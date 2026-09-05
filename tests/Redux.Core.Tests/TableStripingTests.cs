@@ -114,24 +114,123 @@ internal sealed class TableStripingTests
 				new NxmDownloadItem { ProjectName = "Goon's Paladin Overhaul", FileDisplayName = "Paladin Overhaul", State = NxmDownloadState.InstallFailed,
 					ErrorCode = "missing-dependencies", ErrorDetails = "Missing dependency: Goon's Library. Install it, then retry installation." },
 				new NxmDownloadItem { ProjectName = "Unreadable archive example", FileDisplayName = "Download.zip", State = NxmDownloadState.InstallFailed,
-					ErrorCode = "archive-unreadable", ErrorDetails = "The archive could not be read. Try Download Again." }
+					ErrorCode = "archive-unreadable", ErrorDetails = "The archive could not be read. Try Download Again." },
+				new NxmDownloadItem { ProjectName = "Ready archive", FileDisplayName = "Ready.zip", State = NxmDownloadState.Downloaded },
+				new NxmDownloadItem { ProjectName = "Active transfer", FileDisplayName = "Downloading.zip", State = NxmDownloadState.Downloading },
+				new NxmDownloadItem { ProjectName = "Paused transfer", FileDisplayName = "Paused.zip", State = NxmDownloadState.Paused },
+				new NxmDownloadItem { ProjectName = "Installed package", FileDisplayName = "Installed.zip", State = NxmDownloadState.Installed }
 			};
 			var downloads = new NxmDownloadsPane { DataContext = new { NxmDownloads = downloadItems } };
 			host.Child = downloads;
 			ReduxThemeService.Apply(app.Resources, ReduxThemeType.ReduxDark);
-			Layout(host, 1100);
+			Layout(host, 1500);
 			var downloadList = (ListView)downloads.FindName("DownloadsList");
 			foreach (var item in downloadItems)
 			{
 				var row = (ListViewItem)downloadList.ItemContainerGenerator.ContainerFromItem(item);
 				var buttons = VisualChildren(row).OfType<Button>().ToArray();
 				RegressionAssert.True(buttons.Any(button => AutomationProperties.GetName(button) == "Download failure details" && button.IsVisible));
-				RegressionAssert.True(buttons.Any(button => AutomationProperties.GetName(button) == "Download fresh copy" && button.IsVisible));
+				RegressionAssert.Equal(item.CanDownloadAgain, buttons.Any(button => AutomationProperties.GetName(button) == "Download fresh copy" && button.IsVisible));
 				RegressionAssert.Equal(item.CanRetryInstall, buttons.Any(button => AutomationProperties.GetName(button) == "Retry install" && button.IsVisible));
 			}
+			var downloadColumns = ((GridView)downloadList.View).Columns;
+			var actionsColumn = downloadColumns.Last();
+			var downloadScroll = VisualChildren(downloadList).OfType<ScrollViewer>().First();
+			AssertDownloadActions(downloadList, true);
+			if (downloadScroll.ScrollableWidth >= 1) throw new InvalidOperationException($"Wide downloads must not need horizontal scrolling: {downloadScroll.ScrollableWidth}.");
+			var actionHeader = VisualChildren(downloadList).OfType<GridViewColumnHeader>().Single(header => header.Column == actionsColumn);
+			RegressionAssert.False(VisualChildren(actionHeader).OfType<System.Windows.Controls.Primitives.Thumb>().Any());
+			var initialWidth = actionsColumn.ActualWidth;
+			Layout(host, 1700);
+			if (Math.Abs(actionsColumn.ActualWidth - initialWidth - 200) >= 2) throw new InvalidOperationException("Actions must grow with the viewport.");
+			downloadColumns[1].Width += 80;
+			Layout(host, 1700);
+			if (Math.Abs(actionsColumn.ActualWidth - initialWidth - 120) >= 2) throw new InvalidOperationException("Actions must yield to resized data columns.");
+			downloadColumns[1].Width -= 80;
+			downloadColumns.Move(1, downloadColumns.Count - 1);
+			Layout(host, 1500);
+			RegressionAssert.True(ReferenceEquals(actionsColumn, downloadColumns.Last()));
+			downloadColumns.Move(downloadColumns.Count - 2, 1);
+			Layout(host, 1500);
 			Capture(host, "download-errors-wide");
 			Layout(host, 640);
+			RegressionAssert.True(downloadScroll.ScrollableWidth > 0);
+			AssertDownloadActions(downloadList, false);
 			Capture(host, "download-errors-compact");
+			downloadScroll.ScrollToRightEnd();
+			Layout(host, 640);
+			Capture(host, "download-actions-compact");
+			AssertDownloadActions(downloadList, true);
+			var previousActionFontSize = app.FindResource("Redux.FontSize.11");
+			app.Resources["Redux.FontSize.11"] = 16.0;
+			downloadItems[2].State = NxmDownloadState.InstallFailed;
+			downloadItems[2].ErrorCode = "missing-dependencies";
+			Layout(host, 1700);
+			downloadScroll.ScrollToLeftEnd();
+			Layout(host, 1700);
+			AssertDownloadActions(downloadList, true);
+			Capture(host, "download-actions-large-text");
+			app.Resources["Redux.FontSize.11"] = previousActionFontSize;
+
+			var manyDownloads = Enumerable.Range(0, 200).Select(index => new NxmDownloadItem
+			{
+				ProjectName = $"Download {index}", FileDisplayName = $"Archive {index}", State = NxmDownloadState.Downloaded
+			}).ToArray();
+			downloads.DataContext = new { NxmDownloads = manyDownloads };
+			Layout(host, 1500);
+			var selectAll = (CheckBox)downloads.FindName("SelectAllDownloadsCheckBox");
+			selectAll.IsChecked = true;
+			selectAll.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+			RegressionAssert.Equal(200, downloadList.SelectedItems.Count);
+			RegressionAssert.Equal(200, manyDownloads.Count(item => item.IsSelected));
+			downloadList.SelectedItem = manyDownloads[150];
+			RegressionAssert.Equal(1, downloadList.SelectedItems.Count);
+			RegressionAssert.Equal(1, manyDownloads.Count(item => item.IsSelected));
+			downloadList.ScrollIntoView(manyDownloads[0]);
+			Layout(host, 640);
+			RegressionAssert.Equal(1, manyDownloads.Count(item => item.IsSelected));
+			Capture(host, "download-selection-compact");
+			Layout(host, 1500);
+			Capture(host, "download-selection-wide");
+			selectAll.IsChecked = false;
+			selectAll.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+			RegressionAssert.Equal(200, manyDownloads.Count(item => item.IsSelected));
+			selectAll.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+			RegressionAssert.Equal(0, manyDownloads.Count(item => item.IsSelected));
+
+			var selectionMods = Enumerable.Range(0, 200).Select(index => new RegressionModData { Name = $"Selection mod {index}", UUID = Guid.NewGuid().ToString() }).ToArray();
+			var selectionTable = new ModListView
+			{
+				ItemsSource = selectionMods, DisplayMemberPath = nameof(DivinityModData.Name),
+				Style = (Style)app.FindResource("ModOrderListView")
+			};
+			host.Child = selectionTable;
+			Layout(host, 1100);
+			selectionTable.SelectAll();
+			RegressionAssert.Equal(200, selectionMods.Count(mod => mod.IsSelected));
+			selectionTable.SelectedItem = selectionMods[150];
+			RegressionAssert.Equal(1, selectionMods.Count(mod => mod.IsSelected));
+			selectionTable.ScrollIntoView(selectionMods[0]);
+			Layout(host, 1100);
+			RegressionAssert.Equal(1, selectionTable.SelectedItems.Count);
+			RegressionAssert.Equal(1, selectionMods.Count(mod => mod.IsSelected));
+			selectionTable.SelectedItems.Add(selectionMods[1]);
+			RegressionAssert.Equal(2, selectionMods.Count(mod => mod.IsSelected));
+			selectionTable.UnselectAll();
+			RegressionAssert.Equal(0, selectionMods.Count(mod => mod.IsSelected));
+
+			var panes = new HorizontalModLayout();
+			((ColumnDefinition)panes.FindName("DownloadsColumn")).Width = new GridLength(780);
+			((ColumnDefinition)panes.FindName("DownloadsSplitterColumn")).Width = new GridLength(4);
+			var paneDownloads = (NxmDownloadsPane)panes.FindName("DownloadsPane");
+			paneDownloads.Visibility = Visibility.Visible;
+			host.Child = panes;
+			Layout(host, 1800);
+			Layout(host, 1200);
+			var downloadsRight = paneDownloads.TranslatePoint(new Point(), panes).X + paneDownloads.ActualWidth;
+			if (downloadsRight > panes.ActualWidth + 0.5) throw new InvalidOperationException("Downloads overflows the actual view after window resizing.");
+			RegressionAssert.True(((ColumnDefinition)panes.FindName("ActiveModsColumn")).ActualWidth >= 180);
+			RegressionAssert.True(((ColumnDefinition)panes.FindName("InactiveModsColumn")).ActualWidth >= 180);
 
 			var requirements = new[]
 			{
@@ -164,6 +263,40 @@ internal sealed class TableStripingTests
 			window?.Close();
 			app.Resources = previous;
 			app.ShutdownMode = shutdownMode;
+		}
+	}
+
+	private static void AssertDownloadActions(ListView list, bool fitsViewport)
+	{
+		var positions = new Dictionary<string, double>();
+		foreach (var row in VisualChildren(list).OfType<ListViewItem>())
+		{
+			var buttons = VisualChildren(row).OfType<Button>().Where(button => button.IsVisible).ToArray();
+			double previousRight = Double.NegativeInfinity;
+			foreach (var button in buttons)
+			{
+				var name = AutomationProperties.GetName(button);
+				var left = button.TranslatePoint(new Point(), list).X;
+				var right = left + button.ActualWidth;
+				if (left < previousRight - 0.5) throw new InvalidOperationException($"{name} overlaps a preceding action.");
+				previousRight = right;
+				if (!VisualChildren(button).OfType<ReduxIcon>().Any(icon => icon.IsVisible)) throw new InvalidOperationException($"{name} is missing its icon.");
+				if (fitsViewport && right > list.ActualWidth + 0.5)
+				{
+					var scroll = VisualChildren(list).OfType<ScrollViewer>().First();
+					throw new InvalidOperationException($"{name} is clipped at the viewport edge: right={right}, list={list.ActualWidth}, viewport={scroll.ViewportWidth}, extent={scroll.ExtentWidth}, offset={scroll.HorizontalOffset}, columns={String.Join(",", ((GridView)list.View).Columns.Select(column => column.ActualWidth))}.");
+				}
+				var slot = name is "Pause download" or "Resume download" or "Retry download" or "Retry install" or "Install download"
+					? "Primary" : name is "Cancel download" or "Remove download" ? "Remove" : name;
+				if (positions.TryGetValue(slot, out var expected))
+				{
+					if (Math.Abs(left - expected) >= 0.5) throw new InvalidOperationException($"{name} is misaligned across rows.");
+				}
+				else positions.Add(slot, left);
+			}
+			var presenter = VisualChildren(row).OfType<GridViewRowPresenter>().Single();
+			var actionRight = presenter.TranslatePoint(new Point(), list).X + ((GridView)list.View).Columns.Sum(column => column.ActualWidth);
+			if (previousRight > actionRight + 0.5) throw new InvalidOperationException("Actions overflow their column even when scrolled into view.");
 		}
 	}
 
@@ -207,7 +340,13 @@ internal sealed class TableStripingTests
 
 	private static void Layout(FrameworkElement element, double width)
 	{
-		if (Window.GetWindow(element) is { } window) window.Width = width;
+		if (Window.GetWindow(element) is { } window)
+		{
+			window.Width = width;
+			window.UpdateLayout();
+			element.Dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+			return;
+		}
 		element.Dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
 		element.Measure(new Size(width, 680));
 		element.Arrange(new Rect(0, 0, width, 680));

@@ -13,6 +13,7 @@
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:util="clr-namespace:DivinityModManager.Util"
 	x:Name="HorizontalModLayoutView"
+	SizeChanged="ModLayout_SizeChanged"
 	d:DesignHeight="450"
 	d:DesignWidth="800"
 	mc:Ignorable="d">
@@ -1347,7 +1348,7 @@
 	<UserControl.Style>
 		<Style BasedOn="{StaticResource {x:Type UserControl}}" TargetType="UserControl" />
 	</UserControl.Style>
-	<Grid>
+	<Grid x:Name="ModPanesGrid">
 		<Grid.RowDefinitions>
 			<RowDefinition x:Name="ModListsRow" Height="*" MinHeight="180" />
 			<RowDefinition x:Name="ModDetailsSplitterRow" Height="0" />
@@ -1356,9 +1357,11 @@
 		<Grid.ColumnDefinitions>
 			<ColumnDefinition x:Name="CategoriesColumn" Width="220" MinWidth="52" />
 			<ColumnDefinition Width="4" />
-			<ColumnDefinition x:Name="ActiveModsColumn" Width="*" />
+			<ColumnDefinition x:Name="ActiveModsColumn" Width="*" MinWidth="180" />
 			<ColumnDefinition Width="4" />
-			<ColumnDefinition x:Name="InactiveModsColumn" Width="*" />
+			<ColumnDefinition x:Name="InactiveModsColumn" Width="*" MinWidth="180" />
+			<ColumnDefinition x:Name="DownloadsSplitterColumn" Width="0" />
+			<ColumnDefinition x:Name="DownloadsColumn" Width="0" />
 		</Grid.ColumnDefinitions>
 		<Border x:Name="CategoriesPanel" Grid.Column="0"
 			Margin="10,4,5,10"
@@ -1695,7 +1698,7 @@
 				</TextBlock>
 			</Grid>
 		</Border>
-		<GridSplitter x:Name="CategoriesGridSplitter" Grid.Column="1"
+		<c:PaneGridSplitter x:Name="CategoriesGridSplitter" Grid.Column="1"
 			Width="4"
 			HorizontalAlignment="Stretch"
 			VerticalAlignment="Stretch"
@@ -1865,15 +1868,24 @@
 			</Grid>
 		</Grid>
 		</Border>
-		<GridSplitter Grid.Column="3"
+		<c:PaneGridSplitter x:Name="ActiveInactiveGridSplitter" Grid.Column="3"
 			Width="4"
 			HorizontalAlignment="Stretch"
 			VerticalAlignment="Stretch"
 			Style="{StaticResource ReduxVerticalSplitterStyle}"
 			Visibility="{Binding IsInactiveModsExpanded, Converter={StaticResource BoolToVisibilityConverter}}" />
 		<Border Grid.Column="4"
-			Margin="5,4,10,10"
-			Style="{StaticResource ModSectionCard}">
+			x:Name="InactiveModsPanel">
+			<Border.Style>
+				<Style BasedOn="{StaticResource ModSectionCard}" TargetType="Border">
+					<Setter Property="Margin" Value="5,4,10,10" />
+					<Style.Triggers>
+						<DataTrigger Binding="{Binding NxmDownloadsPaneVisible}" Value="True">
+							<Setter Property="Margin" Value="5,4,5,10" />
+						</DataTrigger>
+					</Style.Triggers>
+				</Style>
+			</Border.Style>
 		<Grid x:Name="InactiveModListGrid" HorizontalAlignment="Stretch">
 			<Grid.RowDefinitions>
 				<RowDefinition Height="Auto" />
@@ -2087,6 +2099,12 @@
 			</TextBlock>
 		</Grid>
 		</Border>
+		<c:PaneGridSplitter x:Name="DownloadsGridSplitter" Grid.Column="5" Grid.RowSpan="3"
+			Width="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+			Style="{StaticResource ReduxVerticalSplitterStyle}"
+			Visibility="{Binding NxmDownloadsPaneVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+		<local:NxmDownloadsPane x:Name="DownloadsPane" Grid.Column="6" Grid.RowSpan="3"
+			Visibility="{Binding NxmDownloadsPaneVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 		<GridSplitter x:Name="ModDetailsGridSplitter"
 			Grid.Row="1"
 			Grid.ColumnSpan="5"
@@ -2100,11 +2118,16 @@
 		<Border x:Name="ModDetailsPanel"
 			Grid.Row="2"
 			Grid.ColumnSpan="5"
-			Margin="10,0,10,10"
 			Visibility="Collapsed">
 			<Border.Style>
 				<Style BasedOn="{StaticResource ModSectionCard}" TargetType="{x:Type Border}">
 					<Setter Property="BorderBrush" Value="{DynamicResource ReduxBorderStrongBrush}" />
+					<Setter Property="Margin" Value="10,0,10,10" />
+					<Style.Triggers>
+						<DataTrigger Binding="{Binding NxmDownloadsPaneVisible}" Value="True">
+							<Setter Property="Margin" Value="10,0,5,10" />
+						</DataTrigger>
+					</Style.Triggers>
 				</Style>
 			</Border.Style>
 			<Grid>

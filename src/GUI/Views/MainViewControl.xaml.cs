@@ -52,7 +52,6 @@ public partial class MainViewControl : MainViewControlViewBase
 	private int _diagnosticStatusHoverVersion;
 	private readonly HashSet<ContextMenu> _closingToolbarStatusMenus = new();
 	private MenuItem _nxmAssociationItem;
-	private double _downloadsPaneWidth = 780;
 
 	private readonly Dictionary<string, MenuItem> menuItems = new();
 	public Dictionary<string, MenuItem> MenuItems => menuItems;
@@ -474,7 +473,7 @@ public partial class MainViewControl : MainViewControlViewBase
 	public void FocusNxmDownload(NxmDownloadItem item)
 	{
 		ViewModel.NxmDownloadsPaneVisible = true;
-		DownloadsPane.FocusDownload(item);
+		ModLayout.FocusNxmDownload(item);
 	}
 
 	private void InspectModPackage_Click(object sender, RoutedEventArgs e) =>
@@ -1550,12 +1549,5 @@ public partial class MainViewControl : MainViewControlViewBase
 
 		main = window;
 		ViewModel = vm;
-		ViewModel.WhenAnyValue(viewModel => viewModel.NxmDownloadsPaneVisible)
-			.ObserveOn(RxApp.MainThreadScheduler)
-			.Subscribe(visible =>
-			{
-				if (!visible && DownloadsColumn.ActualWidth >= 520) _downloadsPaneWidth = DownloadsColumn.ActualWidth;
-				DownloadsColumn.Width = new GridLength(visible ? Math.Clamp(_downloadsPaneWidth, 520, 950) : 0);
-			});
 	}
 }

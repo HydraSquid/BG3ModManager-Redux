@@ -4,13 +4,47 @@ using DivinityModManager.ViewModels;
 
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 
 namespace DivinityModManager.Views;
 
 public partial class NxmDownloadsPane : UserControl
 {
 	private MainWindowViewModel ViewModel => DataContext as MainWindowViewModel;
-	public NxmDownloadsPane() => InitializeComponent();
+	public NxmDownloadsPane()
+	{
+		InitializeComponent();
+		var columns = ((GridView)DownloadsList.View).Columns;
+		columns.CollectionChanged += (_, _) =>
+		{
+			// Keep the fill column last while allowing the data columns to be reordered.
+			if (columns.IndexOf(ActionsColumn) == columns.Count - 1) return;
+			Dispatcher.BeginInvoke(new Action(() =>
+			{
+				var index = columns.IndexOf(ActionsColumn);
+				if (index >= 0 && index != columns.Count - 1) columns.Move(index, columns.Count - 1);
+			}));
+		};
+	}
+
+	private void UpdateActionsColumnWidth(object sender, RoutedEventArgs e)
+	{
+		if (ActionsColumn == null || !DownloadsList.IsVisible) return;
+		var scroll = DownloadsList.FindVisualChildren<ScrollViewer>().FirstOrDefault();
+		if (scroll == null || scroll.ViewportWidth <= 0) return;
+
+		// The horizontal stack measures the shared slots without the current cell's width
+		// constraint. Reserve the cell's 12px presenter padding plus its 6px leading margin.
+		var contentWidth = DownloadsList.FindVisualChildren<Grid>()
+			.Where(grid => grid.Name == "DownloadActionSlots")
+			.Select(grid => grid.ActualWidth + 18).DefaultIfEmpty(80).Max();
+		var otherWidth = ((GridView)DownloadsList.View).Columns
+			.Where(column => column != ActionsColumn).Sum(column => column.ActualWidth);
+		var width = Math.Max(contentWidth, scroll.ViewportWidth - otherWidth - 6);
+		if (Double.IsNaN(ActionsColumn.Width) || Math.Abs(ActionsColumn.Width - width) > 0.5)
+			ActionsColumn.Width = width;
+	}
 
 	public void FocusDownload(NxmDownloadItem item)
 	{
@@ -39,6 +73,15 @@ public partial class NxmDownloadsPane : UserControl
 	private async void Cancel_Click(object sender, RoutedEventArgs e) => await RunCommandAsync(() => ViewModel.CancelNxmDownloadAsync(Item(sender)));
 	private void OpenPage_Click(object sender, RoutedEventArgs e) { var item = Item(sender); if (item?.NexusPage != null) ProcessHelper.TryOpenUrl(item.NexusPage.ToString()); }
 	private async void Remove_Click(object sender, RoutedEventArgs e) => await RunCommandAsync(() => ViewModel.RemoveNxmDownloadAsync(Item(sender)));
+	private async void RemoveSelected_Click(object sender, RoutedEventArgs e) => await RunCommandAsync(ViewModel.RemoveSelectedNxmDownloadsAsync);
+
+	private async void DownloadsList_PreviewKeyDown(object sender, KeyEventArgs e)
+	{
+		if (e.Key != Key.Delete || Keyboard.Modifiers != ModifierKeys.None
+			|| e.OriginalSource is TextBoxBase || (e.OriginalSource as DependencyObject)?.FindVisualParent<TextBoxBase>() != null) return;
+		e.Handled = true;
+		await RunCommandAsync(ViewModel.RemoveSelectedNxmDownloadsAsync);
+	}
 
 	private async Task RunCommandAsync(Func<Task> command)
 	{
@@ -58,10 +101,15 @@ public partial class NxmDownloadsPane : UserControl
 		}
 	}
 
-	private void SelectAllDownloads_Click(object sender, RoutedEventArgs e) => SetSelection(SelectAllDownloadsCheckBox.IsChecked == true);
+	private void SelectAllDownloads_Click(object sender, RoutedEventArgs e) => SetSelection(DownloadsList.SelectedItems.Count < DownloadsList.Items.Count);
 	private void SelectAllMenu_Click(object sender, RoutedEventArgs e) => SetSelection(true);
 	private void ClearSelectionMenu_Click(object sender, RoutedEventArgs e) => SetSelection(false);
-	private void DownloadsList_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdateSelectionHeader();
+	private void DownloadsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+	{
+		foreach (var item in e.RemovedItems.OfType<NxmDownloadItem>().ToArray()) item.IsSelected = false;
+		foreach (var item in e.AddedItems.OfType<NxmDownloadItem>().ToArray()) item.IsSelected = true;
+		UpdateSelectionHeader();
+	}
 	private void DownloadsList_ContextMenuOpening(object sender, ContextMenuEventArgs e)
 	{
 		if (e.OriginalSource is not DependencyObject source) return;
@@ -72,7 +120,8 @@ public partial class NxmDownloadsPane : UserControl
 
 	private void SetSelection(bool isSelected)
 	{
-		foreach (var item in DownloadsList.Items.OfType<NxmDownloadItem>()) item.IsSelected = isSelected;
+		if (isSelected) DownloadsList.SelectAll();
+		else DownloadsList.UnselectAll();
 		UpdateSelectionHeader();
 	}
 

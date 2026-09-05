@@ -1522,15 +1522,7 @@
 						Height="6"
 						IsHitTestVisible="False"
 						Visibility="{Binding Settings.HideToolbar, Converter={StaticResource BoolToVisibilityConverter}}" />
-					<Grid Grid.Row="2">
-						<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition x:Name="DownloadsColumn" Width="0" MinWidth="0" /></Grid.ColumnDefinitions>
-						<local:HorizontalModLayout x:Name="ModLayout" />
-						<GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-							Style="{StaticResource ReduxVerticalSplitterStyle}"
-							Visibility="{Binding NxmDownloadsPaneVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
-						<local:NxmDownloadsPane x:Name="DownloadsPane" Grid.Column="2"
-							Visibility="{Binding NxmDownloadsPaneVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
-					</Grid>
+					<local:HorizontalModLayout x:Name="ModLayout" Grid.Row="2" />
 				</Grid>
 				<local:ModUpdatesLayout x:Name="ModUpdaterPanel" Grid.Row="2" Background="{DynamicResource ReduxSurfaceBrush}" />
 			</Grid>

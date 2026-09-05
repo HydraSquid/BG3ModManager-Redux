@@ -21,9 +21,11 @@ internal static class Program
 		var health = new ModHealthTests();
 		var modules = new ReduxModuleStateTests();
 		var tableStriping = new TableStripingTests();
+		var paneSplitters = new PaneSplitterTests();
 		var windowShutdown = new WindowShutdownTests();
 		var failureRecovery = new NxmFailureRecoveryTests();
 		var dependencies = new DependencyAssistanceTests();
+		var batchInstall = new NxmBatchInstallPlannerTests();
 		var bundle = new ReduxBundleTests();
 		var contribution = new ContributionReportPrivacyTests();
 		var comparison = new LoadOrderComparisonTests();
@@ -54,6 +56,14 @@ internal static class Program
 		var loadOrderWorkflow = new LoadOrderWorkflowTests();
 		var tests = new (string Name, Action Run)[]
 		{
+			(nameof(batchInstall.ReverseDownloadedChainInstallsPrerequisitesBeforeAllDependents), batchInstall.ReverseDownloadedChainInstallsPrerequisitesBeforeAllDependents),
+			(nameof(batchInstall.CyclesAndTheirDependentsAreBlockedWithoutBlockingUnrelatedArchives), batchInstall.CyclesAndTheirDependentsAreBlockedWithoutBlockingUnrelatedArchives),
+			(nameof(batchInstall.MissingAndUnselectedPrerequisitesBlockTheirWholeChain), batchInstall.MissingAndUnselectedPrerequisitesBlockTheirWholeChain),
+			(nameof(batchInstall.InstalledAndBundledPrerequisitesRespectRequiredVersions), batchInstall.InstalledAndBundledPrerequisitesRespectRequiredVersions),
+			(nameof(batchInstall.DuplicateUuidAndDestinationChoicesAreNotGuessed), batchInstall.DuplicateUuidAndDestinationChoicesAreNotGuessed),
+			(nameof(batchInstall.SkippedOrFailedPrerequisitesBlockDependentsAndLiveStateIsRechecked), batchInstall.SkippedOrFailedPrerequisitesBlockDependentsAndLiveStateIsRechecked),
+			(nameof(batchInstall.LongDependencyChainsDoNotUseTheCallStack), batchInstall.LongDependencyChainsDoNotUseTheCallStack),
+			(nameof(paneSplitters.PaneDividersResizeOnlyTheirNeighborsAndRestoreResponsiveSizing), paneSplitters.PaneDividersResizeOnlyTheirNeighborsAndRestoreResponsiveSizing),
 			(nameof(source.ReviewedModuleUuidResolvesItsProject), source.ReviewedModuleUuidResolvesItsProject),
 			(nameof(source.MissingDependencyOffersReviewedSourceOnlyWhenIntegrationsAreEnabled), source.MissingDependencyOffersReviewedSourceOnlyWhenIntegrationsAreEnabled),
 			(nameof(source.CurrentNexusArchiveNamesResolveTheirProject), source.CurrentNexusArchiveNamesResolveTheirProject),

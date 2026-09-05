@@ -94,6 +94,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	private NxmDownloadManager _nxmDownloadManager;
 	private readonly SemaphoreSlim _nxmActivationLock = new(1, 1);
 	private readonly SemaphoreSlim _nxmInstallLock = new(1, 1);
+	private bool _nxmBatchInstallRunning;
 	private bool _nxmShuttingDown;
 	private Task _initializeNxmDownloadsTask = Task.CompletedTask;
 	[Reactive] public ReadOnlyObservableCollection<NxmDownloadItem> NxmDownloads { get; private set; }
@@ -658,14 +659,23 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 	public async Task InstallNxmDownloadAsync(NxmDownloadItem item, bool showDependencyReview = true)
 	{
-		if (item?.State is not (NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview or NxmDownloadState.InstallFailed)) return;
-		if (item.State == NxmDownloadState.InstallFailed && !item.CanRetryInstall) return;
 		await _nxmInstallLock.WaitAsync();
+		try { await InstallNxmDownloadCoreAsync(item, showDependencyReview); }
+		finally { _nxmInstallLock.Release(); }
+	}
+
+	private async Task InstallNxmDownloadCoreAsync(NxmDownloadItem item, bool showDependencyReview, byte[] expectedArchiveHash = null)
+	{
 		try
 		{
-			if (item.State is not (NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview or NxmDownloadState.InstallFailed)) return;
+			if (_nxmShuttingDown || item?.State is not (NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview or NxmDownloadState.InstallFailed)) return;
 			if (item.State == NxmDownloadState.InstallFailed && !item.CanRetryInstall) return;
 			var archivePath = GetNxmArchivePath(item);
+			// Hold the selected archive read-only through staging and review so the
+			// dependency plan cannot silently apply to replacement archive contents.
+			await using var archiveGuard = expectedArchiveHash == null ? null : File.Open(archivePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+			if (archiveGuard != null && !expectedArchiveHash.SequenceEqual(await System.Security.Cryptography.SHA256.HashDataAsync(archiveGuard)))
+				throw new NexusDownloadedModValidationException("archive-changed", "The archive changed after batch inspection. Inspect the new file and start a new installation batch.");
 			await _nxmDownloadManager.SetStateAsync(item.Id, NxmDownloadState.Installing);
 			var source = new NexusModManagerLink(item.ModId, item.FileId, null, null, null);
 			var builtinMods = DivinityApp.IgnoredMods.Items.SafeToDictionary(entry => entry.Folder, entry => entry);
@@ -705,7 +715,6 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				}
 			}
 		}
-		finally { _nxmInstallLock.Release(); }
 	}
 
 	private async Task<bool> ConfirmNxmInstallReviewAsync(NexusDownloadedModImportTransaction transaction,
@@ -830,12 +839,116 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		return _nxmDownloadManager.RemoveAsync(item.Id, deleteCompleted);
 	}
 	public Task PauseAllNxmDownloadsAsync() => _nxmDownloadManager?.PauseAllAsync() ?? Task.CompletedTask;
+	public async Task RemoveSelectedNxmDownloadsAsync()
+	{
+		if (_nxmShuttingDown) return;
+		var selected = NxmDownloads?.Where(item => item.IsSelected && item.State != NxmDownloadState.Installing).ToArray() ?? [];
+		if (selected.Length == 0) return;
+		var message = $"Remove {selected.Length} selected download entries?\n\n"
+			+ "Active transfers will be cancelled, partial download files deleted, and retained archives moved to the Recycle Bin. "
+			+ "Installed mods and saved/game load orders will not be changed. Items currently installing are excluded.";
+		if (ReduxMessageBox.Show(Window, message, "Remove Selected Downloads", MessageBoxButton.YesNo,
+			MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+		await _nxmInstallLock.WaitAsync();
+		try
+		{
+			foreach (var item in selected)
+			{
+				if (_nxmShuttingDown) return;
+				await _nxmDownloadManager.RemoveAsync(item.Id, deleteCompletedFile: true);
+			}
+		}
+		finally { _nxmInstallLock.Release(); }
+	}
+
 	public Task ResumeAllNxmDownloadsAsync() => _nxmDownloadManager?.ResumeAllAsync() ?? Task.CompletedTask;
 	public async Task InstallSelectedNxmDownloadsAsync()
 	{
-		foreach (var item in NxmDownloads?.Where(item => item.IsSelected && item.State is
-			NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview or NxmDownloadState.InstallFailed).ToArray() ?? [])
-			await InstallNxmDownloadAsync(item, showDependencyReview: false);
+		if (_nxmBatchInstallRunning || _nxmShuttingDown) return;
+		var selected = NxmDownloads?.Where(item => item.IsSelected && item.State != NxmDownloadState.Installed).ToArray() ?? [];
+		if (selected.Length == 0) return;
+		_nxmBatchInstallRunning = true;
+		await _nxmInstallLock.WaitAsync();
+		try
+		{
+			ShowAlert("Inspecting selected archives and checking their prerequisites before installation...", AlertType.Info, 15);
+			var candidates = new List<NxmInstallCandidate>();
+			var hashes = new Dictionary<NxmDownloadItem, byte[]>();
+			var blocked = new Dictionary<NxmDownloadItem, string>();
+			var builtinMods = DivinityApp.IgnoredMods.Items.SafeToDictionary(entry => entry.Folder, entry => entry);
+			foreach (var item in selected)
+			{
+				if (_nxmShuttingDown) return;
+				if (item.State is not (NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview) && !item.CanRetryInstall)
+				{
+					blocked[item] = "This download is not ready for installation. Finish its download or resolve its recorded failure first.";
+					continue;
+				}
+				try
+				{
+					var path = GetNxmArchivePath(item);
+					await using var archiveGuard = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+					hashes[item] = await System.Security.Cryptography.SHA256.HashDataAsync(archiveGuard);
+					var importer = NexusDownloadedModImporter.Create(PathwayData.AppDataModsPath,
+						Path.Combine(PathwayData.AppDataGameFolder, "Mods_Old_ModManager"), mods.Items, builtinMods);
+					IReadOnlyList<DivinityModData> inspected;
+					try
+					{
+						await using var inspection = await importer.StageAsync(path, CancellationToken.None);
+						inspected = inspection.Packages.Select(package => package.Mod).ToArray();
+					}
+					catch (NexusDownloadedModValidationException ex) when (ex.ErrorCode == "missing-dependencies" && ex.InspectedMods.Count > 0)
+					{
+						// Staging has read every PAK and cleaned its temporary files. Other
+						// selected archives may supply the missing dependencies; no files install here.
+						inspected = ex.InspectedMods;
+					}
+					ModDependencyAssistanceService.RememberInspection(item, NxmDownloadsDirectory, inspected);
+					candidates.Add(new(item, inspected));
+				}
+				catch (Exception ex) { blocked[item] = NexusDownloadedModValidationException.Describe(ex).Details; }
+			}
+			var plan = NxmBatchInstallPlanner.Build(candidates, mods.Items.Concat(DivinityApp.IgnoredMods.Items));
+			foreach (var issue in plan.Blocked) blocked[issue.Key] = issue.Value;
+			var summary = $"Checked {selected.Length} selected archives. {plan.Ordered.Count} can proceed in prerequisite-first order.\n\n"
+				+ String.Join("\n", plan.Ordered.Select((candidate, index) => $"{index + 1}. {candidate.Download.FileDisplayName}"));
+			if (blocked.Count > 0) summary += "\n\nBlocked for this batch:\n" + String.Join("\n\n", blocked.Select(issue => $"{issue.Key.FileDisplayName}: {issue.Value}"));
+			summary += "\n\nNo unselected downloads will be installed. Each archive still requires your approval. Skipping or failing a prerequisite skips its dependents.";
+			if (_nxmShuttingDown) return;
+			if (plan.Ordered.Count == 0)
+			{
+				ReduxMessageBox.Show(Window, summary, "Batch Prerequisite Check", MessageBoxButton.OK, MessageBoxImage.Warning);
+				return;
+			}
+			if (ReduxMessageBox.Show(Window, summary + "\n\nContinue to installation reviews?", "Batch Prerequisite Check",
+				MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+			var installed = new HashSet<NxmDownloadItem>();
+			foreach (var candidate in plan.Ordered)
+			{
+				if (_nxmShuttingDown) return;
+				var item = candidate.Download;
+				if (!NxmDownloads.Contains(item) || (item.State is not (NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview) && !item.CanRetryInstall))
+				{
+					blocked[item] = "Skipped because this download is no longer available, or a selected prerequisite was skipped or failed.";
+					continue;
+				}
+				var reason = NxmBatchInstallPlanner.GetExecutionBlockReason(plan, candidate, installed, mods.Items.Concat(DivinityApp.IgnoredMods.Items));
+				if (reason != null) { blocked[item] = reason; continue; }
+				await InstallNxmDownloadCoreAsync(item, showDependencyReview: false, expectedArchiveHash: hashes[item]);
+				if (item.State == NxmDownloadState.Installed) installed.Add(item);
+				else blocked[item] = "Installation was skipped or failed. Its dependent archives were not installed.";
+				if (item.ErrorCode == "rollback-failed") return;
+			}
+			var result = $"Installed {installed.Count} of {selected.Length} selected archives.";
+			if (blocked.Count > 0) result += "\n\nNot installed:\n" + String.Join("\n\n", blocked.Select(issue => $"{issue.Key.FileDisplayName}: {issue.Value}"));
+			ReduxMessageBox.Show(Window, result, "Batch Installation Result", MessageBoxButton.OK,
+				blocked.Count > 0 ? MessageBoxImage.Warning : MessageBoxImage.Information);
+		}
+		finally
+		{
+			_nxmBatchInstallRunning = false;
+			_nxmInstallLock.Release();
+		}
 	}
 	public async Task ClearCompletedNxmDownloadsAsync()
 	{

@@ -26,6 +26,7 @@
 				<Setter Property="Height" Value="26" />
 				<Setter Property="Margin" Value="2,0" />
 				<Setter Property="Padding" Value="7,2" />
+				<Setter Property="HorizontalContentAlignment" Value="Left" />
 				<Setter Property="Background" Value="Transparent" />
 				<Setter Property="BorderThickness" Value="0" />
 				<Setter Property="FontSize" Value="{DynamicResource Redux.FontSize.11}" />
@@ -145,24 +146,25 @@
 			</Grid.RowDefinitions>
 			<Border Background="{DynamicResource ReduxSurfaceElevatedBrush}" IsHitTestVisible="False" />
 			<Grid Height="Auto" Margin="12,6">
-				<Grid.RowDefinitions><RowDefinition Height="28" /><RowDefinition Height="28" /></Grid.RowDefinitions>
+				<Grid.RowDefinitions><RowDefinition Height="28" /><RowDefinition Height="Auto" MinHeight="28" /></Grid.RowDefinitions>
 				<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
 				<TextBlock Style="{StaticResource ReduxModSectionTitleStyle}" Text="Downloads" />
 				<Button Grid.Column="1" AutomationProperties.Name="Collapse Downloads pane" Style="{StaticResource DownloadHeaderAction}" Click="Close_Click" ToolTip="Collapse Downloads pane"><StackPanel Orientation="Horizontal"><TextBlock Margin="0,0,5,0" Text="Collapse" /><controls:ReduxIcon Width="14" Height="14" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.ChevronRightStroke}" /></StackPanel></Button>
-				<StackPanel Grid.Row="1" Grid.ColumnSpan="2" HorizontalAlignment="Right" Orientation="Horizontal">
+				<WrapPanel Grid.Row="1" Grid.ColumnSpan="2" HorizontalAlignment="Right" Orientation="Horizontal">
 					<Button AutomationProperties.Name="Pause all downloads" Style="{StaticResource DownloadHeaderAction}" Click="PauseAll_Click" ToolTip="Pause all downloads"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.StopCircle}" /><TextBlock Text="Pause All" /></StackPanel></Button>
 					<Button AutomationProperties.Name="Resume all downloads" Style="{StaticResource DownloadHeaderAction}" Click="ResumeAll_Click" ToolTip="Resume all downloads"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.ArrowForwardStroke}" /><TextBlock Text="Resume All" /></StackPanel></Button>
 					<Button AutomationProperties.Name="Install selected downloads" Foreground="{DynamicResource ReduxSuccessBrush}" Style="{StaticResource DownloadHeaderAction}" Click="InstallSelected_Click" ToolTip="Install selected downloads"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.Package}" /><TextBlock Text="Install" /></StackPanel></Button>
 					<Button AutomationProperties.Name="Clear completed downloads" Foreground="{DynamicResource ReduxErrorBrush}" Style="{StaticResource DownloadHeaderAction}" Click="ClearCompleted_Click" ToolTip="Clear completed downloads"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.Trash}" /><TextBlock Text="Clear" /></StackPanel></Button>
+					<Button AutomationProperties.Name="Remove selected downloads" Foreground="{DynamicResource ReduxErrorBrush}" Style="{StaticResource DownloadHeaderAction}" Click="RemoveSelected_Click" ToolTip="Remove selected queue entries and recycle their archives (Delete)"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.Trash}" /><TextBlock Text="Remove Selected" /></StackPanel></Button>
 					<Button AutomationProperties.Name="Open Downloads folder" Style="{StaticResource DownloadHeaderAction}" Click="OpenFolder_Click" ToolTip="Open Downloads folder"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.FolderOpen}" /><TextBlock Text="Folder" /></StackPanel></Button>
-				</StackPanel>
+				</WrapPanel>
 			</Grid>
 			<Border Grid.Row="1" Style="{StaticResource ReduxPaneHeaderDividerStyle}" />
 			<Grid Grid.Row="2">
 				<TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="No Nexus downloads" IsHitTestVisible="False">
 					<TextBlock.Style><Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding NxmDownloads.Count}" Value="0"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style></TextBlock.Style>
 				</TextBlock>
-				<ListView x:Name="DownloadsList" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource ReduxTextPrimaryBrush}" ItemsSource="{Binding NxmDownloads}" ContextMenuOpening="DownloadsList_ContextMenuOpening" SelectionChanged="DownloadsList_SelectionChanged" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
+				<ListView x:Name="DownloadsList" SelectionMode="Extended" PreviewKeyDown="DownloadsList_PreviewKeyDown" Grid.IsSharedSizeScope="True" Loaded="UpdateActionsColumnWidth" SizeChanged="UpdateActionsColumnWidth" ScrollViewer.ScrollChanged="UpdateActionsColumnWidth" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource ReduxTextPrimaryBrush}" ItemsSource="{Binding NxmDownloads}" ContextMenuOpening="DownloadsList_ContextMenuOpening" SelectionChanged="DownloadsList_SelectionChanged" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
 					<ListView.ContextMenu>
 						<ContextMenu DataContext="{Binding RelativeSource={RelativeSource Self}, Path=PlacementTarget.Tag}">
 							<MenuItem Header="Pause Download" Tag="{Binding}" Style="{StaticResource DownloadPauseMenuAction}" Click="Pause_Click"><MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.CircleMinus}" /></MenuItem.Icon></MenuItem>
@@ -172,12 +174,13 @@
 							<MenuItem Header="Install Download" Tag="{Binding}" Style="{StaticResource DownloadInstallMenuAction}" Click="Install_Click"><MenuItem.Icon><controls:ReduxIcon Foreground="{DynamicResource ReduxSuccessBrush}" StrokeData="{StaticResource Redux.Icon.Package}" /></MenuItem.Icon></MenuItem>
 							<Separator />
 							<MenuItem Header="Open on Nexus Mods" Tag="{Binding}" Click="OpenPage_Click"><MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Open}" /></MenuItem.Icon></MenuItem>
-							<MenuItem Header="Details / Inspect Failure" Tag="{Binding}" Click="Details_Click" />
-							<MenuItem Header="Download Again" Tag="{Binding}" Style="{StaticResource DownloadAgainMenuAction}" Click="DownloadAgain_Click" />
+							<MenuItem Header="Details / Inspect Failure" Tag="{Binding}" Click="Details_Click"><MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Information}" /></MenuItem.Icon></MenuItem>
+							<MenuItem Header="Download Again" Tag="{Binding}" Style="{StaticResource DownloadAgainMenuAction}" Click="DownloadAgain_Click"><MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Download}" /></MenuItem.Icon></MenuItem>
 							<MenuItem Header="Open Downloads Folder" Click="OpenFolder_Click"><MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" /></MenuItem.Icon></MenuItem>
 							<Separator />
 							<MenuItem Header="Cancel Download" Tag="{Binding}" Style="{StaticResource DownloadCancelMenuAction}" Click="Cancel_Click"><MenuItem.Icon><controls:ReduxIcon Foreground="{DynamicResource ReduxErrorBrush}" StrokeData="{StaticResource Redux.Icon.CloseCircle}" /></MenuItem.Icon></MenuItem>
 							<MenuItem Header="Remove Download" Tag="{Binding}" Style="{StaticResource DownloadRemoveMenuAction}" Click="Remove_Click"><MenuItem.Icon><controls:ReduxIcon Foreground="{DynamicResource ReduxErrorBrush}" StrokeData="{StaticResource Redux.Icon.Trash}" /></MenuItem.Icon></MenuItem>
+							<MenuItem Header="Remove Selected Downloads" InputGestureText="Delete" Click="RemoveSelected_Click"><MenuItem.Icon><controls:ReduxIcon Foreground="{DynamicResource ReduxErrorBrush}" StrokeData="{StaticResource Redux.Icon.Trash}" /></MenuItem.Icon></MenuItem>
 							<Separator />
 							<MenuItem Header="Select All" Click="SelectAllMenu_Click"><MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.ListStroke}" /></MenuItem.Icon></MenuItem>
 							<MenuItem Header="Clear Selection" Click="ClearSelectionMenu_Click"><MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.CloseCircle}" /></MenuItem.Icon></MenuItem>
@@ -204,20 +207,43 @@
 							<GridViewColumn Width="175" Header="Status" HeaderTemplate="{StaticResource GridViewTextblockHeaderTemplate}">
 								<GridViewColumn.CellTemplate><DataTemplate><TextBlock Margin="10,0,6,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}" Text="{Binding StatusText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FailureDetails}" /></DataTemplate></GridViewColumn.CellTemplate>
 							</GridViewColumn>
-							<GridViewColumn Width="405" Header="Actions" HeaderTemplate="{StaticResource GridViewTextblockHeaderTemplate}">
+							<GridViewColumn x:Name="ActionsColumn" Header="Actions" HeaderTemplate="{StaticResource GridViewTextblockHeaderTemplate}">
+								<GridViewColumn.HeaderContainerStyle>
+									<Style BasedOn="{StaticResource GridViewLeftContainerStyle}" TargetType="GridViewColumnHeader">
+										<Setter Property="IsHitTestVisible" Value="False" />
+										<Setter Property="Template">
+											<Setter.Value>
+												<ControlTemplate TargetType="GridViewColumnHeader">
+													<Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="0,0,0,1" Padding="{TemplateBinding Padding}">
+														<ContentPresenter VerticalAlignment="Center" ContentSource="Content" />
+													</Border>
+												</ControlTemplate>
+											</Setter.Value>
+										</Setter>
+									</Style>
+								</GridViewColumn.HeaderContainerStyle>
 								<GridViewColumn.CellTemplate>
 									<DataTemplate DataType="{x:Type nexus:NxmDownloadItem}">
 										<StackPanel Margin="6,0,0,0" Orientation="Horizontal">
-											<Button Content="Details" AutomationProperties.Name="Download failure details" Tag="{Binding}" Style="{StaticResource DownloadRowAction}" Click="Details_Click" ToolTip="Show the recorded reason; inspect an older failure without installing anything" />
-											<Button Content="Download Again" AutomationProperties.Name="Download fresh copy" Tag="{Binding}" Style="{StaticResource DownloadAgainAction}" Click="DownloadAgain_Click" ToolTip="Keep the old archive and download a fresh copy; this does not fix missing dependencies" />
-											<Button AutomationProperties.Name="Pause download" Tag="{Binding}" Style="{StaticResource DownloadPauseAction}" Click="Pause_Click" ToolTip="Pause download"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.CircleMinus}" /><TextBlock Text="Pause" /></StackPanel></Button>
-											<Button AutomationProperties.Name="Resume download" Tag="{Binding}" Style="{StaticResource DownloadResumeAction}" Click="Resume_Click" ToolTip="Resume download"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.ArrowForwardStroke}" /><TextBlock Text="Resume" /></StackPanel></Button>
-											<Button AutomationProperties.Name="Retry download" Tag="{Binding}" Style="{StaticResource DownloadRetryAction}" Click="Retry_Click" ToolTip="Retry download"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.RefreshStroke}" /><TextBlock Text="Retry" /></StackPanel></Button>
-											<Button AutomationProperties.Name="Retry install" Tag="{Binding}" Style="{StaticResource DownloadRetryInstallAction}" Click="Install_Click" ToolTip="Retry install"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.Package}" /><TextBlock Text="Retry Install" /></StackPanel></Button>
-											<Button AutomationProperties.Name="Install download" Tag="{Binding}" Style="{StaticResource DownloadInstallAction}" Click="Install_Click" ToolTip="Install download"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.Package}" /><TextBlock Text="Install" /></StackPanel></Button>
-											<Button AutomationProperties.Name="Open download on Nexus Mods" Tag="{Binding}" Style="{StaticResource DownloadRowAction}" Click="OpenPage_Click" ToolTip="Open on Nexus Mods"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.Open}" /><TextBlock Text="Nexus" /></StackPanel></Button>
-											<Button AutomationProperties.Name="Cancel download" Tag="{Binding}" Style="{StaticResource DownloadCancelAction}" Click="Cancel_Click" ToolTip="Cancel download"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.CloseCircle}" /><TextBlock Text="Cancel" /></StackPanel></Button>
-											<Button AutomationProperties.Name="Remove download" Tag="{Binding}" Style="{StaticResource DownloadRemoveAction}" Click="Remove_Click" ToolTip="Remove download"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.Trash}" /><TextBlock Text="Remove" /></StackPanel></Button>
+											<Grid x:Name="DownloadActionSlots" SizeChanged="UpdateActionsColumnWidth">
+												<Grid.ColumnDefinitions>
+													<ColumnDefinition Width="Auto" SharedSizeGroup="DownloadDetails" />
+													<ColumnDefinition Width="Auto" SharedSizeGroup="DownloadAgain" />
+													<ColumnDefinition Width="Auto" SharedSizeGroup="DownloadPrimary" />
+													<ColumnDefinition Width="Auto" SharedSizeGroup="DownloadNexus" />
+													<ColumnDefinition Width="Auto" SharedSizeGroup="DownloadRemove" />
+												</Grid.ColumnDefinitions>
+											<Button AutomationProperties.Name="Download failure details" Tag="{Binding}" Style="{StaticResource DownloadRowAction}" Click="Details_Click" ToolTip="Show the recorded reason; inspect an older failure without installing anything"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.Information}" /><TextBlock Text="Details" /></StackPanel></Button>
+											<Button Grid.Column="1" AutomationProperties.Name="Download fresh copy" Tag="{Binding}" Style="{StaticResource DownloadAgainAction}" Click="DownloadAgain_Click" ToolTip="Keep the old archive and download a fresh copy; this does not fix missing dependencies"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.Download}" /><TextBlock Text="Download Again" /></StackPanel></Button>
+											<Button Grid.Column="2" AutomationProperties.Name="Pause download" Tag="{Binding}" Style="{StaticResource DownloadPauseAction}" Click="Pause_Click" ToolTip="Pause download"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.CircleMinus}" /><TextBlock Text="Pause" /></StackPanel></Button>
+											<Button Grid.Column="2" AutomationProperties.Name="Resume download" Tag="{Binding}" Style="{StaticResource DownloadResumeAction}" Click="Resume_Click" ToolTip="Resume download"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.ArrowForwardStroke}" /><TextBlock Text="Resume" /></StackPanel></Button>
+											<Button Grid.Column="2" AutomationProperties.Name="Retry download" Tag="{Binding}" Style="{StaticResource DownloadRetryAction}" Click="Retry_Click" ToolTip="Retry download"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.RefreshStroke}" /><TextBlock Text="Retry" /></StackPanel></Button>
+											<Button Grid.Column="2" AutomationProperties.Name="Retry install" Tag="{Binding}" Style="{StaticResource DownloadRetryInstallAction}" Click="Install_Click" ToolTip="Retry install"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.Package}" /><TextBlock Text="Retry Install" /></StackPanel></Button>
+											<Button Grid.Column="2" AutomationProperties.Name="Install download" Tag="{Binding}" Style="{StaticResource DownloadInstallAction}" Click="Install_Click" ToolTip="Install download"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.Package}" /><TextBlock Text="Install" /></StackPanel></Button>
+											<Button Grid.Column="3" AutomationProperties.Name="Open download on Nexus Mods" Tag="{Binding}" Style="{StaticResource DownloadRowAction}" Click="OpenPage_Click" ToolTip="Open on Nexus Mods"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.Open}" /><TextBlock Text="Nexus" /></StackPanel></Button>
+											<Button Grid.Column="4" AutomationProperties.Name="Cancel download" Tag="{Binding}" Style="{StaticResource DownloadCancelAction}" Click="Cancel_Click" ToolTip="Cancel download"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.CloseCircle}" /><TextBlock Text="Cancel" /></StackPanel></Button>
+											<Button Grid.Column="4" AutomationProperties.Name="Remove download" Tag="{Binding}" Style="{StaticResource DownloadRemoveAction}" Click="Remove_Click" ToolTip="Remove download"><StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.Trash}" /><TextBlock Text="Remove" /></StackPanel></Button>
+											</Grid>
 										</StackPanel>
 									</DataTemplate>
 								</GridViewColumn.CellTemplate>

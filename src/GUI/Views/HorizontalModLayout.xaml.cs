@@ -259,6 +259,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 	private double _lastExpandedModDetailsRowHeight = DefaultModDetailsRowHeight;
 	private double _lastExpandedCategoriesWidth = DefaultExpandedCategoriesWidth;
 	private double _lastExpandedInactiveModsWidth;
+	private double _downloadsPaneWidth = 780;
 	private double _minimumExpandedCategoriesWidth = MinimumExpandedCategoriesWidth;
 	private System.Threading.CancellationTokenSource _categoriesTransition;
 	private System.Threading.CancellationTokenSource _inactiveModsTransition;
@@ -2216,6 +2217,8 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 
 	private async void UpdateInactiveModsLayout(bool isExpanded)
 	{
+		ClampDownloadsWidth();
+		ModPanesGrid.UpdateLayout();
 		if (!IsLoaded || ActiveModsColumn.ActualWidth <= 0 || InactiveModsColumn.ActualWidth <= 0)
 		{
 			ApplyInactiveModsLayout(isExpanded);
@@ -2271,7 +2274,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		}
 
 		InactiveModsColumn.MaxWidth = Double.PositiveInfinity;
-		InactiveModsColumn.MinWidth = 0;
+		InactiveModsColumn.MinWidth = MinimumExpandedCategoriesWidth;
 		// Preserve the user's splitter ratio while retaining responsive star sizing.
 		ActiveModsColumn.Width = new GridLength(Math.Max(1, activeWeight), GridUnitType.Star);
 		InactiveModsColumn.Width = new GridLength(Math.Max(1, inactiveWeight), GridUnitType.Star);
@@ -2302,7 +2305,11 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		var completed = await AnimatePanelValueAsync(
 			startWidth,
 			targetWidth,
-			value => CategoriesColumn.Width = new GridLength(value),
+			value =>
+			{
+				CategoriesColumn.Width = new GridLength(value);
+				ClampDownloadsWidth();
+			},
 			token);
 		if (completed) ApplyCategoriesLayout(isExpanded);
 	}
@@ -2322,6 +2329,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		CategoriesColumn.MinWidth = _minimumExpandedCategoriesWidth;
 		CategoriesColumn.Width = new GridLength(Math.Max(_minimumExpandedCategoriesWidth, _lastExpandedCategoriesWidth));
 		CategoriesGridSplitter.IsEnabled = true;
+		ClampDownloadsWidth();
 	}
 
 	/// <summary>
@@ -2373,6 +2381,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			{
 				CategoriesColumn.Width = new GridLength(_minimumExpandedCategoriesWidth);
 			}
+			ClampDownloadsWidth();
 		}
 	}
 
@@ -2568,6 +2577,32 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		}
 	}
 
+	internal void FocusNxmDownload(Models.NexusMods.NxmDownloadItem item) => DownloadsPane.FocusDownload(item);
+
+	private void UpdateDownloadsLayout(bool visible)
+	{
+		if (!visible && DownloadsColumn.ActualWidth > 0) _downloadsPaneWidth = DownloadsColumn.ActualWidth;
+		DownloadsSplitterColumn.Width = new GridLength(visible ? 4 : 0);
+		DownloadsColumn.Width = new GridLength(visible ? _downloadsPaneWidth : 0);
+		ClampDownloadsWidth();
+	}
+
+	private void ModLayout_SizeChanged(object sender, SizeChangedEventArgs e)
+	{
+		if (e.WidthChanged) ClampDownloadsWidth();
+	}
+
+	private void ClampDownloadsWidth()
+	{
+		if (DownloadsColumn == null || DownloadsColumn.Width.Value <= 0 || ActualWidth <= 0) return;
+		var inactiveMinimum = ViewModel?.IsInactiveModsExpanded == false ? CollapsedCategoriesWidth : 180;
+		var categoriesWidth = CategoriesColumn.Width.IsAbsolute ? CategoriesColumn.Width.Value : CategoriesColumn.ActualWidth;
+		// The inner grid can arrange wider than its viewport when fixed widths and
+		// pane minima no longer fit. Clamp against the containing view, not that grid.
+		var maximum = Math.Max(0, ActualWidth - categoriesWidth - 12 - 180 - inactiveMinimum);
+		if (DownloadsColumn.Width.Value > maximum) DownloadsColumn.Width = new GridLength(maximum);
+	}
+
 	public HorizontalModLayout()
 	{
 		InitializeComponent();
@@ -2598,6 +2633,9 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 					.ObserveOn(RxApp.MainThreadScheduler)
 					.Subscribe(_ => UpdateMinimumExpandedCategoriesWidth()));
 				UpdateMinimumExpandedCategoriesWidth();
+				d(ViewModel.WhenAnyValue(x => x.NxmDownloadsPaneVisible)
+					.ObserveOn(RxApp.MainThreadScheduler)
+					.Subscribe(UpdateDownloadsLayout));
 				d(this.Events().KeyUp.Select(e => e.Key != Key.System ? e.Key : e.SystemKey).Subscribe(ViewModel.OnKeyUp));
 				d(this.Events().KeyDown.Select(e => e.Key != Key.System ? e.Key : e.SystemKey).Subscribe(key =>
 				{

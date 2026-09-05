@@ -202,6 +202,15 @@ public class ModListView : ListView
 	private static bool IsEmbeddedButtonInput(DependencyObject source) =>
 		source is ButtonBase || source?.FindVisualParent<ButtonBase>() != null;
 
+	protected override void OnSelectionChanged(SelectionChangedEventArgs e)
+	{
+		// Container bindings only cover realized rows. Keep offscreen models in sync
+		// with native Ctrl/Shift selection and deselection as well.
+		foreach (var item in e.RemovedItems.OfType<ISelectable>().ToArray()) item.IsSelected = false;
+		foreach (var item in e.AddedItems.OfType<ISelectable>().ToArray()) item.IsSelected = true;
+		base.OnSelectionChanged(e);
+	}
+
 	private void NameColumnWidthChanged(object sender, EventArgs e)
 	{
 		if (!Resizing)

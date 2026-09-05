@@ -4,6 +4,11 @@ PublishRelease.py
 _Backup/
 
 # Redux user exports and diagnostic artifacts
+/Data/
+/Orders/
+/_Logs/
+/Mods/
+/Mods_Old_ModManager/
 *.bg3redux
 *.bg3redux-report
 *.dmp

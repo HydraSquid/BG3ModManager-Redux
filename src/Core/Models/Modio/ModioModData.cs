@@ -1,4 +1,5 @@
 using DivinityModManager.Models.Metadata;
+using DivinityModManager.Util;
 
 using Newtonsoft.Json;
 
@@ -11,7 +12,8 @@ public enum ModioMetadataOrigin
 	Unknown = 0,
 	NativePackage = 1,
 	CreatorManifest = 2,
-	ReduxBundleImport = 3
+	ReduxBundleImport = 3,
+	Manual = 4
 }
 
 /// <summary>
@@ -70,6 +72,21 @@ public class ModioModData : IExternalModMetadata
 
 	[JsonIgnore]
 	public bool HasMetadata => ModId > 0;
+
+	[JsonIgnore]
+	public bool HasAssociation
+	{
+		get
+		{
+			if (MetadataOrigin == ModioMetadataOrigin.Manual)
+			{
+				if (!ModPageLinkParser.TryParseBg3(ProfileUrl, out var link, out _)) return false;
+				return link.SourceType == ModSourceType.MODIO
+					&& link.ModioNameId.Equals(NameId, StringComparison.OrdinalIgnoreCase);
+			}
+			return HasMetadata;
+		}
+	}
 
 	[JsonIgnore]
 	public string Author => SubmittedBy?.DisplayName ?? SubmittedBy?.Username ?? String.Empty;

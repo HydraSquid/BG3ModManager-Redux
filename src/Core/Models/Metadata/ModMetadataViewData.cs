@@ -27,16 +27,16 @@ public sealed class ModMetadataViewData : ReactiveObject
 			if (!_mod.OnlineMetadataEnabled) return null;
 
 			// Explicit Nexus choices and Nexus archive provenance are authoritative
-			// even when the PAK also carries a native mod.io PublishHandle.
+			// even before API enrichment or when the PAK carries a mod.io PublishHandle.
 			if (_mod.NexusModsData?.MetadataOrigin is NexusMetadataOrigin.Manual
 					or NexusMetadataOrigin.NexusArchiveImport
 					or NexusMetadataOrigin.ReduxBundleImport
-				&& _mod.NexusModsData.HasMetadata)
+				&& _mod.NexusModsData.ModId >= DivinityApp.NEXUSMODS_MOD_ID_START)
 			{
 				return _mod.NexusModsData;
 			}
 
-			if (_mod.ModioData?.HasMetadata == true) return _mod.ModioData;
+			if (_mod.ModioData?.HasAssociation == true || _mod.PublishHandle > 0) return _mod.ModioData;
 			return _mod.NexusModsEnabled
 				&& _mod.NexusModsData?.ModId >= DivinityApp.NEXUSMODS_MOD_ID_START
 				? _mod.NexusModsData

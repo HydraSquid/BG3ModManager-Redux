@@ -141,6 +141,23 @@ public partial class ReduxCommandPaletteWindow : AdonisUI.Controls.AdonisWindow
 			})
 			.ToList();
 
+		commands.Add(new ReduxCommandPaletteItem(
+			"Show Downloads",
+			"Downloads",
+			"Open the persistent Nexus downloads pane.",
+			String.Empty,
+			"package",
+			() => viewModel.NxmDownloadsPaneVisible = true,
+			() => !viewModel.NxmDownloadsPaneVisible));
+		commands.Add(new ReduxCommandPaletteItem(
+			"Hide Downloads",
+			"Downloads",
+			"Collapse the persistent Nexus downloads pane.",
+			String.Empty,
+			"package",
+			() => viewModel.NxmDownloadsPaneVisible = false,
+			() => viewModel.NxmDownloadsPaneVisible));
+
 		commands.AddRange(viewModel.Profiles.Select((profile, index) =>
 			new ReduxCommandPaletteItem(
 				$"Switch to profile: {profile.Name}",

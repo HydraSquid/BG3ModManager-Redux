@@ -23,6 +23,15 @@ internal sealed class ReduxModuleStateTests
 		RegressionAssert.False(modules.LoadOrderGuidanceEnabled);
 	}
 
+	public void NexusDownloadsDefaultToConfirmationAndFourTransfers()
+	{
+		var settings = new DivinityModManagerSettings();
+
+		RegressionAssert.True(settings.ConfirmCleanNxmDownloads);
+		RegressionAssert.Equal(4, settings.NxmActiveDownloadLimit);
+		RegressionAssert.Equal(String.Empty, settings.NxmAssociationOwnerId);
+	}
+
 	public void FirstRunOnboardingStartsWithEveryOptionalFeatureOff()
 	{
 		var settings = new DivinityModManagerSettings

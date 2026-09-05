@@ -177,7 +177,7 @@ public class ModUpdateHandler : ReactiveObject
 		}
 		if (Modio.IsEnabled)
 		{
-			foreach (var mod in mods.Where(mod => mod.ModioData.HasMetadata))
+			foreach (var mod in mods.Where(mod => mod.ModioData.HasAssociation))
 			{
 				Modio.CacheData.Mods[mod.UUID] = mod.ModioData;
 			}

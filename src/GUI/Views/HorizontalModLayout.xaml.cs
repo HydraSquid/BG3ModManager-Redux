@@ -1,4 +1,5 @@
-﻿using DivinityModManager.Controls;
+﻿using DivinityModManager.AppServices;
+using DivinityModManager.Controls;
 using DivinityModManager.Converters;
 using DivinityModManager.Models;
 using DivinityModManager.Models.Health;
@@ -46,6 +47,7 @@ public class HorizontalModLayoutBase : ReactiveUserControl<MainWindowViewModel> 
 /// </summary>
 public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayout
 {
+	private readonly DeferredSelectionCoordinator<ModListView> _selectionCoordinator = new();
 	private sealed class VisualDividerAnimatedRow
 	{
 		private readonly object _originalRenderTransform;
@@ -1001,45 +1003,44 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 				Tag = SourceLinkMenuTag,
 				Icon = ReduxIcon.FromResource("Redux.Icon.LinkStroke", true)
 			};
-			if (mod.Metadata.SourceType == ModSourceType.MODIO)
+			var currentSource = mod.Metadata.SourceType;
+			var currentLink = mod.Metadata.SourcePageUrl;
+			var hasLinkedPage = !String.IsNullOrWhiteSpace(currentLink);
+			var sourceBorderBrush = currentSource == ModSourceType.MODIO
+				? "Redux.Pill.Modio.Border"
+				: "Redux.Pill.Nexus.Border";
+			var sourceBackgroundBrush = currentSource == ModSourceType.MODIO
+				? "Redux.Pill.Modio.Background"
+				: "Redux.Pill.Nexus.Background";
+			var linkItem = new MenuItem
 			{
-				sourceMenu.Items.Add(new MenuItem
-				{
-					Header = "Linked to mod.io",
-					IsEnabled = false,
-					ToolTip = "This package identifies itself as a mod.io mod.",
-					Icon = ReduxIcon.FromResource("Redux.Icon.Information", true, "ReduxInfoBrush")
-				});
-			}
-			else
+				Header = hasLinkedPage ? "Change Linked Mod Page..." : "Link Mod Page...",
+				Icon = ReduxIcon.FromResource("Redux.Icon.LinkStroke", true, sourceBorderBrush)
+			};
+			ApplySemanticMenuHover(linkItem, sourceBackgroundBrush, sourceBorderBrush);
+			linkItem.Click += async (_, _) => await ShowManualModPageDialogAsync(mod);
+			sourceMenu.Items.Add(linkItem);
+			if (hasLinkedPage)
 			{
-				var hasNexusLink = mod.NexusModsData?.ModId >= DivinityApp.NEXUSMODS_MOD_ID_START;
-				var linkItem = new MenuItem
+				sourceMenu.Items.Add(new Separator());
+				var unlinkItem = new MenuItem
 				{
-					Header = hasNexusLink ? "Change Linked Mod Page..." : "Link Mod Page...",
-					Icon = ReduxIcon.FromResource("Redux.Icon.LinkStroke", true, "Redux.Pill.Nexus.Border")
+					Header = "Unlink Mod Page",
+					Icon = ReduxIcon.FromResource("Redux.Icon.UnlinkStroke", true, "ReduxErrorBrush")
 				};
-				ApplySemanticMenuHover(linkItem, "Redux.Pill.Nexus.Background", "Redux.Pill.Nexus.Border");
-				linkItem.Click += (_, _) => ShowManualNexusLinkDialog(mod);
-				sourceMenu.Items.Add(linkItem);
-				if (hasNexusLink)
+				ApplySemanticMenuHover(unlinkItem, "ReduxErrorPillBackground", "ReduxErrorBrush");
+				unlinkItem.Click += async (_, _) =>
 				{
-					sourceMenu.Items.Add(new Separator());
-					var unlinkItem = new MenuItem
+					var result = ShowCategoryMessage(
+						$"Remove the {mod.Metadata.SourceLabel} source link from '{mod.DisplayName}'?\n\nThe installed package and its load-order position will not be changed.",
+						"Unlink Mod Page", MessageBoxButton.YesNo, MessageBoxImage.Question);
+					if (result == MessageBoxResult.Yes && !await ViewModel.UnlinkModPageAsync(mod))
 					{
-						Header = "Unlink Mod Page",
-						Icon = ReduxIcon.FromResource("Redux.Icon.UnlinkStroke", true, "ReduxErrorBrush")
-					};
-					ApplySemanticMenuHover(unlinkItem, "ReduxErrorPillBackground", "ReduxErrorBrush");
-					unlinkItem.Click += (_, _) =>
-					{
-						var result = ShowCategoryMessage(
-							$"Remove the Nexus Mods source link from '{mod.DisplayName}'?\n\nThe installed package and its load-order position will not be changed.",
-							"Unlink Mod Page", MessageBoxButton.YesNo, MessageBoxImage.Question);
-						if (result == MessageBoxResult.Yes) ViewModel.UnlinkNexusMod(mod);
-					};
-					sourceMenu.Items.Add(unlinkItem);
-				}
+						ShowCategoryMessage("Redux could not save the source-link removal. Check the log and try again.",
+							"Unlink Mod Page", MessageBoxButton.OK, MessageBoxImage.Error);
+					}
+				};
+				sourceMenu.Items.Add(unlinkItem);
 			}
 			menu.Items.Insert(Math.Min(3, menu.Items.Count), sourceMenu);
 		}
@@ -1200,17 +1201,16 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		};
 	}
 
-	private void ShowManualNexusLinkDialog(DivinityModData mod)
+	private async Task ShowManualModPageDialogAsync(DivinityModData mod)
 	{
-		var currentLink = mod.NexusModsData?.ModId >= DivinityApp.NEXUSMODS_MOD_ID_START
-			? mod.NexusModsData.SourcePageUrl
-			: null;
+		var currentLink = mod.Metadata.SourcePageUrl;
 		var dialog = new NexusManualLinkDialog(currentLink) { Owner = Window.GetWindow(this) };
 		ReduxThemeService.Apply(dialog.Resources, ViewModel.Settings.ColorTheme, ReduxThemeService.GetActiveTheme(ViewModel.Settings));
 		if (dialog.ShowDialog() != true) return;
-		if (!ViewModel.TryManuallyLinkNexusMod(mod, dialog.NexusLink, out var error))
+		var error = await ViewModel.TryManuallyLinkModPageAsync(mod, dialog.ModPageLink);
+		if (!String.IsNullOrWhiteSpace(error))
 		{
-			ShowCategoryMessage(error, "Link Nexus Mods Project", MessageBoxButton.OK, MessageBoxImage.Information);
+			ShowCategoryMessage(error, "Link Mod Page", MessageBoxButton.OK, MessageBoxImage.Information);
 		}
 	}
 
@@ -1531,9 +1531,11 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		// user starts selecting in another panel, clear the old panel so Redux has one
 		// visually unambiguous selection context.
 		if (e?.AddedItems == null || e.AddedItems.Count == 0) return;
-		if (!ReferenceEquals(selectedList, ActiveModsListView)) ActiveModsListView.ClearSelectedItems();
-		if (!ReferenceEquals(selectedList, InactiveModsListView)) InactiveModsListView.ClearSelectedItems();
-		if (!ReferenceEquals(selectedList, ForceLoadedModsListView)) ForceLoadedModsListView.ClearSelectedItems();
+		_selectionCoordinator.Schedule(
+			selectedList,
+			callback => Dispatcher.BeginInvoke(DispatcherPriority.Input, callback),
+			[ActiveModsListView, InactiveModsListView, ForceLoadedModsListView],
+			list => list.ClearSelectedItems());
 	}
 
 	private void ModListView_ButtonClick(object sender, RoutedEventArgs e)

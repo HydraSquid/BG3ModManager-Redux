@@ -116,6 +116,47 @@ public sealed class SourceAssociationTests
 		RegressionAssert.Equal(-1L, result.ModId);
 	}
 
+	public void ModioPageLinkCannotBeMisreadAsNexusProjectThree()
+	{
+		const string url = "https://mod.io/g/baldursgate3/m/item-and-spell-bug-fixes";
+
+		var parsed = ModPageLinkParser.TryParseBg3(url, out var link, out _);
+
+		RegressionAssert.True(parsed);
+		RegressionAssert.Equal(ModSourceType.MODIO, link.SourceType);
+		RegressionAssert.Equal("item-and-spell-bug-fixes", link.ModioNameId);
+		RegressionAssert.Equal(-1L, link.ProjectId);
+		RegressionAssert.Equal(url, link.PageUrl);
+	}
+
+	public void ManualModioLinkShowsItsProviderWithoutApiMetadata()
+	{
+		var mod = CreateMod();
+		mod.NexusModsData.Update(new NexusModsModData
+		{
+			UUID = mod.UUID,
+			ModId = 3,
+			Name = "Wrong Nexus project",
+			Author = "Wrong Nexus author",
+			MetadataOrigin = NexusMetadataOrigin.Manual
+		});
+		ModPageLinkParser.TryParseBg3(
+			"https://mod.io/g/baldursgate3/m/item-and-spell-bug-fixes",
+			out var link,
+			out _);
+
+		ReduxLoadOrderSourceService.ApplyManualPageLink(mod, link);
+
+		RegressionAssert.Equal(NexusMetadataOrigin.ManualUnlinked, mod.NexusModsData.MetadataOrigin);
+		RegressionAssert.Equal(ModioMetadataOrigin.Manual, mod.ModioData.MetadataOrigin);
+		RegressionAssert.True(mod.ModioData.HasAssociation);
+		RegressionAssert.False(mod.ModioData.HasMetadata);
+		RegressionAssert.Equal(ModSourceType.MODIO, mod.Metadata.SourceType);
+		RegressionAssert.Equal("Local module", mod.Metadata.Title);
+		RegressionAssert.Equal("Local author", mod.Metadata.Author);
+		RegressionAssert.Equal(link.PageUrl, mod.Metadata.SourcePageUrl);
+	}
+
 	public void MatchingNexusCreatorAndUploaderUseOneLinkedCreatorLabel()
 	{
 		var mod = CreateMod();
@@ -163,6 +204,59 @@ public sealed class SourceAssociationTests
 
 		RegressionAssert.Equal(ModSourceType.MODIO, mod.Metadata.SourceType);
 		RegressionAssert.Equal("Native mod.io project", mod.Metadata.Title);
+	}
+
+	public void NativePublishHandleWinsOverAutomaticNexusMetadataWithoutAnApiKey()
+	{
+		var mod = CreateMod();
+		mod.PublishHandle = 987654;
+		mod.NexusModsData.ModId = 3;
+		mod.NexusModsData.Name = "Inferred Nexus project";
+		mod.NexusModsData.IsUpdated = true;
+		mod.NexusModsData.MetadataOrigin = NexusMetadataOrigin.BundledProvenance;
+
+		RegressionAssert.Equal(ModSourceType.MODIO, mod.Metadata.SourceType);
+		RegressionAssert.Equal("Local module", mod.Metadata.Title);
+		RegressionAssert.Equal("Local author", mod.Metadata.Author);
+	}
+
+	public void NativeModioPackageRejectsOnlyAutomaticNexusImportMatches()
+	{
+		var mod = CreateMod();
+		mod.PublishHandle = 987654;
+
+		RegressionAssert.False(ReduxLoadOrderSourceService.ShouldApplyImportedNexusAssociation(mod, false));
+		RegressionAssert.True(ReduxLoadOrderSourceService.ShouldApplyImportedNexusAssociation(mod, true));
+	}
+
+	public void FreshNexusInstallWinsBeforeMetadataFetch()
+	{
+		var mod = CreateMod();
+		mod.PublishHandle = 987654;
+		mod.NexusModsData.SetModVersion(19337, 106267);
+		mod.NexusModsData.MetadataOrigin = NexusMetadataOrigin.NexusArchiveImport;
+
+		RegressionAssert.False(mod.NexusModsData.HasMetadata);
+		RegressionAssert.Equal(ModSourceType.NEXUSMODS, mod.Metadata.SourceType);
+		RegressionAssert.Equal("https://www.nexusmods.com/baldursgate3/mods/19337", mod.Metadata.SourcePageUrl);
+		RegressionAssert.Equal("Local module", mod.Metadata.Title);
+		RegressionAssert.Equal("Local author", mod.Metadata.Author);
+
+		var cached = JsonConvert.DeserializeObject<NexusModsModData>(JsonConvert.SerializeObject(mod.NexusModsData))!;
+		var reloaded = CreateMod();
+		reloaded.PublishHandle = 987654;
+		RegressionAssert.True(NexusModsCacheHandler.IsCachedAssociationCompatible(reloaded, cached));
+		reloaded.NexusModsData.Update(cached);
+		RegressionAssert.Equal(ModSourceType.NEXUSMODS, reloaded.Metadata.SourceType);
+	}
+
+	public void ExplicitNexusOriginWithoutAProjectCannotOverrideModio()
+	{
+		var mod = CreateMod();
+		mod.PublishHandle = 987654;
+		mod.NexusModsData.IsUpdated = true;
+		mod.NexusModsData.MetadataOrigin = NexusMetadataOrigin.NexusArchiveImport;
+		RegressionAssert.Equal(ModSourceType.MODIO, mod.Metadata.SourceType);
 	}
 
 	public void NexusArchiveImportWinsOverNativeModioMetadata()
@@ -371,6 +465,21 @@ public sealed class SourceAssociationTests
 		RegressionAssert.False(ModioCacheHandler.IsCachedAssociationCompatible(mod, cached));
 	}
 
+	public void InvalidManualModioCacheEntryIsRejected()
+	{
+		var mod = CreateMod();
+		var cached = new ModioModData
+		{
+			UUID = mod.UUID,
+			ModId = 12345,
+			NameId = "item-and-spell-bug-fixes",
+			ProfileUrl = "https://example.test/g/baldursgate3/m/item-and-spell-bug-fixes",
+			MetadataOrigin = ModioMetadataOrigin.Manual
+		};
+
+		RegressionAssert.False(ModioCacheHandler.IsCachedAssociationCompatible(mod, cached));
+	}
+
 	public void NativeModioCacheDoesNotDependOnCreatorManifest()
 	{
 		var mod = CreateMod();
@@ -384,6 +493,41 @@ public sealed class SourceAssociationTests
 
 		mod.NexusModsData.MetadataOrigin = NexusMetadataOrigin.ManualUnlinked;
 		RegressionAssert.True(ModioCacheHandler.IsCachedAssociationCompatible(mod, cached));
+	}
+
+	public void NativePublishHandleRejectsAnInferredNexusCacheEntry()
+	{
+		var mod = CreateMod();
+		mod.PublishHandle = 987654;
+		var cached = new NexusModsModData
+		{
+			ModId = 3,
+			IsUpdated = true,
+			MetadataOrigin = NexusMetadataOrigin.BundledProvenance
+		};
+
+		RegressionAssert.False(NexusModsCacheHandler.IsCachedAssociationCompatible(mod, cached));
+	}
+
+	public void ManualModioAssociationRejectsAStaleManualNexusCacheEntry()
+	{
+		var mod = CreateMod();
+		mod.ModioData = new ModioModData
+		{
+			UUID = mod.UUID,
+			NameId = "item-and-spell-bug-fixes",
+			ProfileUrl = "https://mod.io/g/baldursgate3/m/item-and-spell-bug-fixes",
+			MetadataOrigin = ModioMetadataOrigin.Manual
+		};
+		var staleNexus = new NexusModsModData
+		{
+			UUID = mod.UUID,
+			ModId = 3,
+			IsUpdated = true,
+			MetadataOrigin = NexusMetadataOrigin.Manual
+		};
+
+		RegressionAssert.False(NexusModsCacheHandler.IsCachedAssociationCompatible(mod, staleNexus));
 	}
 
 	public void CreatorManifestNexusCacheRequiresTheCurrentProjectClaim()

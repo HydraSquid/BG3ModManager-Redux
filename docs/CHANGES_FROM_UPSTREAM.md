@@ -113,6 +113,24 @@ Redux expands provider handling with:
 Provider metadata is informational. It does not silently replace package identity or override an
 explicit user association.
 
+## Nexus download workflow
+
+Redux adds an opt-in, per-user `nxm://` protocol association and a persistent Baldur's Gate 3
+download queue. Association changes are ownership-marked and preserve the previous user handler;
+non-BG3 links are forwarded only through a strictly parsed command without shell execution.
+
+The queue uses bounded concurrency, resumable HTTPS transfers, declared-length and maximum-size
+checks, durable state written atomically with a last-known-good backup, and explicit pause, resume,
+retry, cancellation, and removal actions. Short-lived authorization and signed download URLs remain
+memory-only, and free-account downloads require a fresh matching NXM link after restart or expiry.
+Disabling source integrations cancels and awaits network work, leaves entries paused, and does not
+automatically resume them when integrations are enabled again.
+
+Download completion is separate from installation. Redux stages archive contents on the Mods
+volume, bounds expanded data, validates every PAK, rejects duplicate filenames and module UUIDs,
+shows package warnings and replacements for confirmation, and keeps recovery copies when installed
+files are replaced. It does not silently activate, reorder, or export downloaded mods.
+
 ## Persistence and filesystem safety
 
 Redux hardens state-changing operations through:
@@ -167,7 +185,7 @@ The following remain outside the current Redux delta or are intentionally deferr
 - automatic Redux self-updating during the private alpha;
 - application localization;
 - Linux, macOS, Wine, Proton, and self-contained .NET deployment; and
-- automatic mod installation, repair, conflict resolution, or load-order reordering.
+- unattended mod installation, repair, conflict resolution, or load-order reordering.
 
 ## Maintenance rule for this document
 

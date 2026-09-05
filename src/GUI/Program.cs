@@ -1,6 +1,10 @@
 ﻿using DivinityModManager.Util.ScreenReader;
+using DivinityModManager.AppServices;
+using DivinityModManager.Util;
 
+using System.Collections.Concurrent;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace DivinityModManager;
 
@@ -81,9 +85,59 @@ internal class Program
 
 		_libDirectory = Path.Join(AppDomain.CurrentDomain.BaseDirectory, "_Lib");
 		AppDomain.CurrentDomain.AssemblyResolve += ResolveAssembly;
+		RunApplication(args);
+	}
+
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	private static void RunApplication(string[] args)
+	{
+		var executablePath = Environment.ProcessPath ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BG3ModManager.exe");
+		string initialNxmLink = null;
+		if (args.Length > 0)
+		{
+			if (args.Length != 2 || !args[0].Equals("--nxm", StringComparison.OrdinalIgnoreCase) ||
+				!NexusModManagerLinkParser.TryReadGame(args[1], out var game))
+			{
+				System.Windows.MessageBox.Show("Redux received an invalid Nexus Mod Manager link.", "Nexus Link Error",
+					System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+				return;
+			}
+
+			initialNxmLink = args[1];
+			if (!game.Equals(DivinityApp.NEXUSMODS_GAME_DOMAIN, StringComparison.OrdinalIgnoreCase))
+			{
+				if (!NxmPreviousHandlerForwarder.TryForward(new NxmRegistryStore(), initialNxmLink, executablePath, out var error))
+				{
+					System.Windows.MessageBox.Show(error, "Unsupported Nexus Game",
+						System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+				}
+				return;
+			}
+		}
+
+		using var activationCoordinator = NxmActivationCoordinator.CreateForExecutable(executablePath);
+		if (initialNxmLink != null && activationCoordinator.TryForwardAsync(initialNxmLink, TimeSpan.FromSeconds(3)).GetAwaiter().GetResult())
+			return;
+
+		var pendingActivations = new ConcurrentQueue<string>();
+		if (initialNxmLink != null) pendingActivations.Enqueue(initialNxmLink);
+		App app = null;
+		var listening = activationCoordinator.StartListening(value =>
+		{
+			pendingActivations.Enqueue(value);
+			app?.NotifyNxmActivationAvailable();
+			return Task.CompletedTask;
+		});
+		if (!listening && initialNxmLink != null)
+		{
+			if (activationCoordinator.TryForwardAsync(initialNxmLink, TimeSpan.FromSeconds(3)).GetAwaiter().GetResult()) return;
+			System.Windows.MessageBox.Show("Redux could not deliver the Nexus link to the running instance.",
+				"Nexus Link Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+			return;
+		}
 
 		Util.SmoothLogicalScrollBehavior.Initialize();
-		var app = new App();
+		app = new App(pendingActivations);
 		app.DispatcherUnhandledException += OnEarlyDispatcherException;
 		app.Exit += OnAppExit;
 		app.InitializeComponent();

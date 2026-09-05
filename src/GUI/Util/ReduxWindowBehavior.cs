@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Threading;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Interop;
@@ -783,6 +784,36 @@ public static class ReduxWindowBehavior
 		{
 			window.Closed += (_, _) => RemoveOwnerBackdrop(window);
 		}
+	}
+
+	public static void AttachAsyncShutdown(Window window, Func<Task> prepareShutdown, Action<Exception> reportFailure)
+	{
+		var started = false;
+		var complete = false;
+		window.Closing += async (_, e) =>
+		{
+			if (complete) return;
+			e.Cancel = true;
+			if (started) return;
+			started = true;
+			// Even an idle download manager can finish synchronously. WPF must leave
+			// the first Closing event before we can request the final Close.
+			await Dispatcher.Yield(DispatcherPriority.Background);
+			try
+			{
+				await prepareShutdown();
+				var exit = new TaskCompletionSource<bool>();
+				AnimateExit(window, () => exit.TrySetResult(true));
+				await exit.Task;
+				complete = true;
+				window.Close();
+			}
+			catch (Exception ex)
+			{
+				started = complete = false;
+				reportFailure(ex);
+			}
+		};
 	}
 
 	public static void AttachWindowMotionPreference(Window window)

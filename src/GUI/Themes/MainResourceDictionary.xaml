@@ -201,7 +201,26 @@
 	<sys:Double x:Key="Redux.StatusPill.IconSize">14</sys:Double>
 	<Thickness x:Key="Redux.StatusPill.Padding">8,2</Thickness>
 	<Thickness x:Key="Redux.StatusPill.IconOnlyPadding">6,3</Thickness>
-	<sys:Double x:Key="Redux.PaneHeaderHeight">46</sys:Double>
+	<Style x:Key="ReduxModSectionCardStyle" TargetType="{x:Type Border}">
+		<Setter Property="Background" Value="{DynamicResource ReduxListInteriorBrush}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource ReduxBorderBrush}" />
+		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="CornerRadius" Value="{DynamicResource Redux.CornerRadius.Card}" />
+		<Setter Property="ClipToBounds" Value="True" />
+	</Style>
+	<Style x:Key="ReduxModSectionTitleStyle" BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="{x:Type TextBlock}">
+		<Setter Property="FontSize" Value="{DynamicResource Redux.FontSize.14}" />
+		<Setter Property="FontWeight" Value="{DynamicResource Redux.FontWeight.Title}" />
+		<Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" />
+		<Setter Property="VerticalAlignment" Value="Center" />
+	</Style>
+	<Style x:Key="ReduxPaneHeaderDividerStyle" TargetType="{x:Type Border}">
+		<Setter Property="Height" Value="1" />
+		<Setter Property="HorizontalAlignment" Value="Stretch" />
+		<Setter Property="Background" Value="{DynamicResource ReduxBorderBrush}" />
+		<Setter Property="Opacity" Value="0.8" />
+		<Setter Property="IsHitTestVisible" Value="False" />
+	</Style>
 	<sys:Double x:Key="Redux.MarkerSize.Default">11</sys:Double>
 
 	<!-- Semantic typography roles. Font sizes remain runtime-scalable tokens. -->
@@ -294,6 +313,38 @@
 	<QuadraticEase x:Key="Redux.Motion.EaseOut" EasingMode="EaseOut" />
 	<CubicEase x:Key="Redux.Motion.EaseInOut" EasingMode="EaseInOut" />
 	<SineEase x:Key="Redux.Motion.PanelEase" EasingMode="EaseInOut" />
+	<!-- Shared pane-resize handle: a broad transparent hit target with a thin rail on hover. -->
+	<Style x:Key="ReduxVerticalSplitterStyle" TargetType="{x:Type GridSplitter}">
+		<Setter Property="Background" Value="Transparent" />
+		<Setter Property="Cursor" Value="SizeWE" />
+		<Setter Property="ResizeDirection" Value="Columns" />
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="{x:Type GridSplitter}">
+					<Grid Background="Transparent">
+						<Border x:Name="SplitterHalo" Width="6" Margin="0,6" HorizontalAlignment="Center"
+							Background="{DynamicResource ReduxAccentHoverBrush}" CornerRadius="3" Opacity="0" />
+						<Border x:Name="SplitterRail" Width="2" Margin="0,6" HorizontalAlignment="Center"
+							Background="{DynamicResource ReduxAccentHoverBrush}" CornerRadius="1" Opacity="0" />
+					</Grid>
+					<ControlTemplate.Triggers>
+						<EventTrigger RoutedEvent="MouseEnter">
+							<BeginStoryboard><Storyboard>
+								<DoubleAnimation Storyboard.TargetName="SplitterHalo" Storyboard.TargetProperty="Opacity" To="0.18" Duration="{StaticResource Redux.Motion.Fast}" EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
+								<DoubleAnimation Storyboard.TargetName="SplitterRail" Storyboard.TargetProperty="Opacity" To="1" Duration="{StaticResource Redux.Motion.Fast}" EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
+							</Storyboard></BeginStoryboard>
+						</EventTrigger>
+						<EventTrigger RoutedEvent="MouseLeave">
+							<BeginStoryboard><Storyboard>
+								<DoubleAnimation Storyboard.TargetName="SplitterHalo" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Redux.Motion.Standard}" />
+								<DoubleAnimation Storyboard.TargetName="SplitterRail" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Redux.Motion.Standard}" />
+							</Storyboard></BeginStoryboard>
+						</EventTrigger>
+					</ControlTemplate.Triggers>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
 	<!--
 		Popup menu rows use their own template because AdonisUI paints its highlight
 		inside the base MenuItem template. Styling MenuItem.Background alone therefore
@@ -2019,7 +2070,6 @@
 		<Setter Property="HasDropShadow" Value="True" />
 		<Setter Property="MaxWidth" Value="440" />
 		<Setter Property="SnapsToDevicePixels" Value="False" />
-		<Setter Property="FontFamily" Value="{DynamicResource Redux.FontFamily.UI}" />
 		<Setter Property="FontSize" Value="{DynamicResource Redux.FontSize.12}" />
 		<Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" />
 		<Setter Property="Template">
@@ -2195,6 +2245,24 @@
 		</Grid>
 	</DataTemplate>
 
+	<!-- Text-relative tint works in light, dark, and live custom palettes without
+		introducing a second set of theme colors. Interaction/status styles win. -->
+	<Style TargetType="{x:Type ListView}" BasedOn="{StaticResource {x:Type ListView}}">
+		<Setter Property="AlternationCount" Value="2" />
+	</Style>
+	<Style TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource {x:Type ListViewItem}}">
+		<Setter Property="Background" Value="Transparent" />
+		<Style.Triggers>
+			<MultiTrigger>
+				<MultiTrigger.Conditions>
+					<Condition Property="ItemsControl.AlternationIndex" Value="1" />
+					<Condition Property="IsSelected" Value="False" />
+					<Condition Property="IsMouseOver" Value="False" />
+				</MultiTrigger.Conditions>
+				<Setter Property="Background" Value="{DynamicResource ReduxTableAlternateRowBrush}" />
+			</MultiTrigger>
+		</Style.Triggers>
+	</Style>
 	<Style x:Key="DivinityModDataListItem" BasedOn="{StaticResource {x:Type ListViewItem}}" TargetType="{x:Type ListViewItem}">
 		<!-- Let WPF's item-selection model restore recycled containers directly. The
 			 former generator-status callback re-walked the complete mod collection every
@@ -4369,6 +4437,7 @@
 	<Style x:Key="GridViewLeftContainerStyle" BasedOn="{StaticResource {x:Type GridViewColumnHeader}}" TargetType="{x:Type GridViewColumnHeader}">
 		<Setter Property="Height" Value="30" />
 		<Setter Property="Padding" Value="10,0" />
+		<Setter Property="FontFamily" Value="{DynamicResource Redux.FontFamily.UI}" />
 		<Setter Property="FontSize" Value="{DynamicResource Redux.FontSize.11}" />
 		<Setter Property="FontWeight" Value="{DynamicResource Redux.FontWeight.Title}" />
 		<Setter Property="Background" Value="{DynamicResource ReduxSurfaceMutedBrush}" />

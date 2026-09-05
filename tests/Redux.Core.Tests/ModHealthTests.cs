@@ -351,6 +351,17 @@ internal sealed class ModHealthTests
 		RegressionAssert.False(HasFinding(active, ModHealthFindingCode.McmNotActive));
 	}
 
+	public void FreshNexusInstallDoesNotReceiveModioManagementWarning()
+	{
+		var mod = CreateMod("nexus-subclass", "Nexus subclass", isActive: true);
+		mod.PublishHandle = 987654;
+		mod.NexusModsData.SetModVersion(15058, 90483);
+		mod.NexusModsData.MetadataOrigin = DivinityModManager.Models.NexusMods.NexusMetadataOrigin.NexusArchiveImport;
+		RegressionAssert.False(mod.NexusModsData.HasMetadata);
+		var snapshot = FindSnapshot(new ModHealthAnalyzer().AnalyzeAll(new[] { mod }, new[] { mod }), mod.UUID);
+		RegressionAssert.False(HasFinding(snapshot, ModHealthFindingCode.ModioManagedSource));
+	}
+
 	public void ModioWarningExplainsSteamCloudPersistence()
 	{
 		var mod = CreateMod("modio-cache", "mod.io Mod", isActive: true);

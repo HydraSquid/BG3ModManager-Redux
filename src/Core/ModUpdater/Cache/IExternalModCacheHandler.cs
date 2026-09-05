@@ -60,9 +60,7 @@ public static class IExternalModCacheDataExtensions
 			string contents = JsonConvert.SerializeObject(handler.CacheData, handler.SerializerSettings);
 
 			var buffer = Encoding.UTF8.GetBytes(contents);
-			using var fs = new System.IO.FileStream(filePath, System.IO.FileMode.Create,
-				System.IO.FileAccess.Write, System.IO.FileShare.None, buffer.Length, true);
-			await fs.WriteAsync(buffer, 0, buffer.Length, cts);
+			await AtomicFileWriter.WriteAllBytesAsync(filePath, buffer, cancellationToken: cts);
 
 			return true;
 		}

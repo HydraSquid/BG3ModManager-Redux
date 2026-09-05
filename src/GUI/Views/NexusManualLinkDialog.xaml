@@ -4,7 +4,7 @@
 	xmlns:adonisUi="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
 	xmlns:controls="clr-namespace:DivinityModManager.Controls"
 	xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
-	Title="Link Nexus Mods Page"
+	Title="Link Mod Page"
 	Width="520" MinWidth="440" MinHeight="210" MaxHeight="480"
 	SizeToContent="Height"
 	ResizeMode="CanResize" ShowInTaskbar="False"
@@ -36,14 +36,14 @@
 				<RowDefinition Height="Auto" />
 				<RowDefinition Height="Auto" />
 			</Grid.RowDefinitions>
-			<TextBlock FontSize="{DynamicResource Redux.FontSize.17}" FontWeight="SemiBold" Text="Link a Nexus Mods page" />
+			<TextBlock FontSize="{DynamicResource Redux.FontSize.17}" FontWeight="SemiBold" Text="Link a mod page" />
 			<TextBlock Grid.Row="1" Margin="0,5,0,12" TextWrapping="Wrap"
 				Foreground="{DynamicResource ReduxTextSecondaryBrush}"
-				Text="Paste the Baldur's Gate 3 Nexus Mods page for this mod. The installed file and load order will not change." />
-			<TextBox x:Name="NexusLinkTextBox" Grid.Row="2" MinHeight="34" Padding="9,5"
-				ToolTip="Example: https://www.nexusmods.com/baldursgate3/mods/125" />
+				Text="Paste the Baldur's Gate 3 Nexus Mods or mod.io page for this mod. The installed file and load order will not change." />
+			<TextBox x:Name="ModPageLinkTextBox" Grid.Row="2" MinHeight="34" Padding="9,5"
+				ToolTip="Nexus Mods or mod.io Baldur's Gate 3 page URL" />
 			<TextBlock Grid.Row="3" Margin="0,8,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}"
-				Text="An API key is required to load current page information." />
+				Text="The source is saved immediately. An API key is only required to load current page information." />
 			<StackPanel Grid.Row="4" Margin="0,14,0,0" HorizontalAlignment="Right" Orientation="Horizontal">
 				<Button MinWidth="92" Margin="0,0,8,0" IsDefault="True" Click="Link_Click" Style="{StaticResource ReduxPrimaryActionButtonStyle}">
 					<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.LinkStroke}" /><TextBlock Text="Link Page" /></StackPanel>

@@ -7,7 +7,7 @@ ways to organize, review, and share mod setups.
 
 **Current build:** `0.1.0-alpha.11`
 
-[Nexus Mods](https://www.nexusmods.com/baldursgate3/mods/23799) | [Report an issue](https://github.com/circleainn/BG3ModManager-Redux/issues) | [Changes from upstream](docs/CHANGES_FROM_UPSTREAM.md)
+[Website](https://bg3mm-redux.com/) | [Nexus Mods](https://www.nexusmods.com/baldursgate3/mods/23799) | [Report an issue](https://github.com/circleainn/BG3ModManager-Redux/issues) | [Changes from upstream](docs/CHANGES_FROM_UPSTREAM.md)
 
 > [!IMPORTANT]
 > Redux is still in early development. Keep backups of important profiles, saves, downloaded
@@ -23,6 +23,8 @@ ways to organize, review, and share mod setups.
   requirements, files, changelogs, linked pages, and personal notes.
 - **Online mod information** from Nexus Mods and mod.io, with manual page linking and a reviewed
   local database for some existing Nexus installs. It can be disabled without removing saved links.
+- **Nexus download handling** with an optional Windows `nxm://` association, a persistent bounded
+  queue, resumable transfers, and reviewed installation with recovery copies for replaced PAKs.
 - **Mod Diagnostics** for detectable package, dependency, Script Extender, Mod Fixer, override,
   creator-manifest, conflict, and mod.io conditions. Optional Load Order Advisor checks add cautious
   guidance based only on declared dependencies.
@@ -64,6 +66,26 @@ them automatically.
 
 The optional Load Order Advisor is experimental and disabled by default. It checks declared
 dependency placement and cycles; it does not attempt to infer a complete load order.
+
+## Nexus downloads
+
+Redux can handle **Mod Manager Download** links for Baldur's Gate 3 after the user enables online
+mod information, saves a personal Nexus Mods API key, and opts in through **Tools > Handle Nexus Mod
+Manager Download links**. The per-user Windows association records its owner and preserves the
+previous handler so Redux can restore it later. Links for other games are forwarded only when the
+previous command can be parsed without invoking a shell.
+
+Downloads are kept in the portable `Data\Downloads` folder and displayed in the resizable
+**Downloads** pane. The queue survives restart, limits simultaneous transfers, supports pause,
+resume, retry, cancellation, and removal, and acquires short-lived download URLs only when a
+transfer is ready to start. API keys, NXM authorization values, and signed download URLs are not
+written to the queue manifest. Free-account links that expire must be opened from Nexus again.
+
+Downloading does not install a mod. Installation is a separate action that stages and bounds every
+archive entry, validates every PAK, reports package warnings and replacements, and asks before
+changing the Mods folder. Replaced files receive recovery copies. Disabling online mod information
+stops and pauses network work without disabling review, installation, removal, or local file
+actions; turning it back on does not automatically resume paused entries.
 
 ## Redux Modlists
 
@@ -143,6 +165,7 @@ distributed as a self-contained build.
 During the private alpha:
 
 - Nexus authentication uses a personal API key rather than public SSO.
+- Nexus downloads require a declared HTTP response length and are limited to 32 GiB per archive.
 - Online matching, automatic categories, dependency data, and conflict data may be incomplete.
 - mod.io author profile links cannot always be resolved.
 - Imported fonts may have incomplete metadata or render differently in WPF.

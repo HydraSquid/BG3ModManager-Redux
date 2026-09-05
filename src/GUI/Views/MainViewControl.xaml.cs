@@ -49,6 +49,8 @@ public partial class MainViewControl : MainViewControlViewBase
 	private int _toolbarAnimationVersion;
 	private int _diagnosticStatusHoverVersion;
 	private readonly HashSet<ContextMenu> _closingToolbarStatusMenus = new();
+	private MenuItem _nxmAssociationItem;
+	private double _downloadsPaneWidth = 780;
 
 	private readonly Dictionary<string, MenuItem> menuItems = new();
 	public Dictionary<string, MenuItem> MenuItems => menuItems;
@@ -349,6 +351,20 @@ public partial class MainViewControl : MainViewControlViewBase
 		if (menuItems.TryGetValue("Tools", out var toolsMenuItem))
 		{
 			if (toolsMenuItem.Items.Count > 0) toolsMenuItem.Items.Add(new Separator());
+			_nxmAssociationItem = new MenuItem
+			{
+				Header = "Handle Nexus Mod Manager Download links...",
+				ToolTip = "Choose whether Redux handles nxm:// links from Nexus Mods.",
+				Icon = ReduxIcon.FromResource("Redux.Icon.Link", true)
+			};
+			_nxmAssociationItem.Click += (_, _) =>
+			{
+				ViewModel.ConfigureNxmAssociation();
+				UpdateNxmAssociationMenuItem();
+			};
+			toolsMenuItem.SubmenuOpened += (_, _) => UpdateNxmAssociationMenuItem();
+			toolsMenuItem.Items.Add(_nxmAssociationItem);
+			toolsMenuItem.Items.Add(new Separator());
 			var packagePreflightItem = new MenuItem
 			{
 				Header = "Inspect Mod Package...",
@@ -431,6 +447,24 @@ public partial class MainViewControl : MainViewControlViewBase
 			ReduxMenuItemExtension.ApplySemanticHoverToMenu(topLevelMenu);
 		}
 	}
+
+	private void UpdateNxmAssociationMenuItem()
+	{
+		if (_nxmAssociationItem == null) return;
+		var status = ViewModel.GetNxmAssociationStatus();
+		_nxmAssociationItem.Header = status.Status switch
+		{
+			NxmAssociationStatus.Owned => "Stop handling Nexus Mod Manager Download links...",
+			NxmAssociationStatus.NeedsRepair => "Repair Nexus Mod Manager Download links...",
+			NxmAssociationStatus.OwnedByAnotherHandler => "Review Nexus Mod Manager Download handler...",
+			_ => "Handle Nexus Mod Manager Download links..."
+		};
+		_nxmAssociationItem.IsChecked = status.Status == NxmAssociationStatus.Owned;
+		_nxmAssociationItem.IsCheckable = status.Status == NxmAssociationStatus.Owned;
+	}
+
+	private void ToolbarDownloadsButton_Click(object sender, RoutedEventArgs e) =>
+		ViewModel.NxmDownloadsPaneVisible = !ViewModel.NxmDownloadsPaneVisible;
 
 	private void InspectModPackage_Click(object sender, RoutedEventArgs e)
 	{
@@ -1430,5 +1464,12 @@ public partial class MainViewControl : MainViewControlViewBase
 
 		main = window;
 		ViewModel = vm;
+		ViewModel.WhenAnyValue(viewModel => viewModel.NxmDownloadsPaneVisible)
+			.ObserveOn(RxApp.MainThreadScheduler)
+			.Subscribe(visible =>
+			{
+				if (!visible && DownloadsColumn.ActualWidth >= 520) _downloadsPaneWidth = DownloadsColumn.ActualWidth;
+				DownloadsColumn.Width = new GridLength(visible ? Math.Clamp(_downloadsPaneWidth, 520, 950) : 0);
+			});
 	}
 }

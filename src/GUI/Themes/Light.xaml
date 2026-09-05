@@ -86,6 +86,7 @@
 		<GradientStop Offset="1" Color="#1E326A9F" />
 	</LinearGradientBrush>
 	<SolidColorBrush x:Key="ReduxTextPrimaryBrush" Color="{DynamicResource ReduxTextPrimaryColor}" />
+	<SolidColorBrush x:Key="ReduxTableAlternateRowBrush" Color="{DynamicResource ReduxTextPrimaryColor}" Opacity="0.06" />
 	<SolidColorBrush x:Key="ReduxTextSecondaryBrush" Color="{DynamicResource ReduxTextSecondaryColor}" />
 	<SolidColorBrush x:Key="ReduxTextMutedBrush" Color="{DynamicResource ReduxTextMutedColor}" />
 	<SolidColorBrush x:Key="ReduxAccentForegroundBrush" Color="{DynamicResource ReduxAccentForegroundColor}" />

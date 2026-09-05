@@ -425,17 +425,10 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 		UpdateColorTheme(theme, customTheme);
 	}
 
-	private void OnClosing()
-	{
-		if (ViewModel.Settings.SaveWindowLocation) UpdateWindowSettings();
-		ViewModel.SaveSettings();
-		Application.Current.Shutdown();
-	}
-
 	private void AutoUpdater_OnClosing()
 	{
 		ViewModel.Settings.LastUpdateCheck = DateTimeOffset.Now.ToUnixTimeSeconds();
-		OnClosing();
+		Close();
 	}
 
 	private WindowInteropHelper _wih;
@@ -490,6 +483,10 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 		};
 		SettingsWindow.Hide();
 		SettingsWindow.Init(ViewModel);
+		SettingsWindow.IsVisibleChanged += (_, _) =>
+		{
+			if (!SettingsWindow.IsVisible) ViewModel.NotifySettingsWindowClosed();
+		};
 
 		UpdateWindow = new AppUpdateWindow();
 		ApplyCurrentTheme(UpdateWindow);
@@ -514,7 +511,19 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 
 		this.TaskbarItemInfo.ProgressState = System.Windows.Shell.TaskbarItemProgressState.None;
 
-		Closed += (o, e) => OnClosing();
+		ReduxWindowBehavior.AttachAsyncShutdown(this, async () =>
+		{
+			await ViewModel.ShutdownNxmDownloadsAsync();
+			if (ViewModel.Settings.SaveWindowLocation) UpdateWindowSettings();
+			if (!ViewModel.SaveSettings()) throw new IOException("Settings could not be saved during shutdown.");
+		}, ex =>
+		{
+			DivinityApp.Log($"Could not finish shutdown: {ex.GetType().Name}");
+			ReduxMessageBox.Show(this, "Redux could not finish saving settings or stopping Nexus work. The window will remain open; you can try closing it again.",
+				"Shutdown Paused", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning,
+				System.Windows.MessageBoxResult.OK);
+		});
+		Closed += (_, _) => Application.Current.Shutdown();
 		AutoUpdater.ApplicationExitEvent += AutoUpdater_OnClosing;
 
 		DataContext = ViewModel;

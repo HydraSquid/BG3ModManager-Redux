@@ -115,6 +115,10 @@ public partial class SettingsWindow : SettingsWindowBase
 			"Add optional provider keys for source details and update information.",
 			nameof(DivinityModManagerSettings.NexusModsAPIKey),
 			nameof(DivinityModManagerSettings.ModioAPIKey)),
+		new("Nexus downloads",
+			"Control how the persistent Nexus download queue behaves.",
+			nameof(DivinityModManagerSettings.NxmActiveDownloadLimit),
+			nameof(DivinityModManagerSettings.ConfirmCleanNxmDownloads)),
 		new("Warnings and maintenance",
 			"Choose which update and safety notices Redux keeps active.",
 			nameof(DivinityModManagerSettings.CheckForUpdates),
@@ -763,7 +767,7 @@ public partial class SettingsWindow : SettingsWindowBase
 					};
 					ud.SetBinding(IntegerUpDown.ValueProperty, new Binding(prop.Property.Name)
 					{
-						Source = ViewModel.ExtenderSettings,
+						Source = source,
 						Mode = BindingMode.TwoWay,
 						UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
 					});

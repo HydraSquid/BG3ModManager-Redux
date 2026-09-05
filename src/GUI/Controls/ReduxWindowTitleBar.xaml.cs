@@ -145,6 +145,14 @@ public partial class ReduxWindowTitleBar : UserControl
 			return;
 		}
 
+		// The main window drains downloads and saves state before accepting Close.
+		// It owns the exit animation; hiding it here would conceal a canceled close.
+		if (ReferenceEquals(window, Application.Current.MainWindow))
+		{
+			SystemCommands.CloseWindow(window);
+			return;
+		}
+
 		if (ReduxWindowBehavior.ReduceMotion)
 		{
 			// Hide first so neither the Redux opacity transition nor Windows'

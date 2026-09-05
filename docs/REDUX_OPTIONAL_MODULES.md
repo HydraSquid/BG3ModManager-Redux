@@ -34,6 +34,12 @@ When online mod information is disabled, Redux:
 
 Package scanning and core manager behavior continue normally.
 
+The same switch controls the Nexus download queue's network boundary. Turning online information
+off cancels and awaits active metadata resolution and transfers, persists affected entries as
+paused, and prevents new NXM links from entering the queue. Existing downloaded archives remain
+available for explicit review, installation, removal, and local file actions. Turning online
+information back on does not resume paused downloads automatically.
+
 The inherited **Refresh Mod Updates** operation also services Workshop and GitHub metadata.
 Disabling online mod information does not cancel the whole shared operation. Nexus Mods and mod.io
 stages that have not started are skipped; unrelated update sources continue normally.

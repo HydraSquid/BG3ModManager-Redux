@@ -741,6 +741,9 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 	public void RevealAfterStartup()
 	{
 		_isPreparingStartup = false;
+		// Offscreen preparation must not leave later Nexus-link activation unable
+		// to show this window after the user maximizes it.
+		ShowActivated = true;
 		if (_deferredStartupWindowSettings != null)
 		{
 			var settings = _deferredStartupWindowSettings;

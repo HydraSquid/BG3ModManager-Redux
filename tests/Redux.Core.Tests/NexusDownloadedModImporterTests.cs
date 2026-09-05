@@ -1,11 +1,14 @@
 using DivinityModManager.Models;
+using DivinityModManager.AppServices;
 using DivinityModManager.Util;
 
 using System;
 using System.IO;
+using System.Linq;
 using System.IO.Compression;
 using System.Threading;
 using System.Threading.Tasks;
+using DynamicData;
 
 namespace Redux.Core.Tests;
 
@@ -195,6 +198,48 @@ public sealed class NexusDownloadedModImporterTests
 		RegressionAssert.Contains(failure.Message, "Download Again");
 		RegressionAssert.Equal(0, fixture.StagingDirectoryCount());
 		RegressionAssert.True(File.Exists(fixture.ArchivePath));
+	}
+
+	public void BundledDependenciesAreIdentifiedBeforeAnyPackagePreflight()
+	{
+		foreach (var missingExternal in new[] { false, true })
+		{
+			using var fixture = new ImportFixture();
+			fixture.CreateArchive(("A.pak", "package A"), ("B.pak", "package B"));
+			var a = new RegressionModData { UUID = Guid.NewGuid().ToString(), Name = "A", Author = "Author", Folder = "A", HasMetadata = true, Files = ["Mods/A/meta.lsx"] };
+			var b = new RegressionModData { UUID = Guid.NewGuid().ToString(), Name = "B", Author = "Author", Folder = "B", HasMetadata = true, Files = ["Mods/B/meta.lsx"] };
+			a.Dependencies.AddOrUpdate(ModuleShortDesc.FromModData(b));
+			if (missingExternal) a.Dependencies.AddOrUpdate(new ModuleShortDesc { UUID = Guid.NewGuid().ToString(), Name = "External library" });
+			var loaded = 0;
+			var importer = new NexusDownloadedModImporter(fixture.ModsDirectory, fixture.RecoveryDirectory,
+				(path, _) => { loaded++; return Task.FromResult<DivinityModData>(Path.GetFileName(path) == "A.pak" ? a : b); },
+				(path, others, _) =>
+				{
+					RegressionAssert.Equal(2, loaded);
+					RegressionAssert.Equal(1, others.Count);
+					var mod = Path.GetFileName(path) == "A.pak" ? a : b;
+					NexusDownloadedModValidationException.ThrowIfBlocked(PackagePreflightService.AnalyzeLoadedPackage(path, mod, others));
+					return Task.CompletedTask;
+				});
+			NexusDownloadedModValidationException? failure = null;
+			try
+			{
+				var transaction = importer.StageAsync(fixture.ArchivePath, CancellationToken.None).GetAwaiter().GetResult();
+				try { RegressionAssert.Equal(2, transaction.Packages.Count); }
+				finally { transaction.DisposeAsync().GetAwaiter().GetResult(); }
+			}
+			catch (NexusDownloadedModValidationException ex) { failure = ex; }
+			RegressionAssert.Equal(missingExternal, failure != null);
+			if (failure != null)
+			{
+				RegressionAssert.Equal(2, failure.InspectedMods.Count);
+				var rows = ModDependencyAssistanceService.Build(a.Dependencies.Items, [], [], "", false, failure.InspectedMods);
+				RegressionAssert.Contains(rows.Single(row => row.Uuid == b.UUID).Status, "Included in this archive");
+				RegressionAssert.Contains(rows.Single(row => row.Name == "External library").Status, "Not installed");
+			}
+			RegressionAssert.Equal(0, fixture.StagingDirectoryCount());
+			RegressionAssert.Equal(0, Directory.GetFiles(fixture.ModsDirectory, "*.pak").Length);
+		}
 	}
 
 	private sealed class ImportFixture : IDisposable

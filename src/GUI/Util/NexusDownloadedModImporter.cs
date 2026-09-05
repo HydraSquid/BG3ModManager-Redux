@@ -12,7 +12,12 @@ namespace DivinityModManager.Util;
 public sealed class NexusDownloadedModValidationException : IOException
 {
 	public string ErrorCode { get; }
-	internal NexusDownloadedModValidationException(string code, string details) : base(details) => ErrorCode = code;
+	public IReadOnlyList<DivinityModData> InspectedMods { get; internal set; }
+	internal NexusDownloadedModValidationException(string code, string details, IReadOnlyList<DivinityModData> inspectedMods = null) : base(details)
+	{
+		ErrorCode = code;
+		InspectedMods = inspectedMods ?? [];
+	}
 
 	public static void ThrowIfBlocked(PackagePreflightReport report)
 	{
@@ -23,7 +28,7 @@ public sealed class NexusDownloadedModValidationException : IOException
 		throw new NexusDownloadedModValidationException(code,
 			String.Join("\n", lines) + (code == "missing-dependencies"
 				? "\n\nInstall the listed requirements, refresh the mod library, then retry installation. Downloading this archive again will not supply its dependencies."
-				: "\n\nReview the package requirements and the author's installation instructions before retrying."));
+				: "\n\nReview the package requirements and the author's installation instructions before retrying."), report.Mod == null ? [] : [report.Mod]);
 	}
 
 	private static string PublicText(string value)
@@ -86,13 +91,23 @@ public sealed class NexusDownloadedModImporter
 	private readonly string _modsDirectory;
 	private readonly string _recoveryDirectory;
 	private readonly Func<string, CancellationToken, Task<DivinityModData>> _validator;
-	private readonly Func<string, CancellationToken, Task> _preflight;
+	private readonly Func<string, IReadOnlyList<DivinityModData>, CancellationToken, Task> _preflight;
 
 	public NexusDownloadedModImporter(
 		string modsDirectory,
 		string recoveryDirectory,
 		Func<string, CancellationToken, Task<DivinityModData>> validator,
 		Func<string, CancellationToken, Task> preflight)
+		: this(modsDirectory, recoveryDirectory, validator, (path, _, token) => preflight(path, token))
+	{
+		ArgumentNullException.ThrowIfNull(preflight);
+	}
+
+	public NexusDownloadedModImporter(
+		string modsDirectory,
+		string recoveryDirectory,
+		Func<string, CancellationToken, Task<DivinityModData>> validator,
+		Func<string, IReadOnlyList<DivinityModData>, CancellationToken, Task> preflight)
 	{
 		_modsDirectory = Path.GetFullPath(modsDirectory ?? throw new ArgumentNullException(nameof(modsDirectory)));
 		_recoveryDirectory = Path.GetFullPath(recoveryDirectory ?? throw new ArgumentNullException(nameof(recoveryDirectory)));
@@ -111,9 +126,9 @@ public sealed class NexusDownloadedModImporter
 			modsDirectory,
 			recoveryDirectory,
 			(path, token) => DivinityModDataLoader.LoadModDataFromPakAsync(path, builtinMods, token),
-			async (path, token) =>
+			async (path, otherPackageMods, token) =>
 			{
-				var report = await PackagePreflightService.AnalyzeAsync(path, availableMods, token);
+				var report = await PackagePreflightService.AnalyzeAsync(path, availableMods.Concat(otherPackageMods), token);
 				NexusDownloadedModValidationException.ThrowIfBlocked(report);
 			});
 	}
@@ -143,18 +158,35 @@ public sealed class NexusDownloadedModImporter
 					"The archive could not be fully read. It may be incomplete, damaged, or use an unsupported format. Try Download Again; if a fresh copy fails too, check the author's archive and installation instructions.");
 			}
 			var stagedPaks = new List<StagedNexusPak>(stagedFiles.Count);
+			var hasUnreadablePackage = false;
 			foreach (var staged in stagedFiles)
 			{
 				cancellationToken.ThrowIfCancellationRequested();
-				await _preflight(staged.Path, cancellationToken);
 				var mod = await _validator(staged.Path, cancellationToken);
-				if (mod == null) throw new NexusDownloadedModValidationException("invalid-package", "A PAK file could not be read as a supported BG3 package. Check the author's installation instructions.");
+				if (mod == null) { hasUnreadablePackage = true; continue; }
 				stagedPaks.Add(new StagedNexusPak(staged.Name, staged.Path, Path.Combine(_modsDirectory, staged.Name), mod));
 			}
+			var inspectedMods = stagedPaks.Select(package => package.Mod).ToArray();
+			if (hasUnreadablePackage)
+				throw new NexusDownloadedModValidationException("invalid-package", "A PAK file could not be read as a supported BG3 package. Check the author's installation instructions.", inspectedMods);
 			if (stagedPaks.Where(package => !String.IsNullOrWhiteSpace(package.Mod.UUID))
 				.GroupBy(package => package.Mod.UUID, StringComparer.OrdinalIgnoreCase)
 				.Any(group => group.Count() > 1))
 				throw new InvalidDataException("The archive contains multiple PAK files with the same mod UUID.");
+			// A dependency may be another PAK in this archive. Identify every package
+			// before preflight, and retain the full readable set when validation blocks.
+			foreach (var package in stagedPaks)
+			{
+				try
+				{
+					await _preflight(package.StagedPath, stagedPaks.Where(other => other != package).Select(other => other.Mod).ToArray(), cancellationToken);
+				}
+				catch (NexusDownloadedModValidationException ex)
+				{
+					ex.InspectedMods = inspectedMods;
+					throw;
+				}
+			}
 			return new NexusDownloadedModImportTransaction(stagingRoot, _recoveryDirectory, stagedPaks);
 		}
 		catch

@@ -1,0 +1,83 @@
+<adonisUI:AdonisWindow x:Class="DivinityModManager.Views.NxmDependencyReviewWindow"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:adonisUI="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
+	xmlns:controls="clr-namespace:DivinityModManager.Controls"
+	xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+	Title="Nexus Download Details" Width="800" Height="690" MinWidth="520" MinHeight="420"
+	WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="CanResize"
+	Template="{DynamicResource ReduxWindowTemplate}" Background="{DynamicResource ReduxWindowBrush}"
+	FontFamily="{DynamicResource Redux.FontFamily.UI}" FontSize="{DynamicResource Redux.FontSize.12}">
+	<shell:WindowChrome.WindowChrome>
+		<shell:WindowChrome CaptionHeight="0" CornerRadius="0" GlassFrameThickness="0" ResizeBorderThickness="6" UseAeroCaptionButtons="False" />
+	</shell:WindowChrome.WindowChrome>
+	<Window.Resources>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries><ResourceDictionary Source="../Themes/MainResourceDictionary.xaml" /></ResourceDictionary.MergedDictionaries>
+			<BooleanToVisibilityConverter x:Key="DependencyVisibility" />
+		</ResourceDictionary>
+	</Window.Resources>
+	<Grid>
+		<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+		<controls:ReduxWindowTitleBar IconData="{DynamicResource Redux.Icon.Package}" />
+		<Border Grid.Row="1" Padding="20" Background="{DynamicResource ReduxAppBackgroundBrush}" BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1">
+			<Grid>
+				<Grid.RowDefinitions><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+				<ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+					<StackPanel>
+						<TextBox x:Name="SummaryText" IsReadOnly="True" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource ReduxTextPrimaryBrush}"
+							TextWrapping="Wrap" MaxHeight="240" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Inspection summary" />
+						<StackPanel x:Name="DependenciesPanel" Margin="0,16,0,0">
+							<TextBlock Text="Declared dependencies" FontSize="{DynamicResource Redux.FontSize.16}" FontWeight="SemiBold" Foreground="{DynamicResource ReduxTextPrimaryBrush}" />
+							<TextBlock Margin="0,5,0,12" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextSecondaryBrush}"
+								Text="These requirements come from package metadata, not optional requirements on a web page. Queue matches do not install or satisfy dependencies. Choose the appropriate file and version on Nexus yourself. Reopen this dialog to refresh the status." />
+							<ItemsControl x:Name="DependenciesList">
+								<ItemsControl.ItemTemplate>
+									<DataTemplate>
+										<Border Margin="0,0,0,10" Padding="14" Style="{StaticResource ReduxDialogSummaryCardStyle}">
+											<StackPanel>
+												<TextBlock Text="{Binding Name}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{DynamicResource ReduxTextPrimaryBrush}" />
+												<TextBlock Text="{Binding Status}" Margin="0,5,0,0" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextSecondaryBrush}" />
+												<TextBlock Text="{Binding Uuid}" Margin="0,5,0,0" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextMutedBrush}" />
+												<WrapPanel Margin="0,9,0,0">
+													<Button Content="Show installed mod" Tag="{Binding}" Click="ShowInstalled_Click" Margin="0,0,8,6"
+														Style="{StaticResource ReduxSecondaryActionButtonStyle}" Visibility="{Binding CanShowInstalled, Converter={StaticResource DependencyVisibility}}" />
+													<Button Content="Open Nexus Files" Tag="{Binding}" Click="OpenFiles_Click" Margin="0,0,8,6"
+														Style="{StaticResource ReduxSecondaryActionButtonStyle}" Visibility="{Binding CanOpenFiles, Converter={StaticResource DependencyVisibility}}" />
+													<Button Content="Copy UUID" Tag="{Binding}" Click="CopyUuid_Click" Margin="0,0,0,6"
+														Style="{StaticResource ReduxSecondaryActionButtonStyle}" IsEnabled="{Binding CanCopyUuid}" />
+												</WrapPanel>
+												<ItemsControl ItemsSource="{Binding Downloads}">
+													<ItemsControl.ItemTemplate>
+														<DataTemplate>
+															<StackPanel Margin="0,3,0,6">
+																<Button Tag="{Binding}" Click="ShowDownload_Click" HorizontalAlignment="Left" MaxWidth="650"
+																	Style="{StaticResource ReduxSecondaryActionButtonStyle}" ToolTip="{Binding Explanation}">
+																	<TextBlock Text="{Binding Label}" TextWrapping="Wrap" />
+																</Button>
+																<TextBlock Text="{Binding Explanation}" Margin="0,4,0,0" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextMutedBrush}" />
+															</StackPanel>
+														</DataTemplate>
+													</ItemsControl.ItemTemplate>
+												</ItemsControl>
+												<TextBlock Text="{Binding SourceHint}" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextMutedBrush}" />
+											</StackPanel>
+										</Border>
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+							</ItemsControl>
+						</StackPanel>
+					</StackPanel>
+				</ScrollViewer>
+				<Grid Grid.Row="1" Margin="0,14,0,0">
+					<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+					<TextBlock x:Name="ActionStatusText" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextSecondaryBrush}" VerticalAlignment="Center" />
+					<StackPanel Grid.Column="1" Orientation="Horizontal">
+						<Button x:Name="DismissButton" Content="Close" IsCancel="True" MinWidth="90" Style="{StaticResource ReduxSecondaryActionButtonStyle}" />
+						<Button x:Name="InstallButton" Content="Install reviewed files" Margin="9,0,0,0" Click="Install_Click" Visibility="Collapsed" Style="{StaticResource ReduxPrimaryActionButtonStyle}" />
+					</StackPanel>
+				</Grid>
+			</Grid>
+		</Border>
+	</Grid>
+</adonisUI:AdonisWindow>

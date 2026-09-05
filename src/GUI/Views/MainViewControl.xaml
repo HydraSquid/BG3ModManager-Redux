@@ -1528,7 +1528,7 @@
 						<GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
 							Style="{StaticResource ReduxVerticalSplitterStyle}"
 							Visibility="{Binding NxmDownloadsPaneVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
-						<local:NxmDownloadsPane Grid.Column="2"
+						<local:NxmDownloadsPane x:Name="DownloadsPane" Grid.Column="2"
 							Visibility="{Binding NxmDownloadsPaneVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 					</Grid>
 				</Grid>

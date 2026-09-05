@@ -35,6 +35,10 @@ This is development source, not a separate stable release.
   distinguish unreadable archives, unsupported layouts, validation failures, and file-access
   problems. **Details** can inspect older generic failures without installing them.
   **Download Again** preserves the previous archive and avoids reusing old partial data.
+- **Dependency assistance:** Details and install review distinguish installed, bundled, identified
+  queued, and possible same-project requirements. Reviewed UUID mappings offer **Open Nexus Files**;
+  unknown UUIDs get **Copy UUID** instead of a guessed link. Files and variants are never chosen or
+  downloaded automatically. Queue identities come from this session's package inspections.
 - **Source-association fixes:** explicit Nexus installs remain Nexus even before metadata is
   fetched or when the PAK also contains a mod.io identifier. Provider-neutral **Link Mod Page**
   validates BG3 Nexus/mod.io URLs and supports manual mod.io links without an API key.

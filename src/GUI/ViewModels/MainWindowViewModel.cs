@@ -656,7 +656,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		}
 	}
 
-	public async Task InstallNxmDownloadAsync(NxmDownloadItem item)
+	public async Task InstallNxmDownloadAsync(NxmDownloadItem item, bool showDependencyReview = true)
 	{
 		if (item?.State is not (NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview or NxmDownloadState.InstallFailed)) return;
 		if (item.State == NxmDownloadState.InstallFailed && !item.CanRetryInstall) return;
@@ -672,6 +672,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			var recoveryDirectory = Path.Combine(PathwayData.AppDataGameFolder, "Mods_Old_ModManager");
 			var importer = NexusDownloadedModImporter.Create(PathwayData.AppDataModsPath, recoveryDirectory, mods.Items, builtinMods);
 			await using var transaction = await importer.StageAsync(archivePath, CancellationToken.None);
+			ModDependencyAssistanceService.RememberInspection(item, NxmDownloadsDirectory, transaction.Packages.Select(package => package.Mod));
 			if (!await ConfirmNxmInstallReviewAsync(transaction, CancellationToken.None))
 			{
 				await _nxmDownloadManager.SetStateAsync(item.Id, NxmDownloadState.NeedsReview, "preflight-warning");
@@ -696,6 +697,12 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			else
 			{
 				ShowAlert(failure.Details, AlertType.Danger, 30);
+				if (ex is NexusDownloadedModValidationException { InspectedMods.Count: > 0 } validation)
+				{
+					ModDependencyAssistanceService.RememberInspection(item, NxmDownloadsDirectory, validation.InspectedMods);
+					if (showDependencyReview && validation.InspectedMods.Any(mod => mod.Dependencies.Count > 0))
+						ShowNxmDependencyReview(failure.Details, validation.InspectedMods);
+				}
 			}
 		}
 		finally { _nxmInstallLock.Release(); }
@@ -719,8 +726,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				reviewLines.Add($"{package.FileName}: {warning.Title} - {warning.Message}");
 		}
 		var message = "Review every change before installing:\n\n" + String.Join("\n\n", reviewLines);
-		return ReduxMessageBox.Show(Window, message, "Review Nexus Download", MessageBoxButton.YesNo,
-			MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes;
+		return ShowNxmDependencyReview(message, transaction.Packages.Select(package => package.Mod).ToArray(), allowInstall: true);
 	}
 
 	public Task PauseNxmDownloadAsync(NxmDownloadItem item) => item == null ? Task.CompletedTask : _nxmDownloadManager.PauseAsync(item.Id);
@@ -749,12 +755,15 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	public async Task ShowNxmDownloadDetailsAsync(NxmDownloadItem item)
 	{
 		if (item == null) return;
-		if (item.State == NxmDownloadState.InstallFailed && String.IsNullOrWhiteSpace(item.ErrorDetails))
+		IReadOnlyList<DivinityModData> inspectedMods = [];
+		var summary = item.FailureDetails;
+		if (item.State is (NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview or NxmDownloadState.InstallFailed)
+			&& item.ErrorCode != "rollback-failed")
 		{
 			await _nxmInstallLock.WaitAsync();
 			try
 			{
-				if (item.State != NxmDownloadState.InstallFailed) return;
+				if (item.State is not (NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview or NxmDownloadState.InstallFailed)) return;
 				var builtinMods = DivinityApp.IgnoredMods.Items.SafeToDictionary(entry => entry.Folder, entry => entry);
 				var importer = NexusDownloadedModImporter.Create(PathwayData.AppDataModsPath,
 					Path.Combine(PathwayData.AppDataGameFolder, "Mods_Old_ModManager"), mods.Items, builtinMods);
@@ -762,15 +771,44 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				try
 				{
 					await using var inspection = await importer.StageAsync(GetNxmArchivePath(item), CancellationToken.None);
-					failure = ("install-failed", "The archive currently passes package checks. The old record did not retain the original failure. No files were installed by this inspection; try Retry Install to attempt the file and source-record operations again.");
+					inspectedMods = inspection.Packages.Select(package => package.Mod).ToArray();
+					summary = "The archive currently passes package checks. No files were installed by this inspection. Review the declared dependencies below before installing.";
+					if (item.State == NxmDownloadState.InstallFailed) summary += "\n\nPrevious failure:\n" + item.FailureDetails;
+					failure = (String.Empty, String.Empty);
 				}
-				catch (Exception ex) { failure = NexusDownloadedModValidationException.Describe(ex); }
-				await _nxmDownloadManager.SetStateAsync(item.Id, NxmDownloadState.InstallFailed, failure.Code, failure.Details);
+				catch (Exception ex)
+				{
+					failure = NexusDownloadedModValidationException.Describe(ex);
+					summary = failure.Details;
+					if (ex is NexusDownloadedModValidationException validation) inspectedMods = validation.InspectedMods;
+				}
+				ModDependencyAssistanceService.RememberInspection(item, NxmDownloadsDirectory, inspectedMods);
+				if (!String.IsNullOrEmpty(failure.Code))
+					await _nxmDownloadManager.SetStateAsync(item.Id, NxmDownloadState.InstallFailed, failure.Code, failure.Details);
 			}
 			finally { _nxmInstallLock.Release(); }
 		}
-		ReduxMessageBox.Show(Window, item.FailureDetails, "Nexus Download Details", MessageBoxButton.OK,
-			MessageBoxImage.Information, MessageBoxResult.OK);
+		ShowNxmDependencyReview(summary, inspectedMods);
+	}
+
+	private bool ShowNxmDependencyReview(string summary, IReadOnlyList<DivinityModData> inspectedMods, bool allowInstall = false)
+	{
+		if (_nxmShuttingDown) return false;
+		var rows = ModDependencyAssistanceService.Build(inspectedMods.SelectMany(mod => mod.Dependencies.Items),
+			mods.Items, NxmDownloads, NxmDownloadsDirectory, Modules.SourceIntegrationsEnabled, inspectedMods);
+		var dialog = new NxmDependencyReviewWindow(Window, summary, rows, allowInstall);
+		var accepted = dialog.ShowDialog() == true;
+		if (Window is MainWindow main)
+		{
+			if (dialog.RequestedInstalledMod is { } requestedMod)
+			{
+				var current = mods.Items.FirstOrDefault(mod => mod.UUID.Equals(requestedMod.UUID, StringComparison.OrdinalIgnoreCase));
+				if (current != null) main.MainView.FocusModEntry(current);
+			}
+			if (dialog.RequestedDownload is { } requestedDownload && NxmDownloads?.Contains(requestedDownload) == true)
+				main.MainView.FocusNxmDownload(requestedDownload);
+		}
+		return accepted;
 	}
 
 	private string GetNxmArchivePath(NxmDownloadItem item)
@@ -797,7 +835,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	{
 		foreach (var item in NxmDownloads?.Where(item => item.IsSelected && item.State is
 			NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview or NxmDownloadState.InstallFailed).ToArray() ?? [])
-			await InstallNxmDownloadAsync(item);
+			await InstallNxmDownloadAsync(item, showDependencyReview: false);
 	}
 	public async Task ClearCompletedNxmDownloadsAsync()
 	{

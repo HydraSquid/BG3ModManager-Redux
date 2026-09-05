@@ -23,6 +23,7 @@ internal static class Program
 		var tableStriping = new TableStripingTests();
 		var windowShutdown = new WindowShutdownTests();
 		var failureRecovery = new NxmFailureRecoveryTests();
+		var dependencies = new DependencyAssistanceTests();
 		var bundle = new ReduxBundleTests();
 		var contribution = new ContributionReportPrivacyTests();
 		var comparison = new LoadOrderComparisonTests();
@@ -129,9 +130,15 @@ internal static class Program
 			(nameof(modules.CustomThemeBackgroundEditsPreserveUntouchedBaseRoles), modules.CustomThemeBackgroundEditsPreserveUntouchedBaseRoles),
 			(nameof(tableStriping.TablesAlternateAcrossThemesAndLivePaletteChanges), tableStriping.TablesAlternateAcrossThemesAndLivePaletteChanges),
 			(nameof(nxmImporter.UnreadableArchiveHasAnActionableFailureWithoutInstalling), nxmImporter.UnreadableArchiveHasAnActionableFailureWithoutInstalling),
+			(nameof(nxmImporter.BundledDependenciesAreIdentifiedBeforeAnyPackagePreflight), nxmImporter.BundledDependenciesAreIdentifiedBeforeAnyPackagePreflight),
 			(nameof(failureRecovery.MissingDependencyFailureNamesTheRequirementAndRecovery), failureRecovery.MissingDependencyFailureNamesTheRequirementAndRecovery),
 			(nameof(failureRecovery.FailureDescriptionsNeverExposeRawExceptionCapabilities), failureRecovery.FailureDescriptionsNeverExposeRawExceptionCapabilities),
 			(nameof(failureRecovery.RecoveryActionsReflectTheFailureAndNotifyBindings), failureRecovery.RecoveryActionsReflectTheFailureAndNotifyBindings),
+			(nameof(dependencies.InstalledDependenciesAreDistinguishedFromMissingDownloads), dependencies.InstalledDependenciesAreDistinguishedFromMissingDownloads),
+			(nameof(dependencies.SameProjectDownloadIsOnlyAPossibleDependencyMatch), dependencies.SameProjectDownloadIsOnlyAPossibleDependencyMatch),
+			(nameof(dependencies.InspectedUuidMatchesAreInvalidatedByArchiveChanges), dependencies.InspectedUuidMatchesAreInvalidatedByArchiveChanges),
+			(nameof(dependencies.SourceLinksRequireReviewedUuidsAndEnabledIntegrations), dependencies.SourceLinksRequireReviewedUuidsAndEnabledIntegrations),
+			(nameof(dependencies.BundledAndOlderInstalledDependenciesAreExplained), dependencies.BundledAndOlderInstalledDependenciesAreExplained),
 			(nameof(nxmStore.DetailedInstallFailureSurvivesRestartAndMissingFileInvalidation), nxmStore.DetailedInstallFailureSurvivesRestartAndMissingFileInvalidation),
 			(nameof(nxmManager.DownloadAgainPreservesTheArchiveAndUsesFreshAuthorizationWhenRequired), nxmManager.DownloadAgainPreservesTheArchiveAndUsesFreshAuthorizationWhenRequired),
 			(nameof(nxmManager.FailedRedownloadSavePreservesTheOriginalQueueRecord), nxmManager.FailedRedownloadSavePreservesTheOriginalQueueRecord),

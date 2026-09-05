@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using DynamicData;
 
 using DivinityModManager.AppServices;
@@ -27,6 +28,8 @@ internal sealed class NxmFailureRecoveryTests
 		catch (NexusDownloadedModValidationException ex) { error = ex; }
 		RegressionAssert.True(error != null);
 		RegressionAssert.Equal("missing-dependencies", error!.ErrorCode);
+		RegressionAssert.Equal(mod, error.InspectedMods.Single());
+		RegressionAssert.Equal("07fbc2f1-f359-4b9d-b243-fe28bd783e4c", error.InspectedMods.Single().Dependencies.Items.Single().UUID);
 		RegressionAssert.Contains(error.Message, "Goon's Library");
 		RegressionAssert.Contains(error.Message, "retry installation");
 		RegressionAssert.Contains(error.Message, "Downloading this archive again will not");

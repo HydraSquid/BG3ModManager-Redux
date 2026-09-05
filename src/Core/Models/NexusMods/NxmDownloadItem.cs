@@ -18,6 +18,9 @@ public enum NxmDownloadState
 	InstallFailed
 }
 
+public sealed record NxmArchiveInspection(string FileName, long Length, DateTime LastWriteUtc,
+	IReadOnlyList<ModuleShortDesc> Modules);
+
 [DataContract]
 public sealed class NxmDownloadItem : ReactiveObject
 {
@@ -79,6 +82,7 @@ public sealed class NxmDownloadItem : ReactiveObject
 	}
 
 	[IgnoreDataMember] public NexusModManagerLink Authorization { get; set; }
+	[IgnoreDataMember] public NxmArchiveInspection Inspection { get; set; }
 	[IgnoreDataMember, Reactive] public double BytesPerSecond { get; set; }
 	[IgnoreDataMember, Reactive] public double Progress { get; set; }
 

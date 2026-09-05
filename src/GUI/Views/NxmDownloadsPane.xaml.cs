@@ -12,6 +12,17 @@ public partial class NxmDownloadsPane : UserControl
 	private MainWindowViewModel ViewModel => DataContext as MainWindowViewModel;
 	public NxmDownloadsPane() => InitializeComponent();
 
+	public void FocusDownload(NxmDownloadItem item)
+	{
+		Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
+		{
+			if (!DownloadsList.Items.Contains(item)) return;
+			DownloadsList.SelectedItem = item;
+			DownloadsList.ScrollIntoView(item);
+			DownloadsList.Focus();
+		}));
+	}
+
 	private static NxmDownloadItem Item(object sender) => (sender as FrameworkElement)?.Tag as NxmDownloadItem;
 	private void Close_Click(object sender, RoutedEventArgs e) => ViewModel.NxmDownloadsPaneVisible = false;
 	private async void PauseAll_Click(object sender, RoutedEventArgs e) => await RunCommandAsync(ViewModel.PauseAllNxmDownloadsAsync);

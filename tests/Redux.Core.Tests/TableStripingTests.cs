@@ -12,6 +12,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
 using DivinityModManager.Controls;
+using DivinityModManager.AppServices;
 using DivinityModManager.Models;
 using DivinityModManager.Models.NexusMods;
 using DivinityModManager.Util;
@@ -131,6 +132,31 @@ internal sealed class TableStripingTests
 			Capture(host, "download-errors-wide");
 			Layout(host, 640);
 			Capture(host, "download-errors-compact");
+
+			var requirements = new[]
+			{
+				new ModuleShortDesc { UUID = "069e5871-efe8-44bb-b02a-fe957df5ae0e", Name = "Reviewed dependency" },
+				new ModuleShortDesc { UUID = "11111111-1111-4111-8111-111111111111", Name = "Unknown dependency" }
+			};
+			var assistance = ModDependencyAssistanceService.Build(requirements, [],
+				[new NxmDownloadItem { ModId = 3902, FileDisplayName = "Optional compatibility patch", State = NxmDownloadState.Queued }], "", true);
+			var dependencyWindow = new NxmDependencyReviewWindow(window,
+				"The package declares missing requirements. No files were installed. Review each dependency below.", assistance)
+			{ ShowActivated = false, WindowStartupLocation = WindowStartupLocation.Manual, Left = -15000, Top = -15000 };
+			try
+			{
+				dependencyWindow.Show();
+				var content = (FrameworkElement)dependencyWindow.Content;
+				Layout(content, 800);
+				var buttons = VisualChildren(content).OfType<Button>().Where(button => button.IsVisible).ToArray();
+				RegressionAssert.Equal(1, buttons.Count(button => Equals(button.Content, "Open Nexus Files")));
+				RegressionAssert.Equal(2, buttons.Count(button => Equals(button.Content, "Copy UUID")));
+				RegressionAssert.False(buttons.Any(button => Equals(button.Content, "Install reviewed files")));
+				Capture(content, "dependency-review-wide");
+				Layout(content, 520);
+				Capture(content, "dependency-review-compact");
+			}
+			finally { dependencyWindow.Close(); }
 		}
 		catch (Exception ex) { throw new InvalidOperationException(ex.ToString(), ex); }
 		finally

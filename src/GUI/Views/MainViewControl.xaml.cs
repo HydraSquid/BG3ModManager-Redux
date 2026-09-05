@@ -6,6 +6,7 @@ using DivinityModManager.AppServices;
 using DivinityModManager.Controls;
 using DivinityModManager.Converters;
 using DivinityModManager.Models;
+using DivinityModManager.Models.NexusMods;
 using DivinityModManager.Models.App;
 using DivinityModManager.Models.Health;
 using DivinityModManager.Models.View;
@@ -469,6 +470,12 @@ public partial class MainViewControl : MainViewControlViewBase
 
 	private void ToolbarDownloadsButton_Click(object sender, RoutedEventArgs e) =>
 		ViewModel.NxmDownloadsPaneVisible = !ViewModel.NxmDownloadsPaneVisible;
+
+	public void FocusNxmDownload(NxmDownloadItem item)
+	{
+		ViewModel.NxmDownloadsPaneVisible = true;
+		DownloadsPane.FocusDownload(item);
+	}
 
 	private void InspectModPackage_Click(object sender, RoutedEventArgs e) =>
 		ShowInspectModPackageDialog();

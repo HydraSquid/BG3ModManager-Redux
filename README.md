@@ -1,210 +1,65 @@
 # Baldur's Gate 3 Mod Manager Redux
 
-BG3 Mod Manager Redux is a Windows mod manager built on
-[LaughingLeader's BG3 Mod Manager](https://github.com/LaughingLeader/BG3ModManager). It keeps the
-original manager's package and load-order foundation while adding a refreshed interface and more
-ways to organize, review, and share mod setups.
+This is a development fork of **[circleainn/BG3ModManager-Redux](https://github.com/circleainn/BG3ModManager-Redux)**.
+Please refer to the [upstream README](https://github.com/circleainn/BG3ModManager-Redux#readme)
+for the project overview, requirements, installation, and general usage. This page documents only
+how our `hydra-dev` branch differs from that Redux baseline.
 
-**Current build:** `0.1.0-alpha.11`
+**Upstream:** [Repository](https://github.com/circleainn/BG3ModManager-Redux) |
+[Website](https://bg3mm-redux.com/) |
+[Nexus Mods listing](https://www.nexusmods.com/baldursgate3/mods/23799)
 
-[Website](https://bg3mm-redux.com/) | [Nexus Mods](https://www.nexusmods.com/baldursgate3/mods/23799) | [Report an issue](https://github.com/circleainn/BG3ModManager-Redux/issues) | [Changes from upstream](docs/CHANGES_FROM_UPSTREAM.md)
+## Baseline
 
-> [!IMPORTANT]
-> Redux is still in early development. Keep backups of important profiles, saves, downloaded
-> archives, and the BG3 Mods folder. Review exported orders before launching the game.
+This branch is based on Redux commit
+[`74995a2`](https://github.com/circleainn/BG3ModManager-Redux/commit/74995a2).
+Later upstream changes have not yet been merged, including the newer save-workflow protections,
+unsaved-change prompts, and Windows-protected API-key storage.
 
-## What Redux adds
+[View this branch's changes since that baseline](https://github.com/HydraSquid/BG3ModManager-Redux/compare/74995a2...hydra-dev).
+This is development source, not a separate stable release.
 
-- **A redesigned interface** with Redux Dark, Redux Light, Parchment, custom themes, scalable text,
-  imported fonts, shared window styling, and optional reduced motion and background effects.
-- **Categories and separators** with custom names, descriptions, colors, icons, filtering,
-  collapsible sections, and multiple categories per mod.
-- **Mod details in one place** through hover cards and a resizable drawer for descriptions,
-  requirements, files, changelogs, linked pages, and personal notes.
-- **Online mod information** from Nexus Mods and mod.io, with manual page linking and a reviewed
-  local database for some existing Nexus installs. It can be disabled without removing saved links.
-- **Nexus download handling** with an optional Windows `nxm://` association, a persistent bounded
-  queue, resumable transfers, and reviewed installation with recovery copies for replaced PAKs.
-- **Mod Diagnostics** for detectable package, dependency, Script Extender, Mod Fixer, override,
-  creator-manifest, conflict, and mod.io conditions. Optional Load Order Advisor checks add cautious
-  guidance based only on declared dependencies.
-- **Safer order changes** with an export review, pre-export restore points, order comparison, staged
-  imports, backups, and validated writes.
-- **Redux Modlists** (`.bg3redux`) for moving an order, categories, separators, optional source
-  links, and optional notes between Redux installations without changing `modsettings.lsx` or
-  including mod files.
+## Current Differences
 
-## Organize and review mods
+- **Nexus download links:** optional per-user `nxm://` handling, preserving the previous handler.
+  Enable online integrations and configure a personal Nexus API key, then opt in through
+  **Tools > Handle Nexus Mod Manager Download links**.
+- **Persistent Downloads pane:** bounded concurrent transfers with pause, resume, retry,
+  cancellation, and removal. Short-lived authorization and signed download URLs are not stored
+  in the queue; expired free-account authorization requires a fresh Nexus link.
+- **Separate, reviewed installation:** downloaded archives are staged and their PAKs validated
+  before installation. Replaced files receive recovery copies. Downloading does not activate,
+  reorder, or export mods, and missing dependencies block installation rather than being installed
+  automatically.
+- **Descriptive failures and recovery:** persisted failure details name missing dependencies and
+  distinguish unreadable archives, unsupported layouts, validation failures, and file-access
+  problems. **Details** can inspect older generic failures without installing them.
+  **Download Again** preserves the previous archive and avoids reusing old partial data.
+- **Source-association fixes:** explicit Nexus installs remain Nexus even before metadata is
+  fetched or when the PAK also contains a mod.io identifier. Provider-neutral **Link Mod Page**
+  validates BG3 Nexus/mod.io URLs and supports manual mod.io links without an API key.
+- **Table readability and selection:** theme-aware alternating rows across tables, including
+  custom themes, plus deferred cross-list selection clearing to avoid a WPF selection crash.
+- **Shutdown handling:** closing waits for Nexus work and settings persistence. A failed shutdown
+  keeps the window visible and allows another attempt instead of leaving a hidden process.
 
-- Manage active and inactive mods with the original BG3MM drag-and-drop workflow.
-- Use profiles, campaigns, saved orders, filters, configurable columns, and a compact optional
-  Quick Access menu (`F2`).
-- Assign categories to one mod or a selection, then click category pills to filter both lists.
-- Add separators that remember their placement and collapsed state. Closed separators keep their
-  existing contents sealed and move with those mods as one group; newly positioned mods remain
-  visible until the section is expanded.
-- Add notes to mods and optionally include them in a Redux Modlist.
-- Compare saved orders or load a recent restore point without changing game files until export.
-- Inspect shared internal PAK paths with **Tools > Active File Overlaps**. Overlaps are reported as
-  information, not definite conflicts, because patches often share files intentionally.
+## Limits and Verification
 
-Categories, separators, and notes are Redux data. They are never written to the game's
-`modsettings.lsx`.
+Keep backups before testing. Personal API keys in this branch are still stored in local portable
+`Data/settings.json`; do not share that file or your runtime `Data`, `Orders`, or `_Logs` folders.
+Downloads require a declared HTTP response length and are limited to 32 GiB per archive.
 
-## Mod Diagnostics
+The fork includes regression coverage for the changes above. From a Windows checkout with the
+upstream build prerequisites and submodules installed, run `./Test-Redux.ps1`.
+Windows CI also targets `hydra-dev`.
 
-Mod Diagnostics reports conditions Redux can detect from installed packages and available mod
-information. It does not download, install, delete, repair, or reorder mods automatically.
+For a problem specific to these changes, use [this fork's issue tracker](https://github.com/HydraSquid/BG3ModManager-Redux/issues).
+If it also reproduces on the unmodified baseline, report it upstream with that distinction.
+Never include credentials or private data in reports.
 
-When a dependency is already installed, an available action can reveal it, copy its UUID, open its
-linked page, or activate it after confirmation. Activating a dependency changes only the working
-order until the user exports it.
+## Credits and License
 
-For a missing dependency, Redux can open a known Nexus page when its reviewed database contains an
-exact module-UUID match. Unknown dependencies retain the copy-UUID fallback; Redux does not install
-them automatically.
-
-The optional Load Order Advisor is experimental and disabled by default. It checks declared
-dependency placement and cycles; it does not attempt to infer a complete load order.
-
-## Nexus downloads
-
-Redux can handle **Mod Manager Download** links for Baldur's Gate 3 after the user enables online
-mod information, saves a personal Nexus Mods API key, and opts in through **Tools > Handle Nexus Mod
-Manager Download links**. The per-user Windows association records its owner and preserves the
-previous handler so Redux can restore it later. Links for other games are forwarded only when the
-previous command can be parsed without invoking a shell.
-
-Downloads are kept in the portable `Data\Downloads` folder and displayed in the resizable
-**Downloads** pane. The queue survives restart, limits simultaneous transfers, supports pause,
-resume, retry, cancellation, and removal, and acquires short-lived download URLs only when a
-transfer is ready to start. API keys, NXM authorization values, and signed download URLs are not
-written to the queue manifest. Free-account links that expire must be opened from Nexus again.
-
-Downloading does not install a mod. Installation is a separate action that stages and bounds every
-archive entry, validates every PAK, reports package warnings and replacements, and asks before
-changing the Mods folder. Replaced files receive recovery copies. Disabling online mod information
-stops and pauses network work without disabling review, installation, removal, or local file
-actions; turning it back on does not automatically resume paused entries.
-
-## Redux Modlists
-
-A `.bg3redux` Modlist can contain:
-
-- a saved load order;
-- custom categories, descriptions, assignments, and display order;
-- separators, descriptions, positions, and collapsed states;
-- reusable custom PNG icons;
-- public Nexus Mods or mod.io source references; and
-- mod notes when explicitly selected during export.
-
-Import and export previews show what will change. A Redux Modlist does not contain `.pak` files or
-`modsettings.lsx`, and importing one does not install missing mods. Source-link import is off by
-default because the recipient may have installed the same mod UUID from a different provider.
-When explicitly enabled, imported links replace the local source association for matching UUIDs.
-
-Private testers can also use **Generate Redux Database Contribution** to create a reviewable
-`.bg3redux-report`. Reports exclude profiles, load-order positions, settings, credentials, and
-private filesystem paths.
-
-## Themes and accessibility
-
-- Choose Redux Dark, Redux Light, or Parchment, or create and share a custom theme.
-- Choose Compact, Default, or Large text and one of the bundled fonts, or import `.ttf` and `.otf`
-  files. Some imported fonts may not display correctly.
-- Configure category-colored selection, colored text, icons, and icon-only labels.
-- Reduce motion or disable background blur and dimming.
-- Use selectable dialog text, configurable shortcuts, keyboard-accessible dialogs, and the
-  inherited speech commands.
-
-The first launch opens one setup window for choosing a theme, optional source linking and
-diagnostics, API keys, and accessibility options. Optional features begin disabled and can be
-enabled there or later in Preferences. The setup can be reopened from Help.
-
-## Built on BG3 Mod Manager
-
-Redux is a fork, not a from-scratch replacement. These systems come from LaughingLeader and other
-upstream BG3MM contributors:
-
-- active and inactive lists, profiles, campaigns, saved orders, filtering, and load-order export;
-- `.pak` and archive import through LSLib and the established file workflows;
-- BG3 path detection, launch behavior, override packages, dependencies, UUID checks, Osiris and
-  Mod Fixer detection, and Script Extender management;
-- Nexus Mods integration, caching, links, images, metadata, and update checks;
-- configurable shortcuts, package extraction, metadata tools, and version generation; and
-- CrossSpeak, Windows speech fallback, screen-reader helpers, and speech commands.
-
-Redux reworks and extends many of these systems while retaining their credit. See
-[Changes from upstream BG3 Mod Manager](docs/CHANGES_FROM_UPSTREAM.md) for the detailed distinction.
-
-## For mod authors
-
-Redux retains BG3MM's package extraction, UUID and folder-name copying, metadata inspection, custom
-`meta.lsx` tags, and encoded version generator.
-
-Use **Tools > Inspect Mod Package** to run a read-only release preflight on a `.pak` or common
-release archive. It reports module identity, declared dependencies, embedded creator metadata,
-Script Extender or Osiris signals, override behavior, and common development files without
-installing or modifying the package. The result is a conservative packaging check, not a guarantee
-of in-game compatibility.
-
-A mod author may also place an optional root-level
-[`redux.mod.json`](docs/REDUX_CREATOR_MANIFEST.md) inside a PAK. Redux validates its module claim
-against parsed `meta.lsx` data before using it for Nexus Mods or mod.io identification. Invalid
-claims are ignored and reported without changing user files or load orders.
-
-## Requirements and current limits
-
-- Windows 10 or Windows 11, x64
-- [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
-- Baldur's Gate 3
-
-Linux, macOS, Wine, and Proton are not supported. The application is framework-dependent and is not
-distributed as a self-contained build.
-
-During the private alpha:
-
-- Nexus authentication uses a personal API key rather than public SSO.
-- Nexus downloads require a declared HTTP response length and are limited to 32 GiB per archive.
-- Online matching, automatic categories, dependency data, and conflict data may be incomplete.
-- mod.io author profile links cannot always be resolved.
-- Imported fonts may have incomplete metadata or render differently in WPF.
-- Uncommon display scales and dense layouts may still expose visual issues.
-- Clean-machine packaging and migration behavior need broader testing.
-
-Users are responsible for permission to use or share imported fonts and PNG icons. Imported assets
-are local data and are not included in application packages.
-
-## Documentation
-
-- [Changes from upstream BG3 Mod Manager](docs/CHANGES_FROM_UPSTREAM.md)
-- [Optional features](docs/REDUX_OPTIONAL_MODULES.md)
-- [Redux mod database](docs/REDUX_MOD_DATABASE.md)
-- [Mod developer tools](docs/MOD_DEVELOPER_TOOLS.md)
-- [Creator manifest reference](docs/REDUX_CREATOR_MANIFEST.md)
-- [Creator manifest JSON schema](docs/schemas/redux.mod.schema.json)
-
-## Reporting problems
-
-Use the [issue tracker](https://github.com/circleainn/BG3ModManager-Redux/issues) for
-reproducible bugs. Include the Redux version, reproduction steps, relevant logs, screenshots, and
-affected mod names or UUIDs. Never post API keys or private filesystem information.
-
-## Credits and license
-
-Redux exists because of LaughingLeader's original project and retains substantial upstream code and
-behavior.
-
-- [Original BG3 Mod Manager](https://github.com/LaughingLeader/BG3ModManager)
-- [LaughingLeader](https://github.com/LaughingLeader)
-- [Support LaughingLeader on Ko-fi](https://ko-fi.com/LaughingLeader)
-
-Bundled dependencies and assets include LSLib, CrossSpeak, AdonisUI, ReactiveUI,
-GongSolutions.WPF.DragDrop, Lucide, and the bundled open fonts. Attribution and license terms are in
-[Third-Party Notices](licenses/Third-Party-Notices.md).
-
-Baldur's Gate 3 is developed and published by Larian Studios. Redux is an unofficial community
-project and is not affiliated with or endorsed by Larian Studios, Nexus Mods, or mod.io.
-
-The original project and Redux modifications are distributed under the [MIT License](LICENSE),
-subject to all retained copyright and third-party notices.
+The application and its branding come from [circleainn's Redux](https://github.com/circleainn/BG3ModManager-Redux)
+and [LaughingLeader's original BG3 Mod Manager](https://github.com/LaughingLeader/BG3ModManager).
+Their copyright and attribution are retained under the [MIT License](LICENSE).
+Dependency and asset licenses remain in [Third-Party Notices](licenses/Third-Party-Notices.md).

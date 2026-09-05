@@ -48,6 +48,9 @@ internal static class Program
 		var nxmScheduler = new NxmDownloadSchedulerTests();
 		var nxmTransfer = new NxmTransferTests();
 		var nxmManager = new NxmDownloadManagerTests();
+		var commandPaletteSearch = new CommandPaletteSearchTests();
+		var fileSafety = new FileSafetyTests();
+		var loadOrderWorkflow = new LoadOrderWorkflowTests();
 		var tests = new (string Name, Action Run)[]
 		{
 			(nameof(source.ReviewedModuleUuidResolvesItsProject), source.ReviewedModuleUuidResolvesItsProject),
@@ -136,6 +139,7 @@ internal static class Program
 			(nameof(nxmManager.RedownloadAfterMetadataFailureUsesResolvedPakExtension), nxmManager.RedownloadAfterMetadataFailureUsesResolvedPakExtension),
 			(nameof(windowShutdown.IdleShutdownDefersFinalCloseUntilClosingReturns), windowShutdown.IdleShutdownDefersFinalCloseUntilClosingReturns),
 			(nameof(windowShutdown.FailedShutdownKeepsMainWindowVisibleAndCanBeRetried), windowShutdown.FailedShutdownKeepsMainWindowVisibleAndCanBeRetried),
+			(nameof(windowShutdown.CanceledClosingDoesNotStartNexusShutdownAndCanBeRetried), windowShutdown.CanceledClosingDoesNotStartNexusShutdownAndCanBeRetried),
 			(nameof(modules.LocalOnlyModeChangesOnlySourceIntegrations), modules.LocalOnlyModeChangesOnlySourceIntegrations),
 			(nameof(modules.LoadOrderGuidanceRequiresDiagnosticsWithoutLosingItsPreference), modules.LoadOrderGuidanceRequiresDiagnosticsWithoutLosingItsPreference),
 			(nameof(modules.DisposedModuleStateStopsTrackingSettings), modules.DisposedModuleStateStopsTrackingSettings),
@@ -200,6 +204,10 @@ internal static class Program
 			(nameof(interactionBehavior.ReentrantSelectionSupersedesAnExecutingClear), interactionBehavior.ReentrantSelectionSupersedesAnExecutingClear),
 			(nameof(interactionBehavior.SavingCurrentOrderCanNeverWriteTheGameExportFile), interactionBehavior.SavingCurrentOrderCanNeverWriteTheGameExportFile),
 			(nameof(interactionBehavior.NewBlankOrderContainsNoActivatedMods), interactionBehavior.NewBlankOrderContainsNoActivatedMods),
+			(nameof(interactionBehavior.WorkingChangesStayDetachedUntilExplicitlySaved), interactionBehavior.WorkingChangesStayDetachedUntilExplicitlySaved),
+			(nameof(interactionBehavior.ShutdownSnapshotNeverReplacesTheUnsavedWorkingPresentation), interactionBehavior.ShutdownSnapshotNeverReplacesTheUnsavedWorkingPresentation),
+			(nameof(interactionBehavior.DuplicateWandChoiceNormalizesToTheSingleVisibleIcon), interactionBehavior.DuplicateWandChoiceNormalizesToTheSingleVisibleIcon),
+			(nameof(interactionBehavior.AsyncProviderMetadataSignalsAutomaticCategoryRefresh), interactionBehavior.AsyncProviderMetadataSignalsAutomaticCategoryRefresh),
 			(nameof(automaticCategories.NexusCategoryIdsMatchTheBg3ProviderTaxonomy), automaticCategories.NexusCategoryIdsMatchTheBg3ProviderTaxonomy),
 			(nameof(automaticCategories.ExplicitNexusCategoryWinsOverContradictoryKeywords), automaticCategories.ExplicitNexusCategoryWinsOverContradictoryKeywords),
 			(nameof(automaticCategories.NexusCategoryStaysFirstWhileStrongSecondaryCategoriesFillThreeSlots), automaticCategories.NexusCategoryStaysFirstWhileStrongSecondaryCategoriesFillThreeSlots),
@@ -321,7 +329,17 @@ internal static class Program
 			,(nameof(nxmManager.FreshLinkSaveFailureDoesNotPublishResolvingState), nxmManager.FreshLinkSaveFailureDoesNotPublishResolvingState)
 			,(nameof(nxmManager.FailedShutdownCanBeRetriedUntilPausedStateIsDurable), nxmManager.FailedShutdownCanBeRetriedUntilPausedStateIsDurable)
 			,(nameof(nxmManager.QueueStatesHaveHumanReadableLabels), nxmManager.QueueStatesHaveHumanReadableLabels)
-			,(nameof(nxmManager.InstallFailuresHaveDedicatedHumanReadableState), nxmManager.InstallFailuresHaveDedicatedHumanReadableState)
+			,(nameof(nxmManager.InstallFailuresHaveDedicatedHumanReadableState), nxmManager.InstallFailuresHaveDedicatedHumanReadableState),
+			(nameof(commandPaletteSearch.AliasesAndWordOrderMakeActionsDiscoverable), commandPaletteSearch.AliasesAndWordOrderMakeActionsDiscoverable),
+			(nameof(commandPaletteSearch.MinimumQueryLengthStillProtectsLargeDynamicLists), commandPaletteSearch.MinimumQueryLengthStillProtectsLargeDynamicLists),
+			(nameof(fileSafety.FailedStagedWritePreservesTheExistingDestination), fileSafety.FailedStagedWritePreservesTheExistingDestination),
+			(nameof(fileSafety.AtomicCopyReplacesTheDestinationAndKeepsItsBackup), fileSafety.AtomicCopyReplacesTheDestinationAndKeepsItsBackup),
+			(nameof(fileSafety.AsyncCopyReplacesTheDestinationAndKeepsItsBackup), fileSafety.AsyncCopyReplacesTheDestinationAndKeepsItsBackup),
+			(nameof(fileSafety.ConcurrentWritesNeverExposePartialContent), fileSafety.ConcurrentWritesNeverExposePartialContent),
+			(nameof(fileSafety.CancelledAsyncCopyPreservesTheExistingDestination), fileSafety.CancelledAsyncCopyPreservesTheExistingDestination),
+			(nameof(fileSafety.ProviderCredentialsAreEncryptedAndExcludedFromSettingsJson), fileSafety.ProviderCredentialsAreEncryptedAndExcludedFromSettingsJson),
+			(nameof(loadOrderWorkflow.SaveSwitchRenameAndRestartPreservesEachOrder), loadOrderWorkflow.SaveSwitchRenameAndRestartPreservesEachOrder),
+			(nameof(loadOrderWorkflow.RenameRequiresConfirmationBeforeReplacingAnotherSavedOrder), loadOrderWorkflow.RenameRequiresConfirmationBeforeReplacingAnotherSavedOrder)
 		};
 
 		var failures = 0;

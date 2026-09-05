@@ -792,10 +792,12 @@ public static class ReduxWindowBehavior
 		var complete = false;
 		window.Closing += async (_, e) =>
 		{
-			if (complete) return;
+			if (complete || e.Cancel) return;
 			e.Cancel = true;
 			if (started) return;
 			started = true;
+			var wasEnabled = window.IsEnabled;
+			window.SetCurrentValue(UIElement.IsEnabledProperty, false);
 			// Even an idle download manager can finish synchronously. WPF must leave
 			// the first Closing event before we can request the final Close.
 			await Dispatcher.Yield(DispatcherPriority.Background);
@@ -811,6 +813,7 @@ public static class ReduxWindowBehavior
 			catch (Exception ex)
 			{
 				started = complete = false;
+				window.SetCurrentValue(UIElement.IsEnabledProperty, wasEnabled);
 				reportFailure(ex);
 			}
 		};

@@ -32,7 +32,7 @@ the underlying mod-management model. Major differences include:
   notifications, scrollbars, and window chrome;
 - Dark, Light, and Parchment themes plus persistent custom themes;
 - bundled and imported fonts, Compact/Default/Large text sizes, and reusable custom PNG icons;
-- a reorganized toolbar, compact Toolbar menu, Shortcuts menu, and optional Quick Access menu;
+- a reorganized toolbar, compact Toolbar menu, Shortcuts menu, and searchable Quick Access command menu;
 - a selected-mod details drawer and richer, source-aware hover information; and
 - a unified Lucide-based vector icon system with retained official provider branding where
   appropriate.
@@ -65,6 +65,9 @@ boundaries are recalculated.
 
 Redux extends the inherited load-order workflow with:
 
+- an explicit working-order state that changes only the selected saved order when the user presses
+  Save, with a close warning while changes remain unsaved;
+- named saved-order creation, renaming, deletion, and direct access to the order folder;
 - portable Redux Modlists containing a saved order, optional Redux presentation data, and public
   source references;
 - independent import choices for order data, presentation data, source links, and private notes;
@@ -72,7 +75,8 @@ Redux extends the inherited load-order workflow with:
 - export review showing meaningful activations, deactivations, placement changes, automatically
   included dependencies, and relevant diagnostics;
 - bounded per-profile restore points created before confirmed game exports or on demand;
-- read-only comparison between saved orders and restore points; and
+- read-only comparison between saved orders and restore points;
+- user-directed ZIP backups with a redistribution-permission reminder; and
 - optional private notes that remain outside game files and contribution reports.
 
 Portable Redux data does not include `modsettings.lsx`, installed packages, profiles, saves, API
@@ -135,9 +139,14 @@ files are replaced. It does not silently activate, reorder, or export downloaded
 
 Redux hardens state-changing operations through:
 
-- atomic settings and `modsettings.lsx` writes with validation and rolling backups;
+- staged, validated replacement for settings, saved orders, `modsettings.lsx`, keybindings,
+  provider caches, Script Extender configuration, and active-mod ZIP backups;
+- serialized same-destination writes so overlapping background operations cannot expose a partial
+  file;
 - staged imports so incomplete files are not presented as installed mods;
-- backups before package replacement;
+- backups and accurate success/failure reporting before package replacement or updates;
+- Windows account-protected provider API-key storage outside ordinary settings and diagnostic
+  data;
 - recoverable and permanent deletion paths that update the interface only after filesystem
   success;
 - safe fallback when referenced custom assets are missing; and

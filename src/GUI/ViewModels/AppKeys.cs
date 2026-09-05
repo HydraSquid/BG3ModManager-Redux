@@ -35,11 +35,17 @@ public class AppKeys : ReactiveObject
 	[MenuSettings("File", "Save Current Order")]
 	public Hotkey Save { get; private set; } = new Hotkey(Key.S, ModifierKeys.Control);
 
-	[MenuSettings("File", "Save Order As File...", true)]
+	[MenuSettings("File", "Save Load Order to File...")]
 	public Hotkey SaveAs { get; private set; } = new Hotkey(Key.S, ModifierKeys.Control | ModifierKeys.Alt);
 
-	[MenuSettings("File", "Create Blank Load Order", true)]
+	[MenuSettings("File", "Save as New Load Order...")]
+	public Hotkey SaveNewOrder { get; private set; } = new Hotkey(Key.None);
+
+	[MenuSettings("File", "Create Blank Load Order")]
 	public Hotkey NewOrder { get; private set; } = new Hotkey(Key.N, ModifierKeys.Control);
+
+	[MenuSettings("File", "Rename Load Order...")]
+	public Hotkey RenameOrder { get; private set; } = new Hotkey(Key.None);
 
 	[MenuSettings(
 		"File",
@@ -61,7 +67,7 @@ public class AppKeys : ReactiveObject
 	[MenuSettings("File", "Import Save as New Load Order...")]
 	public Hotkey ImportOrderFromSaveAsNew { get; private set; } = new Hotkey(Key.I, ModifierKeys.Control | ModifierKeys.Shift);
 
-	[MenuSettings("File", "Add Load Order from File...")]
+	[MenuSettings("File", "Import Load Order from File...")]
 	public Hotkey ImportOrderFromFile { get; private set; } = new Hotkey(Key.O, ModifierKeys.Control | ModifierKeys.Shift);
 
 	[MenuSettings(
@@ -90,16 +96,13 @@ public class AppKeys : ReactiveObject
 	[MenuSettings("File", "Back Up Active Mods to ZIP...")]
 	public Hotkey ExportOrderToZip { get; private set; } = new Hotkey(Key.R, ModifierKeys.Control);
 
-	[MenuSettings("File", "Back Up Active Mods to ZIP As...", true)]
-	public Hotkey ExportOrderToArchiveAs { get; private set; } = new Hotkey(Key.R, ModifierKeys.Control | ModifierKeys.Shift);
-
 	[MenuSettings("File", "Refresh Mods")]
 	public Hotkey Refresh { get; private set; } = new Hotkey(Key.F5);
 
 	[MenuSettings("File", "Refresh Mod Updates")]
 	public Hotkey RefreshModUpdates { get; private set; } = new Hotkey(Key.None);
 
-	[MenuSettings("Edit", "Move Selected Mods to Opposite List", true)]
+	[MenuSettings("Edit", "Move Selected Mods to Other List", true)]
 	public Hotkey Confirm { get; private set; } = new Hotkey(Key.Enter);
 
 	[MenuSettings("Edit", "Focus Active Mods List")]
@@ -123,10 +126,10 @@ public class AppKeys : ReactiveObject
 	[MenuSettings("Edit", "Delete Selected Mods...", AddSeparator = true)]
 	public Hotkey DeleteSelectedMods { get; private set; } = new Hotkey(Key.Delete);
 
-	[MenuSettings("Settings", "Open Preferences")]
+	[MenuSettings("Settings", "Preferences...")]
 	public Hotkey OpenPreferences { get; private set; } = new Hotkey(Key.P, ModifierKeys.Control);
 
-	[MenuSettings("Settings", "Open Keyboard Shortcuts")]
+	[MenuSettings("Settings", "Keyboard Shortcuts...", true)]
 	public Hotkey OpenKeybindings { get; private set; } = new Hotkey(Key.K, ModifierKeys.Control);
 
 	[MenuSettings(
@@ -135,15 +138,15 @@ public class AppKeys : ReactiveObject
 		false,
 		"Find an action, mod, profile, order, or category.")]
 	public Hotkey OpenCommandPalette { get; private set; } =
-		new Hotkey(Key.F2);
+		new Hotkey(Key.Q, ModifierKeys.Control);
 
-	[MenuSettings("Settings", "Cycle Theme")]
+	[MenuSettings("Settings", "Change Theme")]
 	public Hotkey ToggleViewTheme { get; private set; } = new Hotkey(Key.L, ModifierKeys.Control);
 
-	[MenuSettings("Settings", "Toggle Toolbar")]
-	public Hotkey ToggleToolbar { get; private set; } = new Hotkey(Key.B, ModifierKeys.Control | ModifierKeys.Shift);
+	[MenuSettings("Settings", "Show or Hide Toolbar")]
+	public Hotkey ToggleToolbar { get; private set; } = new Hotkey(Key.T, ModifierKeys.Control);
 
-	[MenuSettings("Settings", "Toggle Updates View")]
+	[MenuSettings("Settings", "Show or Hide Updates")]
 	public Hotkey ToggleUpdatesView { get; private set; } = new Hotkey();
 
 	[MenuSettings("Go", "Open Mods Folder")]
@@ -161,7 +164,7 @@ public class AppKeys : ReactiveObject
 	[MenuSettings("Tools", "Extract Selected Mods to...")]
 	public Hotkey ExtractSelectedMods { get; private set; } = new Hotkey(Key.OemPeriod, ModifierKeys.Control);
 
-	[MenuSettings("Tools", "Extract Active Adventure Mod to...")]
+	[MenuSettings("Tools", "Extract Active Adventure Mod to...", true)]
 	public Hotkey ExtractSelectedAdventure { get; private set; } = new Hotkey(Key.None);
 
 	[MenuSettings("Tools", "Open Version Generator", Tooltip = "A tool for mod authors to generate version numbers for a mod's meta.lsx")]
@@ -174,10 +177,10 @@ public class AppKeys : ReactiveObject
 		"Read active and override PAK file tables to find shared internal paths. Overlaps are not necessarily conflicts.")]
 	public Hotkey InspectFileOverlaps { get; private set; } = new Hotkey(Key.None);
 
-	[MenuSettings("Tools", "Download & Extract the Script Extender...")]
+	[MenuSettings("Tools", "Install Script Extender...")]
 	public Hotkey DownloadScriptExtender { get; private set; } = new Hotkey(Key.T, ModifierKeys.Control | ModifierKeys.Shift | ModifierKeys.Alt);
 
-	[MenuSettings("Accessibility", "Read Active Load Order")]
+	[MenuSettings("Accessibility", "Read Active Load Order Aloud")]
 	public Hotkey SpeakActiveModOrder { get; private set; } = new Hotkey(Key.Home, ModifierKeys.Control);
 
 	[MenuSettings("Accessibility", "Stop Reading Load Order")]
@@ -212,7 +215,8 @@ public class AppKeys : ReactiveObject
 				keyMapDict.Add(key.ID, key);
 			}
 			string contents = JsonConvert.SerializeObject(keyMapDict, Newtonsoft.Json.Formatting.Indented);
-			File.WriteAllText(filePath, contents);
+			AtomicFileWriter.WriteAllText(filePath, contents, validateTemporaryFile: temporaryPath =>
+				JsonConvert.DeserializeObject<Dictionary<string, Hotkey>>(File.ReadAllText(temporaryPath)) != null);
 		}
 		catch (Exception ex)
 		{
@@ -240,7 +244,8 @@ public class AppKeys : ReactiveObject
 				: "{}";
 			if (!File.Exists(filePath) || !String.Equals(contents, _lastSavedKeybindingsContents, StringComparison.Ordinal))
 			{
-				File.WriteAllText(filePath, contents);
+				AtomicFileWriter.WriteAllText(filePath, contents, filePath + ".bak", temporaryPath =>
+					JsonConvert.DeserializeObject<Dictionary<string, Hotkey>>(File.ReadAllText(temporaryPath)) != null);
 				_lastSavedKeybindingsContents = contents;
 			}
 			result = $"Saved keybindings to '{filePath}'";

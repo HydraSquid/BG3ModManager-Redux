@@ -57,18 +57,50 @@ internal sealed class WindowShutdownTests
 				((Button)titleBar.FindName("CloseButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 				PumpUntil(() => prepareCount == 1);
 				RegressionAssert.True(window.IsVisible);
+				RegressionAssert.False(window.IsEnabled);
 				RegressionAssert.Equal(1.0, titleBar.Opacity);
 				window.Close();
 				RegressionAssert.Equal(1, prepareCount);
 				pending.SetResult(true);
 				PumpUntil(() => failures == 1);
 				RegressionAssert.True(window.IsVisible);
+				RegressionAssert.True(window.IsEnabled);
 				RegressionAssert.False(closed);
 				((Button)titleBar.FindName("CloseButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 				PumpUntil(() => closed);
 				RegressionAssert.Equal(2, prepareCount);
 			}
 			finally { pending.TrySetResult(true); }
+		});
+	}
+
+	public void CanceledClosingDoesNotStartNexusShutdownAndCanBeRetried()
+	{
+		WithWindow((window, _) =>
+		{
+			var cancel = true;
+			var prepared = false;
+			var closed = false;
+			window.Closing += (_, e) => e.Cancel = cancel;
+			ReduxWindowBehavior.AttachAsyncShutdown(window, () =>
+			{
+				prepared = true;
+				return Task.CompletedTask;
+			}, ex => throw new InvalidOperationException("Unexpected shutdown failure", ex));
+			window.Closed += (_, _) => closed = true;
+			try
+			{
+				window.Close();
+				window.Dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+				RegressionAssert.False(prepared);
+				RegressionAssert.True(window.IsVisible);
+				RegressionAssert.True(window.IsEnabled);
+				cancel = false;
+				window.Close();
+				PumpUntil(() => closed);
+				RegressionAssert.True(prepared);
+			}
+			finally { cancel = false; }
 		});
 	}
 

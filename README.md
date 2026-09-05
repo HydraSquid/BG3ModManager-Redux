@@ -3,7 +3,7 @@
 This is a development fork of **[circleainn/BG3ModManager-Redux](https://github.com/circleainn/BG3ModManager-Redux)**.
 Please refer to the [upstream README](https://github.com/circleainn/BG3ModManager-Redux#readme)
 for the project overview, requirements, installation, and general usage. This page documents only
-how our `hydra-dev` branch differs from that Redux baseline.
+how our `main` branch differs from that Redux baseline.
 
 **Upstream:** [Repository](https://github.com/circleainn/BG3ModManager-Redux) |
 [Website](https://bg3mm-redux.com/) |
@@ -11,12 +11,12 @@ how our `hydra-dev` branch differs from that Redux baseline.
 
 ## Baseline
 
-This branch is based on Redux commit
-[`74995a2`](https://github.com/circleainn/BG3ModManager-Redux/commit/74995a2).
-Later upstream changes have not yet been merged, including the newer save-workflow protections,
-unsaved-change prompts, and Windows-protected API-key storage.
+This branch includes upstream Redux through
+[`7147cd9`](https://github.com/circleainn/BG3ModManager-Redux/commit/7147cd9), including its
+save-workflow protections, unsaved-change prompts, and Windows-protected API-key storage.
+Our changes are merged on top without rewriting the shared history.
 
-[View this branch's changes since that baseline](https://github.com/HydraSquid/BG3ModManager-Redux/compare/74995a2...hydra-dev).
+[View this branch's changes since that baseline](https://github.com/HydraSquid/BG3ModManager-Redux/compare/7147cd9...main).
 This is development source, not a separate stable release.
 
 ## Current Differences
@@ -40,18 +40,18 @@ This is development source, not a separate stable release.
   validates BG3 Nexus/mod.io URLs and supports manual mod.io links without an API key.
 - **Table readability and selection:** theme-aware alternating rows across tables, including
   custom themes, plus deferred cross-list selection clearing to avoid a WPF selection crash.
-- **Shutdown handling:** closing waits for Nexus work and settings persistence. A failed shutdown
-  keeps the window visible and allows another attempt instead of leaving a hidden process.
+- **Shutdown handling:** after the upstream unsaved-change confirmation, closing waits for Nexus
+  work and settings persistence. A failed shutdown keeps the window visible and allows another
+  attempt instead of leaving a hidden process.
 
 ## Limits and Verification
 
-Keep backups before testing. Personal API keys in this branch are still stored in local portable
-`Data/settings.json`; do not share that file or your runtime `Data`, `Orders`, or `_Logs` folders.
+Keep backups before testing and keep runtime `Data`, `Orders`, and `_Logs` folders private.
 Downloads require a declared HTTP response length and are limited to 32 GiB per archive.
 
 The fork includes regression coverage for the changes above. From a Windows checkout with the
 upstream build prerequisites and submodules installed, run `./Test-Redux.ps1`.
-Windows CI also targets `hydra-dev`.
+Windows CI targets `main`.
 
 For a problem specific to these changes, use [this fork's issue tracker](https://github.com/HydraSquid/BG3ModManager-Redux/issues).
 If it also reproduces on the unmodified baseline, report it upstream with that distinction.

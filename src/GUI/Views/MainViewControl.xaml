@@ -652,13 +652,17 @@
 								<MenuItem Command="{Binding Keys.Save.Command}" Header="Save Current Order" InputGestureText="{Binding Keys.Save.DisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Save}" /></MenuItem.Icon>
 								</MenuItem>
-								<MenuItem Command="{Binding Keys.SaveAs.Command}" Header="Save Order As File..." InputGestureText="{Binding Keys.SaveAs.DisplayBindingText}">
+								<MenuItem Command="{Binding Keys.SaveAs.Command}" Header="Save Load Order to File..." InputGestureText="{Binding Keys.SaveAs.DisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Duplicate}" /></MenuItem.Icon>
 								</MenuItem>
 								<MenuItem Command="{Binding Keys.NewOrder.Command}" Header="Create Blank Load Order" InputGestureText="{Binding Keys.NewOrder.DisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.DocumentText}" /></MenuItem.Icon>
 								</MenuItem>
-								<MenuItem Command="{Binding Keys.ImportOrderFromFile.Command}" Header="Add Load Order from File..." InputGestureText="{Binding Keys.ImportOrderFromFile.DisplayBindingText}">
+								<MenuItem Command="{Binding Keys.RenameOrder.Command}" Header="Rename Load Order..." InputGestureText="{Binding Keys.RenameOrder.DisplayBindingText}">
+									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Create}" /></MenuItem.Icon>
+								</MenuItem>
+								<Separator />
+								<MenuItem Command="{Binding Keys.ImportOrderFromFile.Command}" Header="Import Load Order from File..." InputGestureText="{Binding Keys.ImportOrderFromFile.DisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" /></MenuItem.Icon>
 								</MenuItem>
 								<MenuItem Command="{Binding Keys.ImportReduxLoadOrder.Command}" Header="Import Redux Modlist..." InputGestureText="{Binding Keys.ImportReduxLoadOrder.DisplayBindingText}">
@@ -668,6 +672,7 @@
 								<MenuItem Command="{Binding OpenLoadOrderFolderCommand}" Header="Open Load Order Folder">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" /></MenuItem.Icon>
 								</MenuItem>
+								<Separator />
 								<MenuItem Command="{Binding DeleteOrderCommand}" CommandParameter="{Binding SelectedModOrder}" Header="Delete Selected Order">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Trash}" Foreground="{DynamicResource ReduxErrorBrush}" /></MenuItem.Icon>
 								</MenuItem>
@@ -677,11 +682,8 @@
 								<MenuItem Command="{Binding Keys.ExportOrderToGame.Command}" Header="Export to Game" InputGestureText="{Binding Keys.ExportOrderToGame.DisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.CloudUpload}" /></MenuItem.Icon>
 								</MenuItem>
-								<MenuItem Command="{Binding Keys.ExportOrderToZip.Command}" Header="Back Up Active Mods to ZIP" InputGestureText="{Binding Keys.ExportOrderToZip.DisplayBindingText}">
+								<MenuItem Command="{Binding Keys.ExportOrderToZip.Command}" Header="Back Up Active Mods to ZIP..." InputGestureText="{Binding Keys.ExportOrderToZip.DisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Archive}" /></MenuItem.Icon>
-								</MenuItem>
-								<MenuItem Command="{Binding Keys.ExportOrderToArchiveAs.Command}" Header="Back Up Active Mods to ZIP As..." InputGestureText="{Binding Keys.ExportOrderToArchiveAs.DisplayBindingText}">
-									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Duplicate}" /></MenuItem.Icon>
 								</MenuItem>
 								<Separator />
 								<MenuItem Command="{Binding Keys.Refresh.Command}" Header="Refresh Mods" InputGestureText="{Binding Keys.Refresh.DisplayBindingText}">
@@ -1306,15 +1308,17 @@
 										</ComboBox.ItemContainerStyle>
 										<ComboBox.ContextMenu>
 											<ContextMenu DataContext="{Binding RelativeSource={RelativeSource Mode=Self}, Path=PlacementTarget.Tag}">
-												<MenuItem Command="{Binding ToggleOrderRenamingCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}, Path=PlacementTarget}" Header="Rename">
+											<MenuItem Command="{Binding Keys.RenameOrder.Command}" Header="Rename Load Order...">
 													<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Create}" /></MenuItem.Icon>
 												</MenuItem>
+												<Separator />
 												<MenuItem Command="{Binding Path=OpenInFileExplorerCommand, Source={x:Static dapp:DivinityApp.Commands}}" CommandParameter="{Binding SelectedModOrder.FilePath}" Header="Open in File Explorer...">
 													<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" /></MenuItem.Icon>
 												</MenuItem>
 												<MenuItem Command="{Binding CopyPathToClipboardCommand}" CommandParameter="{Binding SelectedModOrder.FilePath}" Header="Copy Path to Clipboard">
 													<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Copy}" /></MenuItem.Icon>
 												</MenuItem>
+												<Separator />
 												<MenuItem Command="{Binding DeleteOrderCommand}" CommandParameter="{Binding SelectedModOrder}" Header="Delete Order">
 													<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Trash}" Foreground="{DynamicResource ReduxErrorBrush}" /></MenuItem.Icon>
 												</MenuItem>
@@ -1322,8 +1326,21 @@
 									</ComboBox.ContextMenu>
 								</ComboBox>
 									<Button x:Name="SaveButton"
+										AutomationProperties.Name="Save current load order"
 										ToolTip="Save changes to the selected load order">
-										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Save}" />
+										<controls:ReduxIcon x:Name="SaveButtonIcon"
+											StrokeData="{StaticResource Redux.Icon.Save}" />
+									</Button>
+									<Button x:Name="SaveAsOrderButton"
+										AutomationProperties.Name="Save as a new load order"
+										ToolTip="Save as a new named load order">
+										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Duplicate}" />
+									</Button>
+									<Button Command="{Binding DeleteOrderCommand}"
+										CommandParameter="{Binding SelectedModOrder}"
+										AutomationProperties.Name="Delete selected load order"
+										ToolTip="Delete the selected load order">
+										<controls:ReduxIcon Foreground="{DynamicResource ReduxErrorBrush}" StrokeData="{StaticResource Redux.Icon.Trash}" />
 									</Button>
 									<Button x:Name="OrderActionsButton"
 										AutomationProperties.Name="More load order actions"
@@ -1331,41 +1348,36 @@
 										Foreground="{DynamicResource ReduxAccentHoverBrush}"
 										ToolTip="More load order actions">
 										<controls:ReduxIcon Data="{StaticResource Redux.Icon.MoreHorizontal}" />
-										<Button.ContextMenu>
-											<ContextMenu Placement="Bottom">
-												<MenuItem Command="{Binding Keys.SaveAs.Command}" Header="Save a Copy As...">
-													<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Duplicate}" /></MenuItem.Icon>
-												</MenuItem>
-												<MenuItem Command="{Binding Keys.NewOrder.Command}" Header="Create Blank Load Order">
-													<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.DocumentText}" /></MenuItem.Icon>
-												</MenuItem>
-												<MenuItem Command="{Binding Keys.ImportOrderFromFile.Command}" Header="Add Load Order from File...">
-													<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" /></MenuItem.Icon>
-												</MenuItem>
-												<MenuItem Command="{Binding Keys.ImportReduxLoadOrder.Command}" Header="Import Redux Modlist...">
-													<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Download}" /></MenuItem.Icon>
-												</MenuItem>
+									<Button.ContextMenu>
+										<ContextMenu Placement="Bottom">
+											<MenuItem Command="{Binding Keys.SaveAs.Command}" Header="Save Load Order to File...">
+												<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Duplicate}" /></MenuItem.Icon>
+											</MenuItem>
+											<MenuItem Command="{Binding Keys.NewOrder.Command}" Header="Create Blank Load Order">
+												<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.DocumentText}" /></MenuItem.Icon>
+											</MenuItem>
+											<MenuItem Command="{Binding Keys.RenameOrder.Command}" Header="Rename Load Order...">
+												<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Create}" /></MenuItem.Icon>
+											</MenuItem>
+											<Separator />
+											<MenuItem Command="{Binding Keys.ImportOrderFromFile.Command}" Header="Import Load Order from File...">
+												<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" /></MenuItem.Icon>
+											</MenuItem>
+											<MenuItem Command="{Binding Keys.ImportReduxLoadOrder.Command}" Header="Import Redux Modlist...">
+												<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Download}" /></MenuItem.Icon>
+											</MenuItem>
 											<MenuItem Command="{Binding Keys.ExportReduxLoadOrder.Command}" Header="Export Redux Modlist...">
 												<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.CloudUpload}" /></MenuItem.Icon>
 											</MenuItem>
 											<Separator />
-											<MenuItem Header="Back Up Active Mods">
+											<MenuItem Command="{Binding Keys.ExportOrderToZip.Command}" Header="Back Up Active Mods to ZIP..." InputGestureText="{Binding Keys.ExportOrderToZip.DisplayBindingText}">
 												<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Archive}" /></MenuItem.Icon>
-												<MenuItem Command="{Binding Keys.ExportOrderToArchiveAs.Command}" Header="Choose ZIP Location..." InputGestureText="{Binding Keys.ExportOrderToArchiveAs.DisplayBindingText}">
-													<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" /></MenuItem.Icon>
-												</MenuItem>
-												<MenuItem Command="{Binding Keys.ExportOrderToZip.Command}" Header="Save to Redux Export Folder" InputGestureText="{Binding Keys.ExportOrderToZip.DisplayBindingText}">
-													<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Archive}" /></MenuItem.Icon>
-												</MenuItem>
 											</MenuItem>
+											<Separator />
 											<MenuItem Command="{Binding OpenLoadOrderFolderCommand}" Header="Open Load Order Folder">
 												<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" /></MenuItem.Icon>
 											</MenuItem>
-											<Separator />
-											<MenuItem Command="{Binding DeleteOrderCommand}" CommandParameter="{Binding SelectedModOrder}" Header="Delete Selected Order">
-													<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Trash}" Foreground="{DynamicResource ReduxErrorBrush}" /></MenuItem.Icon>
-												</MenuItem>
-											</ContextMenu>
+										</ContextMenu>
 										</Button.ContextMenu>
 									</Button>
 									<Button x:Name="ToolbarDownloadsButton" AutomationProperties.Name="Downloads" Style="{StaticResource ToolbarLabeledButtonStyle}" Click="ToolbarDownloadsButton_Click" ToolTip="Show or hide Nexus downloads">
@@ -1393,6 +1405,7 @@
 												<MenuItem Command="{Binding CopyPathToClipboardCommand}" CommandParameter="{Binding SelectedProfile.ModSettingsFile}" Header="Copy Path to Clipboard">
 													<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Copy}" /></MenuItem.Icon>
 												</MenuItem>
+												<Separator />
 												<MenuItem Command="{Binding CopyOrderToClipboardCommand}" Header="Copy Order to Clipboard">
 													<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Clipboard}" /></MenuItem.Icon>
 												</MenuItem>

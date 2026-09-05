@@ -7,6 +7,24 @@ namespace DivinityModManager.AppServices;
 /// </summary>
 public static class LoadOrderPersistencePolicy
 {
+	/// <summary>
+	/// Creates a detached working-order snapshot. Editing the active list must not
+	/// mutate the selected saved order until the user explicitly saves it.
+	/// </summary>
+	public static DivinityLoadOrder CreateWorkingCopy(
+		DivinityLoadOrder selectedOrder,
+		IEnumerable<DivinityModData> activeMods)
+	{
+		var workingCopy = new DivinityLoadOrder
+		{
+			Name = selectedOrder?.Name,
+			FilePath = selectedOrder?.FilePath,
+			LastModifiedDate = DateTime.Now
+		};
+		workingCopy.AddRange(activeMods ?? Enumerable.Empty<DivinityModData>(), true);
+		return workingCopy;
+	}
+
 	public static DivinityLoadOrder CreateBlankOrder(string name, string filePath)
 	{
 		return new DivinityLoadOrder
@@ -15,6 +33,22 @@ public static class LoadOrderPersistencePolicy
 			FilePath = filePath,
 			Order = []
 		};
+	}
+
+	public static bool SaveSettingsWithPresentationSnapshot(
+		DivinityModManagerSettings settings,
+		List<ModListVisualDividerData> savedDividers,
+		Func<bool> saveSettings)
+	{
+		// Serialize the accepted discard without replacing the working UI state.
+		// It must remain available if saving or the subsequent window close fails.
+		var workingDividers = settings.VisualModListDividers;
+		try
+		{
+			settings.VisualModListDividers = savedDividers;
+			return saveSettings();
+		}
+		finally { settings.VisualModListDividers = workingDividers; }
 	}
 
 	public static bool RequiresSaveAs(DivinityLoadOrder order)

@@ -7,11 +7,16 @@
 [![Current build](https://img.shields.io/badge/build-0.1.0--alpha.13-9A7BFF?style=flat-square)](https://github.com/circleainn/BG3ModManager-Redux/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-4F86F7?style=flat-square)](#requirements-and-alpha-status)
 [![License](https://img.shields.io/badge/license-MIT-42A66F?style=flat-square)](LICENSE)
+![Discord — coming soon](https://img.shields.io/badge/Discord-Coming_Soon-5865F2?style=flat-square&logo=discord&logoColor=white)
 
 [Download on Nexus Mods](https://www.nexusmods.com/baldursgate3/mods/23799) ·
 [Report a problem](https://github.com/circleainn/BG3ModManager-Redux/issues) ·
 [Browse the docs](docs/README.md) ·
 [See what differs from BG3MM](docs/CHANGES_FROM_UPSTREAM.md)
+
+<br>
+
+<a href="https://ko-fi.com/circleain"><img alt="Support me on Ko-fi" src="https://img.shields.io/badge/Support_me_on_Ko--fi-FF5E5B?style=for-the-badge&amp;logo=ko-fi&amp;logoColor=white"></a>
 
 </div>
 

@@ -111,8 +111,9 @@ or reorder mods.
 The opt-in **Load Order Advisor** is a separate experimental rule family. It combines exact package
 declarations with reviewed offline dependency and ordering facts. Its organizer can preserve current
 separators, create non-empty suggested separators, or remove separators. Every result is previewed;
-applying it is one undoable, unsaved action. Advice can be ignored per relationship without
-disabling other diagnostics.
+the preview counts only separators that it creates, removes, or actually repositions. Applying it is
+one undoable, unsaved action. Advice can be ignored per relationship without disabling other
+diagnostics.
 
 An on-demand **Active File Overlaps** inspector also reports shared internal paths across active and
 override PAKs. It describes possible interactions, not confirmed conflicts.

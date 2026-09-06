@@ -1,52 +1,22 @@
 # Redux creator manifest
 
-`redux.mod.json` is an optional identity link for mod authors who want Redux to connect an installed
-PAK directly to its Nexus Mods project. It is declarative metadata, not an installer or executable
-format.
+`redux.mod.json` is optional, declarative metadata that lets a mod author attach stable provider
+identity to a PAK. Redux validates it against the package's parsed `meta.lsx`; it is never executed
+and cannot install files or change a user's load order.
 
-The canonical placement is:
+Most Nexus authors should use the compact form. The detailed form is available for multi-module
+packages, mod.io identity, offline fallback metadata, or informational dependency claims.
 
-- `redux.mod.json` at the virtual root of every distributed PAK.
+## Where the file belongs
 
-Embedding the manifest keeps the metadata attached to the installed package after its original ZIP,
-7z, or RAR archive has been extracted or discarded. A multi-PAK release should embed a manifest in
-each PAK, and each manifest should describe only the modules contained by that PAK.
+Place `redux.mod.json` at the virtual root of every distributed PAK. A multi-PAK release should put
+a manifest in each PAK, and each manifest should describe only the modules in that PAK.
 
-An archive may also contain a root-level copy as an import-time convenience, but that copy is
-non-authoritative and does not replace the embedded manifest. If archive and PAK metadata conflict,
-Redux should reject the archive claim and validate the embedded PAK metadata independently.
+An outer release archive may also contain a root-level copy for import-time discovery. That copy is
+only a convenience: embedded PAK metadata remains authoritative and is validated independently.
+Conflicting archive claims are rejected.
 
-Redux discovers a root-level manifest while it is already scanning the PAK, then validates the
-claim against the package's parsed `meta.lsx` module metadata. Discovery is read-only and does not
-perform a second package scan. A valid manifest is retained as verified runtime metadata. An
-invalid manifest is ignored and appears as a non-destructive Mod Diagnostics finding.
-
-Validated source claims participate in Redux's normal provider-resolution pipeline. The embedded
-file only needs to establish the stable project identity; cached or live Nexus data supplies the
-name, author, description, images, version history, and other user-facing metadata when available.
-Explicit manual links and manual unlinks take precedence, and source claims never alter load-order
-state. Cached creator-supplied associations are rechecked against the currently installed PAK and
-discarded if its manifest is removed, becomes invalid, or claims a different project.
-
-## Trust model
-
-A manifest is a claim supplied by the package author. Redux must validate it before use:
-
-- module UUIDs, folders, names, and versions must agree with metadata parsed from the PAK;
-- source IDs may establish a provider association, but must not replace an explicit manual link or
-  manual unlink;
-- dependencies remain informational unless the referenced module UUID is present and valid;
-- unknown properties or future schema versions must fail closed;
-- manifests cannot contain commands, absolute paths, credentials, executable hooks, deletion
-  instructions, or changes to `modsettings.lsx`;
-- a manifest cannot directly move mods or modify a user's load order.
-
-Invalid or conflicting manifest claims are ignored and surface a non-destructive diagnostic.
-Explicit user source choices remain unchanged.
-
-## Recommended Nexus manifest
-
-For most Nexus Mods releases, this compact form is all that is needed:
+## Compact Nexus manifest
 
 ```json
 {
@@ -60,28 +30,18 @@ For most Nexus Mods releases, this compact form is all that is needed:
 }
 ```
 
-`moduleUuid` must match the primary module UUID in the PAK's `meta.lsx`. `projectId` is the number
-at the end of the Nexus Mods page URL, such as `12345` in
-`https://www.nexusmods.com/baldursgate3/mods/12345`. Redux uses that identity to construct the page
-link and retrieve current Nexus metadata through its normal source-integration pipeline.
+Replace:
 
-`fileId` may be added inside `nexus` when a release author wants to identify a specific Nexus file,
-but it is not required for the project connection.
+- `moduleUuid` with the primary module UUID from the PAK's `meta.lsx`;
+- `projectId` with the numeric ID at the end of its Nexus Mods page URL.
 
-## Create the compact manifest
-
-Copy the recommended template above into a plain text file named `redux.mod.json`. Replace:
-
-- `moduleUuid` with the primary module UUID from the mod's `meta.lsx`;
-- `projectId` with the number at the end of the mod's Nexus Mods page URL.
-
-Place the completed file at the virtual root of the mod project before building the PAK. No Redux
-tool or post-build repacking step is required.
+An optional positive `fileId` can identify a specific Nexus file, but it is not required to connect
+the installed package with its project. Place the completed JSON at the virtual root before building
+the PAK; Redux does not require a separate post-build tool.
 
 ## Detailed manifest
 
-The original detailed form remains supported for compatibility and for authors who intentionally
-want to include offline fallback metadata or informational dependency claims:
+Use the detailed form when the compact Nexus identity is not sufficient:
 
 ```json
 {
@@ -92,6 +52,7 @@ want to include offline fallback metadata or informational dependency claims:
     "name": "Example Mod",
     "version": "1.2.0",
     "authors": ["Example Author"],
+    "description": "Optional offline fallback description.",
     "homepage": "https://example.invalid/mod",
     "sources": [
       {
@@ -121,5 +82,40 @@ want to include offline fallback metadata or informational dependency claims:
 }
 ```
 
-The authoritative machine-readable definition is
-[`docs/schemas/redux.mod.schema.json`](schemas/redux.mod.schema.json).
+`sources[].service` accepts `nexus` or `modio`. Provider and file IDs must be positive integers.
+Dependencies are informational claims; the package's own parsed metadata and Redux's normal
+diagnostic rules remain authoritative for user-facing checks.
+
+The compact and detailed forms are intentionally exclusive. Do not place `moduleUuid` or `nexus`
+beside `mod` in one manifest.
+
+## Validation and precedence
+
+Redux treats the manifest as an author-supplied claim, not proof by itself.
+
+- Claimed UUIDs, folders, names, versions, and PAK filenames must agree with parsed package data.
+- Unknown properties and unsupported schema versions fail closed.
+- Duplicate authors, invalid URLs, unrelated modules, and conflicting PAK claims are rejected.
+- A source claim cannot replace an explicit manual link or manual unlink.
+- A manifest cannot contain commands, hooks, credentials, absolute paths, or deletion instructions.
+- It cannot move mods, activate packages, rewrite `modsettings.lsx`, or bypass a review dialog.
+
+A valid claim joins Redux's normal source-resolution pipeline. Cached or live provider data may add
+the current name, author, description, image, or version history. If the installed PAK later loses
+the manifest or changes its claimed project, the cached creator association is revalidated and
+discarded when it no longer matches.
+
+Invalid claims are ignored and shown as a non-destructive Mod Diagnostics finding. The package
+itself is not edited.
+
+## Author checklist
+
+1. Use schema version `1` and manifest type `bg3-redux-mod`.
+2. Copy identity values from the final PAK, not an earlier project state.
+3. Include only modules actually contained by that PAK.
+4. Use public HTTP or HTTPS URLs and never include credentials or private paths.
+5. Validate against the [JSON schema](schemas/redux.mod.schema.json).
+6. Run **Tools > Inspect Mod Package...** against the final release artifact.
+
+The [schema](schemas/redux.mod.schema.json) is the authoritative field and length definition. This
+guide explains intended use; it does not override the schema.

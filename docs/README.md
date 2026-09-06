@@ -1,32 +1,37 @@
 # Redux documentation
 
-This directory separates everyday product guidance from author and maintainer references. Start
-with the README for the public overview, then use the smallest guide that fits the question.
+Use this page to find the smallest guide that answers your question. The main
+[project README](../README.md) is the best starting point for installing, testing, or getting a
+quick picture of Redux.
 
-## Product and contribution guides
+## Choose a path
 
-| Guide | Best for | Covers |
-|:--|:--|:--|
-| [Project README](../README.md) | Users and testers | Features, safety boundaries, requirements, and reporting |
-| [Changes from upstream](CHANGES_FROM_UPSTREAM.md) | Users and contributors | What BG3MM provides and what Redux changes or owns |
-| [Optional features](REDUX_OPTIONAL_MODULES.md) | Contributors | Online-source and Load Order Advisor boundaries |
-| [Redux mod database](REDUX_MOD_DATABASE.md) | Contributors and maintainers | Recognition policy, advisor knowledge, and contribution review |
-
-## Mod-author references
-
-| Guide | Covers |
+| I want to… | Start here |
 |:--|:--|
-| [Mod developer tools](MOD_DEVELOPER_TOOLS.md) | Read-only package and release-archive preflight |
-| [Creator manifest](REDUX_CREATOR_MANIFEST.md) | Optional validated provider identity inside a PAK |
-| [Creator manifest schema](schemas/redux.mod.schema.json) | Machine-readable `redux.mod.json` definition |
+| Understand Redux as a user | [Project README](../README.md) |
+| See what Redux retains and changes from BG3MM | [Changes from upstream](CHANGES_FROM_UPSTREAM.md) |
+| Understand diagnostics, online information, or the Load Order Advisor | [Feature boundaries](REDUX_OPTIONAL_MODULES.md) |
+| Help improve offline mod recognition | [Redux mod database](REDUX_MOD_DATABASE.md) |
+| Check a PAK or release archive before publishing it | [Mod developer tools](MOD_DEVELOPER_TOOLS.md) |
+| Add stable provider identity to a PAK | [Creator manifest](REDUX_CREATOR_MANIFEST.md) |
 
-## Maintainer references
+## Author and maintainer references
 
-- [Database maintenance tool](../tools/ReduxModDatabaseTool/README.md)
-- [Third-party notices](../licenses/Third-Party-Notices.md)
+- [Creator manifest JSON schema](schemas/redux.mod.schema.json)
+- [Database maintenance CLI and desktop reviewer](../tools/ReduxModDatabaseTool/README.md)
 - [Windows build and regression workflow](../.github/workflows/windows-ci.yml)
+- [Third-party notices](../licenses/Third-Party-Notices.md)
+
+## Terms used throughout the docs
+
+- **Mod Diagnostics** means the built-in, read-only checks that explain package and dependency
+  conditions.
+- **Load Order Advisor** means the optional guidance layer and its user-reviewed organizer.
+- **Separator** means a Redux visual grouping marker. Separators never enter `modsettings.lsx`.
+- **Redux Modlist** means the portable `.bg3redux` format. It does not contain PAKs or saves.
+- **Contribution report** means a privacy-limited `.bg3redux-report` prepared for database review.
 
 > [!IMPORTANT]
-> Contribution reports, logs, and screenshots can contain contextual information. Never publish API
-> keys, credentials, or private filesystem details. `.bg3redux-report` files are designed to exclude
-> those values, but should still be reviewed before sharing.
+> Review logs, screenshots, and reports before sharing them. Contribution reports are designed to
+> exclude credentials and private paths, but API keys or other private information should never be
+> posted publicly.

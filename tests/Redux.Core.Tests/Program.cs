@@ -250,6 +250,7 @@ internal static class Program
 			(nameof(loadOrderOrganizer.RemoveSeparatorsGloballySortsWithoutReturningMarkers), loadOrderOrganizer.RemoveSeparatorsGloballySortsWithoutReturningMarkers),
 			(nameof(loadOrderOrganizer.UnknownModsRetainTheirRelativeOrder), loadOrderOrganizer.UnknownModsRetainTheirRelativeOrder),
 			(nameof(loadOrderOrganizer.PreserveSeparatorsDoesNotAdoptAVisibleRowBelowAClosedSeparator), loadOrderOrganizer.PreserveSeparatorsDoesNotAdoptAVisibleRowBelowAClosedSeparator),
+			(nameof(loadOrderOrganizer.PreserveSeparatorsReportsOnlyMarkersThatActuallyMove), loadOrderOrganizer.PreserveSeparatorsReportsOnlyMarkersThatActuallyMove),
 			(nameof(loadOrderOrganizer.IgnoringOneRelationshipDoesNotSuppressOtherAdvisorKnowledge), loadOrderOrganizer.IgnoringOneRelationshipDoesNotSuppressOtherAdvisorKnowledge),
 			(nameof(saveGames.RecognizesEveryAdvertisedSaveArchiveFormat), saveGames.RecognizesEveryAdvertisedSaveArchiveFormat),
 			(nameof(saveGames.ClassifiesSaveDifficultyFromAuthoritativeRulesetValues), saveGames.ClassifiesSaveDifficultyFromAuthoritativeRulesetValues),

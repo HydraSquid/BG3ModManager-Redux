@@ -1,22 +1,84 @@
 # Redux Mod Database Tool
 
-This developer utility builds and validates conservative additions to
-`src/GUI/Resources/ReduxModDatabase.json`.
+This maintainer utility validates and prepares conservative updates to
+`src/GUI/Resources/ReduxModDatabase.json`. It is deliberately separate from Redux runtime behavior:
+it does not contact providers, store credentials, guess a project from a filename, or write without
+an explicit `--write` flag.
 
-It deliberately separates database maintenance from Redux's runtime. The tool never contacts
-Nexus Mods, stores credentials, guesses a project from a filename, or modifies the database unless
-the `add` command receives an explicit `--write` flag.
+For the database trust model and user contribution flow, read the
+[Redux mod database guide](../../docs/REDUX_MOD_DATABASE.md).
 
-## Commands
+## Quick reference
 
-From the repository root:
+Run commands from the repository root.
+
+| Command | Purpose | Writes by default? |
+|:--|:--|:--:|
+| `validate` | Check schema, counts, references, hashes, group cycles, and collisions | No |
+| `fingerprint` | Calculate Redux's exact PAK or archive fingerprint | No |
+| `review-report` | Privacy-audit and classify a contribution report | Only the requested review output |
+| `accept-report` | Preview selected, independently reviewed report records | No |
+| `add` | Preview one project and exact-artifact addition | No |
+
+## Validate the database
 
 ```powershell
 dotnet run --project tools/ReduxModDatabaseTool -- validate
+dotnet run --project tools/ReduxModDatabaseTool -- validate --database "C:\Redux\ReduxModDatabase.json"
+```
+
+Validation covers the complete database, including source identities, exact-match collisions,
+ordering-group references and cycles, dependency aliases and substitutes, supported match policy,
+and recorded counts. Run it before and after every accepted update.
+
+## Fingerprint one artifact
+
+```powershell
 dotnet run --project tools/ReduxModDatabaseTool -- fingerprint --file "C:\Mods\Example.pak"
+```
+
+PAKs use xxHash64 encoded as Base64 from the little-endian 64-bit value. Archives use lowercase MD5.
+Both include exact byte length. These values identify an exact artifact; they are not signatures of
+authorship or safety.
+
+## Review a contribution report
+
+```powershell
 dotnet run --project tools/ReduxModDatabaseTool -- review-report `
-  --file "C:\Reports\Redux-Mod-Database-Contribution.bg3redux-report" `
-  --output "C:\Reports\Redux-Mod-Database-Review.json"
+  --file "C:\Reports\Contribution.bg3redux-report" `
+  --output "C:\Reports\Contribution.review.json"
+```
+
+The command validates the report schema and privacy declaration, rejects embedded path data,
+non-public provider URLs, invalid UUID fallbacks, and inconsistent fingerprints, then compares each
+record with the current database. Results are grouped into new project candidates, known projects,
+already-known packages, conflicts, non-Nexus records, and unavailable fingerprints. The database is
+not changed.
+
+## Accept reviewed report records
+
+After independently confirming the Nexus projects, preview one project or a selected batch:
+
+```powershell
+dotnet run --project tools/ReduxModDatabaseTool -- accept-report `
+  --file "C:\Reports\Contribution.bg3redux-report" `
+  --mod-id 123
+
+dotnet run --project tools/ReduxModDatabaseTool -- accept-report `
+  --file "C:\Reports\Contribution.bg3redux-report" `
+  --mod-ids 123,456,789
+```
+
+Acceptance requires exact fingerprints and verified project IDs. It rejects collisions and does not
+promote UUIDs into reviewed module identities. Nexus file IDs are retained when present; exact PAK
+records use `-1` when a file ID is unavailable.
+
+Review the preview, then repeat the same command with `--write`. The selected batch is validated and
+written as one atomic replacement.
+
+## Add one reviewed artifact
+
+```powershell
 dotnet run --project tools/ReduxModDatabaseTool -- add `
   --file "C:\Mods\Example.pak" `
   --mod-id 123 `
@@ -26,53 +88,41 @@ dotnet run --project tools/ReduxModDatabaseTool -- add `
   --version "1.0"
 ```
 
-The `add` command is preview-only by default. Review its proposed records, then repeat it with
-`--write` to atomically update the database. Run `validate` again before committing the result.
-Validation also checks the bundled community identity and load-order sections when present,
-including UUID validity, uniqueness, project references, ordering-group references and cycles,
-dependency aliases and substitutes, supported match policy, and recorded counts.
+Useful options:
 
-The `review-report` command validates the report's schema and privacy declaration, rejects absolute
-or embedded path data, non-public provider URLs, invalid UUID fallbacks, and inconsistent
-fingerprint states, then compares exact fingerprints with the current database. Its output
-separates new project candidates, candidates for known projects, already-known packages, conflicts,
-non-Nexus records, and packages whose fingerprints were unavailable. It never changes the database.
+| Option | Meaning |
+|:--|:--|
+| `--authors <a,b>` | Multiple project authors |
+| `--aliases <a,b>` | Additional reviewed project names |
+| `--category <name>` | Nexus/Redux category metadata |
+| `--picture-url <url>` | Public Nexus image URL |
+| `--logical-file-name <name>` | Archive display filename |
+| `--module-uuid <uuid>` | Optional reviewed module identity |
+| `--module-name <name>` | Reviewed module name |
+| `--module-folder <folder>` | Reviewed module folder |
+| `--module-files <a.pak,b.pak>` | Expected PAK filenames |
+| `--database <path>` | Override automatic database discovery |
+| `--write` | Atomically apply a validated preview |
 
-After independently confirming candidate Nexus projects and file records, preview one project or a
-selected batch:
+The `add` command is also preview-only until `--write` is present. A module UUID should be promoted
+only when maintainers have established that it reliably identifies one project.
 
-```powershell
-dotnet run --project tools/ReduxModDatabaseTool -- accept-report `
-  --file "C:\Reports\Redux-Mod-Database-Contribution.bg3redux-report" `
-  --mod-id 123
+## Desktop reviewer
 
-dotnet run --project tools/ReduxModDatabaseTool -- accept-report `
-  --file "C:\Reports\Redux-Mod-Database-Contribution.bg3redux-report" `
-  --mod-ids 123,456,789
-```
-
-This is also preview-only by default. It requires exact fingerprints and verified Nexus project IDs,
-rejects fingerprint conflicts, and does not promote module UUIDs into reviewed identities. Nexus file
-IDs are preserved when the report contains them; exact PAK records use `-1` when modern archive names
-do not expose a file ID. A selected batch is validated and written as one atomic update. Repeat it
-with `--write` only after reviewing the proposed records.
-
-## Private desktop reviewer
-
-The repository also contains a compact maintainer interface that wraps the same commands:
+The repository contains a compact private maintainer interface over the same validation and
+acceptance code:
 
 ```powershell
 dotnet run --project tools/ReduxModDatabaseTool.Desktop
 ```
 
-It opens a contribution report, shows duplicate/conflict classifications, lets a maintainer select
-independently verified Nexus projects, previews the exact batch, and exposes the write action only
-after that preview succeeds. This utility is not part of Redux tester packages.
+It opens a contribution report, displays duplicate and conflict classifications, lets a maintainer
+select verified projects, and exposes the write action only after a successful preview. It is not
+included in public Redux tester packages.
 
-When launched from a repository checkout, the reviewer finds
-`src/GUI/Resources/ReduxModDatabase.json` automatically. A portable copy can keep
-`ReduxModDatabase.json` beside the executable or in a `Resources` subfolder. Paths can also be
-provided explicitly:
+From a checkout, the reviewer finds the bundled database automatically. A portable copy can place
+`ReduxModDatabase.json` beside the executable or in a `Resources` subfolder, or receive paths
+explicitly:
 
 ```powershell
 ReduxModDatabaseReviewer.exe `
@@ -80,5 +130,5 @@ ReduxModDatabaseReviewer.exe `
   --database "C:\Redux\ReduxModDatabase.json"
 ```
 
-Use `--help` for the full option list, including aliases, categories, picture URLs, and reviewed
-module identities.
+Use `--help` for the command-line contract. A successful preview is still not a substitute for
+checking the real provider project and exact release artifact.

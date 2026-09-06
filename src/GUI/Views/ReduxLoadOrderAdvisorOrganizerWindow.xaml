@@ -232,7 +232,7 @@
 						<Border Width="38" Height="38" Margin="0,0,11,0" Background="{DynamicResource ReduxAccentPillBackground}" CornerRadius="8">
 							<controls:ReduxIcon Width="17" Height="17" Foreground="{DynamicResource ReduxAccentHoverBrush}" IconKey="list" /></Border>
 						<StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock x:Name="SeparatorCountText" FontSize="{DynamicResource Redux.FontSize.20}"
-							FontWeight="Bold" Foreground="{DynamicResource ReduxAccentHoverBrush}" Text="0" /><TextBlock Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="Resulting separators" /></StackPanel>
+							FontWeight="Bold" Foreground="{DynamicResource ReduxAccentHoverBrush}" Text="0" /><TextBlock Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="Separator changes" /></StackPanel>
 					</Grid></Border>
 					<Border Margin="0" Style="{StaticResource ReduxDialogSummaryCardStyle}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
 						<Border Width="38" Height="38" Margin="0,0,11,0" Background="{DynamicResource ReduxWarningPillBackground}" CornerRadius="8">
@@ -254,15 +254,15 @@
 							<TextBlock Margin="0,3,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="No known placements need to change." />
 						</StackPanel>
 					</Grid></TabItem>
-					<TabItem x:Name="ResultingSeparatorsTab" Header="Resulting Separators"><Grid Margin="0,9,0,0">
+					<TabItem x:Name="ResultingSeparatorsTab" Header="Separator Changes"><Grid Margin="0,9,0,0">
 						<ListBox x:Name="SeparatorList" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch"
 							ItemContainerStyle="{StaticResource ReduxPassiveResultItemStyle}" ItemTemplate="{StaticResource SeparatorTemplate}"
 							ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" />
 						<StackPanel x:Name="NoSeparatorsText" HorizontalAlignment="Center" VerticalAlignment="Center">
 							<Border Width="44" Height="44" HorizontalAlignment="Center" Background="{DynamicResource ReduxAccentPillBackground}" CornerRadius="22">
 								<controls:ReduxIcon Width="20" Height="20" Foreground="{DynamicResource ReduxAccentHoverBrush}" IconKey="list" /></Border>
-							<TextBlock Margin="0,10,0,0" HorizontalAlignment="Center" FontWeight="SemiBold" Text="No separators in this preview" />
-							<TextBlock Margin="0,3,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="The active order will be one continuous list." />
+							<TextBlock x:Name="NoSeparatorsTitle" Margin="0,10,0,0" HorizontalAlignment="Center" FontWeight="SemiBold" Text="No separator changes" />
+							<TextBlock x:Name="NoSeparatorsDescription" Margin="0,3,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Your existing separators stay where they are." />
 						</StackPanel>
 					</Grid></TabItem>
 					<TabItem Header="Needs Review"><Grid Margin="0,9,0,0">

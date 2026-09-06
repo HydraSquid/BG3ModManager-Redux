@@ -1,118 +1,135 @@
-# Optional features and built-in diagnostics
+# Diagnostics and optional features
 
-Redux preserves the inherited mod-manager core and layers optional network and guidance features
-around it. This is a contributor reference for those boundaries; the public feature overview lives
-in the [project README](../README.md).
+This contributor guide defines which Redux systems are built in, which are optional, and what must
+continue working when optional features are disabled.
 
-Provider metadata and load-order guidance must not become prerequisites for scanning packages,
-managing the active list, importing or exporting load orders, detecting game paths, using LSLib, or
-performing normal file operations.
+The short version is simple:
 
-At runtime, `ReduxModuleState` is the central reactive contract for optional-module availability.
-Provider services and source-related UI consume `SourceIntegrationsEnabled`. Built-in diagnostics
-remain available through `ModDiagnosticsEnabled`; experimental ordering rules and organizer UI
-consume `LoadOrderGuidanceEnabled`. Feature code should not reinterpret the underlying preference
-values independently.
+| System | Default boundary |
+|:--|:--|
+| Core mod management | Always available |
+| Mod Diagnostics | Always available and read-only |
+| Online mod information | Optional |
+| Load Order Advisor | Optional and experimental |
 
-The first-run setup is also available from Help. Source linking and experimental load-order guidance
-begin disabled so each optional feature is explicitly enabled by the user. Mod Diagnostics is a
-built-in Redux feature and has no enable/disable setting.
-Returning users keep their saved choices. Theme, motion, and background effects preview live and
-return to their previous values if the window is dismissed. API keys and settings are stored only
-after **Save & Continue**. Provider keys are masked and encrypted for the current Windows account;
-they are excluded from normal settings and diagnostic exports. The setup does not change packages
-or load orders.
+Package scanning, Active and Inactive Mods, saved orders, game-path discovery, LSLib, file
+operations, and normal load-order editing must never depend on a provider or advisor being enabled.
 
-## Source linking and online mod information
+## Runtime contract
 
-This feature retains BG3MM's Nexus Mods metadata, links, images, and update foundation, then adds
-mod.io, manual page linking, and the reviewed Redux database fallback. It can be disabled with
-**Disable online mod information** in Preferences.
+`ReduxModuleState` is the shared reactive source for feature availability:
 
-When online mod information is disabled, Redux:
+- provider services and source UI consume `SourceIntegrationsEnabled`;
+- built-in checks consume `ModDiagnosticsEnabled`; and
+- ordering rules and organizer UI consume `LoadOrderGuidanceEnabled`.
 
-- does not request Nexus Mods or mod.io metadata;
-- cancels dedicated provider metadata work already in progress;
-- does not enrich imports from the bundled source database;
+Feature code should consume those values instead of interpreting preference fields independently.
+That keeps menus, background work, diagnostics, and detail surfaces in agreement.
+
+On first launch, online information and Load Order Advisor guidance begin disabled. Returning users
+keep their saved choices. Mod Diagnostics has no off switch.
+
+## Built-in Mod Diagnostics
+
+Mod Diagnostics turns locally known package facts into consistent explanations and actions. It is
+always part of Redux and does not require network access.
+
+Findings can appear in mod rows, hover cards, the details drawer, toolbar status, Quick Access, and
+relevant review windows. The default checks cover detectable conditions such as:
+
+- missing, inactive, self-referencing, outdated, or cyclic dependencies;
+- invalid or duplicate module UUIDs;
+- declared package conflicts;
+- Script Extender requirements and availability;
+- Mod Fixer, force-loaded, and override behavior;
+- invalid embedded creator manifests; and
+- provider-specific safety notes when provider identity is visible.
+
+Checks implement `IModHealthRule` and receive an immutable `ModHealthAnalysisContext`.
+`IModHealthAnalyzer` composes them into display snapshots, keeping individual rule families outside
+the main window coordinator.
+
+Diagnostics never silently download, repair, remove, activate, reorder, or rewrite a package. A
+user can explicitly reveal or activate an installed dependency, open a reviewed source page, or copy
+a declared UUID. Missing-dependency source actions appear only when the bundled database maps that
+exact identity to one reviewed project.
+
+One inherited edge case receives a specific explanation: Mod Configuration Menu can expose some
+override files in game even when its normal module is inactive. Redux advises activating MCM and
+using **Sync Load Order to Game** rather than implying that the partial appearance is a complete
+installation.
+
+## Optional online mod information
+
+**Disable online mod information** turns off Nexus Mods and mod.io enrichment while leaving local
+package management intact. Redux retains existing associations so they can return if the feature is
+enabled again.
+
+While disabled, Redux:
+
+- skips Nexus Mods and mod.io requests and cancels dedicated provider work;
+- does not enrich new imports from the bundled source database;
 - hides source-linking actions and the Source column;
-- disables provider API-key and provider-warning controls without clearing their saved values;
-- presents installed packages as Local; and
-- retains existing provider associations so they return if integrations are re-enabled.
+- disables provider key and provider-warning controls without erasing saved values; and
+- presents packages as **Local**.
 
-Package scanning and core manager behavior continue normally.
+The inherited **Refresh Mod Updates** workflow can also service non-provider sources. Disabling
+online mod information skips Nexus and mod.io stages that have not started; it does not cancel
+unrelated update work.
 
-The inherited **Refresh Mod Updates** operation also services Workshop and GitHub metadata.
-Disabling online mod information does not cancel the whole shared operation. Nexus Mods and mod.io
-stages that have not started are skipped; unrelated update sources continue normally.
+Local diagnostics remain active. Source-specific warnings disappear when their identity is hidden.
+For example, the mod.io safety note explains that removing a local PAK does not unsubscribe it and
+that BG3 or Steam Cloud may restore managed content.
 
-Disabling online information does not affect Mod Diagnostics. Its checks use locally parsed
-package information and remain useful offline. Source-specific warnings, such as the mod.io restore
-notice, disappear while online identities are hidden.
+Provider keys are masked and stored outside ordinary settings using protection tied to the current
+Windows account. They are excluded from diagnostic exports and contribution reports.
 
-The mod.io restore notice warns that deleting a local PAK is not the same as unsubscribing. BG3 can
-download subscribed mods again, and Steam Cloud can preserve an app-specific cached copy even after
-the user unsubscribes. Redux therefore recommends keeping one manager authoritative rather than
-mixing its exported order with the in-game/mod.io manager.
+## Optional Load Order Advisor
 
-## Mod Diagnostics
+**Enable Load Order Advisor** adds an experimental guidance family to Mod Diagnostics. It uses exact
+package declarations plus Redux's reviewed offline dependency and ordering knowledge. It does not
+replace the built-in checks.
 
-Mod Diagnostics is Redux's built-in user-facing diagnostic system. It evaluates facts Redux or the
-inherited package parser has already detected and never repairs, installs, removes, reorders, or
-rewrites anything. Its findings appear in the toolbar, mod rows, drawer, hover cards, compact menu,
-and relevant review windows.
+The advisor can report:
 
-Checks implement `IModHealthRule` and receive an immutable `ModHealthAnalysisContext`. The
-`IModHealthAnalyzer` composes those rules into display snapshots. This keeps diagnostic rules
-separate from the main window and makes individual rule families removable.
+- a declared dependency placed later than its dependant;
+- a dependency cycle that no linear order can satisfy; and
+- reviewed load-after guidance from the bundled database.
 
-The default checks cover invalid or duplicate UUIDs, missing or inactive dependencies,
-self-dependency metadata, installed dependencies below a declared minimum version, declared
-conflicts, Script Extender availability, legacy Mod Fixer and override behavior, provider-specific
-safety notes, and invalid embedded Redux creator manifests.
+Known patch-style relationships that intentionally load later are handled separately to avoid false
+warnings. Inactive packages and always-loaded overrides are excluded from numbered-order advice.
+The advisor does not infer an order from a vague category, author, or filename match.
 
-When Mod Configuration Menu is installed but absent from the active order, diagnostics explain that
-its override files can make part of MCM appear in game even though its normal module entry was not
-exported. MCM's in-game reference to BG3MM includes compatible managers such as Redux; the corrective
-action is to activate MCM and use **Sync Load Order to Game**.
+### Organize Active Load Order
 
-Dependency findings provide conservative follow-up actions without installing anything. Redux can
-show or activate an installed inactive dependency, open a known source page, or copy the declared
-UUID. For a completely missing dependency, a source-page action appears only when the reviewed
-bundled database maps that exact module UUID to one Nexus project. Unknown or ambiguous UUIDs keep
-the copy-only fallback, and source actions remain hidden when online mod information is disabled.
+The organizer is user-invoked and preview-first. It offers three separator policies:
 
-### Experimental load-order guidance
+1. **Preserve my separators** keeps each separator and its membership together, sorting only inside
+   those boundaries.
+2. **Use suggested separators** replaces the current layout with non-empty named groups backed by
+   offline knowledge.
+3. **Remove separators** organizes the full active list as one numbered sequence.
 
-Load-order guidance is an experimental, opt-in Mod Diagnostics rule family. **Enable Load Order
-Advisor** is disabled by default; enabling it adds ordering rules and the organizer without changing
-the built-in diagnostic checks.
+The preview separates proposed mod moves, actual separator changes, and relationships that still
+need review. Existing preserved separators are not counted as changes unless their marker really
+moves. Applying the plan creates one undoable, unsaved edit and never writes to the game. Individual
+recommendations can be ignored locally and restored later.
 
-These rules report when an active package's explicitly declared dependency is positioned later in
-the numbered order and when active declared dependency metadata forms a cycle that no linear order
-can satisfy. They do not infer category, author, framework, patch, or compatibility ordering.
-Inactive packages and always-loaded override packages are excluded because neither
-has a meaningful position in the normal `modsettings.lsx` order. The rules remain registered
-separately from the default checks so the experimental family can be omitted without changing the
-rest of Mod Diagnostics.
+When guidance is disabled, its organizer action and status indicator are absent.
 
-When guidance is enabled, **Organize Active Load Order** can create a user-reviewed preview from
-those exact relationships and Redux's bundled offline ordering knowledge. The preview can preserve
-current separators, create named suggested separators, or remove separators. Nothing changes until
-the user applies the preview; applying it creates one undoable, unsaved action and never exports to
-the game automatically. Placement recommendations can be ignored individually and restored later.
-The organizer action and its status indicator are absent when load-order guidance is disabled.
+## First-run and preference behavior
 
-All findings share one toolbar status, compact top-menu indicator, grouped finding popup,
-selected-mod presentation, and severity language. The unified interface does not remove the
-internal rule boundary or the saved opt-in preference.
+The first-run setup is also reachable from Help. Theme, motion, and background effects preview live
+and return to their previous values if setup is dismissed. API keys and persistent settings are
+stored only after **Save & Continue**. Setup never edits packages or load orders.
 
-## Extension requirements
+## Rules for new feature work
 
-Optional feature extensions must remain:
+Optional extensions must remain:
 
 - reversible through a clear preference;
-- read-only unless a separate, explicit user action authorizes a change;
+- conservative when evidence is incomplete;
+- read-only unless a separate explicit action authorizes a change;
 - absent from the interface when disabled where practical;
-- independent of package discovery and load-order persistence;
-- conservative when evidence is incomplete; and
-- safe to remove without changing inherited backend behavior.
+- independent of package discovery and load-order persistence; and
+- removable without changing inherited core behavior.

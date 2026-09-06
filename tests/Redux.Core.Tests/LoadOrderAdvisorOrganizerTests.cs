@@ -22,6 +22,7 @@ internal sealed class LoadOrderAdvisorOrganizerTests
 		RegressionAssert.SequenceEqual([dependency, dependent], plan.OrderedMods);
 		RegressionAssert.Equal("First", plan.Dividers.Single().Title);
 		RegressionAssert.SequenceEqual([dependency.UUID, dependent.UUID], plan.Dividers.Single().MemberModUuids);
+		RegressionAssert.Equal(0, plan.SeparatorChanges.Count);
 	}
 
 	public void PreserveSeparatorsReportsRelationshipsItCannotSafelyApply()
@@ -73,6 +74,8 @@ internal sealed class LoadOrderAdvisorOrganizerTests
 		RegressionAssert.SequenceEqual([early, late, unknown], plan.OrderedMods);
 		RegressionAssert.SequenceEqual(["Early", "Late", "Needs Review"], plan.Dividers.Select(divider => divider.Title));
 		RegressionAssert.False(plan.Dividers.Any(divider => divider.Title == "Unused"));
+		RegressionAssert.Equal(3, plan.SeparatorChanges.Count);
+		RegressionAssert.True(plan.SeparatorChanges.All(change => change.Kind == LoadOrderAdvisorSeparatorChangeKind.Created));
 	}
 
 	public void RemoveSeparatorsGloballySortsWithoutReturningMarkers()
@@ -86,6 +89,8 @@ internal sealed class LoadOrderAdvisorOrganizerTests
 
 		RegressionAssert.SequenceEqual([dependency, dependent], plan.OrderedMods);
 		RegressionAssert.Equal(0, plan.Dividers.Count);
+		RegressionAssert.Equal(1, plan.SeparatorChanges.Count);
+		RegressionAssert.Equal(LoadOrderAdvisorSeparatorChangeKind.Removed, plan.SeparatorChanges[0].Kind);
 	}
 
 	public void UnknownModsRetainTheirRelativeOrder()
@@ -117,6 +122,22 @@ internal sealed class LoadOrderAdvisorOrganizerTests
 			CreateKnowledge());
 
 		RegressionAssert.SequenceEqual([member.UUID], plan.Dividers.Single().MemberModUuids);
+	}
+
+	public void PreserveSeparatorsReportsOnlyMarkersThatActuallyMove()
+	{
+		var member = CreateMod("member", "Member");
+		var divider = Divider("Moved", -3, member.UUID);
+
+		var plan = LoadOrderAdvisorOrganizer.CreatePlan(
+			[member], [divider],
+			LoadOrderAdvisorSeparatorPolicy.PreserveMySeparators,
+			CreateKnowledge());
+
+		RegressionAssert.Equal(1, plan.SeparatorChanges.Count);
+		RegressionAssert.Equal(LoadOrderAdvisorSeparatorChangeKind.Repositioned, plan.SeparatorChanges[0].Kind);
+		RegressionAssert.Equal(-3, plan.SeparatorChanges[0].PreviousPosition);
+		RegressionAssert.Equal(0, plan.SeparatorChanges[0].Divider.Position);
 	}
 
 	public void IgnoringOneRelationshipDoesNotSuppressOtherAdvisorKnowledge()

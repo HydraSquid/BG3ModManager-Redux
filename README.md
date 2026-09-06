@@ -74,9 +74,10 @@ placement checks based on exact package declarations and Redux's offline orderin
 - replace them with non-empty suggested separators; or
 - remove active separators and organize the full numbered list.
 
-Nothing is applied silently. The preview shows moves, resulting separators, and relationships that
-need review. Applying it creates one undoable, unsaved edit; individual recommendations can be
-ignored and restored later.
+Nothing is applied silently. The preview shows mod moves, actual separator changes, and
+relationships that need review; unchanged preserved separators are left out of the change count.
+Applying it creates one undoable, unsaved edit, and individual recommendations can be ignored and
+restored later.
 
 ### Safer load-order changes
 

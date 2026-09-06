@@ -102,25 +102,32 @@ public partial class ReduxLoadOrderAdvisorOrganizerWindow : AdonisUI.Controls.Ad
 			.Where(item => !String.IsNullOrWhiteSpace(item.mod.UUID))
 			.GroupBy(item => item.mod.UUID, StringComparer.OrdinalIgnoreCase)
 			.ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
-		var separators = _plan.Dividers.Select(divider =>
+		var separators = _plan.SeparatorChanges.Select(change =>
 		{
+			var divider = change.Divider;
 			var members = (divider.MemberModUuids ?? [])
 				.Where(positions.ContainsKey)
 				.Select(uuid => positions[uuid])
 				.OrderBy(item => item.index)
 				.ToArray();
+			if (change.Kind == LoadOrderAdvisorSeparatorChangeKind.Removed)
+				return new ReduxLoadOrderAdvisorSeparatorItem(
+					divider.Title, "Will be removed from the active order", FormatModCount(members.Length), divider.Color, divider.IconId);
 			if (members.Length == 0)
 				return new ReduxLoadOrderAdvisorSeparatorItem(
-					divider.Title, "Empty separator", "0 mods", divider.Color, divider.IconId);
+					divider.Title,
+					change.Kind == LoadOrderAdvisorSeparatorChangeKind.Created ? "Will be created as an empty separator" : "Will be repositioned",
+					"0 mods", divider.Color, divider.IconId);
 			var first = members[0];
 			var last = members[^1];
+			var action = change.Kind == LoadOrderAdvisorSeparatorChangeKind.Created ? "Create" : "Move";
 			var placement = first.index == last.index
-				? $"Placed above #{first.index + 1} {first.mod.DisplayName}"
-				: $"Placed above #{first.index + 1} {first.mod.DisplayName} · through #{last.index + 1} {last.mod.DisplayName}";
+				? $"{action} above #{first.index + 1} {first.mod.DisplayName}"
+				: $"{action} above #{first.index + 1} {first.mod.DisplayName} · through #{last.index + 1} {last.mod.DisplayName}";
 			return new ReduxLoadOrderAdvisorSeparatorItem(
 				divider.Title,
 				placement,
-				$"{members.Length} mod{(members.Length == 1 ? String.Empty : "s")}",
+				FormatModCount(members.Length),
 				divider.Color,
 				divider.IconId);
 		}).ToArray();
@@ -128,16 +135,30 @@ public partial class ReduxLoadOrderAdvisorOrganizerWindow : AdonisUI.Controls.Ad
 		UnresolvedList.ItemsSource = unresolved;
 		SeparatorList.ItemsSource = separators;
 		MoveCountText.Text = moves.Length.ToString();
-		SeparatorCountText.Text = _plan.Dividers.Count.ToString();
+		SeparatorCountText.Text = separators.Length.ToString();
 		UnresolvedCountText.Text = unresolved.Length.ToString();
 		NoMovesText.Visibility = moves.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
 		NoUnresolvedText.Visibility = unresolved.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
 		NoSeparatorsText.Visibility = separators.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+		NoSeparatorsTitle.Text = _selectedPolicy switch
+		{
+			LoadOrderAdvisorSeparatorPolicy.CreateSuggestedSeparators => "No suggested separators",
+			LoadOrderAdvisorSeparatorPolicy.RemoveSeparators => "No separators to remove",
+			_ => "No separator changes"
+		};
+		NoSeparatorsDescription.Text = _selectedPolicy switch
+		{
+			LoadOrderAdvisorSeparatorPolicy.CreateSuggestedSeparators => "Redux has no separator groups to add for this order.",
+			LoadOrderAdvisorSeparatorPolicy.RemoveSeparators => "The active order is already one continuous list.",
+			_ => "Your existing separators stay where they are."
+		};
 		RestoreIgnoredButton.Visibility = (_viewModel.Settings.IgnoredLoadOrderAdvisorFindingKeys?.Count ?? 0) > 0
 			? Visibility.Visible
 			: Visibility.Collapsed;
 		ApplyButton.IsEnabled = _plan.HasChanges;
 	}
+
+	private static string FormatModCount(int count) => $"{count} mod{(count == 1 ? String.Empty : "s")}";
 
 	private void IgnoreAdviceButton_Click(object sender, RoutedEventArgs e)
 	{

@@ -1,125 +1,143 @@
 # Redux mod database
 
-> **Audience:** Redux contributors and database maintainers. Users who want to help can generate a
-> contribution from **Tools > Generate Redux Database Contribution...**; no manual JSON editing is
-> required.
+Redux ships a reviewed offline knowledge file at
+`src/GUI/Resources/ReduxModDatabase.json`. It serves two related purposes:
 
-`src/GUI/Resources/ReduxModDatabase.json` is a bundled offline database that lets Redux identify
-some pre-existing Nexus Mods installs without an API request. It's not an importer, and it never
-matches a package from a filename alone, title alone, arbitrary UUID, or approximate version. It uses
-exact fingerprints first, followed by identities with enough corroborating evidence to avoid silently
-relabeling unrelated local packages.
+1. conservatively recognize some installed Nexus Mods packages without a live API request; and
+2. provide exact dependency and placement facts to the optional Load Order Advisor.
 
-Source-association records are loaded and queried through `ReduxModDatabaseService`
-(`src/Core/AppServices/ReduxModDatabaseService.cs`). The optional Load Order Advisor lazily loads
-the separate ordering data during its existing background analysis pass. It remains read-only
-and never moves a package.
+These evidence sets share one validated database but remain logically separate. Recognizing a
+source never changes a load order, and ordering knowledge never invents a provider identity.
 
-## Structure
+> [!NOTE]
+> Users do not need to edit JSON. To help improve coverage, use
+> **Tools > Generate Redux Database Contribution...** and submit the resulting
+> `.bg3redux-report` for review.
 
-- `schemaVersion` — must be `1`; anything else is treated as empty.
-- `projects` — one entry per Nexus project (`modId`, `name`, `authors`, `aliases`, `pictureUrl`).
-- `exactPakFingerprints` — one entry per exact installed `.pak` (`hash`, `size`, `modId`, `fileId`,
-  plus fallback `name`/`author`/`version`/`pictureUrl` if the project record is incomplete).
-  `hash` is xxHash64 over the full `.pak` byte stream, Base64-encoded from the little-endian 64-bit
-  value.
-- `exactArchiveFingerprints` — one entry per exact downloaded archive (`md5`, `size`, `modId`,
-  `fileId`, `logicalFileName`, plus the same fallback fields). `md5` is lowercase hex over the full
-  archive.
-- `moduleIdentities` — reviewed UUID → `modId` links for mods whose module UUID reliably identifies
-  a single Nexus project, used when no exact fingerprint is available.
-- `communityModuleIdentities` — exact UUID → Nexus project candidates from the expanded offline
-  dataset. At runtime these are accepted only when the installed package name, folder, or filename
-  also agrees with the recorded identity. Conflicting authors reject the match, and community-only
-  projects are excluded from the broader name-and-author fallback.
-- `loadOrderEntries` — UUID-keyed ordering knowledge kept independently of source linking: names,
-  groups, dividers, dependencies, explicit load-after rules, Script Extender requirements, and
-  evidence counts. The advisor uses exact installed UUIDs and names from these records to supplement
-  package metadata that may be incomplete.
-- `orderingGroups` — the named ordering groups and their `after` relationships. These are retained
-  as placement guidance; they are not treated as dependency requirements.
-- `dependencyNameAliases` — exact normalized requirement names that identify a differently named
-  module UUID. Approximate matching is deliberately excluded.
-- `dependencySubstitutes` — explicitly reviewed module UUIDs that can satisfy a differently keyed
-  requirement.
+## Recognition is deliberately conservative
 
-When enabled, the Load Order Advisor combines installed package declarations with the bundled
-records. It reports reversed dependency placement, exact dependency cycles, and explicit
-mod-author load-after relationships. Known patch-style dependencies that intentionally load after
-their dependants do not produce a false placement warning. The user-invoked organizer can preview a
-stable ordering from these facts and the ordering groups. Its default mode sorts only within current
-separator membership, while the other modes can create nonempty suggested separators or remove active
-separators. Unknown mods retain their relative order, conflicts blocked by separator placement are reported, and
-applying a preview remains an undoable unsaved edit rather than an automatic export.
-Specific placement relationships can be ignored locally without disabling other advisor knowledge;
-the organizer provides a single action to restore ignored advice.
+Redux prefers **Local** over a confident-looking mistake. A filename, display title, arbitrary
+UUID, or approximate version is never enough by itself.
 
-## Match order
+The source match order is:
 
-1. Exact `.pak` fingerprint (size + hash) — strongest.
-2. Exact archive fingerprint (size + md5).
-3. Reviewed module UUID identity.
-4. Community UUID identity corroborated by an exact normalized installed name, folder, or filename;
-   author metadata must also agree when both sides provide it.
-5. Normalized name + author agreement across every alias a project has, only when exactly one
-   project matches. Name-only candidates are ignored.
+1. exact installed PAK fingerprint: byte length plus xxHash64;
+2. exact downloaded-archive fingerprint: byte length plus MD5;
+3. a reviewed module UUID identity;
+4. a community UUID candidate corroborated by an exact normalized package name, folder, or
+   filename, with author agreement when both sides provide authors; then
+5. one unambiguous normalized project-name/alias and author match.
 
-Anything that doesn't clear one of these stays **Local**.
+Conflicting or ambiguous evidence produces no provider assignment. Manual links and manual unlinks
+always outrank automatic database matches.
 
-## Adding an exact `.pak` or archive fingerprint
+Redux keeps evidence collections in one database rather than treating Nexus and mod.io as competing
+databases. Provider provenance is attached to a resolved association, which prevents a package from
+being relabelled merely because another ecosystem uses a similar name. The current bundled project
+and fingerprint records are Nexus-focused; native mod.io identity and cached provider metadata flow
+through their own corroborated source pipeline.
 
-The repository includes a validation-first developer utility at
-`tools/ReduxModDatabaseTool`. It computes the same hashes Redux uses, validates the full database,
-and previews additions without writing by default:
+## Database map
+
+| Section | Purpose |
+|:--|:--|
+| `schemaVersion` | Supported database contract. Unknown versions fail closed. |
+| `projects` | Reviewed Nexus project name, authors, aliases, category, and image metadata. |
+| `exactPakFingerprints` | Exact installed PAK size and xxHash64 mapped to a project and optional file ID. |
+| `exactArchiveFingerprints` | Exact archive size and MD5 mapped to a project, file ID, and logical filename. |
+| `moduleIdentities` | Reviewed UUID-to-project identities that are safe without extra name corroboration. |
+| `communityModuleIdentities` | Broader UUID candidates that require exact package-name, folder, or filename corroboration. |
+| `loadOrderEntries` | UUID-keyed names, groups, dependency facts, load-after rules, requirements, and evidence counts. |
+| `orderingGroups` | Named placement groups and their explicit `after` relationships. |
+| `dependencyNameAliases` | Exact normalized dependency names mapped to differently named module UUIDs. |
+| `dependencySubstitutes` | Reviewed module UUIDs allowed to satisfy a differently keyed requirement. |
+| `counts` | Integrity totals checked by the maintenance tooling. |
+
+Installed PAK hashes use xxHash64 over the complete byte stream, encoded as Base64 from the
+little-endian 64-bit value. Archive hashes use lowercase hexadecimal MD5 over the complete archive.
+The hashes identify exact artifacts; they are not security signatures.
+
+## How the Load Order Advisor uses it
+
+When the optional advisor is enabled, Redux combines exact installed package declarations with the
+offline ordering sections. It can explain reversed dependency placement, exact dependency cycles,
+reviewed load-after relationships, and known substitutes. Patch-style exceptions that intentionally
+load later are represented explicitly rather than guessed from names.
+
+The organizer uses the same facts to create a deterministic preview:
+
+- **Preserve my separators** sorts only within existing membership boundaries;
+- **Use suggested separators** creates non-empty named groups; and
+- **Remove separators** sorts the active list as one numbered sequence.
+
+Unknown mods retain their relative order. The preview reports mod moves, actual separator changes,
+and relationships blocked by the selected policy. Unchanged preserved separators do not inflate the
+change count. Applying a plan is one undoable, unsaved edit and never writes to the game.
+
+## Generate a contribution report
+
+**Tools > Generate Redux Database Contribution...** creates a privacy-limited report from installed
+user mods. It includes sanitized module identity, exact PAK fingerprints, and provider IDs Redux
+already knows—including Nexus project and file IDs when available.
+
+It excludes:
+
+- PAK or archive contents;
+- absolute filesystem paths;
+- profiles and load-order positions;
+- categories, separators, private notes, and application settings; and
+- API keys, credentials, URL query strings, and fragments.
+
+Generation is read-only. A report is review evidence, not an automatic database import. Review the
+file before sharing it and submit the report itself—not copyrighted mod archives or PAKs.
+
+Reports created before the current privacy checks should be regenerated.
+
+## Maintainer review workflow
+
+The repository includes a preview-first CLI and a private desktop reviewer. From the repository
+root:
 
 ```powershell
 dotnet run --project tools/ReduxModDatabaseTool -- validate
-dotnet run --project tools/ReduxModDatabaseTool -- fingerprint --file "C:\Mods\Example.pak"
+dotnet run --project tools/ReduxModDatabaseTool -- review-report `
+  --file "C:\Reports\Contribution.bg3redux-report" `
+  --output "C:\Reports\Contribution.review.json"
+dotnet run --project tools/ReduxModDatabaseTool -- accept-report `
+  --file "C:\Reports\Contribution.bg3redux-report" `
+  --mod-ids 123,456
 ```
 
-See `tools/ReduxModDatabaseTool/README.md` for the guarded `add` workflow.
+`review-report` repeats the privacy audit, validates the report contract, and classifies records as
+new, known, conflicting, non-Nexus, or unavailable. `accept-report` requires independently verified
+Nexus project IDs and exact fingerprints. Both are non-writing until `--write` is supplied; a
+selected batch is validated and replaced atomically.
 
-Private tester builds can generate a privacy-limited `.bg3redux-report` from
-**Tools > Generate Redux Database Contribution...**. Reports omit absolute paths, load-order positions,
-profile names, application settings, and credentials. Maintainers can audit and classify a report
-without changing the database:
+Exact PAK evidence requires a verified Nexus project ID. Redux preserves a known Nexus file ID and
+records `-1` when a modern archive name does not expose one. Report acceptance does not promote a
+community UUID into the reviewed `moduleIdentities` collection.
+
+For one local artifact, use the guarded fingerprint/add workflow:
 
 ```powershell
-dotnet run --project tools/ReduxModDatabaseTool -- review-report `
-  --file "Redux-Mod-Database-Contribution.bg3redux-report" `
-  --output "Redux-Mod-Database-Review.json"
+dotnet run --project tools/ReduxModDatabaseTool -- fingerprint --file "C:\Mods\Example.pak"
+dotnet run --project tools/ReduxModDatabaseTool -- add `
+  --file "C:\Mods\Example.pak" `
+  --mod-id 123 --file-id 456 `
+  --name "Example Mod" --author "Example Author" --version "1.0"
 ```
 
-Contribution reports are evidence for review, not an automatic trust source. Conflicts must be
-resolved manually. Confirmed Nexus projects can be previewed with `accept-report --mod-id <id>` or
-as one selected batch with `accept-report --mod-ids <id,id,...>`. Exact PAK evidence requires a
-verified Nexus project ID; the Nexus file ID is preserved when available and recorded as `-1` when
-modern archive names do not expose it. The batch is written atomically only with an additional
-`--write`; individual local artifacts still use the preview-first `add` workflow. The private desktop
-reviewer in `tools/ReduxModDatabaseTool.Desktop` exposes the same
-guarded sequence without requiring command-line entry and is not included in Redux tester packages.
-It finds the repository database automatically when run from a checkout. Portable maintainer copies
-can keep `ReduxModDatabase.json` beside the reviewer executable or in a `Resources` subfolder, and
-can receive report and database paths through `--report` and `--database`.
+Review the preview, repeat with `--write`, then run `validate` again. See the
+[tool reference](../tools/ReduxModDatabaseTool/README.md) for every option and the desktop reviewer.
 
-The exporter removes embedded path-shaped metadata and strips credentials, query strings, and
-fragments from provider URLs before writing. It validates the privacy contract both before and
-after the temporary report is serialized. The maintainer utility independently repeats those
-checks and rejects older or altered reports that contain invalid UUID fallbacks, embedded paths,
-non-public provider URLs, or inconsistent fingerprint states.
+## Review checklist
 
-Reports produced before these privacy checks were introduced should be regenerated rather than
-shared.
+1. Confirm the provider project and file against the real release page.
+2. Confirm the exact artifact that produced the fingerprint.
+3. Resolve every existing fingerprint or identity conflict; never overwrite evidence to silence it.
+4. Keep reviewed identities separate from community candidates.
+5. Update through the tool so counts, references, cycles, and collisions are validated.
+6. Test recognition with online information both enabled and disabled.
+7. Confirm an unrelated package with a similar name remains **Local**.
 
-1. Confirm the Nexus mod ID and file ID from the actual file page.
-2. Get the exact file (installed `.pak`, or the downloaded archive) that produced it.
-3. Record its byte length and hash (xxHash64/Base64 for a `.pak`, MD5/hex for an archive).
-4. Add the entry to `exactPakFingerprints` or `exactArchiveFingerprints`, and add or update the
-   matching `projects` entry if it doesn't exist yet.
-5. Update the `counts` block.
-6. Confirm the JSON parses and that no identical size+hash pair points at more than one project.
-7. Test against a clean Redux debug settings file, with and without a Nexus API key.
-
-Don't add filename-only, title-only, uncorroborated UUID, or approximate-version matches — those can
-misattribute a local or repackaged mod to the wrong Nexus project. Community identity candidates must
-remain separate from reviewed identities so the runtime corroboration requirement cannot be bypassed.
+Never add filename-only, title-only, fuzzy-version, or uncorroborated community UUID matches.

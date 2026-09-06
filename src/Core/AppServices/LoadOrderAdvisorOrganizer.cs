@@ -24,14 +24,27 @@ public sealed record LoadOrderAdvisorUnresolvedRelationship(
 	string Reason,
 	string IgnoreKey);
 
+public enum LoadOrderAdvisorSeparatorChangeKind
+{
+	Created,
+	Repositioned,
+	Removed
+}
+
+public sealed record LoadOrderAdvisorSeparatorChange(
+	ModListVisualDividerData Divider,
+	LoadOrderAdvisorSeparatorChangeKind Kind,
+	int? PreviousPosition = null);
+
 public sealed class LoadOrderAdvisorPlan
 {
 	public IReadOnlyList<DivinityModData> OrderedMods { get; init; } = [];
 	public IReadOnlyList<ModListVisualDividerData> Dividers { get; init; } = [];
 	public IReadOnlyList<LoadOrderAdvisorMove> Moves { get; init; } = [];
+	public IReadOnlyList<LoadOrderAdvisorSeparatorChange> SeparatorChanges { get; init; } = [];
 	public IReadOnlyList<LoadOrderAdvisorUnresolvedRelationship> UnresolvedRelationships { get; init; } = [];
 	public LoadOrderAdvisorSeparatorPolicy SeparatorPolicy { get; init; }
-	public bool HasChanges => Moves.Count > 0 || SeparatorPolicy != LoadOrderAdvisorSeparatorPolicy.PreserveMySeparators;
+	public bool HasChanges => Moves.Count > 0 || SeparatorChanges.Count > 0;
 }
 
 /// <summary>
@@ -66,6 +79,7 @@ public static class LoadOrderAdvisorOrganizer
 			.OrderBy(divider => divider.Position)
 			.Select(CloneDivider)
 			.ToList();
+		var originalDividers = activeDividers.Select(CloneDivider).ToList();
 		knowledge ??= ReduxModDatabaseService.LoadOrderAdvisorKnowledge;
 		var installed = mods
 			.Where(mod => !String.IsNullOrWhiteSpace(mod.UUID))
@@ -154,15 +168,49 @@ public static class LoadOrderAdvisorOrganizer
 				BuildMoveReason(item.mod, edges, knowledge),
 				BuildMoveIgnoreKey(item.mod, edges)))
 			.ToList();
+		var separatorChanges = BuildSeparatorChanges(originalDividers, plannedDividers, separatorPolicy);
 
 		return new LoadOrderAdvisorPlan
 		{
 			OrderedMods = ordered,
 			Dividers = plannedDividers,
 			Moves = moves,
+			SeparatorChanges = separatorChanges,
 			UnresolvedRelationships = unresolved,
 			SeparatorPolicy = separatorPolicy
 		};
+	}
+
+	private static IReadOnlyList<LoadOrderAdvisorSeparatorChange> BuildSeparatorChanges(
+		IReadOnlyList<ModListVisualDividerData> currentDividers,
+		IReadOnlyList<ModListVisualDividerData> plannedDividers,
+		LoadOrderAdvisorSeparatorPolicy policy)
+	{
+		if (policy == LoadOrderAdvisorSeparatorPolicy.CreateSuggestedSeparators)
+			return plannedDividers.Select(divider => new LoadOrderAdvisorSeparatorChange(
+				divider, LoadOrderAdvisorSeparatorChangeKind.Created)).ToArray();
+
+		if (policy == LoadOrderAdvisorSeparatorPolicy.RemoveSeparators)
+			return currentDividers.Select(divider => new LoadOrderAdvisorSeparatorChange(
+				divider, LoadOrderAdvisorSeparatorChangeKind.Removed, divider.Position)).ToArray();
+
+		var currentById = currentDividers
+			.Where(divider => !String.IsNullOrWhiteSpace(divider.Id))
+			.GroupBy(divider => divider.Id, StringComparer.OrdinalIgnoreCase)
+			.ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+		var changes = new List<LoadOrderAdvisorSeparatorChange>();
+		for (var index = 0; index < plannedDividers.Count; index++)
+		{
+			var planned = plannedDividers[index];
+			var current = !String.IsNullOrWhiteSpace(planned.Id)
+				&& currentById.TryGetValue(planned.Id, out var identified)
+					? identified
+					: index < currentDividers.Count ? currentDividers[index] : null;
+			if (current != null && current.Position != planned.Position)
+				changes.Add(new LoadOrderAdvisorSeparatorChange(
+					planned, LoadOrderAdvisorSeparatorChangeKind.Repositioned, current.Position));
+		}
+		return changes;
 	}
 
 	private static List<Edge> BuildEdges(

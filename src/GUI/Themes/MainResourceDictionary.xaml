@@ -4287,43 +4287,68 @@
 		</Grid>
 	</DataTemplate>
 	<DataTemplate x:Key="ReduxSourceLabelToolTipTemplate" DataType="{x:Type data:DivinityModData}">
-		<Border MaxWidth="390"
-			Padding="12,10"
+		<Border MaxWidth="340"
+			Padding="10,8"
+			Background="{DynamicResource ReduxSurfaceElevatedBrush}"
+			BorderBrush="{DynamicResource ReduxBorderStrongBrush}"
 			BorderThickness="1"
 			CornerRadius="{DynamicResource Redux.CornerRadius.Card}">
-			<Border.Style>
-				<Style TargetType="{x:Type Border}">
-					<Setter Property="Background" Value="{DynamicResource ReduxSurfaceElevatedBrush}" />
-					<Setter Property="BorderBrush" Value="{DynamicResource ReduxAccentBrush}" />
-					<Style.Triggers>
-						<DataTrigger Binding="{Binding Metadata.SourceType}" Value="{x:Static dapp:ModSourceType.NEXUSMODS}">
-							<Setter Property="Background" Value="{StaticResource Redux.Pill.Nexus.Background}" />
-							<Setter Property="BorderBrush" Value="{StaticResource Redux.Pill.Nexus.Border}" />
-						</DataTrigger>
-						<DataTrigger Binding="{Binding Metadata.SourceType}" Value="{x:Static dapp:ModSourceType.MODIO}">
-							<Setter Property="Background" Value="{StaticResource Redux.Pill.Modio.Background}" />
-							<Setter Property="BorderBrush" Value="{StaticResource Redux.Pill.Modio.Border}" />
-						</DataTrigger>
-					</Style.Triggers>
-				</Style>
-			</Border.Style>
-			<TextBlock FontSize="{DynamicResource Redux.FontSize.13}"
-				FontWeight="SemiBold"
-				Text="{Binding DisplaySource}">
-				<TextBlock.Style>
-					<Style TargetType="{x:Type TextBlock}">
-						<Setter Property="Foreground" Value="{DynamicResource ReduxAccentBrush}" />
-						<Style.Triggers>
-							<DataTrigger Binding="{Binding Metadata.SourceType}" Value="{x:Static dapp:ModSourceType.NEXUSMODS}">
-								<Setter Property="Foreground" Value="{StaticResource Redux.Pill.Nexus.Border}" />
-							</DataTrigger>
-							<DataTrigger Binding="{Binding Metadata.SourceType}" Value="{x:Static dapp:ModSourceType.MODIO}">
-								<Setter Property="Foreground" Value="{StaticResource Redux.Pill.Modio.Border}" />
-							</DataTrigger>
-						</Style.Triggers>
-					</Style>
-				</TextBlock.Style>
-			</TextBlock>
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="3" />
+					<ColumnDefinition Width="Auto" />
+				</Grid.ColumnDefinitions>
+				<Border CornerRadius="2">
+					<Border.Style>
+						<Style TargetType="{x:Type Border}">
+							<Setter Property="Background" Value="{DynamicResource ReduxAccentBrush}" />
+							<Style.Triggers>
+								<DataTrigger Binding="{Binding Metadata.SourceType}" Value="{x:Static dapp:ModSourceType.NEXUSMODS}">
+									<Setter Property="Background" Value="{StaticResource Redux.Pill.Nexus.Border}" />
+								</DataTrigger>
+								<DataTrigger Binding="{Binding Metadata.SourceType}" Value="{x:Static dapp:ModSourceType.MODIO}">
+									<Setter Property="Background" Value="{StaticResource Redux.Pill.Modio.Border}" />
+								</DataTrigger>
+							</Style.Triggers>
+						</Style>
+					</Border.Style>
+				</Border>
+				<StackPanel Grid.Column="1" Margin="9,0,2,0">
+					<StackPanel Orientation="Horizontal">
+						<Grid Width="14" Height="14" Margin="0,0,7,0" VerticalAlignment="Center"
+							Visibility="{Binding ShowInterfaceIcons, Converter={StaticResource BoolToVisibilityConverter}}">
+							<Viewbox Width="14" Height="14" Stretch="Uniform"
+								Visibility="{Binding Metadata.OnlineSourceVisibility}">
+								<ContentControl Content="{Binding}" ContentTemplate="{StaticResource PlatformIconPresenterTemplate}" />
+							</Viewbox>
+							<controls:ReduxIcon Width="14" Height="14"
+								Foreground="{DynamicResource ReduxAccentBrush}"
+								StrokeData="{StaticResource Redux.Icon.FolderOpen}">
+								<controls:ReduxIcon.Style>
+									<Style BasedOn="{StaticResource {x:Type controls:ReduxIcon}}" TargetType="{x:Type controls:ReduxIcon}">
+										<Style.Triggers>
+											<DataTrigger Binding="{Binding Metadata.OnlineSourceVisibility}" Value="{x:Static Visibility.Visible}">
+												<Setter Property="Visibility" Value="Collapsed" />
+											</DataTrigger>
+										</Style.Triggers>
+									</Style>
+								</controls:ReduxIcon.Style>
+							</controls:ReduxIcon>
+						</Grid>
+						<TextBlock VerticalAlignment="Center"
+							FontSize="{DynamicResource Redux.FontSize.12}"
+							FontWeight="SemiBold"
+							Foreground="{DynamicResource ReduxTextPrimaryBrush}"
+							Text="{Binding DisplaySource}" />
+					</StackPanel>
+					<TextBlock Margin="0,3,0,0"
+						MaxWidth="300"
+						FontSize="{DynamicResource Redux.FontSize.11}"
+						Foreground="{DynamicResource ReduxTextMutedBrush}"
+						Text="{Binding Metadata.LinkStatus}"
+						TextWrapping="Wrap" />
+				</StackPanel>
+			</Grid>
 		</Border>
 	</DataTemplate>
 	<DataTemplate x:Key="ModSourceTemplate" DataType="{x:Type data:DivinityModData}">

@@ -10,6 +10,7 @@
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-4F86F7?style=flat-square)](#requirements-and-alpha-status)
 [![License](https://img.shields.io/badge/license-MIT-42A66F?style=flat-square)](LICENSE)
 [![Support on Ko-fi](https://img.shields.io/badge/Support-Ko--fi-FF5E5B?style=flat-square&logo=ko-fi&logoColor=white)](https://ko-fi.com/circleain)
+![Discord — Coming Soon](https://img.shields.io/badge/Discord-Coming_Soon-5865F2?style=flat-square&logo=discord&logoColor=white)
 
 [Download on Nexus Mods](https://www.nexusmods.com/baldursgate3/mods/23799) ·
 [Visit the website](https://bg3mm-redux.com) ·

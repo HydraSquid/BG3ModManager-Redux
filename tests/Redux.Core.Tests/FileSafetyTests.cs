@@ -1,3 +1,4 @@
+using DivinityModManager.AppServices;
 using DivinityModManager.Models;
 using DivinityModManager.Util;
 
@@ -112,6 +113,56 @@ public sealed class FileSafetyTests
 				RegressionAssert.Equal("installed", File.ReadAllText(destination));
 				RegressionAssert.False(Directory.EnumerateFiles(directory, "*.tmp").Any());
 			}
+		});
+	}
+
+	public void GameLoadOrderChangeCanBeUndoneAndRedone()
+	{
+		WithTemporaryDirectory(directory =>
+		{
+			var path = Path.Combine(directory, "modsettings.lsx");
+			File.WriteAllText(path, "before");
+			var before = ReversibleFileChangeService.Capture(path);
+			File.WriteAllText(path, "after");
+			var after = ReversibleFileChangeService.Capture(path);
+
+			RegressionAssert.True(ReversibleFileChangeService.TryRestore(path, after, before, out _));
+			RegressionAssert.Equal("before", File.ReadAllText(path));
+			RegressionAssert.True(ReversibleFileChangeService.TryRestore(path, before, after, out _));
+			RegressionAssert.Equal("after", File.ReadAllText(path));
+		});
+	}
+
+	public void GameLoadOrderUndoRefusesToOverwriteANewerExternalChange()
+	{
+		WithTemporaryDirectory(directory =>
+		{
+			var path = Path.Combine(directory, "modsettings.lsx");
+			File.WriteAllText(path, "before");
+			var before = ReversibleFileChangeService.Capture(path);
+			File.WriteAllText(path, "redux export");
+			var exported = ReversibleFileChangeService.Capture(path);
+			File.WriteAllText(path, "newer external change");
+
+			RegressionAssert.False(ReversibleFileChangeService.TryRestore(path, exported, before, out var error));
+			RegressionAssert.True(error.Contains("newer file", StringComparison.OrdinalIgnoreCase));
+			RegressionAssert.Equal("newer external change", File.ReadAllText(path));
+		});
+	}
+
+	public void FirstGameLoadOrderExportCanUndoBackToNoFile()
+	{
+		WithTemporaryDirectory(directory =>
+		{
+			var path = Path.Combine(directory, "modsettings.lsx");
+			var missing = ReversibleFileChangeService.Capture(path);
+			File.WriteAllText(path, "first export");
+			var exported = ReversibleFileChangeService.Capture(path);
+
+			RegressionAssert.True(ReversibleFileChangeService.TryRestore(path, exported, missing, out _));
+			RegressionAssert.False(File.Exists(path));
+			RegressionAssert.True(ReversibleFileChangeService.TryRestore(path, missing, exported, out _));
+			RegressionAssert.Equal("first export", File.ReadAllText(path));
 		});
 	}
 

@@ -214,11 +214,29 @@ public partial class SettingsWindow : SettingsWindowBase
 			ViewModel.Settings.TypographyFont = ReduxTypographyFont.Manrope;
 			ViewModel.Settings.CustomTypographyFont = String.Empty;
 			ViewModel.Settings.TextSize = ReduxTextSize.Default;
+			ViewModel.Settings.UsesGeneratedGradients = theme != ReduxThemeType.Parchment;
 			ReduxThemeService.ApplyBuiltInCategoryPresentation(ViewModel.Settings, theme);
 			ThemeComboBox.SelectedValue = theme;
 			RefreshTypographyChoices();
 			RefreshCustomThemeControls();
 		}
+	}
+
+	private void GeneratedGradientsCheckBox_Click(object sender, RoutedEventArgs e)
+	{
+		if (_updatingCustomThemeSelection || ViewModel?.Settings == null) return;
+		var useGradients = GeneratedGradientsCheckBox.IsChecked == true;
+		var activeTheme = ReduxThemeService.GetActiveTheme(ViewModel.Settings);
+		if (activeTheme != null)
+		{
+			activeTheme.UsesGeneratedGradients = useGradients;
+		}
+		else
+		{
+			ViewModel.Settings.UsesGeneratedGradients = useGradients;
+		}
+		MainWindow.Self.MainView.UpdateColorTheme(ViewModel.Settings.ColorTheme);
+		ViewModel.Main.SaveSettings();
 	}
 
 	private void ThemeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -339,6 +357,8 @@ public partial class SettingsWindow : SettingsWindowBase
 		CustomThemeComboBox.ItemsSource = ViewModel.Settings.CustomThemes;
 		var activeTheme = ReduxThemeService.GetActiveTheme(ViewModel.Settings);
 		CustomThemeComboBox.SelectedItem = activeTheme;
+		GeneratedGradientsCheckBox.IsChecked = activeTheme?.UsesGeneratedGradients
+			?? ViewModel.Settings.UsesGeneratedGradients;
 		var hasSelection = CustomThemeComboBox.SelectedItem is ReduxCustomTheme;
 		EditCustomThemeButton.IsEnabled = hasSelection;
 		DeleteCustomThemeButton.IsEnabled = hasSelection;

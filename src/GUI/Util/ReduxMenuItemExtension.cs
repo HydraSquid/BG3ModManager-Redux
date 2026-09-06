@@ -252,6 +252,7 @@ public static class ReduxMenuItemExtension
 		return header.Equals("Save Current Order", StringComparison.OrdinalIgnoreCase)
 			|| header.Equals("Export Load Order to Game", StringComparison.OrdinalIgnoreCase)
 			|| header.Equals("Export to Game", StringComparison.OrdinalIgnoreCase)
+			|| header.Equals("Sync Load Order to Game", StringComparison.OrdinalIgnoreCase)
 			|| header.StartsWith("Generate Redux Database Contribution", StringComparison.OrdinalIgnoreCase);
 	}
 }

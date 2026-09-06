@@ -554,7 +554,7 @@ public partial class MainViewControl : MainViewControlViewBase
 	public void UpdateColorTheme(ReduxThemeType theme)
 	{
 		var customTheme = ReduxThemeService.GetActiveTheme(ViewModel.Settings);
-		ReduxThemeService.Apply(this.Resources, theme, customTheme);
+		ReduxThemeService.Apply(this.Resources, theme, customTheme, ViewModel.Settings.UsesGeneratedGradients);
 		main.UpdateColorTheme(theme, customTheme);
 	}
 
@@ -1327,7 +1327,7 @@ public partial class MainViewControl : MainViewControlViewBase
 			Window.GetWindow(this),
 			$"Activate {dependency.DisplayName}?\n\nRequired by: {requiredBy}\n\n"
 			+ "Redux will add the installed dependency to the end of the current working order. "
-			+ "Review its placement before exporting. No game files are changed until you export.",
+			+ "Review its placement before syncing. No game files are changed until you sync the load order.",
 			"Activate Dependency",
 			MessageBoxButton.YesNo,
 			MessageBoxImage.Question,
@@ -1336,7 +1336,7 @@ public partial class MainViewControl : MainViewControlViewBase
 		{
 			ViewModel.AddActiveMod(dependency, recordHistory: true);
 			ViewModel.ShowAlert(
-				$"Activated {dependency.DisplayName}. Review its load-order position before exporting.",
+				$"Activated {dependency.DisplayName}. Review its load-order position before syncing.",
 				AlertType.Success,
 				20);
 			ModLayout.FocusModEntry(dependency);

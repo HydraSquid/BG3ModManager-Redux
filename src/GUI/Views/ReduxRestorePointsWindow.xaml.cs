@@ -48,7 +48,7 @@ public partial class ReduxRestorePointsWindow : AdonisUI.Controls.AdonisWindow
 		var settings = MainWindow.Self?.ViewModel?.Settings;
 		if (settings != null)
 		{
-			ReduxThemeService.Apply(Resources, settings.ColorTheme, ReduxThemeService.GetActiveTheme(settings));
+			ReduxThemeService.Apply(Resources, settings.ColorTheme, ReduxThemeService.GetActiveTheme(settings), settings.UsesGeneratedGradients);
 		}
 
 		RestorePointList.ItemsSource = _restorePoints;

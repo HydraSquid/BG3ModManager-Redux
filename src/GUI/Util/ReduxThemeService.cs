@@ -81,7 +81,7 @@ public static class ReduxThemeService
 				PresentationReadSettings);
 			if (settings == null) return;
 
-			Apply(resources, settings.ColorTheme, GetActiveTheme(settings));
+			Apply(resources, settings.ColorTheme, GetActiveTheme(settings), settings.UsesGeneratedGradients);
 			// Apply accessibility after the theme so freshly loaded template resources
 			// cannot restore popup motion that Reduce Motion has disabled.
 			ReduxWindowBehavior.ConfigureAccessibility(
@@ -118,6 +118,7 @@ public static class ReduxThemeService
 			ShowCategoryIconsInPills = showCategoryIconsInPills ?? true,
 			UseCategoryColorsForSidebarText = useCategoryColorsForSidebarText ?? baseTheme == ReduxThemeType.ReduxDark,
 			UseIconsOnly = (showCategoryIconsInPills ?? true) && (useIconsOnly ?? false),
+			UsesGeneratedGradients = baseTheme != ReduxThemeType.Parchment,
 			BackgroundColor = colors[0],
 			SurfaceColor = colors[1],
 			AccentColor = colors[2],
@@ -145,6 +146,7 @@ public static class ReduxThemeService
 		theme.ShowCategoryIconsInPills = defaults.ShowCategoryIconsInPills;
 		theme.UseCategoryColorsForSidebarText = defaults.UseCategoryColorsForSidebarText;
 		theme.UseIconsOnly = defaults.UseIconsOnly;
+		theme.UsesGeneratedGradients = defaults.UsesGeneratedGradients;
 	}
 
 	public static void ApplyBuiltInCategoryPresentation(DivinityModManagerSettings settings, ReduxThemeType theme)
@@ -204,7 +206,8 @@ public static class ReduxThemeService
 		return true;
 	}
 
-	public static void Apply(ResourceDictionary resources, ReduxThemeType builtInTheme, ReduxCustomTheme customTheme = null)
+	public static void Apply(ResourceDictionary resources, ReduxThemeType builtInTheme,
+		ReduxCustomTheme customTheme = null, bool? useBuiltInGeneratedGradients = null)
 	{
 		if (resources == null) return;
 		foreach (var key in OverrideKeys) resources.Remove(key);
@@ -214,17 +217,21 @@ public static class ReduxThemeService
 		var palette = hasValidCustomTheme
 			? CreateResourceColors(customTheme)
 			: CreateBuiltInResourceColors(baseTheme);
-		ApplyPalette(resources, palette, baseTheme, hasValidCustomTheme);
+		ApplyPalette(resources, palette, baseTheme, hasValidCustomTheme,
+			hasValidCustomTheme
+				? customTheme.UsesGeneratedGradients
+				: useBuiltInGeneratedGradients ?? baseTheme != ReduxThemeType.Parchment);
 	}
 
 	public static void PreviewColors(ResourceDictionary resources, ReduxCustomTheme customTheme)
 	{
 		if (resources == null || customTheme == null || !TryValidate(customTheme, out _)) return;
-		ApplyPalette(resources, CreateResourceColors(customTheme), customTheme.BaseTheme, isCustomTheme: true);
+		ApplyPalette(resources, CreateResourceColors(customTheme), customTheme.BaseTheme,
+			isCustomTheme: true, customTheme.UsesGeneratedGradients);
 	}
 
 	private static void ApplyPalette(ResourceDictionary resources, IReadOnlyDictionary<string, Color> palette,
-		ReduxThemeType baseTheme, bool isCustomTheme)
+		ReduxThemeType baseTheme, bool isCustomTheme, bool useGeneratedGradients)
 	{
 		foreach (var entry in palette)
 		{
@@ -243,20 +250,30 @@ public static class ReduxThemeService
 		// Reapply the built-in art direction explicitly. This also prevents a generated
 		// custom-theme brush from surviving when the user switches back to the same base theme.
 		var primaryActionOwner = FindResourceOwner(resources, "ReduxPrimaryActionBackgroundBrush") ?? resources;
-		primaryActionOwner["ReduxPrimaryActionBackgroundBrush"] = isCustomTheme
+		primaryActionOwner["ReduxPrimaryActionBackgroundBrush"] = useGeneratedGradients
 			? CreatePrimaryActionGradient(palette["ReduxAccentColor"], restrainedHueShift: false)
-			: baseTheme == ReduxThemeType.Parchment
-				? CreateGradient("#681D2B", "#962735", "#B7383D")
-				: CreatePrimaryActionGradient(palette["ReduxAccentColor"], restrainedHueShift: false);
+			: CreateSolidBrush(palette["ReduxAccentColor"]);
 
 		var destructiveActionOwner = FindResourceOwner(resources, "ReduxDestructiveActionBackgroundBrush") ?? resources;
-		destructiveActionOwner["ReduxDestructiveActionBackgroundBrush"] = isCustomTheme
-			? CreateDestructiveActionGradient(palette["ReduxErrorColor"])
-			: CreateBuiltInDestructiveActionGradient(baseTheme);
+		destructiveActionOwner["ReduxDestructiveActionBackgroundBrush"] = useGeneratedGradients
+			? isCustomTheme
+				? CreateDestructiveActionGradient(palette["ReduxErrorColor"])
+				: CreateBuiltInDestructiveActionGradient(baseTheme)
+			: CreateSolidBrush(palette["ReduxErrorColor"]);
 		var destructiveForegroundOwner = FindResourceOwner(resources, "ReduxDestructiveActionForegroundBrush") ?? resources;
-		destructiveForegroundOwner["ReduxDestructiveActionForegroundBrush"] = new SolidColorBrush(isCustomTheme
-			? BestForeground(ScaleBrightness(palette["ReduxErrorColor"], 0.72))
-			: System.Windows.Media.Colors.White);
+		destructiveForegroundOwner["ReduxDestructiveActionForegroundBrush"] = CreateSolidBrush(
+			useGeneratedGradients
+				? isCustomTheme
+					? BestForeground(ScaleBrightness(palette["ReduxErrorColor"], 0.72))
+					: System.Windows.Media.Colors.White
+				: BestForeground(palette["ReduxErrorColor"]));
+	}
+
+	private static SolidColorBrush CreateSolidBrush(Color color)
+	{
+		var brush = new SolidColorBrush(color);
+		if (brush.CanFreeze) brush.Freeze();
+		return brush;
 	}
 
 	private static void SetBrushResource(ResourceDictionary resources, string key, Brush brush)

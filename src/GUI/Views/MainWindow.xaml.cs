@@ -391,28 +391,34 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 	private void ApplyCurrentTheme(Window window)
 	{
 		if (ViewModel?.Settings == null) return;
-		ReduxThemeService.Apply(window.Resources, ViewModel.Settings.ColorTheme, ReduxThemeService.GetActiveTheme(ViewModel.Settings));
+		ReduxThemeService.Apply(window.Resources, ViewModel.Settings.ColorTheme,
+			ReduxThemeService.GetActiveTheme(ViewModel.Settings), ViewModel.Settings.UsesGeneratedGradients);
 	}
 
 	public void UpdateColorTheme(ReduxThemeType theme, ReduxCustomTheme customTheme = null)
 	{
-		ReduxThemeService.Apply(this.Resources, theme, customTheme);
-		ReduxThemeService.Apply(SettingsWindow.Resources, theme, customTheme);
+		bool? useBuiltInGradients = customTheme == null && ViewModel?.Settings != null
+			? theme == ViewModel.Settings.ColorTheme
+				? ViewModel.Settings.UsesGeneratedGradients
+				: theme != ReduxThemeType.Parchment
+			: null;
+		ReduxThemeService.Apply(this.Resources, theme, customTheme, useBuiltInGradients);
+		ReduxThemeService.Apply(SettingsWindow.Resources, theme, customTheme, useBuiltInGradients);
 		if (AboutWindow != null)
 		{
-			ReduxThemeService.Apply(AboutWindow.Resources, theme, customTheme);
+			ReduxThemeService.Apply(AboutWindow.Resources, theme, customTheme, useBuiltInGradients);
 		}
 		if (VersionGeneratorWindow != null)
 		{
-			ReduxThemeService.Apply(VersionGeneratorWindow.Resources, theme, customTheme);
+			ReduxThemeService.Apply(VersionGeneratorWindow.Resources, theme, customTheme, useBuiltInGradients);
 		}
 		if (UpdateWindow != null)
 		{
-			ReduxThemeService.Apply(UpdateWindow.Resources, theme, customTheme);
+			ReduxThemeService.Apply(UpdateWindow.Resources, theme, customTheme, useBuiltInGradients);
 		}
 		if (HelpWindow != null)
 		{
-			ReduxThemeService.Apply(HelpWindow.Resources, theme, customTheme);
+			ReduxThemeService.Apply(HelpWindow.Resources, theme, customTheme, useBuiltInGradients);
 		}
 	}
 
@@ -420,7 +426,12 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 	{
 		if (MainView != null)
 		{
-			ReduxThemeService.Apply(MainView.Resources, theme, customTheme);
+			bool? useBuiltInGradients = customTheme == null && ViewModel?.Settings != null
+				? theme == ViewModel.Settings.ColorTheme
+					? ViewModel.Settings.UsesGeneratedGradients
+					: theme != ReduxThemeType.Parchment
+				: null;
+			ReduxThemeService.Apply(MainView.Resources, theme, customTheme, useBuiltInGradients);
 		}
 		UpdateColorTheme(theme, customTheme);
 	}

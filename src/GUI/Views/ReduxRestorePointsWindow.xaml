@@ -185,7 +185,7 @@
 							Text="Load Order History" />
 						<TextBlock Margin="0,5,0,0"
 							Foreground="{DynamicResource ReduxTextSecondaryBrush}"
-							Text="Review snapshots, see what changed, and safely load an earlier order without touching game files until the next export."
+							Text="Review snapshots, see what changed, and safely load an earlier order without changing the game load order until you sync it."
 							TextWrapping="Wrap" />
 					</StackPanel>
 					<Button Grid.Column="1"
@@ -263,7 +263,7 @@
 								<TextBlock Margin="0,3,0,0"
 									HorizontalAlignment="Center"
 									Foreground="{DynamicResource ReduxTextMutedBrush}"
-									Text="Capture the working order or confirm an export to begin."
+									Text="Capture the working order or sync a load order to begin."
 									TextAlignment="Center"
 									TextWrapping="Wrap" />
 							</StackPanel>

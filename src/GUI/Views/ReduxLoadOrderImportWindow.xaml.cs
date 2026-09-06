@@ -40,7 +40,7 @@ public partial class ReduxLoadOrderImportWindow : AdonisUI.Controls.AdonisWindow
 
 		var settings = MainWindow.Self?.ViewModel?.Settings;
 		if (settings != null)
-			ReduxThemeService.Apply(Resources, settings.ColorTheme, ReduxThemeService.GetActiveTheme(settings));
+			ReduxThemeService.Apply(Resources, settings.ColorTheme, ReduxThemeService.GetActiveTheme(settings), settings.UsesGeneratedGradients);
 
 		var orderCount = contents?.LoadOrder?.Order?.Count ?? 0;
 		var categoryCount = contents?.Presentation?.CustomCategories?.Count ?? 0;

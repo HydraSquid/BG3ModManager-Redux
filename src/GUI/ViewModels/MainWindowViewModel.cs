@@ -60,7 +60,18 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		List<ModListVisualDividerData> Dividers,
 		bool HadUnsavedChanges);
 
-	private readonly BoundedUndoRedoHistory<LoadOrderEditState> _loadOrderEditHistory = new(50);
+	private abstract record LoadOrderHistoryState;
+
+	private sealed record WorkingLoadOrderHistoryState(LoadOrderEditState State) : LoadOrderHistoryState;
+
+	private sealed record GameLoadOrderFileHistoryState(
+		string ProfileUuid,
+		string FilePath,
+		ReversibleFileChangeService.Snapshot ExpectedCurrent,
+		ReversibleFileChangeService.Snapshot Replacement,
+		string[] ReplacementOrderUuids) : LoadOrderHistoryState;
+
+	private readonly BoundedUndoRedoHistory<LoadOrderHistoryState> _loadOrderEditHistory = new(50);
 	private bool _restoringLoadOrderEdit;
 
 	[Reactive] public MainWindow Window { get; private set; }
@@ -321,7 +332,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	private bool HasExported { get; set; }
 	[Reactive] public bool HasUnsavedLoadOrderChanges { get; private set; }
 	[Reactive] public bool IsCurrentOrderExportedToGame { get; private set; }
-	[Reactive] public string ExportToGameStatusText { get; private set; } = "Not exported — no game load order has been detected for this profile.";
+	[Reactive] public string ExportToGameStatusText { get; private set; } = "Not synced — no game load order has been detected for this profile.";
 	[Reactive] public bool CanUndoLoadOrderChange { get; private set; }
 	[Reactive] public bool CanRedoLoadOrderChange { get; private set; }
 
@@ -3405,6 +3416,7 @@ Directory the zip will be extracted to:
 				Settings.ActiveCustomThemeId = String.Empty;
 				ReduxThemeService.ApplyBuiltInCategoryPresentation(Settings, welcomeWindow.SelectedTheme);
 				Settings.ColorTheme = welcomeWindow.SelectedTheme;
+				Settings.UsesGeneratedGradients = welcomeWindow.SelectedTheme != ReduxThemeType.Parchment;
 			}
 
 			Settings.LocalOnlyMode = welcomeWindow.SelectedLocalOnlyMode;
@@ -4165,7 +4177,8 @@ Directory the zip will be extracted to:
 			"Name this load order",
 			"Save the current active mods as a new load order in Redux.",
 			"Save");
-		ReduxThemeService.Apply(nameDialog.Resources, Settings.ColorTheme, ReduxThemeService.GetActiveTheme(Settings));
+		ReduxThemeService.Apply(nameDialog.Resources, Settings.ColorTheme,
+			ReduxThemeService.GetActiveTheme(Settings), Settings.UsesGeneratedGradients);
 		if (ReduxWindowBehavior.ShowDialogWithOwnerBackdrop(nameDialog, Window) != true) return;
 
 		var fileName = DivinityModDataLoader.MakeSafeFilename(nameDialog.CategoryName + ".json", '_');
@@ -4358,7 +4371,7 @@ Directory the zip will be extracted to:
 				DivinityApp.Log($"Unexpected error while exporting the load order:\n{ex}");
 				await Observable.Start(() =>
 				{
-					ShowAlert("Redux could not finish exporting the load order. No successful export was reported; check the log for details.", AlertType.Danger, 30);
+					ShowAlert("Redux could not apply the game load-order changes. No successful change was reported; check the log for details.", AlertType.Danger, 30);
 					return Unit.Default;
 				}, RxApp.MainThreadScheduler);
 			}
@@ -4505,6 +4518,7 @@ Directory the zip will be extracted to:
 		if (SelectedProfile != null && SelectedModOrder != null)
 		{
 			var outputPath = Path.Combine(SelectedProfile.Folder, "modsettings.lsx");
+			ReversibleFileChangeService.Snapshot previousFileSnapshot = null;
 			var hasPreviousExport = File.Exists(outputPath);
 			IReadOnlyList<DivinityLoadOrderEntry> previouslyExportedOrder = Array.Empty<DivinityLoadOrderEntry>();
 			if (hasPreviousExport)
@@ -4530,6 +4544,15 @@ Directory the zip will be extracted to:
 				return false;
 			}
 
+			try
+			{
+				previousFileSnapshot = ReversibleFileChangeService.Capture(outputPath);
+			}
+			catch (Exception ex)
+			{
+				DivinityApp.Log($"Could not capture game load order for undo history: {ex}");
+			}
+
 			if (hasPreviousExport)
 			{
 				var profileUuid = SelectedProfile.UUID;
@@ -4545,7 +4568,7 @@ Directory the zip will be extracted to:
 						profileUuid,
 						profileName,
 						sourceOrderName,
-						"Before game export",
+						"Before game load-order change",
 						snapshotOrder,
 						out _,
 						out var error);
@@ -4557,7 +4580,7 @@ Directory the zip will be extracted to:
 					await Observable.Start(() =>
 					{
 						ShowAlert(
-							"Redux could not create a pre-export restore point. The export will continue.",
+							"Redux could not create a restore point before changing the game load order. The operation will continue.",
 							AlertType.Warning,
 							20);
 						return Unit.Default;
@@ -4567,6 +4590,18 @@ Directory the zip will be extracted to:
 
 			DeleteModCrashSanityCheck();
 			var result = await DivinityModDataLoader.ExportModSettingsToFileAsync(SelectedProfile.Folder, finalOrder);
+			ReversibleFileChangeService.Snapshot exportedFileSnapshot = null;
+			if (result && previousFileSnapshot != null)
+			{
+				try
+				{
+					exportedFileSnapshot = ReversibleFileChangeService.Capture(outputPath);
+				}
+				catch (Exception ex)
+				{
+					DivinityApp.Log($"Could not capture exported game load order for undo history: {ex}");
+				}
+			}
 
 			if (result)
 			{
@@ -4590,7 +4625,17 @@ Directory the zip will be extracted to:
 			{
 				await Observable.Start(() =>
 				{
-					ShowAlert($"Exported load order to '{outputPath}'", AlertType.Success, 15);
+					if (previousFileSnapshot != null && exportedFileSnapshot != null)
+					{
+						RecordGameLoadOrderFileChange(
+							SelectedProfile.UUID,
+							outputPath,
+							previousFileSnapshot,
+							exportedFileSnapshot,
+							previouslyExportedOrder.Select(entry => entry.UUID),
+							finalOrder.Select(mod => mod.UUID));
+					}
+					ShowAlert($"Applied load-order changes to '{outputPath}'", AlertType.Success, 15);
 
 					if (DivinityModDataLoader.ExportedSelectedProfile(PathwayData.AppDataProfilesPath, SelectedProfile.UUID))
 					{
@@ -4620,9 +4665,9 @@ Directory the zip will be extracted to:
 			{
 				await Observable.Start(() =>
 				{
-					string msg = $"Problem exporting load order to '{outputPath}'. Is the file locked?";
+					string msg = $"Problem applying load-order changes to '{outputPath}'. Is the file locked?";
 					ShowAlert(msg, AlertType.Danger);
-					ReduxMessageBox.ShowWithActions(Window, msg, "Mod Order Export Failed",
+					ReduxMessageBox.ShowWithActions(Window, msg, "Game Load Order Update Failed",
 						MessageBoxButton.OK, MessageBoxImage.Warning, MessageBoxResult.OK,
 						("Copy to Clipboard", "Redux.Icon.Copy", () => ((System.Windows.Input.ICommand)DivinityApp.Commands.CopyToClipboardCommand).Execute(msg)));
 					return Unit.Default;
@@ -4633,7 +4678,7 @@ Directory the zip will be extracted to:
 		{
 			await Observable.Start(() =>
 			{
-				ShowAlert("Select a profile and load order before exporting.", AlertType.Danger);
+				ShowAlert("Select a profile and load order before syncing with the game.", AlertType.Danger);
 				return Unit.Default;
 			}, RxApp.MainThreadScheduler);
 		}
@@ -7410,17 +7455,43 @@ Directory the zip will be extracted to:
 		if (_restoringLoadOrderEdit || before == null) return;
 		var after = CaptureLoadOrderEditState();
 		if (LoadOrderEditStatesEqual(before, after)) return;
-		_loadOrderEditHistory.Record(before, after);
+		_loadOrderEditHistory.Record(
+			new WorkingLoadOrderHistoryState(before),
+			new WorkingLoadOrderHistoryState(after));
 		UpdateLoadOrderHistoryAvailability();
 	}
 
-	private void RestoreLoadOrderEditState(LoadOrderEditState state)
+	private void RecordGameLoadOrderFileChange(
+		string profileUuid,
+		string filePath,
+		ReversibleFileChangeService.Snapshot before,
+		ReversibleFileChangeService.Snapshot after,
+		IEnumerable<string> beforeOrderUuids,
+		IEnumerable<string> afterOrderUuids)
 	{
-		if (state == null) return;
+		_loadOrderEditHistory.Record(
+			new GameLoadOrderFileHistoryState(
+				profileUuid,
+				filePath,
+				after,
+				before,
+				(beforeOrderUuids ?? []).Where(uuid => !String.IsNullOrWhiteSpace(uuid)).ToArray()),
+			new GameLoadOrderFileHistoryState(
+				profileUuid,
+				filePath,
+				before,
+				after,
+				(afterOrderUuids ?? []).Where(uuid => !String.IsNullOrWhiteSpace(uuid)).ToArray()));
+		UpdateLoadOrderHistoryAvailability();
+	}
+
+	private bool RestoreLoadOrderEditState(LoadOrderEditState state)
+	{
+		if (state == null) return false;
 		if (!ReferenceEquals(state.Order, SelectedModOrder))
 		{
 			ClearLoadOrderEditHistory();
-			return;
+			return false;
 		}
 
 		_restoringLoadOrderEdit = true;
@@ -7447,13 +7518,64 @@ Directory the zip will be extracted to:
 		ScheduleModHealthRefresh();
 		HasUnsavedLoadOrderChanges = state.HadUnsavedChanges;
 		QueueSave();
+		return true;
+	}
+
+	private bool TryRestoreLoadOrderHistoryState(LoadOrderHistoryState historyState, out string error)
+	{
+		switch (historyState)
+		{
+			case WorkingLoadOrderHistoryState workingState:
+				error = null;
+				return RestoreLoadOrderEditState(workingState.State);
+
+			case GameLoadOrderFileHistoryState fileState:
+				var currentProfilePath = SelectedProfile == null
+					? null
+					: Path.Combine(SelectedProfile.Folder, "modsettings.lsx");
+				if (SelectedProfile == null
+					|| !String.Equals(SelectedProfile.UUID, fileState.ProfileUuid, StringComparison.OrdinalIgnoreCase)
+					|| !String.Equals(
+						Path.GetFullPath(currentProfilePath),
+						Path.GetFullPath(fileState.FilePath),
+						StringComparison.OrdinalIgnoreCase))
+				{
+					error = "Switch back to the profile used by this action before undoing or redoing it.";
+					return false;
+				}
+
+				HasExported = false;
+				if (!ReversibleFileChangeService.TryRestore(
+					fileState.FilePath,
+					fileState.ExpectedCurrent,
+					fileState.Replacement,
+					out error))
+				{
+					return false;
+				}
+
+				SetKnownGameOrder(fileState.ReplacementOrderUuids, fileState.Replacement.Exists);
+				SelectedProfile.ActiveMods.Clear();
+				SelectedProfile.ActiveMods.AddRange(
+					fileState.ReplacementOrderUuids.Select(ProfileActiveModDataFromUUID));
+				return true;
+		}
+
+		error = "Redux could not recognize the history action.";
+		return false;
 	}
 
 	private void UndoLoadOrderChange()
 	{
 		if (TryApplyTextEditingCommand(ApplicationCommands.Undo)) return;
 		if (!_loadOrderEditHistory.TryUndo(out var state)) return;
-		RestoreLoadOrderEditState(state);
+		if (!TryRestoreLoadOrderHistoryState(state, out var error))
+		{
+			_loadOrderEditHistory.TryRedo(out _);
+			UpdateLoadOrderHistoryAvailability();
+			ShowAlert(error ?? "The last action could not be undone.", AlertType.Warning, 12);
+			return;
+		}
 		UpdateLoadOrderHistoryAvailability();
 		ShowAlert("Undid the last action.", AlertType.Info, 5);
 	}
@@ -7462,7 +7584,13 @@ Directory the zip will be extracted to:
 	{
 		if (TryApplyTextEditingCommand(ApplicationCommands.Redo)) return;
 		if (!_loadOrderEditHistory.TryRedo(out var state)) return;
-		RestoreLoadOrderEditState(state);
+		if (!TryRestoreLoadOrderHistoryState(state, out var error))
+		{
+			_loadOrderEditHistory.TryUndo(out _);
+			UpdateLoadOrderHistoryAvailability();
+			ShowAlert(error ?? "The last action could not be redone.", AlertType.Warning, 12);
+			return;
+		}
 		UpdateLoadOrderHistoryAvailability();
 		ShowAlert("Redid the last action.", AlertType.Info, 5);
 	}
@@ -8917,14 +9045,14 @@ Directory the zip will be extracted to:
 		if (SelectedProfile == null)
 		{
 			IsCurrentOrderExportedToGame = false;
-			ExportToGameStatusText = "Select a profile before exporting a load order to the game.";
+			ExportToGameStatusText = "Select a profile before syncing a load order to the game.";
 			return;
 		}
 
 		if (!_hasKnownGameOrder)
 		{
 			IsCurrentOrderExportedToGame = false;
-			ExportToGameStatusText = "Not exported — no game load order has been detected for this profile.";
+			ExportToGameStatusText = "Not synced — no game load order has been detected for this profile.";
 			return;
 		}
 
@@ -8938,8 +9066,8 @@ Directory the zip will be extracted to:
 			_lastKnownGameOrderUuids,
 			StringComparer.OrdinalIgnoreCase);
 		ExportToGameStatusText = IsCurrentOrderExportedToGame
-			? "Exported — the game matches the current active order."
-			: "Export needed — the current active order differs from the game.";
+			? "Synced — the game matches the current active order."
+			: "Sync needed — the current active order differs from the game.";
 	}
 
 	private List<DivinityLoadOrderEntry> CreateWorkingLoadOrderEntries()
@@ -9482,6 +9610,7 @@ Directory the zip will be extracted to:
 			Settings.TextSize = ReduxTextSize.Default;
 			ReduxThemeService.ApplyBuiltInCategoryPresentation(Settings, nextTheme);
 			Settings.ColorTheme = nextTheme;
+			Settings.UsesGeneratedGradients = nextTheme != ReduxThemeType.Parchment;
 		});
 
 		Keys.ToggleToolbar.AddAction(() => Settings.HideToolbar = !Settings.HideToolbar);

@@ -116,7 +116,8 @@ internal sealed class ReduxModuleStateTests
 			UseCategoryColorsForHover = false,
 			UseCategoryColorsForSidebarSelection = true,
 			ShowCategoryIconsInPills = true,
-			UseIconsOnly = true
+			UseIconsOnly = true,
+			UsesGeneratedGradients = false
 		};
 
 		var clone = theme.Clone();
@@ -126,6 +127,7 @@ internal sealed class ReduxModuleStateTests
 		RegressionAssert.True(clone.UseCategoryColorsForSidebarSelection);
 		RegressionAssert.True(clone.UseIconsOnly);
 		RegressionAssert.True(clone.UseSourceIconsOnly);
+		RegressionAssert.False(clone.UsesGeneratedGradients);
 	}
 
 	public void CustomThemePreviewRegeneratesEverySemanticPillGradient()
@@ -172,6 +174,40 @@ internal sealed class ReduxModuleStateTests
 		AssertResourceColor(resources, "ReduxTextPrimaryColor", Color.FromRgb(0xF2, 0xED, 0xF7));
 		AssertResourceColor(resources, "ReduxTextSecondaryColor", Color.FromRgb(0xC8, 0xBD, 0xD4));
 		AssertResourceColor(resources, "ReduxTextMutedColor", Color.FromRgb(0xA0, 0x94, 0xAE));
+	}
+
+	public void GeneratedActionGradientsFollowThemeDefaultsAndCustomChoice()
+	{
+		var dark = ReduxThemeService.CreateFromBase("Dark", ReduxThemeType.ReduxDark);
+		var light = ReduxThemeService.CreateFromBase("Light", ReduxThemeType.ReduxLight);
+		var parchment = ReduxThemeService.CreateFromBase("Parchment", ReduxThemeType.Parchment);
+		RegressionAssert.True(dark.UsesGeneratedGradients);
+		RegressionAssert.True(light.UsesGeneratedGradients);
+		RegressionAssert.False(parchment.UsesGeneratedGradients);
+		RegressionAssert.True(new ReduxCustomTheme { BaseTheme = ReduxThemeType.ReduxDark }.UsesGeneratedGradients);
+		RegressionAssert.False(new ReduxCustomTheme { BaseTheme = ReduxThemeType.Parchment }.UsesGeneratedGradients);
+		var builtInSettings = new DivinityModManagerSettings { ColorTheme = ReduxThemeType.ReduxDark };
+		RegressionAssert.True(builtInSettings.UsesGeneratedGradients);
+		builtInSettings.ColorTheme = ReduxThemeType.Parchment;
+		RegressionAssert.False(builtInSettings.UsesGeneratedGradients);
+		builtInSettings.UsesGeneratedGradients = true;
+		RegressionAssert.True(builtInSettings.UsesGeneratedGradients);
+
+		var resources = new ResourceDictionary
+		{
+			["ReduxPrimaryActionBackgroundBrush"] = Brushes.Transparent,
+			["ReduxDestructiveActionBackgroundBrush"] = Brushes.Transparent,
+			["ReduxDestructiveActionForegroundBrush"] = Brushes.Transparent
+		};
+		dark.UsesGeneratedGradients = false;
+		ReduxThemeService.PreviewColors(resources, dark);
+		RegressionAssert.True(resources["ReduxPrimaryActionBackgroundBrush"] is SolidColorBrush);
+		RegressionAssert.True(resources["ReduxDestructiveActionBackgroundBrush"] is SolidColorBrush);
+
+		dark.UsesGeneratedGradients = true;
+		ReduxThemeService.PreviewColors(resources, dark);
+		RegressionAssert.True(resources["ReduxPrimaryActionBackgroundBrush"] is LinearGradientBrush);
+		RegressionAssert.True(resources["ReduxDestructiveActionBackgroundBrush"] is LinearGradientBrush);
 	}
 
 	private static void AssertPillColor(ResourceDictionary resources, string key, Color expected)

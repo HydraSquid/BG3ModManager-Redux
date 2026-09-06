@@ -344,7 +344,7 @@ internal sealed class ModHealthTests
 		var inactive = FindSnapshot(analyzer.AnalyzeAll(new[] { mcm }, Array.Empty<DivinityModData>()), mcm.UUID);
 		var finding = inactive.Findings.Single(item => item.Code == ModHealthFindingCode.McmNotActive);
 		RegressionAssert.Equal(ModHealthSeverity.Warning, finding.Severity);
-		RegressionAssert.Contains(finding.Message, "Export to Game");
+		RegressionAssert.Contains(finding.Message, "Sync Load Order to Game");
 		RegressionAssert.Contains(finding.Message, "Redux");
 
 		var active = FindSnapshot(analyzer.AnalyzeAll(new[] { mcm }, new[] { mcm }), mcm.UUID);

@@ -24,7 +24,7 @@ public partial class ReduxModNoteWindow : AdonisUI.Controls.AdonisWindow
 		if (owner?.IsLoaded == true) Owner = owner;
 		var settings = MainWindow.Self?.ViewModel?.Settings;
 		if (settings != null)
-			ReduxThemeService.Apply(Resources, settings.ColorTheme, ReduxThemeService.GetActiveTheme(settings));
+			ReduxThemeService.Apply(Resources, settings.ColorTheme, ReduxThemeService.GetActiveTheme(settings), settings.UsesGeneratedGradients);
 
 		var targets = (mods ?? [])
 			.Where(mod => mod != null)

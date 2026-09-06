@@ -7,14 +7,10 @@ using System.Windows.Controls;
 
 namespace DivinityModManager.Views;
 
-public sealed record ReduxLoadOrderAdvisorPolicyOption(
-	string Name,
-	string Description,
-	LoadOrderAdvisorSeparatorPolicy Policy);
-
 public sealed record ReduxLoadOrderAdvisorMoveItem(
 	string Name,
-	string PositionSummary,
+	int PreviousPosition,
+	int NextPosition,
 	string Reason,
 	string IgnoreKey)
 {
@@ -29,12 +25,18 @@ public sealed record ReduxLoadOrderAdvisorUnresolvedItem(
 public sealed record ReduxLoadOrderAdvisorSeparatorItem(
 	string Name,
 	string PlacementSummary,
-	string CountSummary);
+	string CountSummary,
+	string Color,
+	string IconId)
+{
+	public bool HasIcon => !String.IsNullOrWhiteSpace(IconId);
+}
 
 public partial class ReduxLoadOrderAdvisorOrganizerWindow : AdonisUI.Controls.AdonisWindow
 {
 	private readonly MainWindowViewModel _viewModel;
 	private LoadOrderAdvisorPlan _plan;
+	private LoadOrderAdvisorSeparatorPolicy _selectedPolicy = LoadOrderAdvisorSeparatorPolicy.PreserveMySeparators;
 	private bool _initializing;
 
 	public ReduxLoadOrderAdvisorOrganizerWindow(Window owner, MainWindowViewModel viewModel)
@@ -45,35 +47,26 @@ public partial class ReduxLoadOrderAdvisorOrganizerWindow : AdonisUI.Controls.Ad
 		if (owner?.IsLoaded == true) Owner = owner;
 		_viewModel = viewModel;
 		if (viewModel?.Settings != null)
-			ReduxThemeService.Apply(Resources, viewModel.Settings.ColorTheme, ReduxThemeService.GetActiveTheme(viewModel.Settings));
+			ReduxThemeService.Apply(Resources, viewModel.Settings.ColorTheme,
+				ReduxThemeService.GetActiveTheme(viewModel.Settings), viewModel.Settings.UsesGeneratedGradients);
 
 		_initializing = true;
-		PolicyComboBox.ItemsSource = new[]
-		{
-			new ReduxLoadOrderAdvisorPolicyOption(
-				"Preserve My Separators",
-				"Keep every separator and its contained mods together. Redux only reorders within each separator and lists placements the current separator layout prevents it from fixing.",
-				LoadOrderAdvisorSeparatorPolicy.PreserveMySeparators),
-			new ReduxLoadOrderAdvisorPolicyOption(
-				"Use Suggested Separators",
-				"Reorder the full active list and replace current separators with nonempty separators suggested by Redux's offline knowledge.",
-				LoadOrderAdvisorSeparatorPolicy.CreateSuggestedSeparators),
-			new ReduxLoadOrderAdvisorPolicyOption(
-				"Remove Separators",
-				"Reorder the full active list and remove active-pane separators. Inactive-pane separators are not changed.",
-				LoadOrderAdvisorSeparatorPolicy.RemoveSeparators)
-		};
-		PolicyComboBox.SelectedIndex = 0;
+		PreservePolicyButton.IsChecked = true;
 		_initializing = false;
 		RefreshPlan();
 	}
 
-	private void PolicyComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+	private void PolicyButton_Checked(object sender, RoutedEventArgs e)
 	{
 		if (_initializing) return;
+		if (sender == SuggestedPolicyButton)
+			_selectedPolicy = LoadOrderAdvisorSeparatorPolicy.CreateSuggestedSeparators;
+		else if (sender == RemovePolicyButton)
+			_selectedPolicy = LoadOrderAdvisorSeparatorPolicy.RemoveSeparators;
+		else
+			_selectedPolicy = LoadOrderAdvisorSeparatorPolicy.PreserveMySeparators;
 		RefreshPlan();
-		if (PolicyComboBox.SelectedItem is ReduxLoadOrderAdvisorPolicyOption
-			{ Policy: LoadOrderAdvisorSeparatorPolicy.CreateSuggestedSeparators })
+		if (_selectedPolicy == LoadOrderAdvisorSeparatorPolicy.CreateSuggestedSeparators)
 		{
 			PreviewTabs.SelectedItem = ResultingSeparatorsTab;
 		}
@@ -81,16 +74,24 @@ public partial class ReduxLoadOrderAdvisorOrganizerWindow : AdonisUI.Controls.Ad
 
 	private void RefreshPlan()
 	{
-		if (_viewModel == null || PolicyComboBox.SelectedItem is not ReduxLoadOrderAdvisorPolicyOption option) return;
-		PolicyDescriptionText.Text = option.Description;
+		if (_viewModel == null) return;
 		_plan = LoadOrderAdvisorOrganizer.CreatePlan(
 			_viewModel.ActiveMods,
 			_viewModel.Settings.VisualModListDividers,
-			option.Policy,
+			_selectedPolicy,
 			ignoredFindingKeys: _viewModel.Settings.IgnoredLoadOrderAdvisorFindingKeys);
+		if (_selectedPolicy == LoadOrderAdvisorSeparatorPolicy.CreateSuggestedSeparators)
+		{
+			foreach (var divider in _plan.Dividers)
+			{
+				divider.Color = _viewModel.GetCurrentCategoryColor(divider.Title);
+				divider.IconId = _viewModel.GetCurrentCategoryIcon(divider.Title);
+			}
+		}
 		var moves = _plan.Moves.Select(move => new ReduxLoadOrderAdvisorMoveItem(
 			move.Name,
-			$"{move.PreviousPosition}  →  {move.NextPosition}",
+			move.PreviousPosition,
+			move.NextPosition,
 			move.Reason,
 			move.IgnoreKey)).ToArray();
 		var unresolved = _plan.UnresolvedRelationships.Select(item =>
@@ -110,7 +111,7 @@ public partial class ReduxLoadOrderAdvisorOrganizerWindow : AdonisUI.Controls.Ad
 				.ToArray();
 			if (members.Length == 0)
 				return new ReduxLoadOrderAdvisorSeparatorItem(
-					divider.Title, "Empty separator", "0 mods");
+					divider.Title, "Empty separator", "0 mods", divider.Color, divider.IconId);
 			var first = members[0];
 			var last = members[^1];
 			var placement = first.index == last.index
@@ -119,7 +120,9 @@ public partial class ReduxLoadOrderAdvisorOrganizerWindow : AdonisUI.Controls.Ad
 			return new ReduxLoadOrderAdvisorSeparatorItem(
 				divider.Title,
 				placement,
-				$"{members.Length} mod{(members.Length == 1 ? String.Empty : "s")}");
+				$"{members.Length} mod{(members.Length == 1 ? String.Empty : "s")}",
+				divider.Color,
+				divider.IconId);
 		}).ToArray();
 		MoveList.ItemsSource = moves;
 		UnresolvedList.ItemsSource = unresolved;

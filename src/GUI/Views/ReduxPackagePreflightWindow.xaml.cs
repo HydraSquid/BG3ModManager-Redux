@@ -34,7 +34,8 @@ public partial class ReduxPackagePreflightWindow : AdonisUI.Controls.AdonisWindo
 			ReduxThemeService.Apply(
 				Resources,
 				settings.ColorTheme,
-				ReduxThemeService.GetActiveTheme(settings));
+				ReduxThemeService.GetActiveTheme(settings),
+				settings.UsesGeneratedGradients);
 		}
 
 		_sourcePath = packagePath ?? String.Empty;

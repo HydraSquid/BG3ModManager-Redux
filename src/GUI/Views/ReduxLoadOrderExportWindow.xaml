@@ -101,7 +101,7 @@
 						StrokeData="{StaticResource Redux.Icon.Information}" />
 					<TextBlock x:Name="BundleSafetyText" Grid.Column="1"
 						Foreground="{DynamicResource ReduxTextPrimaryBrush}"
-						Text="This modlist does not contain mod .pak files or modsettings.lsx. It cannot install mods or change the game until someone uses Export to Game."
+						Text="This modlist does not contain mod .pak files or modsettings.lsx. It cannot install mods or change the game until someone uses Sync Load Order to Game."
 						TextWrapping="Wrap" />
 				</Grid>
 			</Border>

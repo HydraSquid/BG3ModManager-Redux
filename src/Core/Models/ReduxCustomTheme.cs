@@ -11,6 +11,8 @@ namespace DivinityModManager.Models;
 [DataContract]
 public class ReduxCustomTheme : ReactiveObject
 {
+	private bool? _useGeneratedGradients;
+
 	[DataMember, Reactive] public string Id { get; set; } = Guid.NewGuid().ToString("N");
 	[DataMember, Reactive] public string Name { get; set; } = "Custom Theme";
 	[DataMember, Reactive] public ReduxThemeType BaseTheme { get; set; } = ReduxThemeType.ReduxDark;
@@ -42,6 +44,23 @@ public class ReduxCustomTheme : ReactiveObject
 	}
 	[DefaultValue(false)]
 	[DataMember, Reactive] public bool UseSourceIconsOnly { get; set; }
+	[DataMember(Name = "UseGeneratedGradients", EmitDefaultValue = false)]
+	public bool? UseGeneratedGradientsPreference
+	{
+		get => _useGeneratedGradients;
+		set
+		{
+			if (_useGeneratedGradients == value) return;
+			this.RaiseAndSetIfChanged(ref _useGeneratedGradients, value);
+			this.RaisePropertyChanged(nameof(UsesGeneratedGradients));
+		}
+	}
+	[IgnoreDataMember]
+	public bool UsesGeneratedGradients
+	{
+		get => UseGeneratedGradientsPreference ?? BaseTheme != ReduxThemeType.Parchment;
+		set => UseGeneratedGradientsPreference = value;
+	}
 	[IgnoreDataMember]
 	public bool UseIconsOnly
 	{
@@ -74,6 +93,7 @@ public class ReduxCustomTheme : ReactiveObject
 		ShowCategoryIconsInPills = ShowCategoryIconsInPills,
 		UseCategoryColorsForSidebarText = UseCategoryColorsForSidebarText,
 		UseIconsOnly = UseIconsOnly,
+		UseGeneratedGradientsPreference = UseGeneratedGradientsPreference,
 		BackgroundColor = BackgroundColor,
 		SurfaceColor = SurfaceColor,
 		AccentColor = AccentColor,

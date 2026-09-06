@@ -677,34 +677,73 @@
 								<UniformGrid Grid.Column="2" Margin="14,0,0,0" Columns="2" VerticalAlignment="Center">
 					<CheckBox Margin="0,0,10,0"
 										IsChecked="{Binding Settings.UseCategoryColorsForInteractions, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-										<StackPanel Margin="6,0,0,0">
-											<TextBlock FontWeight="SemiBold" Text="Use category colors for selection" />
-											<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Use category colors when hovering over or selecting mods." TextWrapping="Wrap" />
-										</StackPanel>
+						<Grid Margin="6,0,0,0">
+							<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+							<controls:ReduxIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"
+								Foreground="{DynamicResource ReduxAccentBrush}" StrokeData="{StaticResource Redux.Icon.ReorderStroke}" />
+							<StackPanel Grid.Column="1">
+								<TextBlock FontWeight="SemiBold" Text="Use category colors for selection" />
+								<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Use category colors when hovering over or selecting mods." TextWrapping="Wrap" />
+							</StackPanel>
+						</Grid>
 									</CheckBox>
 					<CheckBox x:Name="InterfaceIconsCheckBox" Margin="0,0,10,0"
 										IsChecked="{Binding Settings.ShowCategoryIconsInPills, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 										Unchecked="InterfaceIconsCheckBox_Unchecked">
-										<StackPanel Margin="6,0,0,0">
-											<TextBlock FontWeight="SemiBold" Text="Show icons" />
-											<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Show category, source, and status icons in lists, cards, and details." TextWrapping="Wrap" />
-										</StackPanel>
+						<Grid Margin="6,0,0,0">
+							<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+							<controls:ReduxIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"
+								Foreground="{DynamicResource ReduxAccentBrush}" StrokeData="{StaticResource Redux.Icon.ListStroke}" />
+							<StackPanel Grid.Column="1">
+								<TextBlock FontWeight="SemiBold" Text="Show icons" />
+								<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Show category, source, and status icons in lists, cards, and details." TextWrapping="Wrap" />
+							</StackPanel>
+						</Grid>
 									</CheckBox>
 					<CheckBox
 										IsChecked="{Binding Settings.UseCategoryColorsForSidebarText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-										<StackPanel Margin="6,0,0,0">
-											<TextBlock FontWeight="SemiBold" Text="Colored text" />
-											<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Use contextual category and source colors for text throughout lists, cards, and details." TextWrapping="Wrap" />
-										</StackPanel>
+						<Grid Margin="6,0,0,0">
+							<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+							<controls:ReduxIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"
+								Foreground="{DynamicResource ReduxAccentBrush}" StrokeData="{StaticResource Redux.Icon.Pricetag}" />
+							<StackPanel Grid.Column="1">
+								<TextBlock FontWeight="SemiBold" Text="Colored text" />
+								<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Use contextual category and source colors for text throughout lists, cards, and details." TextWrapping="Wrap" />
+							</StackPanel>
+						</Grid>
 									</CheckBox>
 					<CheckBox Margin="0,8,10,0"
 										IsChecked="{Binding Settings.UseIconsOnly, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 										IsEnabled="{Binding IsChecked, ElementName=InterfaceIconsCheckBox}">
-										<StackPanel Margin="6,0,0,0">
-											<TextBlock FontWeight="SemiBold" Text="Hide icon labels" />
-											<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Show icons without their text labels." TextWrapping="Wrap" />
-										</StackPanel>
+						<Grid Margin="6,0,0,0">
+							<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+							<controls:ReduxIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"
+								Foreground="{DynamicResource ReduxAccentBrush}" StrokeData="{StaticResource Redux.Icon.Albums}" />
+							<StackPanel Grid.Column="1">
+								<TextBlock FontWeight="SemiBold" Text="Hide icon labels" />
+								<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Show icons without their text labels." TextWrapping="Wrap" />
+							</StackPanel>
+						</Grid>
 									</CheckBox>
+					<CheckBox x:Name="GeneratedGradientsCheckBox" Margin="0,8,10,0"
+						Click="GeneratedGradientsCheckBox_Click">
+						<Grid Margin="6,0,0,0">
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="Auto" />
+								<ColumnDefinition Width="*" />
+							</Grid.ColumnDefinitions>
+							<controls:ReduxIcon Width="16" Height="16" Margin="0,0,8,0"
+								VerticalAlignment="Center" Foreground="{DynamicResource ReduxAccentBrush}"
+								StrokeData="{StaticResource Redux.Icon.Sparkles}" />
+							<StackPanel Grid.Column="1">
+								<TextBlock FontWeight="SemiBold" Text="Use generated gradients" />
+								<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.10}"
+									Foreground="{DynamicResource ReduxTextMutedBrush}"
+									Text="Blend the active theme's colors across action buttons."
+									TextWrapping="Wrap" />
+							</StackPanel>
+						</Grid>
+					</CheckBox>
 								</UniformGrid>
 							</Grid>
 						</Border>

@@ -385,6 +385,7 @@
 								<Grid.RowDefinitions>
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
 								</Grid.RowDefinitions>
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition Width="*" />
@@ -483,6 +484,28 @@
 											<TextBlock FontWeight="SemiBold" Text="Hide icon labels" />
 											<TextBlock Margin="0,3,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}"
 												Text="Show icons without their text labels."
+												TextWrapping="Wrap" />
+										</StackPanel>
+									</Grid>
+								</CheckBox>
+
+								<CheckBox x:Name="GeneratedGradientsCheckBox"
+									Grid.Row="2" Grid.ColumnSpan="3" Margin="0,10,0,0"
+									IsChecked="{Binding UsesGeneratedGradients, Mode=TwoWay}"
+									Style="{StaticResource ReduxCheckBoxStyle}"
+									Click="GeneratedGradientsCheckBox_Click">
+									<Grid Margin="4,0,12,0">
+										<Grid.ColumnDefinitions>
+											<ColumnDefinition Width="Auto" />
+											<ColumnDefinition Width="*" />
+										</Grid.ColumnDefinitions>
+										<controls:ReduxIcon Width="18" Height="18" Margin="0,0,12,0"
+											VerticalAlignment="Center" Foreground="{DynamicResource ReduxAccentBrush}"
+											StrokeData="{StaticResource Redux.Icon.Sparkles}" />
+										<StackPanel Grid.Column="1">
+											<TextBlock FontWeight="SemiBold" Text="Use generated gradients" />
+											<TextBlock Margin="0,3,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}"
+												Text="Blend this theme's colors across primary and destructive action buttons."
 												TextWrapping="Wrap" />
 										</StackPanel>
 									</Grid>

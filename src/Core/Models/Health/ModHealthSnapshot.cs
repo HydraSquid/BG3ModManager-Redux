@@ -65,7 +65,7 @@ public sealed class ModHealthSnapshot
 	public string StatusDescription => HasErrors
 		? "This mod or one of its dependencies may not work as expected."
 		: HasWarnings
-			? "Review these warnings before exporting or launching the game."
+			? "Review these warnings before syncing the load order or launching the game."
 			: HasInfo
 				? "This mod has loading or compatibility information."
 				: "No issues found.";

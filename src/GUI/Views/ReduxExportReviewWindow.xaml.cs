@@ -38,7 +38,7 @@ public sealed class ReduxExportReviewData
 		var safeOrderName = String.IsNullOrWhiteSpace(orderName) ? "Current" : orderName;
 		var safeProfileName = String.IsNullOrWhiteSpace(profileName) ? "selected profile" : profileName;
 		DestinationSummary =
-			$"Exporting “{safeOrderName}” to “{safeProfileName}” with {FormatCount(comparison.ProposedModCount, "active mod")}.";
+			$"“{safeOrderName}” will become the game load order for “{safeProfileName}”, with {FormatCount(comparison.ProposedModCount, "active mod")}.";
 		ActivatedCount = comparison.Activated.Count;
 		DeactivatedCount = comparison.Deactivated.Count;
 		RepositionedCount = comparison.Repositioned.Count;
@@ -51,21 +51,21 @@ public sealed class ReduxExportReviewData
 			? $"Changes ({comparison.Changes.Count})"
 			: "Changes";
 		NoChangesSummary = comparison.HasPreviousOrder
-			? "This order matches the load order currently exported to the selected profile."
-			: "No earlier exported load order is available for comparison.";
+			? "This order already matches the selected profile's game load order."
+			: "No existing game load order is available for comparison.";
 		BaselineSummary = comparison.HasPreviousOrder
-			? "Compared with the load order currently exported to this profile."
-			: "No previous export is available for this profile.";
+			? "Compared with the selected profile's current game load order."
+			: "This profile does not have an earlier game load order to compare.";
 
 		HasDiagnosticErrors = healthErrorCount > 0;
 		HasDiagnosticWarnings = healthWarningCount > 0 || missingDependencyCount > 0;
 		if (HasDiagnosticErrors)
 		{
-			DiagnosticTitle = "Fix errors before exporting";
+			DiagnosticTitle = "Fix errors before applying changes";
 		}
 		else if (HasDiagnosticWarnings)
 		{
-			DiagnosticTitle = "Review warnings before exporting";
+			DiagnosticTitle = "Review warnings before applying changes";
 		}
 		else
 		{
@@ -129,7 +129,7 @@ public partial class ReduxExportReviewWindow : AdonisUI.Controls.AdonisWindow
 		var settings = MainWindow.Self?.ViewModel?.Settings;
 		if (settings != null)
 		{
-			ReduxThemeService.Apply(Resources, settings.ColorTheme, ReduxThemeService.GetActiveTheme(settings));
+			ReduxThemeService.Apply(Resources, settings.ColorTheme, ReduxThemeService.GetActiveTheme(settings), settings.UsesGeneratedGradients);
 		}
 		DataContext = review ?? throw new ArgumentNullException(nameof(review));
 	}

@@ -11,7 +11,7 @@ ways to organize, review, and share mod setups.
 
 > [!IMPORTANT]
 > Redux is still in early development. Keep backups of important profiles, saves, downloaded
-> archives, and the BG3 Mods folder. Review exported orders before launching the game.
+> archives, and the BG3 Mods folder. Review load-order changes before applying them to the game.
 
 ## What Redux adds
 
@@ -26,8 +26,8 @@ ways to organize, review, and share mod setups.
 - **Mod Diagnostics** for detectable package, dependency, Script Extender, Mod Fixer, override,
   creator-manifest, conflict, and mod.io conditions. Optional Load Order Advisor checks add cautious
   guidance from package declarations and Redux's offline ordering knowledge.
-- **Safer order changes** with an export review, pre-export restore points, order comparison, staged
-  imports, backups, and validated writes.
+- **Safer order changes** with a game-order review, restore points, order comparison, staged imports,
+  backups, validated writes, and guarded Undo/Redo for changes applied to `modsettings.lsx`.
 - **Redux Modlists** (`.bg3redux`) for moving an order, categories, separators, optional source
   links, and optional notes between Redux installations without changing `modsettings.lsx` or
   including mod files.
@@ -39,14 +39,15 @@ ways to organize, review, and share mod setups.
   Quick Access menu (`Ctrl+Q`) with searchable actions and familiar alternate terms.
 - Working changes remain separate from the selected saved order until **Save** is pressed. Redux
   warns before closing with unsaved load-order changes.
-- Undo or redo reversible working-order actions—including activation, deactivation, repositioning,
-  separator changes, and applied organizer previews—with `Ctrl+Z` and `Ctrl+Y`.
+- Undo or redo reversible actions—including activation, deactivation, repositioning, separator
+  changes, organizer changes, and game load-order writes—with `Ctrl+Z` and `Ctrl+Y`. Redux will not
+  undo a game-file change if BG3 or another manager has modified that file afterward.
 - Assign categories to one mod or a selection, then click category pills to filter both lists.
 - Add separators that remember their placement and collapsed state. Closed separators keep their
   existing contents sealed and move with those mods as one group; newly positioned mods remain
   visible until the separator is expanded.
 - Add notes to mods and optionally include them in a Redux Modlist.
-- Compare saved orders or load a recent restore point without changing game files until export.
+- Compare saved orders or load a recent restore point without changing the game's load order.
 - Inspect shared internal PAK paths with **Tools > Active File Overlaps**. Overlaps are reported as
   information, not definite conflicts, because patches often share files intentionally.
 
@@ -60,7 +61,7 @@ information. It does not download, install, delete, repair, or reorder mods auto
 
 When a dependency is already installed, an available action can reveal it, copy its UUID, open its
 linked page, or activate it after confirmation. Activating a dependency changes only the working
-order until the user exports it.
+order until the user syncs that order to the game.
 
 For a missing dependency, Redux can open a known Nexus page when its reviewed database contains an
 exact module-UUID match. Unknown dependencies retain the copy-UUID fallback; Redux does not install
@@ -73,7 +74,7 @@ mod-author load-after guidance. **Organize Active Load Order** can turn those fa
 that preserves your separators, creates suggested separators, or removes separators. Applying a preview
 is one undoable, unsaved edit; the resulting separator names, membership, and load-order ranges are
 shown before applying. Individual placement recommendations can be ignored and restored later.
-Redux never silently reorders or exports the load order.
+Redux never silently reorders the list or changes the game's load order.
 
 ## Redux Modlists
 
@@ -117,7 +118,9 @@ share only the `.bg3redux-report`, not the original mod archives or `.pak` files
 
 ## Themes and accessibility
 
-- Choose Redux Dark, Redux Light, or Parchment, or create and share a custom theme.
+- Choose Redux Dark, Redux Light, or Parchment, or create and share a custom theme. The active theme
+  can use solid action colors or gradients generated from its semantic colors; gradients are the
+  default for Redux Dark and Light, while Parchment uses solid actions.
 - Choose Compact, Default, or Large text and one of the bundled fonts, or import `.ttf` and `.otf`
   files. Some imported fonts may not display correctly.
 - Configure category-colored selection, colored text, icons, and icon-only labels.

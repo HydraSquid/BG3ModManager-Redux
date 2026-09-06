@@ -679,7 +679,7 @@
 							</MenuItem>
 							<MenuItem Header="Export">
 								<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.CloudUpload}" /></MenuItem.Icon>
-								<MenuItem Command="{Binding Keys.ExportOrderToGame.Command}" Header="Export to Game" InputGestureText="{Binding Keys.ExportOrderToGame.DisplayBindingText}">
+								<MenuItem Command="{Binding Keys.ExportOrderToGame.Command}" Header="Sync Load Order to Game" InputGestureText="{Binding Keys.ExportOrderToGame.DisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.CloudUpload}" /></MenuItem.Icon>
 								</MenuItem>
 								<MenuItem Command="{Binding Keys.ExportOrderToZip.Command}" Header="Back Up Active Mods to ZIP..." InputGestureText="{Binding Keys.ExportOrderToZip.DisplayBindingText}">
@@ -1081,9 +1081,16 @@
 								<Setter Property="Width" Value="Auto" />
 								<Setter Property="Height" Value="{DynamicResource Redux.ControlHeight.Standard}" />
 								<Setter Property="Margin" Value="1,0" />
-								<Setter Property="Padding" Value="12,0" />
+								<Setter Property="Padding" Value="11,0" />
 								<Setter Property="BorderThickness" Value="0" />
 								<Setter Property="Tag" Value="{Binding}" />
+							</Style>
+							<Style x:Key="ToolbarCompactIconButtonStyle" BasedOn="{StaticResource ToolbarButtonBaseStyle}" TargetType="{x:Type Button}">
+								<Setter Property="Width" Value="30" />
+								<Setter Property="Margin" Value="0" />
+							</Style>
+							<Style x:Key="ToolbarUtilityButtonStyle" BasedOn="{StaticResource ToolbarCompactIconButtonStyle}" TargetType="{x:Type Button}">
+								<Setter Property="Foreground" Value="{DynamicResource ReduxTextSecondaryBrush}" />
 							</Style>
 							<Style x:Key="ToolbarWorkflowIconStyle" BasedOn="{StaticResource {x:Type controls:ReduxIcon}}" TargetType="{x:Type controls:ReduxIcon}">
 								<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
@@ -1323,18 +1330,21 @@
 								</ComboBox>
 									<Button x:Name="SaveButton"
 										AutomationProperties.Name="Save current load order"
+										Style="{StaticResource ToolbarCompactIconButtonStyle}"
 										ToolTip="Save changes to the selected load order">
 										<controls:ReduxIcon x:Name="SaveButtonIcon"
 											StrokeData="{StaticResource Redux.Icon.Save}" />
 									</Button>
 									<Button x:Name="SaveAsOrderButton"
 										AutomationProperties.Name="Save as a new load order"
+										Style="{StaticResource ToolbarCompactIconButtonStyle}"
 										ToolTip="Save as a new named load order">
 										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Duplicate}" />
 									</Button>
 									<Button Command="{Binding DeleteOrderCommand}"
 										CommandParameter="{Binding SelectedModOrder}"
 										AutomationProperties.Name="Delete selected load order"
+										Style="{StaticResource ToolbarCompactIconButtonStyle}"
 										ToolTip="Delete the selected load order">
 										<controls:ReduxIcon Foreground="{DynamicResource ReduxErrorBrush}" StrokeData="{StaticResource Redux.Icon.Trash}" />
 									</Button>
@@ -1343,7 +1353,7 @@
 										ToolTip="{Binding LoadOrderAdvisorStatusText}"
 										Visibility="{Binding Modules.LoadOrderGuidanceEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
 										<Button.Style>
-											<Style BasedOn="{StaticResource {x:Type Button}}" TargetType="{x:Type Button}">
+											<Style BasedOn="{StaticResource ToolbarCompactIconButtonStyle}" TargetType="{x:Type Button}">
 												<Setter Property="Foreground" Value="{DynamicResource ReduxIconBrush}" />
 												<Style.Triggers>
 													<DataTrigger Binding="{Binding HasLoadOrderAdvisorReview}" Value="True">
@@ -1362,6 +1372,7 @@
 										AutomationProperties.Name="More load order actions"
 										Click="OrderActionsButton_Click"
 										Foreground="{DynamicResource ReduxAccentHoverBrush}"
+										Style="{StaticResource ToolbarCompactIconButtonStyle}"
 										ToolTip="More load order actions">
 										<controls:ReduxIcon Data="{StaticResource Redux.Icon.MoreHorizontal}" />
 									<Button.ContextMenu>
@@ -1397,24 +1408,50 @@
 										</Button.ContextMenu>
 									</Button>
 									<Button x:Name="ExportToModSettingsButton"
-										Style="{StaticResource ToolbarWorkflowButtonStyle}"
+										AutomationProperties.Name="{Binding ExportToGameStatusText}"
 										ToolTip="{Binding ExportToGameStatusText}">
+										<Button.Style>
+											<Style BasedOn="{StaticResource ToolbarWorkflowButtonStyle}" TargetType="{x:Type Button}">
+												<Style.Triggers>
+													<DataTrigger Binding="{Binding IsCurrentOrderExportedToGame}" Value="True">
+														<Setter Property="IsEnabled" Value="False" />
+														<Setter Property="Background" Value="{DynamicResource ReduxSurfaceElevatedBrush}" />
+														<Setter Property="BorderBrush" Value="{DynamicResource ReduxBorderBrush}" />
+														<Setter Property="BorderThickness" Value="1" />
+														<Setter Property="Foreground" Value="{DynamicResource ReduxTextMutedBrush}" />
+													</DataTrigger>
+												</Style.Triggers>
+											</Style>
+										</Button.Style>
 										<StackPanel Orientation="Horizontal">
-											<controls:ReduxIcon Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.CloudUpload}" Style="{StaticResource ToolbarWorkflowIconStyle}" />
-											<TextBlock Text="Export to Game" />
-											<Border Width="10"
-												Height="10"
-												Margin="7,0,0,0"
-												VerticalAlignment="Center"
-												Background="{DynamicResource ReduxSurfaceBrush}"
-												CornerRadius="5"
-												Visibility="{Binding IsCurrentOrderExportedToGame, Converter={StaticResource BoolToVisibilityConverterReversed}}">
-												<Ellipse Width="5" Height="5" Fill="{DynamicResource ReduxWarningBrush}" />
-											</Border>
+											<controls:ReduxIcon Margin="0,0,6,0">
+												<controls:ReduxIcon.Style>
+													<Style BasedOn="{StaticResource ToolbarWorkflowIconStyle}" TargetType="{x:Type controls:ReduxIcon}">
+														<Setter Property="StrokeData" Value="{StaticResource Redux.Icon.CloudUpload}" />
+														<Style.Triggers>
+															<DataTrigger Binding="{Binding IsCurrentOrderExportedToGame}" Value="True">
+																<Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Check}" />
+															</DataTrigger>
+														</Style.Triggers>
+													</Style>
+												</controls:ReduxIcon.Style>
+											</controls:ReduxIcon>
+											<TextBlock>
+												<TextBlock.Style>
+													<Style TargetType="{x:Type TextBlock}">
+														<Setter Property="Text" Value="Sync load order to game" />
+														<Style.Triggers>
+															<DataTrigger Binding="{Binding IsCurrentOrderExportedToGame}" Value="True">
+																<Setter Property="Text" Value="Load order synced" />
+															</DataTrigger>
+														</Style.Triggers>
+													</Style>
+												</TextBlock.Style>
+											</TextBlock>
 										</StackPanel>
 										<Button.ContextMenu>
 											<ContextMenu>
-												<MenuItem Command="{Binding Path=OpenFileCommand, Source={x:Static dapp:DivinityApp.Commands}}" CommandParameter="{Binding SelectedProfile.ModSettingsFile}" Header="Open Exported Mod Order File...">
+												<MenuItem Command="{Binding Path=OpenFileCommand, Source={x:Static dapp:DivinityApp.Commands}}" CommandParameter="{Binding SelectedProfile.ModSettingsFile}" Header="Open Game Load Order File...">
 													<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Open}" /></MenuItem.Icon>
 												</MenuItem>
 												<MenuItem Command="{Binding Path=OpenInFileExplorerCommand, Source={x:Static dapp:DivinityApp.Commands}}" CommandParameter="{Binding SelectedProfile.ModSettingsFile}" Header="Open in File Explorer...">
@@ -1436,18 +1473,20 @@
 									<Rectangle Width="1" Height="20" />
 									<Button x:Name="UndoLoadOrderButton"
 										AutomationProperties.Name="Undo last action"
+										Style="{StaticResource ToolbarUtilityButtonStyle}"
 										ToolTip="Undo Last Action (Ctrl+Z)">
 										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Undo}" />
 									</Button>
 									<Button x:Name="RedoLoadOrderButton"
 										AutomationProperties.Name="Redo last action"
+										Style="{StaticResource ToolbarUtilityButtonStyle}"
 										ToolTip="Redo Last Action (Ctrl+Y)">
 										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Redo}" />
 									</Button>
-									<Button x:Name="RefreshButton" ToolTip="Refresh Mods">
+									<Button x:Name="RefreshButton" Style="{StaticResource ToolbarUtilityButtonStyle}" ToolTip="Refresh Mods">
 										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.RefreshStroke}" />
 									</Button>
-									<Button x:Name="OpenModsFolderButton" ToolTip="Open Mods Folder">
+									<Button x:Name="OpenModsFolderButton" Style="{StaticResource ToolbarUtilityButtonStyle}" ToolTip="Open Mods Folder">
 										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" />
 										<Button.ContextMenu>
 											<ContextMenu>
@@ -1457,7 +1496,7 @@
 											</ContextMenu>
 										</Button.ContextMenu>
 									</Button>
-									<Button x:Name="OpenExtenderLogsFolderButton" ToolTip="Open Logs Folder">
+									<Button x:Name="OpenExtenderLogsFolderButton" Style="{StaticResource ToolbarUtilityButtonStyle}" ToolTip="Open Logs Folder">
 										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.DocumentText}" />
 										<Button.ContextMenu>
 											<ContextMenu>

@@ -265,6 +265,8 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 	private VisualDividerAnimation _activeVisualDividerTransition;
 	private VisualDividerAnimation _inactiveVisualDividerTransition;
 	private DispatcherOperation _modDetailsSelectionUpdate;
+	private bool _suppressModDetailsToggleAnimation;
+	private bool _modDetailsHiding;
 	private DispatcherOperation _paneSelectionSync;
 	private ModListView _pendingSelectionOwner;
 	private bool _synchronizingPaneSelection;
@@ -670,7 +672,8 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			useCategoryColorsForSidebarSelection: ViewModel.Settings.UseCategoryColorsForInteractions,
 			useCategoryColorsForSidebarText: ViewModel.Settings.UseCategoryColorsForSidebarText,
 			showInterfaceIcons: ViewModel.Settings.ShowCategoryIconsInPills) { Owner = Window.GetWindow(this) };
-		ReduxThemeService.Apply(dialog.Resources, ViewModel.Settings.ColorTheme, ReduxThemeService.GetActiveTheme(ViewModel.Settings));
+		ReduxThemeService.Apply(dialog.Resources, ViewModel.Settings.ColorTheme,
+			ReduxThemeService.GetActiveTheme(ViewModel.Settings), ViewModel.Settings.UsesGeneratedGradients);
 		var result = dialog.ShowDialog();
 		SaveCategoryDialogColors(dialog);
 		if (result == true && !ViewModel.TryAddCustomModCategory(dialog.CategoryName, dialog.CategoryColor,
@@ -707,7 +710,8 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			useCategoryColorsForSidebarSelection: ViewModel.Settings.UseCategoryColorsForInteractions,
 			useCategoryColorsForSidebarText: ViewModel.Settings.UseCategoryColorsForSidebarText,
 			showInterfaceIcons: ViewModel.Settings.ShowCategoryIconsInPills) { Owner = Window.GetWindow(this) };
-		ReduxThemeService.Apply(dialog.Resources, ViewModel.Settings.ColorTheme, ReduxThemeService.GetActiveTheme(ViewModel.Settings));
+		ReduxThemeService.Apply(dialog.Resources, ViewModel.Settings.ColorTheme,
+			ReduxThemeService.GetActiveTheme(ViewModel.Settings), ViewModel.Settings.UsesGeneratedGradients);
 		var result = dialog.ShowDialog();
 		SaveCategoryDialogColors(dialog);
 		if (result != true) return;
@@ -1220,7 +1224,8 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			? mod.NexusModsData.SourcePageUrl
 			: null;
 		var dialog = new NexusManualLinkDialog(currentLink) { Owner = Window.GetWindow(this) };
-		ReduxThemeService.Apply(dialog.Resources, ViewModel.Settings.ColorTheme, ReduxThemeService.GetActiveTheme(ViewModel.Settings));
+		ReduxThemeService.Apply(dialog.Resources, ViewModel.Settings.ColorTheme,
+			ReduxThemeService.GetActiveTheme(ViewModel.Settings), ViewModel.Settings.UsesGeneratedGradients);
 		if (dialog.ShowDialog() != true) return;
 		if (!ViewModel.TryManuallyLinkNexusMod(mod, dialog.NexusLink, out var error))
 		{
@@ -1246,7 +1251,8 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			savedColors: ViewModel.Settings.SavedCategoryColors, visualDividerMode: true,
 			useCategoryColorsForHover: ViewModel.Settings.UseCategoryColorsForInteractions)
 			{ Owner = Window.GetWindow(this) };
-		ReduxThemeService.Apply(dialog.Resources, ViewModel.Settings.ColorTheme, ReduxThemeService.GetActiveTheme(ViewModel.Settings));
+		ReduxThemeService.Apply(dialog.Resources, ViewModel.Settings.ColorTheme,
+			ReduxThemeService.GetActiveTheme(ViewModel.Settings), ViewModel.Settings.UsesGeneratedGradients);
 		if (dialog.ShowDialog() != true) { SaveCategoryDialogColors(dialog); return; }
 		SaveCategoryDialogColors(dialog);
 		ViewModel.AddVisualDivider(activeList, position, dialog.CategoryName, dialog.CategoryColor,
@@ -1277,7 +1283,8 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			description: divider.Description,
 			hideSeparatorLine: divider.HideLine)
 			{ Owner = Window.GetWindow(this) };
-		ReduxThemeService.Apply(dialog.Resources, ViewModel.Settings.ColorTheme, ReduxThemeService.GetActiveTheme(ViewModel.Settings));
+		ReduxThemeService.Apply(dialog.Resources, ViewModel.Settings.ColorTheme,
+			ReduxThemeService.GetActiveTheme(ViewModel.Settings), ViewModel.Settings.UsesGeneratedGradients);
 		if (dialog.ShowDialog() != true) { SaveCategoryDialogColors(dialog); return; }
 		SaveCategoryDialogColors(dialog);
 		ViewModel.UpdateVisualDivider(item, dialog.CategoryName, dialog.CategoryColor,
@@ -2101,33 +2108,96 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 				(ViewModel.ActiveMods.Contains(mod)
 					|| ViewModel.InactiveMods.Contains(mod)
 					|| ViewModel.ForceLoadedMods.Contains(mod)));
-		if (selectedMod != null)
-		{
-			ViewModel.MarkModSeen(selectedMod);
-		}
-
 		if (selectedMod == null)
 		{
 			RememberExpandedModDetailsHeight();
+			if (detailsWereVisible)
+			{
+				if (!_modDetailsHiding) HideModDetails();
+			}
+			else
+			{
+				ModDetailsContent.Content = null;
+				UpdateModDetailsLayout(false);
+			}
+			return;
 		}
 
+		ViewModel.MarkModSeen(selectedMod);
+		if (_modDetailsHiding)
+		{
+			_modDetailsTransition?.Cancel();
+			_modDetailsHiding = false;
+			UpdateModDetailsLayout(true);
+		}
 		if (!ReferenceEquals(ModDetailsContent.Content, selectedMod))
 		{
 			ModDetailsContent.Content = selectedMod;
 		}
-		var nextVisibility = selectedMod != null ? Visibility.Visible : Visibility.Collapsed;
-		if (ModDetailsPanel.Visibility != nextVisibility)
+
+		// Changing the selected mod replaces the content without rebuilding the row.
+		// A newly revealed drawer starts as its compact, discoverable header.
+		if (!detailsWereVisible)
 		{
-			ModDetailsPanel.Visibility = nextVisibility;
+			ModDetailsPanel.Visibility = Visibility.Visible;
+			RevealCollapsedModDetails();
+		}
+	}
+
+	private async void RevealCollapsedModDetails()
+	{
+		_modDetailsHiding = false;
+		_modDetailsTransition?.Cancel();
+		_modDetailsTransition = new System.Threading.CancellationTokenSource();
+		var token = _modDetailsTransition.Token;
+
+		_suppressModDetailsToggleAnimation = true;
+		try
+		{
+			ModDetailsToggleButton.IsChecked = false;
+		}
+		finally
+		{
+			_suppressModDetailsToggleAnimation = false;
 		}
 
-		// Changing the selected mod should replace the drawer content without
-		// rebuilding its row. Reapplying the row here could turn a user-sized
-		// drawer into the full available height after the main window was resized.
-		if (detailsWereVisible != (selectedMod != null))
-		{
-			UpdateModDetailsLayout(selectedMod != null);
-		}
+		ModDetailsGridSplitter.Visibility = Visibility.Collapsed;
+		ModDetailsSplitterRow.Height = new GridLength(0);
+		ModDetailsRow.MinHeight = 0;
+		ModDetailsRow.Height = new GridLength(0);
+		await ReduxWindowBehavior.WaitForRenderFrameAsync();
+		if (token.IsCancellationRequested || ModDetailsPanel.Visibility != Visibility.Visible) return;
+
+		var completed = await AnimatePanelValueAsync(
+			0,
+			CollapsedModDetailsRowHeight,
+			value => ModDetailsRow.Height = new GridLength(value),
+			token);
+		if (completed) UpdateModDetailsLayout(true);
+	}
+
+	private async void HideModDetails()
+	{
+		_modDetailsTransition?.Cancel();
+		_modDetailsTransition = new System.Threading.CancellationTokenSource();
+		var token = _modDetailsTransition.Token;
+		_modDetailsHiding = true;
+
+		ModDetailsGridSplitter.Visibility = Visibility.Collapsed;
+		ModDetailsSplitterRow.Height = new GridLength(0);
+		ModDetailsRow.MinHeight = 0;
+		var startHeight = Math.Max(0, ModDetailsRow.ActualHeight);
+		var completed = await AnimatePanelValueAsync(
+			startHeight,
+			0,
+			value => ModDetailsRow.Height = new GridLength(value),
+			token);
+		if (!completed) return;
+
+		_modDetailsHiding = false;
+		ModDetailsPanel.Visibility = Visibility.Collapsed;
+		ModDetailsContent.Content = null;
+		UpdateModDetailsLayout(false);
 	}
 
 	private void RememberExpandedModDetailsHeight()
@@ -2142,6 +2212,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 	{
 		if (!hasSelectedMod)
 		{
+			_modDetailsTransition?.Cancel();
 			ModDetailsGridSplitter.Visibility = Visibility.Collapsed;
 			ModDetailsSplitterRow.Height = new GridLength(0);
 			ModDetailsRow.MinHeight = 0;
@@ -2166,11 +2237,13 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 
 	private async void ModDetailsToggleButton_Checked(object sender, RoutedEventArgs e)
 	{
+		if (_suppressModDetailsToggleAnimation) return;
 		await AnimateModDetailsLayoutAsync(true);
 	}
 
 	private async void ModDetailsToggleButton_Unchecked(object sender, RoutedEventArgs e)
 	{
+		if (_suppressModDetailsToggleAnimation) return;
 		RememberExpandedModDetailsHeight();
 		await AnimateModDetailsLayoutAsync(false);
 	}

@@ -106,7 +106,7 @@ public partial class ReduxCommandPaletteWindow : AdonisUI.Controls.AdonisWindow
 		var settings = MainWindow.Self?.ViewModel?.Settings;
 		if (settings != null)
 		{
-			ReduxThemeService.Apply(Resources, settings.ColorTheme, ReduxThemeService.GetActiveTheme(settings));
+			ReduxThemeService.Apply(Resources, settings.ColorTheme, ReduxThemeService.GetActiveTheme(settings), settings.UsesGeneratedGradients);
 		}
 
 		_commands = BuildCommandList(viewModel, focusMod, additionalCommands);

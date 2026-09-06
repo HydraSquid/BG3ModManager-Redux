@@ -98,6 +98,12 @@ public partial class CustomThemeEditorWindow : AdonisWindow
 		Theme.UseIconsOnly = false;
 	}
 
+	private void GeneratedGradientsCheckBox_Click(object sender, RoutedEventArgs e)
+	{
+		Theme.UsesGeneratedGradients = GeneratedGradientsCheckBox.IsChecked == true;
+		PreviewTheme();
+	}
+
 	private void ColorButton_Click(object sender, RoutedEventArgs e)
 	{
 		if (sender is not Button { Tag: string propertyName }) return;
@@ -142,6 +148,7 @@ public partial class CustomThemeEditorWindow : AdonisWindow
 
 	private void PreviewTheme()
 	{
+		GeneratedGradientsCheckBox.IsChecked = Theme.UsesGeneratedGradients;
 		ReduxThemeService.Apply(Resources, Theme.BaseTheme, Theme);
 		ReduxTypographyService.Apply(Application.Current.Resources, Theme.TypographyFont, Theme.CustomTypographyFont);
 		ReduxTypographyService.ApplyTextSize(Application.Current.Resources, Theme.TextSize);

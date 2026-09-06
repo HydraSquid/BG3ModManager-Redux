@@ -56,7 +56,7 @@ public partial class ReduxLoadOrderComparisonWindow : AdonisUI.Controls.AdonisWi
 		var settings = MainWindow.Self?.ViewModel?.Settings;
 		if (settings != null)
 		{
-			ReduxThemeService.Apply(Resources, settings.ColorTheme, ReduxThemeService.GetActiveTheme(settings));
+			ReduxThemeService.Apply(Resources, settings.ColorTheme, ReduxThemeService.GetActiveTheme(settings), settings.UsesGeneratedGradients);
 		}
 
 		_orders = orders ?? [];

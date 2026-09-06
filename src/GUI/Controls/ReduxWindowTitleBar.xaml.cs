@@ -155,6 +155,14 @@ public partial class ReduxWindowTitleBar : UserControl
 			return;
 		}
 
+		// Dialogs with shared transitions animate from their Closing event. Starting
+		// another exit here would run the same fade twice before the backdrop clears.
+		if (ReduxWindowBehavior.HasDialogTransitions(window))
+		{
+			SystemCommands.CloseWindow(window);
+			return;
+		}
+
 		_windowActionRunning = true;
 		ReduxWindowBehavior.AnimateExit(window, () =>
 		{

@@ -71,7 +71,7 @@ safety notes, and invalid embedded Redux creator manifests.
 When Mod Configuration Menu is installed but absent from the active order, diagnostics explain that
 its override files can make part of MCM appear in game even though its normal module entry was not
 exported. MCM's in-game reference to BG3MM includes compatible managers such as Redux; the corrective
-action is to activate MCM and use **Export to Game**.
+action is to activate MCM and use **Sync Load Order to Game**.
 
 Dependency findings provide conservative follow-up actions without installing anything. Redux can
 show or activate an installed inactive dependency, open a known source page, or copy the declared

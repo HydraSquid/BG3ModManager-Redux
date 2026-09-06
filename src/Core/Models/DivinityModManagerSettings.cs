@@ -53,6 +53,8 @@ public enum ReduxTextSize
 [DataContract]
 public class DivinityModManagerSettings : ReactiveObject
 {
+	private bool? _useGeneratedGradients;
+
 	[SettingsEntry("Game Data folder", "The game's Data folder, used when loading editor projects. Example: Baldur's Gate 3/Data.")]
 	[DataMember, Reactive] public string GameDataPath { get; set; }
 
@@ -134,6 +136,25 @@ public class DivinityModManagerSettings : ReactiveObject
 	[DefaultValue(ReduxThemeType.ReduxDark)]
 	[SettingsEntry("Theme", "Choose the app's colors.", HideFromUI = true)]
 	[DataMember, Reactive] public ReduxThemeType ColorTheme { get; set; } = ReduxThemeType.ReduxDark;
+
+	[DataMember(Name = "UseGeneratedGradients", EmitDefaultValue = false)]
+	public bool? UseGeneratedGradientsPreference
+	{
+		get => _useGeneratedGradients;
+		set
+		{
+			if (_useGeneratedGradients == value) return;
+			this.RaiseAndSetIfChanged(ref _useGeneratedGradients, value);
+			this.RaisePropertyChanged(nameof(UsesGeneratedGradients));
+		}
+	}
+
+	[IgnoreDataMember]
+	public bool UsesGeneratedGradients
+	{
+		get => UseGeneratedGradientsPreference ?? ColorTheme != ReduxThemeType.Parchment;
+		set => UseGeneratedGradientsPreference = value;
+	}
 
 	[DefaultValue(ReduxTypographyFont.Manrope)]
 	[SettingsEntry("App font", "Choose the font used throughout the app.", HideFromUI = true)]

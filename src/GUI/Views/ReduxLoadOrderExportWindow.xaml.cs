@@ -27,7 +27,7 @@ public partial class ReduxLoadOrderExportWindow : AdonisUI.Controls.AdonisWindow
 
 		var settings = MainWindow.Self?.ViewModel?.Settings;
 		if (settings != null)
-			ReduxThemeService.Apply(Resources, settings.ColorTheme, ReduxThemeService.GetActiveTheme(settings));
+			ReduxThemeService.Apply(Resources, settings.ColorTheme, ReduxThemeService.GetActiveTheme(settings), settings.UsesGeneratedGradients);
 
 		OrderNameText.Text = String.IsNullOrWhiteSpace(orderName) ? "Redux Modlist" : orderName;
 		ModCountText.Text = FormatCount(modCount, "mod");

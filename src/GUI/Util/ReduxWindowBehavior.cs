@@ -844,6 +844,9 @@ public static class ReduxWindowBehavior
 		}
 	}
 
+	public static bool HasDialogTransitions(Window window) =>
+		window != null && AnimatedCloseStates.TryGetValue(window, out _);
+
 	/// <summary>
 	/// Dims the owning window while a Redux secondary surface is visible. Leases
 	/// are reference-counted so nested or simultaneous secondary windows cannot
@@ -1128,8 +1131,16 @@ public static class ReduxWindowBehavior
 		animation.Completed += (_, _) =>
 		{
 			target.BeginAnimation(UIElement.OpacityProperty, null);
-			target.Opacity = 1;
-			completed();
+			try
+			{
+				// Close or hide while the content is still transparent. Restoring opacity
+				// first makes the window flash back for one frame and looks like a second close.
+				completed();
+			}
+			finally
+			{
+				target.Opacity = 1;
+			}
 		};
 		target.BeginAnimation(UIElement.OpacityProperty, animation);
 	}

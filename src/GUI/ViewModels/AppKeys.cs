@@ -87,7 +87,7 @@ public class AppKeys : ReactiveObject
 	[MenuSettings("File", "Import Load Order and Mods from Archive...", true)]
 	public Hotkey ImportOrderFromZipFile { get; private set; } = new Hotkey(Key.None);
 
-	[MenuSettings("File", "Export Load Order to Game")]
+	[MenuSettings("File", "Sync Load Order to Game")]
 	public Hotkey ExportOrderToGame { get; private set; } = new Hotkey(Key.E, ModifierKeys.Control);
 
 	[MenuSettings("File", "Export Load Order to Text File...")]

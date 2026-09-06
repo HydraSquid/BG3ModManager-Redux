@@ -30,7 +30,8 @@ the underlying mod-management model. Major differences include:
 - Redux branding, executable metadata, iconography, startup experience, and About/Help surfaces;
 - shared semantic colors, typography, spacing, corner radii, controls, menus, tooltips, dialogs,
   notifications, scrollbars, and window chrome;
-- Dark, Light, and Parchment themes plus persistent custom themes;
+- Dark, Light, and Parchment themes plus persistent custom themes and a per-theme generated-action
+  gradient preference;
 - bundled and imported fonts, Compact/Default/Large text sizes, and reusable custom PNG icons;
 - a reorganized toolbar, compact Toolbar menu, Shortcuts menu, and searchable Quick Access command menu;
 - a selected-mod details drawer and richer, source-aware hover information; and
@@ -72,7 +73,8 @@ Redux extends the inherited load-order workflow with:
 
 - an explicit working-order state that changes only the selected saved order when the user presses
   Save, with a close warning while changes remain unsaved;
-- bounded Undo/Redo history for reversible active-list, separator, and organizer actions;
+- bounded Undo/Redo history for reversible active-list, separator, organizer, and game load-order
+  actions, with external-change checks before restoring `modsettings.lsx`;
 - named saved-order creation, renaming, deletion, and direct access to the order folder;
 - portable Redux Modlists containing a saved order, optional Redux presentation data, and public
   source references;
@@ -129,6 +131,8 @@ Redux hardens state-changing operations through:
 
 - staged, validated replacement for settings, saved orders, `modsettings.lsx`, keybindings,
   provider caches, Script Extender configuration, and active-mod ZIP backups;
+- guarded in-session restoration of game load-order writes without overwriting a file changed later
+  by the game or another manager;
 - serialized same-destination writes so overlapping background operations cannot expose a partial
   file;
 - staged imports so incomplete files are not presented as installed mods;

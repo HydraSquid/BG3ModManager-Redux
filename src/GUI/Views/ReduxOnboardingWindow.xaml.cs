@@ -65,7 +65,7 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 
 		if (settings != null)
 		{
-			ReduxThemeService.Apply(Resources, settings.ColorTheme, ReduxThemeService.GetActiveTheme(settings));
+			ReduxThemeService.Apply(Resources, settings.ColorTheme, ReduxThemeService.GetActiveTheme(settings), settings.UsesGeneratedGradients);
 			ReduxDarkThemeCard.IsChecked = settings.ColorTheme == ReduxThemeType.ReduxDark;
 			ReduxLightThemeCard.IsChecked = settings.ColorTheme == ReduxThemeType.ReduxLight;
 			ParchmentThemeCard.IsChecked = settings.ColorTheme == ReduxThemeType.Parchment;

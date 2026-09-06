@@ -420,7 +420,7 @@ public sealed class McmActivationHealthRule : IModHealthRule
 			ModHealthFindingCode.McmNotActive,
 			ModHealthSeverity.Warning,
 			"Mod Configuration Menu is not active",
-			"MCM includes files that can load before its normal module entry is active. That can make MCM appear in game while it warns that the load order was reset. Move MCM into the active pane and use Export to Game. Its reference to BG3MM also applies to compatible managers such as Redux."));
+			"MCM includes files that can load before its normal module entry is active. That can make MCM appear in game while it warns that the load order was reset. Move MCM into the active pane and use Sync Load Order to Game. Its reference to BG3MM also applies to compatible managers such as Redux."));
 	}
 }
 

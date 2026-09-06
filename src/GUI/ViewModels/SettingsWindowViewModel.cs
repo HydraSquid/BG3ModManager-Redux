@@ -472,6 +472,7 @@ public class SettingsWindowViewModel : ReactiveObject
 					case SettingsWindowTab.Appearance:
 						Settings.ActiveCustomThemeId = String.Empty;
 						Settings.ColorTheme = ReduxThemeType.ReduxDark;
+						Settings.UsesGeneratedGradients = true;
 						Settings.TypographyFont = ReduxTypographyFont.Manrope;
 						Settings.CustomTypographyFont = String.Empty;
 						Settings.TextSize = ReduxTextSize.Default;

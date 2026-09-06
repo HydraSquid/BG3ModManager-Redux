@@ -36,7 +36,8 @@ public partial class ReduxFileOverlapWindow : AdonisUI.Controls.AdonisWindow
 			ReduxThemeService.Apply(
 				Resources,
 				settings.ColorTheme,
-				ReduxThemeService.GetActiveTheme(settings));
+				ReduxThemeService.GetActiveTheme(settings),
+				settings.UsesGeneratedGradients);
 		}
 
 		_candidates = candidates ?? [];

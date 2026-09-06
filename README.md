@@ -1,21 +1,18 @@
 <div align="center">
 
+<img src="https://bg3mm-redux.com/assets/redux-square.png" alt="BG3 Mod Manager Redux" width="92">
+
 # Baldur's Gate 3 Mod Manager Redux
 
 **A more visual, deliberate way to organize Baldur's Gate 3 mods.**
 
-[![Current build](https://img.shields.io/badge/build-0.1.0--alpha.13-9A7BFF?style=flat-square)](https://github.com/circleainn/BG3ModManager-Redux/releases)
+[![Current build](https://img.shields.io/badge/build-0.1.0--alpha.13-9A7BFF?style=flat-square)](https://www.nexusmods.com/baldursgate3/mods/23799)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-4F86F7?style=flat-square)](#requirements-and-alpha-status)
 [![License](https://img.shields.io/badge/license-MIT-42A66F?style=flat-square)](LICENSE)
-![Discord — coming soon](https://img.shields.io/badge/Discord-Coming_Soon-5865F2?style=flat-square&logo=discord&logoColor=white)
-
-<br>
-
-<a href="https://ko-fi.com/circleain"><img alt="Support me on Ko-fi" src="https://img.shields.io/badge/Support_me_on_Ko--fi-FF5E5B?style=for-the-badge&amp;logo=ko-fi&amp;logoColor=white"></a>
-
-<br>
+[![Support on Ko-fi](https://img.shields.io/badge/Support-Ko--fi-FF5E5B?style=flat-square&logo=ko-fi&logoColor=white)](https://ko-fi.com/circleain)
 
 [Download on Nexus Mods](https://www.nexusmods.com/baldursgate3/mods/23799) ·
+[Visit the website](https://bg3mm-redux.com) ·
 [Report a problem](https://github.com/circleainn/BG3ModManager-Redux/issues) ·
 [Browse the docs](docs/README.md) ·
 [See what differs from BG3MM](docs/CHANGES_FROM_UPSTREAM.md)

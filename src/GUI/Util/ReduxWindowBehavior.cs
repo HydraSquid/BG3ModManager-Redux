@@ -165,7 +165,7 @@ public static class ReduxWindowBehavior
 
 	public static bool ReduceMotion { get; private set; }
 	public static bool BackgroundEffectsDisabled { get; private set; }
-	private static bool ShouldAnimate => SystemParameters.ClientAreaAnimation && !ReduceMotion;
+	private static bool ShouldAnimateOpacity => !ReduceMotion && SystemParameters.ClientAreaAnimation;
 
 	public static void ConfigureAccessibility(bool reduceMotion, bool disableBackgroundEffects)
 	{
@@ -185,12 +185,6 @@ public static class ReduxWindowBehavior
 				ApplyPopupMotionPreference(window.Resources);
 				AttachWindowMotionPreference(window);
 				ApplyWindowMotionPreference(window);
-				if (ReduceMotion)
-				{
-					var target = GetAnimationTarget(window);
-					target.BeginAnimation(UIElement.OpacityProperty, null);
-					target.Opacity = 1;
-				}
 			}
 		}
 		RefreshPopupMotion();
@@ -278,14 +272,12 @@ public static class ReduxWindowBehavior
 
 	private static void ApplyManagedPopupMotion(Popup popup)
 	{
-		popup.PopupAnimation = ReduceMotion
-			? PopupAnimation.None
-			: GetManagedPopupAnimation(popup);
+		popup.PopupAnimation = NormalizePopupAnimation(GetManagedPopupAnimation(popup));
 	}
 
 	private static void ApplyManagedContextMenuMotion(ContextMenu contextMenu)
 	{
-		var animation = ReduceMotion ? PopupAnimation.None : PopupAnimation.Fade;
+		var animation = NormalizePopupAnimation(PopupAnimation.Fade);
 		contextMenu.Resources[SystemParameters.MenuPopupAnimationKey] = animation;
 
 		// ContextMenu is hosted by a private framework-owned Popup. Its PopupAnimation
@@ -521,8 +513,8 @@ public static class ReduxWindowBehavior
 	private static void ApplyPopupMotionPreference(ResourceDictionary resources)
 	{
 		if (resources == null) return;
-		var fadeAnimation = ReduceMotion ? PopupAnimation.None : PopupAnimation.Fade;
-		var slideAnimation = ReduceMotion ? PopupAnimation.None : PopupAnimation.Slide;
+		var fadeAnimation = NormalizePopupAnimation(PopupAnimation.Fade);
+		var slideAnimation = NormalizePopupAnimation(PopupAnimation.Slide);
 
 		resources["Redux.Motion.PopupFadeAnimation"] = fadeAnimation;
 		resources["Redux.Motion.PopupSlideAnimation"] = slideAnimation;
@@ -532,6 +524,16 @@ public static class ReduxWindowBehavior
 		// instead, so override it alongside the Redux templates to keep Reduce Motion
 		// effective for right-click menus and any framework-owned submenus.
 		resources[SystemParameters.MenuPopupAnimationKey] = fadeAnimation;
+	}
+
+	private static PopupAnimation NormalizePopupAnimation(PopupAnimation requested)
+	{
+		if (!SystemParameters.ClientAreaAnimation)
+		{
+			return PopupAnimation.None;
+		}
+
+		return ReduceMotion ? PopupAnimation.None : requested;
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
@@ -976,14 +978,14 @@ public static class ReduxWindowBehavior
 	{
 		var target = GetAnimationTarget(window);
 		target.BeginAnimation(UIElement.OpacityProperty, null);
-		target.Opacity = ShouldAnimate
+		target.Opacity = ShouldAnimateOpacity
 			? Math.Clamp(fromOpacity, 0, 1)
 			: 1;
 	}
 
 	private static void AnimateDialogClosing(Window window, AnimatedCloseState state, CancelEventArgs e)
 	{
-		if (state.BypassAnimation || !window.IsVisible || !ShouldAnimate) return;
+		if (state.BypassAnimation || !window.IsVisible || !ShouldAnimateOpacity) return;
 
 		e.Cancel = true;
 		if (state.IsClosing) return;
@@ -1048,7 +1050,7 @@ public static class ReduxWindowBehavior
 	/// </remarks>
 	public static Task WaitForRenderFrameAsync()
 	{
-		if (!ShouldAnimate) return Task.CompletedTask;
+		if (!ShouldAnimateOpacity) return Task.CompletedTask;
 
 		var completion = new TaskCompletionSource();
 		EventHandler handler = null;
@@ -1069,7 +1071,7 @@ public static class ReduxWindowBehavior
 	{
 		var target = GetAnimationTarget(window);
 		target.BeginAnimation(UIElement.OpacityProperty, null);
-		if (!ShouldAnimate)
+		if (!ShouldAnimateOpacity)
 		{
 			target.Opacity = 1;
 			return Task.CompletedTask;
@@ -1097,7 +1099,7 @@ public static class ReduxWindowBehavior
 	{
 		var target = GetAnimationTarget(window);
 		target.BeginAnimation(UIElement.OpacityProperty, null);
-		if (!ShouldAnimate)
+		if (!ShouldAnimateOpacity)
 		{
 			target.Opacity = 1;
 			return;
@@ -1118,7 +1120,7 @@ public static class ReduxWindowBehavior
 	public static void AnimateExit(Window window, Action completed)
 	{
 		var target = GetAnimationTarget(window);
-		if (!window.IsVisible || !ShouldAnimate)
+		if (!window.IsVisible || !ShouldAnimateOpacity)
 		{
 			completed();
 			return;

@@ -1,5 +1,9 @@
 # Redux mod database
 
+> **Audience:** Redux contributors and database maintainers. Users who want to help can generate a
+> contribution from **Tools > Generate Redux Database Contribution...**; no manual JSON editing is
+> required.
+
 `src/GUI/Resources/ReduxModDatabase.json` is a bundled offline database that lets Redux identify
 some pre-existing Nexus Mods installs without an API request. It's not an importer, and it never
 matches a package from a filename alone, title alone, arbitrary UUID, or approximate version. It uses

@@ -1,5 +1,8 @@
 # Mod developer tools
 
+> **Audience:** mod authors and release maintainers. These tools inspect files; they do not install
+> or change them.
+
 Redux includes small, focused tools for inspecting mod packages without installing or changing
 them.
 

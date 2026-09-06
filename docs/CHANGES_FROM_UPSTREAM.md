@@ -1,195 +1,196 @@
 # Changes from upstream BG3 Mod Manager
 
 BG3 Mod Manager Redux is a Windows-only fork of
-[LaughingLeader's BG3 Mod Manager](https://github.com/LaughingLeader/BG3ModManager). This document
-is a living description of the product and architectural differences between Redux and upstream.
-It is not a release history; individual fixes and version-specific changes belong in Git history
-and the issue tracker.
+[LaughingLeader's BG3 Mod Manager](https://github.com/LaughingLeader/BG3ModManager). Redux depends on
+the upstream project's mature BG3 package and load-order foundation; it is neither a clean-room
+rewrite nor an attempt to obscure that lineage.
 
-## Relationship to upstream
+This page documents **durable product and architectural differences**. It is not a changelog or a
+claim that every visible behavior originated in Redux.
 
-Redux retains the upstream foundations that make it a BG3 mod manager:
+> [!NOTE]
+> “Retained” means Redux continues to build on upstream behavior. “Extended” means Redux adds a
+> guarded workflow or presentation layer around that behavior. “Redux-owned” identifies a system
+> introduced for this fork.
 
-- profiles, campaigns, active and inactive mod lists, saved orders, and normal load-order editing;
-- import and export of `modsettings.lsx` and supported load-order formats;
-- `.pak` and archive handling through LSLib;
-- game, profile, save, order, and mod path detection;
-- game launch behavior and Script Extender integration;
-- Nexus Mods and mod.io metadata capabilities;
-- override and force-loaded mod handling; and
-- inherited keyboard, speech, and screen-reader support.
+## At a glance
 
-Redux remains a fork rather than a clean-room replacement. Upstream copyright, attribution,
-license terms, and third-party notices are preserved.
+| Area | Upstream foundation retained | Redux difference |
+|:--|:--|:--|
+| Mod management | PAK parsing, archives, active/inactive lists, profiles, campaigns | Structured drop review, safer staged replacement, unified selection and presentation |
+| Load orders | Editing, saved orders, `modsettings.lsx` import/export | Explicit unsaved working state, review-before-write, restore points, comparisons, Undo/Redo |
+| Organization | List ordering and filtering | Multi-category organization and persistent visual separators |
+| Mod information | Nexus metadata, package metadata, dependencies, overrides | Unified diagnostics, mod.io/manual provenance, offline recognition, richer details surfaces |
+| Guidance | Parsed dependency facts | Optional Load Order Advisor and separator-aware organization previews |
+| Portability | Existing order formats | `.bg3redux` Modlists for selected Redux presentation and public source data |
+| Saves | Profile and save-path discovery | Profile-aware Save Game Manager with campaign grouping and guarded imports |
+| Interface | Existing WPF application and accessibility foundations | Redux design system, themes, custom appearance, Quick Access, motion controls |
 
-## Product and interface differences
+## The upstream core Redux preserves
 
-Redux replaces the inherited presentation layer with a cohesive Redux interface while retaining
-the underlying mod-management model. Major differences include:
+Redux continues to rely on upstream systems for:
 
-- Redux branding, executable metadata, iconography, startup experience, and About/Help surfaces;
-- shared semantic colors, typography, spacing, corner radii, controls, menus, tooltips, dialogs,
-  notifications, scrollbars, and window chrome;
-- Dark, Light, and Parchment themes plus persistent custom themes and a per-theme generated-action
-  gradient preference;
-- bundled and imported fonts, Compact/Default/Large text sizes, and reusable custom PNG icons;
-- a reorganized toolbar, compact Toolbar menu, Shortcuts menu, and searchable Quick Access command menu;
-- a selected-mod details drawer and richer, source-aware hover information; and
-- a unified Lucide-based vector icon system with retained official provider branding where
-  appropriate.
+- profiles, campaigns, active and inactive lists, saved orders, and normal list editing;
+- `modsettings.lsx` and supported load-order import/export;
+- PAK metadata parsing and archive workflows through LSLib;
+- BG3, profile, save, order, and Mods-folder discovery;
+- override and force-loaded packages, dependency metadata, UUID checks, Osiris/Mod Fixer detection,
+  and Script Extender integration;
+- game launch behavior and inherited update-provider foundations;
+- Nexus Mods metadata, caching, images, and links; and
+- configurable shortcuts, speech, and screen-reader foundations.
 
-Redux list surfaces use bounded render-only wheel transitions over logical item scrolling.
-Virtualization and recycling remain authoritative, avoiding WPF's mixed-height pixel-anchor path.
-The shared **Reduce motion** preference disables smooth scrolling together with other animated
-movement.
+Unless a change is explicitly scoped and tested, Redux preserves these semantics and established
+user-data locations. Upstream copyright, attribution, license terms, and third-party notices remain
+intact.
 
-## Categories and visual organization
+## Redux-owned interface and organization
 
-Redux adds a persistent organization layer that upstream does not provide:
+Redux introduces a shared visual system across its main window and dialogs:
 
-- automatic and user-created mod categories;
-- multiple category assignments per mod;
-- category colors, descriptions, icons, ordering, counts, and filtering;
-- category-aware row, hover, selection, and details presentation;
-- category import/export through Redux-owned formats; and
-- explicit reset and fallback behavior for removed colors, icons, fonts, or categories.
+- semantic success, warning, error, information, and accent colors;
+- consistent typography, spacing, corner radii, controls, menus, tooltips, window chrome, and
+  notifications;
+- Redux Dark, Redux Light, Parchment, and persistent custom themes;
+- optional generated gradients, imported fonts, scalable text, and reusable custom PNG icons;
+- a reorganized toolbar and searchable Quick Access menu;
+- richer hover information and a persistent selected-mod details drawer; and
+- a unified Lucide-based icon language while preserving official provider branding where relevant.
 
-Redux also adds named visual separators to the active load order. Separators support colors,
-descriptions, icons, persistent collapse state, and durable separator membership. They are strictly
-presentation data: they are never written to `modsettings.lsx` or treated as mods. Expanded
-separator drags move only the marker. Collapsed separators move with their sealed contents as one
-group, remain closed after the move, and do not absorb unrelated rows at their destination. Rows
-placed next to a closed separator remain visible until the separator is expanded and its separator
-boundaries are recalculated.
+Redux list surfaces retain virtualization and logical scrolling while applying bounded render-only
+wheel motion. Reduce Motion removes scrolling, sliding, scaling, and transition animation without
+removing clear hover or selection feedback.
 
-The opt-in Load Order Advisor can preview conservative organization using exact dependency and
-offline ordering knowledge. A user can preserve existing separators, create suggested separators,
-or remove separators before applying the preview as one undoable, unsaved action. Recommendations
-can be ignored individually and restored later; Redux never applies or exports a preview silently.
+### Categories
 
-## Load-order workflow and portable data
+Redux categories are a persistent presentation layer with automatic and user-created categories,
+multiple assignments per mod, names, descriptions, colors, icons, display order, filtering, counts,
+and category-aware selection. Missing or removed assets have explicit fallback behavior.
 
-Redux extends the inherited load-order workflow with:
+### Separators
 
-- an explicit working-order state that changes only the selected saved order when the user presses
-  Save, with a close warning while changes remain unsaved;
-- bounded Undo/Redo history for reversible active-list, separator, organizer, and game load-order
-  actions, with external-change checks before restoring `modsettings.lsx`;
-- named saved-order creation, renaming, deletion, and direct access to the order folder;
-- portable Redux Modlists containing a saved order, optional Redux presentation data, and public
-  source references;
-- independent import choices for order data, presentation data, source links, and private notes;
-- validation against malformed, mismatched, or unexpected bundle contents;
-- export review showing meaningful activations, deactivations, placement changes, automatically
-  included dependencies, and relevant diagnostics;
-- bounded per-profile restore points created before confirmed game exports or on demand;
-- read-only comparison between saved orders and restore points;
-- user-directed ZIP backups with a redistribution-permission reminder; and
-- optional private notes that remain outside game files and contribution reports.
+Redux separators are named visual markers with descriptions, colors, icons, durable membership,
+and persistent collapse state. They never enter `modsettings.lsx` and are never treated as mods.
 
-Portable Redux data does not include `modsettings.lsx`, installed packages, profiles, saves, API
-keys, logs, caches, or other machine-private data.
+- An expanded separator moves only its marker.
+- A collapsed separator moves with its sealed contents.
+- Moving a closed group does not absorb unrelated destination rows.
+- Rows placed next to a closed separator remain visible until the group is expanded.
 
-Source-link import is disabled by default. Enabling it explicitly replaces Nexus Mods or mod.io
-associations for matching module UUIDs; leaving it disabled preserves the recipient's installed
-package provenance.
+## Deliberate load-order workflow
 
-## Diagnostics and dependency assistance
+Redux extends upstream load-order editing with an explicit working state:
 
-Redux replaces scattered status presentation with a built-in, read-only Mod Diagnostics system. It
-can report dependency, UUID, Script Extender, creator-manifest, declared-conflict, Mod Fixer,
-override, and mod.io safety conditions without automatically changing the installation or load
-order.
+- edits remain unsaved until the user presses **Save**;
+- closing or replacing a dirty working order requires confirmation;
+- saved orders can be created, renamed, deleted, compared, and opened in their folder;
+- bounded Undo/Redo covers activation, deactivation, movement, separators, organizer changes, and
+  guarded writes to the game order;
+- **Sync Load Order to Game** previews activations, deactivations, placement changes, automatically
+  included dependencies, and relevant diagnostics before writing;
+- per-profile restore points are created before confirmed writes and can also be created on demand;
+  and
+- an undo refuses to overwrite `modsettings.lsx` if BG3 or another manager changed it afterward.
 
-Optional load-order guidance is kept separate from default correctness checks. Contextual actions
-may reveal an installed dependency, copy its UUID, open a reviewed source page, or explicitly add
-an already-installed inactive dependency to the working order after confirmation. Redux does not
-automatically download, install, repair, activate, resolve, or reorder mods.
+Redux Modlists add a portable `.bg3redux` format for a saved order and user-selected category,
+separator, custom-icon, public-source, and optional-note data. Import choices remain independent.
+Bundles are validated and never contain installed PAKs, saves, profiles, API keys, or
+`modsettings.lsx`.
 
-An on-demand Active File Overlaps inspector reports shared paths across active and override PAKs.
-It describes overlaps, not confirmed conflicts.
+## Diagnostics and optional guidance
 
-## Source metadata and provenance
+Redux's built-in Mod Diagnostics unifies package facts that were previously scattered across
+different UI paths. It reports detectable dependency, UUID, Script Extender, creator-manifest,
+declared-conflict, Mod Fixer, override, and provider-safety conditions through consistent severity
+and follow-up actions.
 
-Redux expands provider handling with:
+Diagnostics are read-only. A user may explicitly reveal or activate an installed dependency, open
+a reviewed source, or copy a UUID, but Redux does not silently download, repair, remove, activate,
+or reorder mods.
 
-- explicit manual, native, cached, reviewed-database, and local provenance states;
-- conservative archive-name and package-identity matching;
-- reviewed missing-dependency links;
-- creator-manifest validation and guarded cache reuse;
-- a reversible local-only mode that stops Nexus Mods and mod.io requests without deleting stored
-  associations; and
-- privacy-validated contribution reports that exclude credentials, private paths, notes, profiles,
-  and load-order data.
+The opt-in **Load Order Advisor** is a separate experimental rule family. It combines exact package
+declarations with reviewed offline dependency and ordering facts. Its organizer can preserve current
+separators, create non-empty suggested separators, or remove separators. Every result is previewed;
+applying it is one undoable, unsaved action. Advice can be ignored per relationship without
+disabling other diagnostics.
 
-Provider metadata is informational. It does not silently replace package identity or override an
-explicit user association.
+An on-demand **Active File Overlaps** inspector also reports shared internal paths across active and
+override PAKs. It describes possible interactions, not confirmed conflicts.
 
-## Persistence and filesystem safety
+## Source identity and offline knowledge
 
-Redux hardens state-changing operations through:
+Redux extends provider metadata with explicit provenance states: manual, native, cached,
+creator-supplied, reviewed-database, and Local. Resolution is conservative and honors manual user
+choices. Provider metadata cannot replace a package's parsed identity or change its load order.
 
-- staged, validated replacement for settings, saved orders, `modsettings.lsx`, keybindings,
-  provider caches, Script Extender configuration, and active-mod ZIP backups;
-- guarded in-session restoration of game load-order writes without overwriting a file changed later
-  by the game or another manager;
-- serialized same-destination writes so overlapping background operations cannot expose a partial
-  file;
-- staged imports so incomplete files are not presented as installed mods;
-- backups and accurate success/failure reporting before package replacement or updates;
-- Windows account-protected provider API-key storage outside ordinary settings and diagnostic
-  data;
-- recoverable and permanent deletion paths that update the interface only after filesystem
-  success;
-- safe fallback when referenced custom assets are missing; and
-- release packaging checks that reject credentials, settings, logs, caches, backups, development
-  symbols, and private local paths.
+The bundled database supports:
 
-## Accessibility differences
+- exact installed-PAK and downloaded-archive fingerprints;
+- reviewed module identities;
+- corroborated community identity candidates;
+- reviewed missing-dependency source links; and
+- exact dependency aliases, substitutes, ordering groups, and author-supplied placement facts.
 
-Redux keeps upstream speech and screen-reader foundations while adding or reorganizing:
+Online Nexus Mods and mod.io information can be disabled without deleting cached associations.
+Privacy-limited `.bg3redux-report` contributions omit credentials, private paths, profiles, notes,
+settings, and load-order data and still require maintainer review.
 
-- a top-level Accessibility menu;
-- first-run theme, online-feature, diagnostic, and accessibility setup;
-- Atkinson Hyperlegible and adjustable interface text sizes;
+## Save Game Manager
+
+Redux adds a profile-aware save browser over upstream path discovery. It groups story saves by
+campaign, uses available WebP thumbnails and `SaveInfo.json` difficulty metadata, remembers campaign
+collapse state, and provides compact toolbar actions.
+
+Save folders, loose LSV files, and supported ZIP/7z/RAR/TAR/GZip-family archives can be installed
+through a picker or drag and drop. Save and mod drops use distinct structured reviews; mixed drops
+are rejected rather than guessed. Imports are staged, unsafe or oversized archive content is
+rejected, existing names require confirmation, and deletion uses the Windows Recycle Bin. Redux
+does not modify save contents or include saves in portable Modlists.
+
+## Filesystem and privacy hardening
+
+Redux applies staged, validated, or atomic replacement to settings, saved orders, imports,
+`modsettings.lsx`, keybindings, provider caches, Script Extender configuration, and active-mod ZIP
+backups. Same-destination writes are serialized so overlapping operations cannot expose partial
+content. Update and deletion results are reported only after the underlying filesystem action
+succeeds.
+
+Provider API keys are stored outside ordinary settings using Windows account-protected storage.
+Diagnostic exports and release packaging checks reject credentials and other private runtime data.
+
+## Accessibility additions
+
+Redux retains upstream speech and screen-reader support while adding:
+
+- a top-level Accessibility menu and first-run setup;
+- Atkinson Hyperlegible, other bundled fonts, imported fonts, and adjustable text size;
 - keyboard-operable Redux dialogs and a rebuilt shortcut editor;
 - selectable dialog text and consistent focus behavior;
-- lightweight realized-row automation for large virtualized mod lists; and
-- shared reduced-motion and reduced-background-effects preferences.
+- lightweight automation for realized rows in large virtualized lists; and
+- independent reduced-motion and reduced-background-effects preferences.
 
 ## Targeted upstream corrections
 
-Redux includes focused fixes for confirmed inherited defects, including:
-
-- large archive imports that previously allocated the entire file at once;
-- silent save/export failure when no profile or load order was selected;
-- blank profile handling on clean installations;
-- saved-order path mismatches across restart;
-- drag state remaining locked after load failures;
-- deletion of entries whose `.pak` file had already disappeared;
-- incomplete Script Extender version comparison;
-- refresh discarding unsaved order changes without confirmation; and
-- early startup failures closing without a useful explanation.
+Redux includes focused fixes for confirmed inherited problems, including large-archive memory use,
+blank-profile startup, saved-order path mismatches, stuck drag/toolbar state after failures,
+deleting already-missing PAK entries, Script Extender version comparison, refresh with unsaved
+changes, and startup failures without useful feedback.
 
 The upstream tracking discussion is
 [issue #11](https://github.com/circleainn/BG3ModManager-Redux/issues/11).
 
-## Compatibility boundaries
+## Current boundaries and non-goals
 
-Unless a change is explicitly scoped and regression-tested, Redux preserves upstream load-order
-semantics, profile and campaign behavior, import/export formats, LSLib integration, `.pak` parsing,
-game-path detection, launch behavior, and established user-data locations.
-
-The following remain outside the current Redux delta or are intentionally deferred:
+Redux currently does not provide:
 
 - public Nexus SSO authentication;
 - automatic Redux self-updating during the private alpha;
+- automatic downloading, compatibility repair, or conflict resolution;
+- silent load-order sorting or automatic game-file export;
 - application localization;
-- Linux, macOS, Wine, Proton, and self-contained .NET deployment; and
-- automatic mod installation, repair, conflict resolution, or load-order reordering.
+- Linux, macOS, Wine, or Proton support; or
+- a self-contained .NET distribution.
 
-## Maintenance rule for this document
-
-Update this page when Redux adds, removes, or materially changes an enduring difference from
-upstream. Do not add version headings, patch notes, commit summaries, one-off bug narratives, or
-planned ideas that do not yet describe the product.
+This document should change only when an enduring upstream/Redux boundary changes. Version notes,
+individual fixes, plans, and one-off implementation details belong in release notes, issues, or Git
+history.

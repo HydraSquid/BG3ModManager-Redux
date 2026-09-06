@@ -395,6 +395,7 @@
 
 								<CheckBox
 									IsChecked="{Binding UseCategoryColorsForInteractions}"
+									Click="PresentationCheckBox_Click"
 									Style="{StaticResource ReduxCheckBoxStyle}">
 									<Grid Margin="4,0,12,0">
 										<Grid.ColumnDefinitions>
@@ -419,7 +420,8 @@
 								<CheckBox x:Name="HideIconsCheckBox" Grid.Column="2"
 									IsChecked="{Binding ShowCategoryIconsInPills, Converter={StaticResource InverseBooleanConverter}}"
 									Style="{StaticResource ReduxCheckBoxStyle}"
-									Checked="HideIconsCheckBox_Checked">
+									Checked="HideIconsCheckBox_Checked"
+									Click="PresentationCheckBox_Click">
 									<Grid Margin="4,0,12,0">
 										<Grid.ColumnDefinitions>
 											<ColumnDefinition Width="Auto" />
@@ -443,6 +445,7 @@
 								<CheckBox Grid.Row="1"
 									Margin="0,10,0,0"
 									IsChecked="{Binding UseCategoryColorsForSidebarText}"
+									Click="PresentationCheckBox_Click"
 									Style="{StaticResource ReduxCheckBoxStyle}">
 									<Grid Margin="4,0,12,0">
 										<Grid.ColumnDefinitions>
@@ -468,6 +471,7 @@
 									Margin="0,10,0,0"
 									IsChecked="{Binding UseIconsOnly}"
 									IsEnabled="{Binding ShowCategoryIconsInPills}"
+									Click="PresentationCheckBox_Click"
 									Style="{StaticResource ReduxCheckBoxStyle}">
 									<Grid Margin="4,0,12,0">
 										<Grid.ColumnDefinitions>

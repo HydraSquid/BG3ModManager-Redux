@@ -66,13 +66,6 @@ public class HideWindowBase<TViewModel> : AdonisWindow, IViewFor<TViewModel>, IR
 	public void HideWithTransition()
 	{
 		if (_hideAnimationRunning || !IsVisible) return;
-		if (ReduxWindowBehavior.ReduceMotion)
-		{
-			Hide();
-			ReduxWindowBehavior.RemoveOwnerBackdrop(this);
-			return;
-		}
-
 		_hideAnimationRunning = true;
 		ReduxWindowBehavior.AnimateExit(this, () =>
 		{

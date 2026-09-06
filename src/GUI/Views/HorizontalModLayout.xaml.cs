@@ -2136,15 +2136,15 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		}
 
 		// Changing the selected mod replaces the content without rebuilding the row.
-		// A newly revealed drawer starts as its compact, discoverable header.
+		// A newly revealed drawer restores the user's last expanded/collapsed choice.
 		if (!detailsWereVisible)
 		{
 			ModDetailsPanel.Visibility = Visibility.Visible;
-			RevealCollapsedModDetails();
+			RevealModDetails();
 		}
 	}
 
-	private async void RevealCollapsedModDetails()
+	private async void RevealModDetails()
 	{
 		_modDetailsHiding = false;
 		_modDetailsTransition?.Cancel();
@@ -2154,7 +2154,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		_suppressModDetailsToggleAnimation = true;
 		try
 		{
-			ModDetailsToggleButton.IsChecked = false;
+			ModDetailsToggleButton.IsChecked = ViewModel.IsModDetailsExpanded;
 		}
 		finally
 		{
@@ -2165,12 +2165,20 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		ModDetailsSplitterRow.Height = new GridLength(0);
 		ModDetailsRow.MinHeight = 0;
 		ModDetailsRow.Height = new GridLength(0);
+		var targetHeight = ViewModel.IsModDetailsExpanded
+			? Math.Max(MinimumExpandedModDetailsRowHeight, _lastExpandedModDetailsRowHeight)
+			: CollapsedModDetailsRowHeight;
+		if (ViewModel.IsModDetailsExpanded)
+		{
+			ModDetailsGridSplitter.Visibility = Visibility.Visible;
+			ModDetailsSplitterRow.Height = new GridLength(ModDetailsSplitterHeight);
+		}
 		await ReduxWindowBehavior.WaitForRenderFrameAsync();
 		if (token.IsCancellationRequested || ModDetailsPanel.Visibility != Visibility.Visible) return;
 
 		var completed = await AnimatePanelValueAsync(
 			0,
-			CollapsedModDetailsRowHeight,
+			targetHeight,
 			value => ModDetailsRow.Height = new GridLength(value),
 			token);
 		if (completed) UpdateModDetailsLayout(true);

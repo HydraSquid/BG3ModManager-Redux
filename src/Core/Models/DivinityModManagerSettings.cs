@@ -168,7 +168,7 @@ public class DivinityModManagerSettings : ReactiveObject
 	[DataMember, Reactive] public ReduxTextSize TextSize { get; set; } = ReduxTextSize.Default;
 
 	[DefaultValue(false)]
-	[SettingsEntry("Reduce motion", "Disable smooth scrolling and animated movement, using immediate transitions instead.")]
+	[SettingsEntry("Reduce motion", "Remove sliding, scaling, smooth scrolling, and animated window or menu transitions while keeping clear interface feedback.")]
 	[DataMember, Reactive] public bool ReduceMotion { get; set; }
 
 	[DefaultValue(false)]
@@ -301,6 +301,12 @@ public class DivinityModManagerSettings : ReactiveObject
 
 	[DefaultValue(true)]
 	[DataMember, Reactive] public bool AlwaysLoadedPanelExpanded { get; set; } = true;
+
+	[DefaultValue(true)]
+	[DataMember, Reactive] public bool ModDetailsPanelExpanded { get; set; } = true;
+
+	// Presentation-only state for campaign groups in Save Game Manager.
+	[DataMember, Reactive] public List<string> CollapsedSaveGameCampaigns { get; set; } = new();
 
 	[DefaultValue("All Mods")]
 	[DataMember, Reactive] public string SavedModCategoryFilter { get; set; } = "All Mods";
@@ -495,6 +501,11 @@ public class DivinityModManagerSettings : ReactiveObject
 			? new Dictionary<string, string>(ModListVisualDividers, StringComparer.OrdinalIgnoreCase)
 			: new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		VisualModListDividers ??= new List<ModListVisualDividerData>();
+		CollapsedSaveGameCampaigns = (CollapsedSaveGameCampaigns ?? [])
+			.Where(name => !String.IsNullOrWhiteSpace(name))
+			.Select(name => name.Trim())
+			.Distinct(StringComparer.OrdinalIgnoreCase)
+			.ToList();
 		IgnoredLoadOrderAdvisorFindingKeys = (IgnoredLoadOrderAdvisorFindingKeys ?? [])
 			.Where(key => !String.IsNullOrWhiteSpace(key))
 			.Distinct(StringComparer.OrdinalIgnoreCase)

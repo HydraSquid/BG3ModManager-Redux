@@ -100,8 +100,7 @@ public class ModListDropHandler : DefaultDropHandler
 			var files = data.GetFileDropList();
 			foreach (var file in files)
 			{
-				var ext = Path.GetExtension(file).ToLower();
-				if (MainWindowViewModel.IsImportableFile(ext))
+				if (MainWindowViewModel.IsImportablePath(file))
 				{
 					dropInfo.Effects = DragDropEffects.Copy | DragDropEffects.Move;
 					dropInfo.DropTargetAdorner = DropTargetAdorners.Highlight;
@@ -128,11 +127,11 @@ public class ModListDropHandler : DefaultDropHandler
 		{
 			if (dropFileData.ContainsFileDropList())
 			{
-				var files = dropFileData.GetFileDropList()?.Cast<string>().ToList();
-				if (files != null)
-				{
-					_viewModel.ImportMods(files, isActive);
-				}
+				var files = dropFileData.GetFileDropList()?.Cast<string>()
+					.Where(MainWindowViewModel.IsImportablePath)
+					.ToList();
+				if (files is { Count: > 0 })
+					_ = _viewModel.ReviewAndImportDroppedModsAsync(files, isActive);
 			}
 			return;
 		}

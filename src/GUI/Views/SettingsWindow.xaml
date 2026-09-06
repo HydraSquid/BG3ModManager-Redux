@@ -32,6 +32,7 @@
 	WindowStartupLocation="CenterOwner"
 	FontFamily="{DynamicResource Redux.FontFamily.UI}" FontSize="{DynamicResource Redux.FontSize.12}"
 	FontWeight="{DynamicResource Redux.FontWeight.Body}"
+	Foreground="{DynamicResource ReduxTextPrimaryBrush}"
 	TextOptions.TextFormattingMode="Ideal"
 	TextOptions.TextRenderingMode="ClearType"
     mc:Ignorable="d">
@@ -540,7 +541,7 @@
 
 		<TabControl x:Name="PreferencesTabControl"
 			Grid.Row="1"
-			ItemContainerStyle="{StaticResource SettingsTabItemStyle}"
+			ItemContainerStyle="{StaticResource ReduxContentTabItemStyle}"
 			Style="{StaticResource SettingsTabControlStyle}">
 			<TabItem x:Name="GeneralSettingssTab" FocusManager.FocusedElement="{Binding ElementName=SettingsAutoGrid}">
 				<TabItem.Header>

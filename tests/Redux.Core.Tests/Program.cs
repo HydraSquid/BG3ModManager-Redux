@@ -41,6 +41,7 @@ internal static class Program
 		var loadOrderWorkflow = new LoadOrderWorkflowTests();
 		var undoRedoHistory = new UndoRedoHistoryTests();
 		var loadOrderOrganizer = new LoadOrderAdvisorOrganizerTests();
+		var saveGames = new SaveGameServiceTests();
 		var tests = new (string Name, Action Run)[]
 		{
 			(nameof(source.ReviewedModuleUuidResolvesItsProject), source.ReviewedModuleUuidResolvesItsProject),
@@ -213,6 +214,7 @@ internal static class Program
 			(nameof(visualDividerDrag.CollapsedVisibilityStopsAtTheNextSeparator), visualDividerDrag.CollapsedVisibilityStopsAtTheNextSeparator),
 			(nameof(visualModSelection.SelectAllIncludesOnlyVisibleModRows), visualModSelection.SelectAllIncludesOnlyVisibleModRows),
 			(nameof(visualModSelection.FilterProjectionOmitsCollapsedRowsFromTheItemsSource), visualModSelection.FilterProjectionOmitsCollapsedRowsFromTheItemsSource),
+			(nameof(settingsMaintenance.SaveGameCampaignCollapseStateRoundTripsWithoutDuplicates), settingsMaintenance.SaveGameCampaignCollapseStateRoundTripsWithoutDuplicates),
 			(nameof(settingsMaintenance.RestoringAutomaticCategoriesClearsCurrentAndLegacyAssignmentsOnly), settingsMaintenance.RestoringAutomaticCategoriesClearsCurrentAndLegacyAssignmentsOnly),
 			(nameof(settingsMaintenance.RestoringAutomaticCategoriesMakesTheClassifierAuthoritativeAgain), settingsMaintenance.RestoringAutomaticCategoriesMakesTheClassifierAuthoritativeAgain),
 			(nameof(smoothLogicalScroll.PartialWheelDeltasAccumulateWithoutPrematureScrolling), smoothLogicalScroll.PartialWheelDeltasAccumulateWithoutPrematureScrolling),
@@ -248,7 +250,13 @@ internal static class Program
 			(nameof(loadOrderOrganizer.RemoveSeparatorsGloballySortsWithoutReturningMarkers), loadOrderOrganizer.RemoveSeparatorsGloballySortsWithoutReturningMarkers),
 			(nameof(loadOrderOrganizer.UnknownModsRetainTheirRelativeOrder), loadOrderOrganizer.UnknownModsRetainTheirRelativeOrder),
 			(nameof(loadOrderOrganizer.PreserveSeparatorsDoesNotAdoptAVisibleRowBelowAClosedSeparator), loadOrderOrganizer.PreserveSeparatorsDoesNotAdoptAVisibleRowBelowAClosedSeparator),
-			(nameof(loadOrderOrganizer.IgnoringOneRelationshipDoesNotSuppressOtherAdvisorKnowledge), loadOrderOrganizer.IgnoringOneRelationshipDoesNotSuppressOtherAdvisorKnowledge)
+			(nameof(loadOrderOrganizer.IgnoringOneRelationshipDoesNotSuppressOtherAdvisorKnowledge), loadOrderOrganizer.IgnoringOneRelationshipDoesNotSuppressOtherAdvisorKnowledge),
+			(nameof(saveGames.RecognizesEveryAdvertisedSaveArchiveFormat), saveGames.RecognizesEveryAdvertisedSaveArchiveFormat),
+			(nameof(saveGames.ClassifiesSaveDifficultyFromAuthoritativeRulesetValues), saveGames.ClassifiesSaveDifficultyFromAuthoritativeRulesetValues),
+			(nameof(saveGames.DiscoversSaveMetadataAndMatchingThumbnail), saveGames.DiscoversSaveMetadataAndMatchingThumbnail),
+			(nameof(saveGames.InstallsNestedZipAsOneSaveFolder), saveGames.InstallsNestedZipAsOneSaveFolder),
+			(nameof(saveGames.RejectsUnsafeArchivePathsBeforeImport), saveGames.RejectsUnsafeArchivePathsBeforeImport),
+			(nameof(saveGames.ExistingSaveIsPreservedUntilReplacementIsRequested), saveGames.ExistingSaveIsPreservedUntilReplacementIsRequested)
 		};
 
 		var failures = 0;

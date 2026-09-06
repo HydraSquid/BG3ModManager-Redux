@@ -3,6 +3,7 @@ using AdonisUI.Controls;
 
 using AutoUpdaterDotNET;
 
+using DivinityModManager.AppServices;
 using DivinityModManager.Controls;
 using DivinityModManager.Extensions;
 using DivinityModManager.Models;
@@ -234,6 +235,55 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 			};
 			WindowResizeGlow.BeginAnimation(OpacityProperty, fade);
 		});
+	}
+
+	private void MainWindow_PreviewDrop(object sender, DragEventArgs e)
+	{
+		if (!e.Data.GetDataPresent(DataFormats.FileDrop)
+			|| e.Data.GetData(DataFormats.FileDrop) is not string[] paths
+			|| paths.Length == 0)
+			return;
+
+		try
+		{
+			var saveSources = paths
+				.Where(Bg3SaveGameService.IsSupportedSaveInput)
+				.Select(path => new { Path = path, Names = Bg3SaveGameService.GetImportFolderNames(path) })
+				.Where(source => source.Names.Count > 0)
+				.ToArray();
+			if (saveSources.Length == 0) return;
+			if (saveSources.Length != paths.Length)
+			{
+				ReduxMessageBox.Show(this,
+					"This drop contains both save-game and mod files. Drop saves and mods separately so Redux can use the correct installer.",
+					"Separate Saves and Mods", System.Windows.MessageBoxButton.OK,
+					System.Windows.MessageBoxImage.Warning, System.Windows.MessageBoxResult.OK);
+				e.Handled = true;
+				return;
+			}
+
+			var names = saveSources.SelectMany(source => source.Names).ToArray();
+			var storyFolder = ViewModel?.SelectedProfile?.Folder == null
+				? null
+				: Path.Combine(ViewModel.SelectedProfile.Folder, "Savegames", "Story");
+			if (ReduxSaveManagerWindow.ConfirmDroppedSaveInstall(this, names, storyFolder))
+				MainView.ShowSaveManager(saveSources.Select(source => source.Path));
+			e.Handled = true;
+		}
+		catch (Exception ex) when (ex is InvalidDataException or SharpCompress.Common.InvalidFormatException)
+		{
+			// A non-save or malformed archive remains available to the normal mod-drop path.
+		}
+		catch (IOException)
+		{
+			// A locked archive remains available to the normal mod-drop path and its diagnostics.
+		}
+		catch (Exception ex)
+		{
+			// Save detection is best-effort. Unexpected archive-reader failures must not
+			// prevent the established mod-drop path from handling the same input.
+			DivinityApp.Log($"Could not classify dropped files as saves: {ex.Message}");
+		}
 	}
 
 	public void ApplyWindowPosition(WindowSettings win)
@@ -669,6 +719,15 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 			() => ViewModel.OpenLoadOrderFolderCommand.Execute(null),
 			() => ViewModel.OpenLoadOrderFolderCommand?.CanExecute(null) == true,
 			searchTerms: "browse directory saved orders"),
+		new(
+			"Save Game Manager...",
+			"Tools",
+			"Browse, install, and safely remove story saves for the selected profile.",
+			String.Empty,
+			"book-open",
+			() => MainView.ShowSaveManager(),
+			() => ViewModel.SelectedProfile != null && !ViewModel.IsLocked,
+			searchTerms: "manager install import delete thumbnail lsv zip saves"),
 		new(
 			"Open Save Games Folder",
 			"Folders",

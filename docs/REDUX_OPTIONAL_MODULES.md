@@ -1,9 +1,12 @@
-# Optional features
+# Optional features and built-in diagnostics
 
-Redux preserves the inherited mod-manager core and layers newer features around it. Provider
-metadata and load-order guidance must not become prerequisites for scanning packages, managing the
-active list, importing or exporting load orders, detecting game paths, using LSLib, or performing
-normal file operations.
+Redux preserves the inherited mod-manager core and layers optional network and guidance features
+around it. This is a contributor reference for those boundaries; the public feature overview lives
+in the [project README](../README.md).
+
+Provider metadata and load-order guidance must not become prerequisites for scanning packages,
+managing the active list, importing or exporting load orders, detecting game paths, using LSLib, or
+performing normal file operations.
 
 At runtime, `ReduxModuleState` is the central reactive contract for optional-module availability.
 Provider services and source-related UI consume `SourceIntegrationsEnabled`. Built-in diagnostics

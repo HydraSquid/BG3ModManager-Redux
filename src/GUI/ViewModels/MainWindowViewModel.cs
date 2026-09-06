@@ -267,6 +267,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	[Reactive] public bool IsCategoriesExpanded { get; set; } = true;
 	[Reactive] public bool IsAlwaysLoadedExpanded { get; set; } = true;
 	[Reactive] public bool IsInactiveModsExpanded { get; set; } = true;
+	[Reactive] public bool IsModDetailsExpanded { get; set; } = true;
 
 	// Presentation order is intentionally separate from rule priority so sidebar refinement
 	// cannot change automatic category classification behavior.
@@ -1231,6 +1232,12 @@ Directory the zip will be extracted to:
 		this.WhenAnyValue(x => x.IsAlwaysLoadedExpanded).ObserveOn(RxApp.MainThreadScheduler).Subscribe((expanded) =>
 		{
 			Settings.AlwaysLoadedPanelExpanded = expanded;
+			if (IsInitialized) SaveSettings();
+		});
+
+		this.WhenAnyValue(x => x.IsModDetailsExpanded).ObserveOn(RxApp.MainThreadScheduler).Subscribe((expanded) =>
+		{
+			Settings.ModDetailsPanelExpanded = expanded;
 			if (IsInitialized) SaveSettings();
 		});
 
@@ -2425,7 +2432,7 @@ Directory the zip will be extracted to:
 
 	private async Task<ImportOperationResults> AddModFromFile(Dictionary<string, DivinityModData> builtinMods, ImportOperationResults taskResult, string filePath, CancellationToken cts, bool? toActiveList = null)
 	{
-		var ext = Path.GetExtension(filePath).ToLower();
+		var ext = GetImportFileExtension(filePath);
 		if (ext.Equals(".pak", StringComparison.OrdinalIgnoreCase))
 		{
 			var outputFilePath = Path.Combine(PathwayData.AppDataModsPath, Path.GetFileName(filePath));
@@ -2580,6 +2587,107 @@ Directory the zip will be extracted to:
 		}
 	}
 
+	public async Task ReviewAndImportDroppedModsAsync(IReadOnlyList<string> files, bool toActiveList)
+	{
+		if (files == null || files.Count == 0) return;
+		var destination = toActiveList ? "Active Mods" : "Inactive Mods";
+		var installed = mods.Items
+			.Where(mod => mod != null && !mod.IsVisualDivider)
+			.DistinctBy(mod => mod.UUID, StringComparer.OrdinalIgnoreCase)
+			.ToArray();
+		var reviewItems = new List<ReduxInstallReviewItem>();
+		try
+		{
+			foreach (var file in files)
+			{
+				if (Path.GetExtension(file).Equals(".pak", StringComparison.OrdinalIgnoreCase))
+				{
+					var report = await PackagePreflightService.AnalyzeAsync(file, installed);
+					reviewItems.Add(CreateModInstallReviewItem(report, installed));
+					continue;
+				}
+
+				if (ArchivePackagePreflightService.IsSupportedArchive(file))
+				{
+					var archive = await ArchivePackagePreflightService.AnalyzeAsync(file, installed);
+					if (archive.Packages.Count > 0)
+						reviewItems.AddRange(archive.Packages.Select(report => CreateModInstallReviewItem(report, installed)));
+					else
+						reviewItems.Add(CreateUninspectedModReviewItem(file));
+					continue;
+				}
+
+				reviewItems.Add(CreateUninspectedModReviewItem(file));
+			}
+		}
+		catch (Exception ex)
+		{
+			DivinityApp.Log($"Dropped-mod review failed:\n{ex}");
+			ReduxMessageBox.Show(Window, "Redux could not inspect the dropped files. No mods were installed.",
+				"Could Not Review Mods", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+			return;
+		}
+
+		var updateCount = reviewItems.Count(item => item.Status.StartsWith("Update", StringComparison.Ordinal));
+		var replacementCount = reviewItems.Count(item => item.Tone == ReduxInstallReviewTone.Warning);
+		var newCount = reviewItems.Count - updateCount - replacementCount;
+		var summaryParts = new List<string>();
+		if (newCount > 0) summaryParts.Add($"{newCount} new");
+		if (updateCount > 0) summaryParts.Add($"{updateCount} update{(updateCount == 1 ? String.Empty : "s")}");
+		if (replacementCount > 0) summaryParts.Add($"{replacementCount} replacement{(replacementCount == 1 ? String.Empty : "s")} to review");
+		var dialog = new ReduxInstallReviewWindow(Window, reviewItems, false, destination,
+			$"Destination: {destination} · {String.Join(" · ", summaryParts)}");
+		if (dialog.ShowDialog() == true || dialog.Accepted)
+			ImportMods(files.ToList(), toActiveList);
+	}
+
+	private static ReduxInstallReviewItem CreateModInstallReviewItem(PackagePreflightReport report, IReadOnlyList<DivinityModData> installedMods)
+	{
+		if (report?.Mod == null) return CreateUninspectedModReviewItem(report?.PackagePath);
+		var incoming = report.Mod;
+		var installed = installedMods.FirstOrDefault(candidate =>
+			!String.IsNullOrWhiteSpace(incoming.UUID)
+			&& String.Equals(candidate.UUID, incoming.UUID, StringComparison.OrdinalIgnoreCase));
+		var detailParts = new[]
+		{
+			incoming.Version?.VersionInt > 0 ? $"Version {incoming.Version.Version}" : "Version not provided",
+			String.IsNullOrWhiteSpace(incoming.Author) ? null : incoming.Author,
+			GetReviewSourceName(report.PackagePath)
+		}.Where(value => !String.IsNullOrWhiteSpace(value));
+		if (installed == null)
+			return new ReduxInstallReviewItem(report.DisplayName, String.Join(" · ", detailParts), "New mod", ReduxInstallReviewTone.Info);
+
+		var incomingVersion = incoming.Version?.VersionInt ?? 0;
+		var installedVersion = installed.Version?.VersionInt ?? 0;
+		var installedLabel = installedVersion > 0 ? installed.Version.Version : "unknown";
+		var incomingLabel = incomingVersion > 0 ? incoming.Version.Version : "unknown";
+		if (incomingVersion > 0 && installedVersion > 0 && incomingVersion > installedVersion)
+			return new ReduxInstallReviewItem(report.DisplayName, String.Join(" · ", detailParts),
+				$"Update {installedLabel} → {incomingLabel}", ReduxInstallReviewTone.Success);
+		if (incomingVersion > 0 && installedVersion > 0 && incomingVersion < installedVersion)
+			return new ReduxInstallReviewItem(report.DisplayName, String.Join(" · ", detailParts),
+				$"Downgrade {installedLabel} → {incomingLabel}", ReduxInstallReviewTone.Warning);
+		if (incomingVersion > 0 && installedVersion > 0)
+			return new ReduxInstallReviewItem(report.DisplayName, String.Join(" · ", detailParts),
+				$"Reinstall version {incomingLabel}", ReduxInstallReviewTone.Warning);
+		return new ReduxInstallReviewItem(report.DisplayName, String.Join(" · ", detailParts),
+			"Replace installed mod · version comparison unavailable", ReduxInstallReviewTone.Warning);
+	}
+
+	private static ReduxInstallReviewItem CreateUninspectedModReviewItem(string file) => new(
+		Path.GetFileName(file ?? String.Empty),
+		"Package details will be checked during installation",
+		"Review during install",
+		ReduxInstallReviewTone.Warning);
+
+	private static string GetReviewSourceName(string packagePath)
+	{
+		if (String.IsNullOrWhiteSpace(packagePath)) return String.Empty;
+		var separator = packagePath.LastIndexOf("::", StringComparison.Ordinal);
+		var source = separator >= 0 ? packagePath[(separator + 2)..] : packagePath;
+		return Path.GetFileName(source.Replace('/', Path.DirectorySeparatorChar));
+	}
+
 	private string GetInitialStartingDirectory(string prioritizePath = "")
 	{
 		var directory = prioritizePath;
@@ -2609,14 +2717,25 @@ Directory the zip will be extracted to:
 		return directory;
 	}
 
-	private static readonly List<string> _archiveFormats = new() { ".7z", ".7zip", ".gzip", ".rar", ".tar", ".tar.gz", ".zip" };
+	private static readonly List<string> _archiveFormats = new() { ".7z", ".7zip", ".gz", ".gzip", ".rar", ".tar", ".tar.gz", ".tgz", ".zip" };
 	private static readonly List<string> _compressedFormats = new() { ".bz2", ".xz", ".zst" };
 	private static readonly string _archiveFormatsStr = String.Join(";", _archiveFormats.Select(x => "*" + x));
 	private static readonly string _compressedFormatsStr = String.Join(";", _compressedFormats.Select(x => "*" + x));
 
 	public static bool IsImportableFile(string ext)
 	{
-		return ext == ".pak" || _archiveFormats.Contains(ext) || _compressedFormats.Contains(ext);
+		return ext.Equals(".pak", StringComparison.OrdinalIgnoreCase)
+			|| _archiveFormats.Contains(ext, StringComparer.OrdinalIgnoreCase)
+			|| _compressedFormats.Contains(ext, StringComparer.OrdinalIgnoreCase);
+	}
+
+	public static bool IsImportablePath(string path) => !String.IsNullOrWhiteSpace(path)
+		&& IsImportableFile(GetImportFileExtension(path));
+
+	private static string GetImportFileExtension(string path)
+	{
+		var lowerPath = (path ?? String.Empty).ToLowerInvariant();
+		return lowerPath.EndsWith(".tar.gz", StringComparison.Ordinal) ? ".tar.gz" : Path.GetExtension(lowerPath);
 	}
 
 	private void OpenModImportDialog()
@@ -6636,6 +6755,7 @@ Directory the zip will be extracted to:
 		IsCategoriesExpanded = Settings.CategoriesPanelExpanded;
 		IsInactiveModsExpanded = Settings.InactiveModsPanelExpanded;
 		IsAlwaysLoadedExpanded = Settings.AlwaysLoadedPanelExpanded;
+		IsModDetailsExpanded = Settings.ModDetailsPanelExpanded;
 		Keys.LoadKeybindings(this);
 		SaveSettings();
 
@@ -8201,6 +8321,61 @@ Directory the zip will be extracted to:
 	{
 		_refreshModCategoriesTask?.Dispose();
 		_refreshModCategoriesTask = RxApp.MainThreadScheduler.Schedule(TimeSpan.FromMilliseconds(100), RefreshModCategories);
+	}
+
+	/// <summary>
+	/// Applies the presentation-only part of a custom theme without mutating saved settings.
+	/// The editor uses this for live preview, including detached menus and hover cards.
+	/// </summary>
+	public void PreviewModPresentation(ReduxCustomTheme theme)
+	{
+		if (theme == null)
+		{
+			ApplyModPresentation(
+				Settings.ShowCategoryIconsInPills,
+				Settings.UseIconsOnly,
+				Settings.UseCategoryColorsForSidebarText,
+				Settings.UseCategoryColorsForInteractions);
+			return;
+		}
+
+		ApplyModPresentation(
+			theme.ShowCategoryIconsInPills,
+			theme.ShowCategoryIconsInPills && theme.UseIconsOnly,
+			theme.UseCategoryColorsForSidebarText,
+			theme.UseCategoryColorsForInteractions);
+	}
+
+	private void ApplyModPresentation(bool showIcons, bool useIconsOnly, bool useColoredText, bool useColoredInteractions)
+	{
+		DivinityApp.ShowInterfaceIcons = showIcons;
+		DivinityApp.UseIconsOnly = useIconsOnly;
+		DivinityApp.UseCategoryColorsForText = useColoredText;
+		DivinityApp.UseCategoryColorsForInteractions = useColoredInteractions;
+
+		var allMods = ActiveMods.Concat(InactiveMods).Concat(ForceLoadedMods)
+			.Where(mod => !mod.IsVisualDivider)
+			.GroupBy(mod => mod.UUID, StringComparer.OrdinalIgnoreCase)
+			.Select(group => group.First());
+		foreach (var mod in allMods)
+		{
+			mod.ShowInterfaceIcons = showIcons;
+			mod.UseIconsOnly = useIconsOnly;
+			mod.UseCategoryColorsForText = useColoredText;
+			var categoryNames = mod.DisplayCategories?.Select(category => category.Name).ToArray() ?? [];
+			if (categoryNames.Length == 0 && !String.IsNullOrWhiteSpace(mod.DisplayCategory))
+				categoryNames = [mod.DisplayCategory];
+			mod.DisplayCategories = categoryNames
+				.Select(category => new ModCategoryDisplayData(
+					category,
+					GetCategoryColor(category),
+					GetCategoryIcon(category),
+					GetCategoryDescription(category),
+					showIcons,
+					useIconsOnly,
+					useColoredText))
+				.ToList();
+		}
 	}
 
 	private void RefreshModCategories()

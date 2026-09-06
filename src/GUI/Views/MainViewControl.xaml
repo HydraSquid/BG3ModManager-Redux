@@ -1207,11 +1207,13 @@
 								<Setter Property="DataContext" Value="{Binding RelativeSource={RelativeSource Mode=Self}, Path=PlacementTarget.Tag}" />
 							</Style>
 						</Grid.Resources>
-						<Grid Grid.ColumnSpan="5">
+						<Grid Grid.ColumnSpan="7">
 							<Grid.ColumnDefinitions>
 								<ColumnDefinition Width="Auto" />
 								<ColumnDefinition Width="1" />
 								<ColumnDefinition Width="*" />
+								<ColumnDefinition Width="1" />
+								<ColumnDefinition Width="Auto" />
 								<ColumnDefinition Width="1" />
 								<ColumnDefinition Width="Auto" />
 							</Grid.ColumnDefinitions>
@@ -1536,8 +1538,55 @@
 
 							<Rectangle Grid.Column="3" Width="1" Margin="0,8" Fill="{DynamicResource ReduxBorderBrush}" Opacity="0.7" />
 
+							<!-- Save Games: a compact entry point kept separate from load-order file operations. -->
+							<Grid Grid.Column="4" Margin="12,0">
+								<Grid.RowDefinitions>
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+								</Grid.RowDefinitions>
+								<TextBlock Style="{StaticResource ToolbarGroupLabelStyle}" Text="Save Games" />
+								<StackPanel Grid.Row="1" VerticalAlignment="Center" Orientation="Horizontal">
+									<Button Click="SaveGameManagerButton_Click"
+										AutomationProperties.Name="Open Save Game Manager"
+										Content="Manage" Style="{StaticResource ToolbarWorkflowButtonStyle}"
+										ToolTip="Browse, install, and remove saves for the selected profile" />
+									<Button Click="ImportSaveGameButton_Click"
+										AutomationProperties.Name="Install save from file"
+										Style="{StaticResource ToolbarUtilityButtonStyle}"
+										ToolTip="Install a save from a ZIP archive or .lsv file">
+										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Download}" />
+									</Button>
+									<Button Click="OpenSaveGamesFolder_Click"
+										AutomationProperties.Name="Open save games folder"
+										Style="{StaticResource ToolbarUtilityButtonStyle}"
+										ToolTip="Open the selected profile's save games folder">
+										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" />
+									</Button>
+									<Button Click="OrderActionsButton_Click"
+										AutomationProperties.Name="More save game actions"
+										Foreground="{DynamicResource ReduxAccentHoverBrush}"
+										Style="{StaticResource ToolbarCompactIconButtonStyle}"
+										ToolTip="More save game actions">
+										<controls:ReduxIcon Data="{StaticResource Redux.Icon.MoreHorizontal}" />
+										<Button.ContextMenu>
+											<ContextMenu Placement="Bottom">
+												<MenuItem Header="Install Save Folder..." Click="ImportSaveGameFolder_Click">
+													<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" /></MenuItem.Icon>
+												</MenuItem>
+												<Separator />
+												<MenuItem Header="Copy Save Folder Path" Click="CopySaveGamesFolderPath_Click">
+													<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Copy}" /></MenuItem.Icon>
+												</MenuItem>
+											</ContextMenu>
+										</Button.ContextMenu>
+									</Button>
+								</StackPanel>
+							</Grid>
+
+							<Rectangle Grid.Column="5" Width="1" Margin="0,8" Fill="{DynamicResource ReduxBorderBrush}" Opacity="0.7" />
+
 							<!-- Play: the final action remains visually distinct and anchored to the right edge. -->
-							<Grid Grid.Column="4" Margin="12,0,0,0">
+							<Grid Grid.Column="6" Margin="12,0,0,0">
 								<Grid.RowDefinitions>
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />

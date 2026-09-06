@@ -1,0 +1,266 @@
+<adonisUI:AdonisWindow x:Class="DivinityModManager.Views.ReduxSaveManagerWindow"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:adonisUI="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
+	xmlns:controls="clr-namespace:DivinityModManager.Controls"
+	xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+	Title="Save Game Manager" Width="820" Height="620" MinWidth="680" MinHeight="480"
+	AllowDrop="True" Drop="Window_Drop" DragOver="Window_DragOver"
+	FontFamily="{DynamicResource Redux.FontFamily.UI}" FontSize="{DynamicResource Redux.FontSize.12}"
+	FontWeight="{DynamicResource Redux.FontWeight.Body}" ResizeMode="CanResize" ShowInTaskbar="False"
+	WindowStartupLocation="CenterOwner" WindowStyle="SingleBorderWindow"
+	Template="{DynamicResource ReduxWindowTemplate}" Background="{DynamicResource ReduxWindowBrush}"
+	UseLayoutRounding="True" SnapsToDevicePixels="True">
+	<shell:WindowChrome.WindowChrome>
+		<shell:WindowChrome CaptionHeight="0" CornerRadius="0" GlassFrameThickness="0"
+			ResizeBorderThickness="6" UseAeroCaptionButtons="False" />
+	</shell:WindowChrome.WindowChrome>
+	<Window.Resources>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<ResourceDictionary Source="../Themes/MainResourceDictionary.xaml" />
+			</ResourceDictionary.MergedDictionaries>
+			<Style x:Key="SaveListItemStyle" TargetType="{x:Type ListBoxItem}">
+				<Setter Property="Margin" Value="0,0,0,7" />
+				<Setter Property="Padding" Value="0" />
+				<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+				<Setter Property="Background" Value="Transparent" />
+				<Setter Property="BorderThickness" Value="0" />
+				<Setter Property="FocusVisualStyle" Value="{x:Null}" />
+				<Setter Property="Template">
+					<Setter.Value>
+						<ControlTemplate TargetType="{x:Type ListBoxItem}">
+							<Border x:Name="Card" Padding="9" Background="{DynamicResource ReduxSurfaceBrush}"
+								BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1"
+								CornerRadius="{DynamicResource Redux.CornerRadius.Control}">
+								<ContentPresenter />
+							</Border>
+							<ControlTemplate.Triggers>
+								<Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Card" Property="Background" Value="{DynamicResource ReduxSurfaceElevatedBrush}" /></Trigger>
+								<Trigger Property="IsSelected" Value="True"><Setter TargetName="Card" Property="Background" Value="{DynamicResource ReduxAccentSoftBrush}" /><Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource ReduxAccentBrush}" /></Trigger>
+							</ControlTemplate.Triggers>
+						</ControlTemplate>
+					</Setter.Value>
+				</Setter>
+			</Style>
+			<Style x:Key="CampaignExpanderStyle" TargetType="{x:Type Expander}">
+				<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+				<Setter Property="Template">
+					<Setter.Value>
+						<ControlTemplate TargetType="{x:Type Expander}">
+							<Grid>
+								<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+								<ToggleButton x:Name="HeaderButton" HorizontalContentAlignment="Stretch"
+									IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+									Background="Transparent" BorderThickness="0" Cursor="Hand" FocusVisualStyle="{x:Null}">
+									<ToggleButton.Template>
+										<ControlTemplate TargetType="{x:Type ToggleButton}">
+											<Border x:Name="HeaderSurface" Padding="7,6" Background="Transparent" CornerRadius="{DynamicResource Redux.CornerRadius.Control}">
+												<Grid>
+													<Grid.ColumnDefinitions><ColumnDefinition Width="20" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+													<controls:ReduxIcon Width="14" Height="14" VerticalAlignment="Center"
+														Foreground="{DynamicResource ReduxAccentHoverBrush}" StrokeData="{StaticResource Redux.Icon.ChevronRightStroke}"
+														RenderTransformOrigin="0.5,0.5">
+														<controls:ReduxIcon.Style>
+															<Style BasedOn="{StaticResource {x:Type controls:ReduxIcon}}" TargetType="{x:Type controls:ReduxIcon}">
+																<Setter Property="RenderTransform"><Setter.Value><RotateTransform Angle="0" /></Setter.Value></Setter>
+															<Style.Triggers>
+																<DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="True">
+																	<DataTrigger.EnterActions>
+																		<BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+																			To="90" Duration="{StaticResource Redux.Motion.Fast}" EasingFunction="{StaticResource Redux.Motion.EaseOut}" /></Storyboard></BeginStoryboard>
+																	</DataTrigger.EnterActions>
+																	<DataTrigger.ExitActions>
+																		<BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+																			To="0" Duration="{StaticResource Redux.Motion.Fast}" EasingFunction="{StaticResource Redux.Motion.EaseOut}" /></Storyboard></BeginStoryboard>
+																	</DataTrigger.ExitActions>
+																</DataTrigger>
+																</Style.Triggers>
+															</Style>
+														</controls:ReduxIcon.Style>
+													</controls:ReduxIcon>
+													<ContentPresenter Grid.Column="1" VerticalAlignment="Center" ContentSource="Content" />
+												</Grid>
+											</Border>
+											<ControlTemplate.Triggers>
+												<Trigger Property="IsMouseOver" Value="True"><Setter TargetName="HeaderSurface" Property="Background" Value="{DynamicResource ReduxSurfaceElevatedBrush}" /></Trigger>
+											</ControlTemplate.Triggers>
+										</ControlTemplate>
+									</ToggleButton.Template>
+									<ContentPresenter ContentSource="Header" />
+								</ToggleButton>
+								<ContentPresenter x:Name="ExpandSite" Grid.Row="1" ContentSource="Content"
+									RenderTransformOrigin="0.5,0">
+									<ContentPresenter.RenderTransform><TranslateTransform Y="0" /></ContentPresenter.RenderTransform>
+								</ContentPresenter>
+							</Grid>
+						</ControlTemplate>
+					</Setter.Value>
+				</Setter>
+			</Style>
+		</ResourceDictionary>
+	</Window.Resources>
+	<Grid>
+		<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+		<controls:ReduxWindowTitleBar IconData="{DynamicResource Redux.Icon.BookOpen}" />
+		<Border Grid.Row="1" Padding="18,14" Background="{DynamicResource ReduxAppBackgroundBrush}"
+			BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1">
+			<Grid>
+				<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+				<Grid>
+					<StackPanel>
+						<TextBlock FontSize="{DynamicResource Redux.FontSize.20}" FontWeight="{DynamicResource Redux.FontWeight.Title}"
+							Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="Save games" />
+						<TextBlock Margin="0,4,0,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}"
+							Text="Browse this profile's saves or drop a save folder, .lsv file, or ZIP archive here to install it." TextWrapping="Wrap" />
+					</StackPanel>
+				</Grid>
+
+				<StackPanel Grid.Row="1" Margin="0,12,0,10" Orientation="Horizontal">
+					<Button Margin="0,0,7,0" Click="ImportArchiveButton_Click" Style="{StaticResource ReduxPrimaryActionButtonStyle}">
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="15" Height="15" Margin="0,0,7,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.Download}" /><TextBlock Text="Install Save..." /></StackPanel>
+					</Button>
+					<Button Margin="0,0,7,0" Click="ImportFolderButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="15" Height="15" Margin="0,0,7,0" StrokeData="{StaticResource Redux.Icon.FolderOpen}" /><TextBlock Text="Install Folder..." /></StackPanel>
+					</Button>
+					<Button Margin="0,0,7,0" Click="OpenFolderButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="15" Height="15" Margin="0,0,7,0" StrokeData="{StaticResource Redux.Icon.FolderOpen}" /><TextBlock Text="Open Folder" /></StackPanel>
+					</Button>
+					<Button Click="RefreshButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="15" Height="15" Margin="0,0,7,0" StrokeData="{StaticResource Redux.Icon.RefreshStroke}" /><TextBlock Text="Refresh" /></StackPanel>
+					</Button>
+				</StackPanel>
+
+				<Grid Grid.Row="2">
+					<Border Background="{DynamicResource ReduxListInteriorBrush}" BorderBrush="{DynamicResource ReduxBorderBrush}"
+						BorderThickness="1" CornerRadius="{DynamicResource Redux.CornerRadius.Card}" />
+					<ListBox x:Name="SaveList" Margin="8" Background="Transparent" BorderThickness="0"
+						HorizontalContentAlignment="Stretch" ItemContainerStyle="{StaticResource SaveListItemStyle}"
+						SelectionChanged="SaveList_SelectionChanged" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.IsVirtualizingWhenGrouping="True" VirtualizingPanel.VirtualizationMode="Recycling">
+						<ListBox.GroupStyle>
+							<GroupStyle>
+								<GroupStyle.ContainerStyle>
+									<Style TargetType="{x:Type GroupItem}">
+										<Setter Property="Margin" Value="0,0,0,6" />
+										<Setter Property="Template">
+											<Setter.Value>
+												<ControlTemplate TargetType="{x:Type GroupItem}">
+											<Expander IsExpanded="True" Style="{StaticResource CampaignExpanderStyle}"
+												Loaded="CampaignExpander_Loaded"
+												Expanded="CampaignExpander_Expanded" Collapsed="CampaignExpander_Collapsed">
+													<Expander.Header>
+														<Grid>
+															<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+															<controls:ReduxIcon Width="15" Height="15" Margin="0,0,8,0" Foreground="{DynamicResource ReduxAccentHoverBrush}" StrokeData="{StaticResource Redux.Icon.BookOpen}" />
+															<TextBlock Grid.Column="1" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="{Binding Name}" />
+															<Border Grid.Column="2" Margin="10,0,6,0" Padding="7,2" BorderThickness="1"
+																CornerRadius="{DynamicResource Redux.CornerRadius.Pill}"
+																Visibility="{Binding Items[0].HasDifficulty, Converter={StaticResource BoolToVisibilityConverter}}">
+																<Border.Style>
+																	<Style TargetType="{x:Type Border}">
+																		<Setter Property="Background" Value="{DynamicResource ReduxSurfaceMutedBrush}" />
+																		<Setter Property="BorderBrush" Value="{DynamicResource ReduxBorderStrongBrush}" />
+																		<Style.Triggers>
+																			<DataTrigger Binding="{Binding Items[0].IsTacticianMode}" Value="True">
+																				<Setter Property="Background" Value="{DynamicResource ReduxErrorPillBackground}" />
+																				<Setter Property="BorderBrush" Value="{DynamicResource ReduxErrorBrush}" />
+																			</DataTrigger>
+																			<DataTrigger Binding="{Binding Items[0].IsHonourMode}" Value="True">
+																				<Setter Property="Background" Value="{DynamicResource ReduxWarningPillBackground}" />
+																				<Setter Property="BorderBrush" Value="{DynamicResource ReduxWarningBrush}" />
+																			</DataTrigger>
+																		</Style.Triggers>
+																	</Style>
+																</Border.Style>
+																<StackPanel Orientation="Horizontal">
+																	<controls:ReduxIcon Width="12" Height="12" Margin="0,0,5,0">
+																		<controls:ReduxIcon.Style>
+																			<Style BasedOn="{StaticResource {x:Type controls:ReduxIcon}}" TargetType="{x:Type controls:ReduxIcon}">
+																				<Setter Property="Foreground" Value="{DynamicResource ReduxTextSecondaryBrush}" />
+																				<Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Shield}" />
+																				<Style.Triggers>
+																					<DataTrigger Binding="{Binding Items[0].IsTacticianMode}" Value="True">
+																						<Setter Property="Foreground" Value="{DynamicResource ReduxErrorBrush}" />
+																						<Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Skull}" />
+																					</DataTrigger>
+																					<DataTrigger Binding="{Binding Items[0].IsHonourMode}" Value="True">
+																						<Setter Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" />
+																						<Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Crown}" />
+																					</DataTrigger>
+																				</Style.Triggers>
+																			</Style>
+																		</controls:ReduxIcon.Style>
+																	</controls:ReduxIcon>
+																	<TextBlock VerticalAlignment="Center" FontSize="{DynamicResource Redux.FontSize.10}" Text="{Binding Items[0].DifficultyLabel}">
+																		<TextBlock.Style>
+																			<Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="{x:Type TextBlock}">
+																				<Setter Property="Foreground" Value="{DynamicResource ReduxTextSecondaryBrush}" />
+																				<Style.Triggers>
+																					<DataTrigger Binding="{Binding Items[0].IsTacticianMode}" Value="True"><Setter Property="Foreground" Value="{DynamicResource ReduxErrorBrush}" /></DataTrigger>
+																					<DataTrigger Binding="{Binding Items[0].IsHonourMode}" Value="True"><Setter Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" /></DataTrigger>
+																				</Style.Triggers>
+																			</Style>
+																		</TextBlock.Style>
+																	</TextBlock>
+																</StackPanel>
+															</Border>
+															<Border Grid.Column="3" MinWidth="25" Padding="7,2" Background="{DynamicResource ReduxAccentPillBackground}" CornerRadius="{DynamicResource Redux.CornerRadius.Pill}">
+																<TextBlock HorizontalAlignment="Center" Foreground="{DynamicResource ReduxAccentHoverBrush}" Text="{Binding ItemCount}" />
+															</Border>
+															</Grid>
+														</Expander.Header>
+														<ItemsPresenter Margin="0,4,0,0" />
+													</Expander>
+												</ControlTemplate>
+											</Setter.Value>
+										</Setter>
+									</Style>
+								</GroupStyle.ContainerStyle>
+							</GroupStyle>
+						</ListBox.GroupStyle>
+						<ListBox.ItemTemplate>
+							<DataTemplate>
+								<Grid Height="82">
+									<Grid.ColumnDefinitions><ColumnDefinition Width="132" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+									<Border Background="{DynamicResource ReduxSurfaceMutedBrush}" CornerRadius="{DynamicResource Redux.CornerRadius.Control}" ClipToBounds="True">
+										<Grid>
+											<controls:ReduxIcon Width="25" Height="25" Foreground="{DynamicResource ReduxTextMutedBrush}" StrokeData="{StaticResource Redux.Icon.Camera}" />
+											<Image Source="{Binding ThumbnailPath}" Stretch="UniformToFill" />
+										</Grid>
+									</Border>
+									<StackPanel Grid.Column="1" Margin="13,0,10,0" VerticalAlignment="Center">
+										<TextBlock FontSize="{DynamicResource Redux.FontSize.14}" FontWeight="SemiBold" Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+										<TextBlock Margin="0,4,0,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}" Text="{Binding CampaignName}" TextTrimming="CharacterEllipsis" />
+										<TextBlock Margin="0,4,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="{Binding FolderName}" TextTrimming="CharacterEllipsis" />
+									</StackPanel>
+									<StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+										<TextBlock HorizontalAlignment="Right" Foreground="{DynamicResource ReduxTextSecondaryBrush}" Text="{Binding ModifiedText}" />
+										<TextBlock Margin="0,5,0,0" HorizontalAlignment="Right" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="{Binding SizeText}" />
+									</StackPanel>
+								</Grid>
+							</DataTemplate>
+						</ListBox.ItemTemplate>
+					</ListBox>
+					<StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center">
+						<Border Width="48" Height="48" HorizontalAlignment="Center" Background="{DynamicResource ReduxAccentPillBackground}" CornerRadius="24">
+							<controls:ReduxIcon Width="22" Height="22" Foreground="{DynamicResource ReduxAccentHoverBrush}" IconKey="folder" />
+						</Border>
+						<TextBlock Margin="0,10,0,0" HorizontalAlignment="Center" FontWeight="SemiBold" Text="No story saves found" />
+						<TextBlock Margin="0,3,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Install a save or create one in game, then refresh." />
+					</StackPanel>
+				</Grid>
+
+				<Grid Grid.Row="3" Margin="0,10,0,0">
+					<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+					<TextBlock x:Name="ProfilePathText" VerticalAlignment="Center" Foreground="{DynamicResource ReduxTextMutedBrush}" TextTrimming="CharacterEllipsis" />
+					<Button x:Name="DeleteButton" Grid.Column="1" MinWidth="88" Margin="8,0" IsEnabled="False"
+						Click="DeleteButton_Click" Style="{StaticResource ReduxDestructiveActionButtonStyle}">
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.Trash}" /><TextBlock Text="Delete" /></StackPanel>
+					</Button>
+					<Button Grid.Column="2" MinWidth="88" Content="Close" IsCancel="True" Style="{StaticResource ReduxSecondaryActionButtonStyle}" />
+				</Grid>
+			</Grid>
+		</Border>
+	</Grid>
+</adonisUI:AdonisWindow>

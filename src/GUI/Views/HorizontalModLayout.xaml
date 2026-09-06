@@ -1319,9 +1319,9 @@
 				</Grid>
 			</DataTemplate>
 			<DataTemplate x:Key="ModDetailsTabbedTemplate" DataType="{x:Type data:DivinityModData}">
-				<TabControl ItemContainerStyle="{StaticResource ModDetailsTabItemStyle}"
+				<TabControl ItemContainerStyle="{StaticResource ReduxContentTabItemStyle}"
 					SelectedIndex="0"
-					Style="{StaticResource ModDetailsTabControlStyle}">
+					Style="{StaticResource ReduxContentTabControlStyle}">
 					<TabItem Header="Overview">
 						<ContentControl Content="{Binding}" ContentTemplate="{StaticResource ModDetailsOverviewTemplate}" />
 					</TabItem>
@@ -2219,7 +2219,7 @@
 					<ToggleButton x:Name="ModDetailsToggleButton"
 						Grid.Column="5"
 						VerticalAlignment="Center"
-						IsChecked="True"
+						IsChecked="{Binding IsModDetailsExpanded, Mode=TwoWay}"
 						Style="{StaticResource ModDetailsToggleStyle}"
 						ToolTip="Collapse or expand mod details" />
 				</Grid>

@@ -681,6 +681,79 @@
 			</Setter.Value>
 		</Setter>
 	</Style>
+	<!-- Shared tabs for information-heavy Redux surfaces such as the mod drawer and
+	     load-order previews. Selection uses color and a quiet underline; hover lift
+	     automatically reduces to opacity-only feedback under Reduce Motion. -->
+	<Style x:Key="ReduxContentTabControlStyle" TargetType="{x:Type TabControl}">
+		<Setter Property="Background" Value="Transparent" />
+		<Setter Property="BorderThickness" Value="0" />
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="{x:Type TabControl}">
+					<Grid KeyboardNavigation.TabNavigation="Local">
+						<Grid.RowDefinitions><RowDefinition Height="42" /><RowDefinition Height="1" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+						<TabPanel Margin="14,2" ClipToBounds="False" IsItemsHost="True" KeyboardNavigation.TabIndex="1" />
+						<Border Grid.Row="1" Height="1" Background="{DynamicResource ReduxBorderBrush}" />
+						<ContentPresenter x:Name="PART_SelectedContentHost" Grid.Row="2" ContentSource="SelectedContent"
+							KeyboardNavigation.DirectionalNavigation="Contained" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
+							TextElement.Foreground="{DynamicResource ReduxTextPrimaryBrush}" />
+					</Grid>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
+	<Style x:Key="ReduxContentTabItemStyle" TargetType="{x:Type TabItem}">
+		<Setter Property="Background" Value="Transparent" />
+		<Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" />
+		<Setter Property="BorderBrush" Value="Transparent" />
+		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="ClipToBounds" Value="False" />
+		<Setter Property="Cursor" Value="Hand" />
+		<Setter Property="FocusVisualStyle" Value="{x:Null}" />
+		<Setter Property="Padding" Value="{DynamicResource Redux.TabHeader.Padding}" />
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="{x:Type TabItem}">
+					<Grid x:Name="HeaderHost" Margin="0,0,4,0" Background="Transparent"
+						util:ReduxWindowBehavior.HoverLift="1" RenderTransformOrigin="0.5,0.5"
+						TextElement.FontWeight="{DynamicResource Redux.FontWeight.Control}"
+						TextElement.Foreground="{DynamicResource ReduxTextMutedBrush}">
+						<Grid.RenderTransform><TranslateTransform Y="0" /></Grid.RenderTransform>
+						<Grid.RowDefinitions><RowDefinition Height="*" /><RowDefinition Height="2" /></Grid.RowDefinitions>
+						<Border x:Name="TabHoverSurface" Grid.RowSpan="2" Margin="{DynamicResource Redux.TabHeader.HoverMargin}"
+							Background="{DynamicResource ReduxAccentSoftBrush}" CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
+							IsHitTestVisible="False" Opacity="0" />
+						<ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center"
+							VerticalAlignment="Center" ContentSource="Header" RecognizesAccessKey="True" />
+						<Border x:Name="SelectionUnderline" Grid.Row="1" Margin="5,0"
+							Background="{DynamicResource ReduxAccentBrush}" CornerRadius="1" Opacity="0" />
+					</Grid>
+					<ControlTemplate.Triggers>
+						<MultiTrigger>
+							<MultiTrigger.Conditions><Condition Property="IsMouseOver" Value="True" /><Condition Property="IsSelected" Value="False" /></MultiTrigger.Conditions>
+							<MultiTrigger.EnterActions><BeginStoryboard><Storyboard>
+								<DoubleAnimation Storyboard.TargetName="TabHoverSurface" Storyboard.TargetProperty="Opacity" To="1"
+									Duration="{StaticResource Redux.Motion.Fast}" EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
+							</Storyboard></BeginStoryboard></MultiTrigger.EnterActions>
+							<MultiTrigger.ExitActions><BeginStoryboard><Storyboard>
+								<DoubleAnimation Storyboard.TargetName="TabHoverSurface" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Redux.Motion.Standard}" />
+							</Storyboard></BeginStoryboard></MultiTrigger.ExitActions>
+						</MultiTrigger>
+						<Trigger Property="IsMouseOver" Value="True"><Setter TargetName="HeaderHost" Property="TextElement.Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" /></Trigger>
+						<Trigger Property="IsSelected" Value="True">
+							<Setter Property="Panel.ZIndex" Value="1" /><Setter TargetName="HeaderHost" Property="TextElement.Foreground" Value="{DynamicResource ReduxAccentHoverBrush}" /><Setter TargetName="HeaderHost" Property="TextElement.FontWeight" Value="SemiBold" />
+							<Trigger.EnterActions><BeginStoryboard><Storyboard>
+								<DoubleAnimation Storyboard.TargetName="SelectionUnderline" Storyboard.TargetProperty="Opacity" To="1" Duration="{StaticResource Redux.Motion.Fast}" />
+							</Storyboard></BeginStoryboard></Trigger.EnterActions>
+							<Trigger.ExitActions><BeginStoryboard><Storyboard>
+								<DoubleAnimation Storyboard.TargetName="SelectionUnderline" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.10" />
+							</Storyboard></BeginStoryboard></Trigger.ExitActions>
+						</Trigger>
+					</ControlTemplate.Triggers>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
 
 	<!-- Lucide vector icons, normalized to Lucide's native 24x24 view box. -->
 	<!-- Curated fantasy/category glyphs. Keep these readable at 12-16px. -->

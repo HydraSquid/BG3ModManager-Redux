@@ -306,7 +306,7 @@
 											<controls:ReduxIcon Width="17" Height="17" Margin="0,1,9,0" Foreground="{DynamicResource ReduxAccentHoverBrush}" StrokeData="{DynamicResource Redux.Icon.Flash}" />
 											<StackPanel Grid.Column="1">
 												<TextBlock Style="{StaticResource WelcomeChoiceTitleStyle}" Text="Reduce motion" />
-												<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}" Text="Remove animated movement and use immediate, quieter transitions." />
+												<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}" Text="Remove sliding, scaling, smooth scrolling, and animated window or menu transitions while keeping clear interface feedback." />
 											</StackPanel>
 										</Grid>
 									</CheckBox>

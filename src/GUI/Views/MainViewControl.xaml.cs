@@ -180,17 +180,76 @@ public partial class MainViewControl : MainViewControlViewBase
 
 	public void OpenSaveGamesFolder()
 	{
-		var saveGamesPath = ViewModel.SelectedProfile?.Folder == null
-			? null
-			: Path.Combine(ViewModel.SelectedProfile.Folder, "Savegames", "Story");
-		if (!String.IsNullOrWhiteSpace(saveGamesPath) && Directory.Exists(saveGamesPath))
+		var saveGamesPath = GetSelectedSaveGamesPath();
+		if (String.IsNullOrWhiteSpace(saveGamesPath))
 		{
+			ViewModel.ShowAlert("Select a BG3 player profile before opening save games.", AlertType.Warning);
+			return;
+		}
+
+		try
+		{
+			Directory.CreateDirectory(saveGamesPath);
 			ProcessHelper.TryOpenPath(saveGamesPath, Directory.Exists);
 		}
-		else
+		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
 		{
-			ViewModel.ShowAlert("The selected profile's save games folder could not be found.", AlertType.Warning);
+			ViewModel.ShowAlert($"The save games folder could not be opened: {ex.Message}", AlertType.Warning);
 		}
+	}
+
+	public void ShowSaveManager(string pendingImportPath = null) =>
+		ShowSaveManager(String.IsNullOrWhiteSpace(pendingImportPath) ? [] : [pendingImportPath]);
+
+	public void ShowSaveManager(IEnumerable<string> pendingImportPaths)
+	{
+		if (ViewModel.SelectedProfile?.Folder == null)
+		{
+			ViewModel.ShowAlert("Select a BG3 player profile before opening save games.", AlertType.Warning);
+			return;
+		}
+
+		new ReduxSaveManagerWindow(main, ViewModel, pendingImportPaths).ShowDialog();
+	}
+
+	private void SaveGameManagerButton_Click(object sender, RoutedEventArgs e) => ShowSaveManager();
+
+	private void ImportSaveGameButton_Click(object sender, RoutedEventArgs e)
+	{
+		if (!HasSelectedSaveProfile()) return;
+		var selectedPath = ReduxSaveManagerWindow.ChooseSaveFile(main);
+		if (!String.IsNullOrWhiteSpace(selectedPath)) ShowSaveManager(selectedPath);
+	}
+
+	private void ImportSaveGameFolder_Click(object sender, RoutedEventArgs e)
+	{
+		if (!HasSelectedSaveProfile()) return;
+		var selectedPath = ReduxSaveManagerWindow.ChooseSaveFolder(main);
+		if (!String.IsNullOrWhiteSpace(selectedPath)) ShowSaveManager(selectedPath);
+	}
+
+	private void CopySaveGamesFolderPath_Click(object sender, RoutedEventArgs e)
+	{
+		var saveGamesPath = GetSelectedSaveGamesPath();
+		if (String.IsNullOrWhiteSpace(saveGamesPath))
+		{
+			ViewModel.ShowAlert("Select a BG3 player profile before copying its save folder path.", AlertType.Warning);
+			return;
+		}
+
+		DivinityApp.Commands.CopyToClipboard(saveGamesPath);
+		ViewModel.ShowAlert("Copied the save games folder path.", AlertType.Success, 8);
+	}
+
+	private string GetSelectedSaveGamesPath() => ViewModel.SelectedProfile?.Folder == null
+		? null
+		: Path.Combine(ViewModel.SelectedProfile.Folder, "Savegames", "Story");
+
+	private bool HasSelectedSaveProfile()
+	{
+		if (ViewModel.SelectedProfile?.Folder != null) return true;
+		ViewModel.ShowAlert("Select a BG3 player profile before installing saves.", AlertType.Warning);
+		return false;
 	}
 
 	private void RegisterKeyBindings()
@@ -333,7 +392,7 @@ public partial class MainViewControl : MainViewControlViewBase
 				Header = "Reduce Motion",
 				IsCheckable = true,
 				StaysOpenOnClick = true,
-				ToolTip = "Use immediate transitions while retaining simple visual feedback.",
+				ToolTip = "Remove sliding, scaling, smooth scrolling, and animated window or menu transitions while keeping clear interface feedback.",
 				Icon = ReduxIcon.FromResource("Redux.Icon.CircleMinus", true)
 			};
 			BindingOperations.SetBinding(
@@ -383,6 +442,15 @@ public partial class MainViewControl : MainViewControlViewBase
 		if (menuItems.TryGetValue("Tools", out var toolsMenuItem))
 		{
 			if (toolsMenuItem.Items.Count > 0) toolsMenuItem.Items.Add(new Separator());
+			var saveManagerItem = new MenuItem
+			{
+				Header = "Save Game Manager...",
+				ToolTip = "Browse, install, and safely remove story saves for the selected profile.",
+				Icon = ReduxIcon.FromResource("Redux.Icon.BookOpen", true)
+			};
+			saveManagerItem.Click += (_, _) => ShowSaveManager();
+			toolsMenuItem.Items.Add(saveManagerItem);
+
 			var packagePreflightItem = new MenuItem
 			{
 				Header = "Inspect Mod Package...",
@@ -571,6 +639,7 @@ public partial class MainViewControl : MainViewControlViewBase
 	{
 		var customTheme = ReduxThemeService.GetActiveTheme(ViewModel.Settings);
 		ReduxThemeService.Apply(this.Resources, theme, customTheme, ViewModel.Settings.UsesGeneratedGradients);
+		ViewModel.PreviewModPresentation(null);
 		main.UpdateColorTheme(theme, customTheme);
 	}
 
@@ -578,6 +647,7 @@ public partial class MainViewControl : MainViewControlViewBase
 	{
 		var baseTheme = theme?.BaseTheme ?? ViewModel.Settings.ColorTheme;
 		ReduxThemeService.Apply(this.Resources, baseTheme, theme);
+		ViewModel.PreviewModPresentation(theme);
 		main.UpdateColorTheme(baseTheme, theme);
 	}
 
@@ -1089,10 +1159,12 @@ public partial class MainViewControl : MainViewControlViewBase
 
 		if (ReduxWindowBehavior.ReduceMotion)
 		{
-			menu.BeginAnimation(UIElement.OpacityProperty, null);
 			translate.BeginAnimation(TranslateTransform.YProperty, null);
-			menu.Opacity = show ? 1 : 0;
 			translate.Y = 0;
+			menu.BeginAnimation(
+				UIElement.OpacityProperty,
+				new DoubleAnimation(show ? 1 : 0, duration) { EasingFunction = easing },
+				HandoffBehavior.SnapshotAndReplace);
 			return;
 		}
 
@@ -1238,8 +1310,13 @@ public partial class MainViewControl : MainViewControlViewBase
 			button.Width = targetWidth;
 			if (button.Template.FindName("StatusLabel", button) is TextBlock immediateLabel)
 			{
-				immediateLabel.BeginAnimation(UIElement.OpacityProperty, null);
-				immediateLabel.Opacity = expand ? expandedLabelOpacity : compactLabelOpacity;
+				immediateLabel.BeginAnimation(
+					UIElement.OpacityProperty,
+					new DoubleAnimation(expand ? expandedLabelOpacity : compactLabelOpacity, duration)
+					{
+						EasingFunction = easing
+					},
+					HandoffBehavior.SnapshotAndReplace);
 			}
 			if (button.Template.FindName("StatusChevron", button) is FrameworkElement immediateChevron)
 			{

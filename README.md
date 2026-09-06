@@ -1,223 +1,227 @@
+<div align="center">
+
 # Baldur's Gate 3 Mod Manager Redux
 
-BG3 Mod Manager Redux is a Windows mod manager built on
-[LaughingLeader's BG3 Mod Manager](https://github.com/LaughingLeader/BG3ModManager). It keeps the
-original manager's package and load-order foundation while adding a refreshed interface and more
-ways to organize, review, and share mod setups.
+**A more visual, deliberate way to organize Baldur's Gate 3 mods.**
 
-**Current build:** `0.1.0-alpha.12`
+[![Current build](https://img.shields.io/badge/build-0.1.0--alpha.13-9A7BFF?style=flat-square)](https://github.com/circleainn/BG3ModManager-Redux/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-4F86F7?style=flat-square)](#requirements-and-alpha-status)
+[![License](https://img.shields.io/badge/license-MIT-42A66F?style=flat-square)](LICENSE)
 
-[Nexus Mods](https://www.nexusmods.com/baldursgate3/mods/23799) | [Report an issue](https://github.com/circleainn/BG3ModManager-Redux/issues) | [Changes from upstream](docs/CHANGES_FROM_UPSTREAM.md)
+[Download on Nexus Mods](https://www.nexusmods.com/baldursgate3/mods/23799) ·
+[Report a problem](https://github.com/circleainn/BG3ModManager-Redux/issues) ·
+[Browse the docs](docs/README.md) ·
+[See what differs from BG3MM](docs/CHANGES_FROM_UPSTREAM.md)
+
+</div>
 
 > [!IMPORTANT]
-> Redux is still in early development. Keep backups of important profiles, saves, downloaded
-> archives, and the BG3 Mods folder. Review load-order changes before applying them to the game.
+> Redux is in early development. Keep independent backups of important profiles, saves, downloaded
+> archives, and the BG3 Mods folder. Always review proposed load-order changes before applying them.
+
+Redux is a Windows mod manager built on
+[LaughingLeader's BG3 Mod Manager](https://github.com/LaughingLeader/BG3ModManager). It preserves
+BG3MM's proven package, profile, and load-order foundation while adding a cohesive interface,
+stronger organization, safer review workflows, and optional offline-assisted guidance.
+
+## Redux at a glance
+
+| Organize | Review | Personalize |
+|:--|:--|:--|
+| Multiple categories per mod | Built-in package diagnostics | Dark, Light, and Parchment themes |
+| Named, collapsible separators | Optional Load Order Advisor | Custom themes and generated gradients |
+| Saved orders and comparisons | Export previews and restore points | Adjustable text, fonts, icons, and motion |
+| Searchable <kbd>Ctrl</kbd> + <kbd>Q</kbd> actions | Undo/Redo for reversible changes | Unified hover cards and details drawer |
+
+### The main workflow
+
+1. **Install and inspect.** Drop PAKs or supported archives into Active or Inactive Mods. Redux
+   previews new installs, updates, same-version replacements, and possible downgrades first.
+2. **Organize without losing intent.** Assign categories, create separators, move mods, and use
+   <kbd>Ctrl</kbd> + <kbd>Z</kbd> / <kbd>Ctrl</kbd> + <kbd>Y</kbd> for reversible edits.
+3. **Save deliberately.** Working changes do not overwrite the selected saved order until **Save**
+   is pressed. Closing with unsaved changes requires confirmation.
+4. **Review the game change.** **Sync Load Order to Game** shows what will activate, deactivate, or
+   move before Redux writes `modsettings.lsx`.
 
 ## What Redux adds
 
-- **A redesigned interface** with Redux Dark, Redux Light, Parchment, custom themes, scalable text,
-  imported fonts, shared window styling, and optional reduced motion and background effects.
-- **Categories and separators** with custom names, descriptions, colors, icons, filtering,
-  collapsible separators, and multiple categories per mod.
-- **Mod details in one place** through hover cards and a resizable drawer for descriptions,
-  requirements, files, changelogs, linked pages, and personal notes.
-- **Online mod information** from Nexus Mods and mod.io, with manual page linking and a reviewed
-  local database for some existing Nexus installs. It can be disabled without removing saved links.
-- **Mod checks and load-order guidance** that bring BG3MM's package detection into Redux's unified
-  warnings, hover details, and review tools. The optional Load Order Advisor adds experimental
-  placement guidance from declared dependencies and Redux's offline knowledge.
-- **Safer order changes** with a game-order review, restore points, order comparison, staged imports,
-  backups, validated writes, and guarded Undo/Redo for changes applied to `modsettings.lsx`.
-- **Redux Modlists** (`.bg3redux`) for moving an order, categories, separators, optional source
-  links, and optional notes between Redux installations without changing `modsettings.lsx` or
-  including mod files.
+### Categories, separators, and mod details
 
-## Organize and review mods
+- Automatic and custom categories with names, descriptions, colors, icons, ordering, and filtering.
+- Up to three visible category assignments per mod.
+- Separators with persistent membership and collapse state. Closed separators move with their
+  contained mods and do not absorb nearby rows unexpectedly.
+- A resizable details drawer and hover cards for descriptions, requirements, files, changelogs,
+  source pages, diagnostics, and private notes.
+- Configurable list columns and unified selection between Active and Inactive Mods.
 
-- Manage active and inactive mods with the original BG3MM drag-and-drop workflow.
-- Use profiles, campaigns, saved orders, filters, configurable columns, and a compact optional
-  Quick Access menu (`Ctrl+Q`) with searchable actions and familiar alternate terms.
-- Working changes remain separate from the selected saved order until **Save** is pressed. Redux
-  warns before closing with unsaved load-order changes.
-- Undo or redo reversible actions—including activation, deactivation, repositioning, separator
-  changes, organizer changes, and game load-order writes—with `Ctrl+Z` and `Ctrl+Y`. Redux will not
-  undo a game-file change if BG3 or another manager has modified that file afterward.
-- Assign categories to one mod or a selection, then click category pills to filter both lists.
-- Add separators that remember their placement and collapsed state. Closed separators keep their
-  existing contents sealed and move with those mods as one group; newly positioned mods remain
-  visible until the separator is expanded.
-- Add notes to mods and optionally include them in a Redux Modlist.
-- Compare saved orders or load a recent restore point without changing the game's load order.
-- Inspect shared internal PAK paths with **Tools > Active File Overlaps**. Overlaps are reported as
-  information, not definite conflicts, because patches often share files intentionally.
-
-Categories, separators, and notes are Redux data. They are never written to the game's
+Categories, separators, and notes are Redux presentation data. They never enter the game's
 `modsettings.lsx`.
 
-## Mod checks and Load Order Advisor
+### Diagnostics and Load Order Advisor
 
-BG3MM already parses package metadata and identifies dependencies, overrides, Mod Fixer behavior,
-and Script Extender requirements. Redux keeps that foundation and presents the results through its
-built-in Mod Diagnostics: unified warnings, severity indicators, hover details, drawer information,
-and relevant follow-up actions. Diagnostics never download, install, delete, repair, or reorder
-mods automatically.
+Mod Diagnostics is built into Redux. It brings facts already detected by BG3MM's package parser—
+including dependencies, UUID problems, overrides, Mod Fixer behavior, and Script Extender
+requirements—into consistent row indicators, hover details, the mod drawer, and review windows.
+Diagnostics are read-only: they do not download, repair, remove, activate, or reorder mods.
 
-When a dependency is already installed, an available action can reveal it, copy its UUID, open its
-linked page, or activate it after confirmation. Activating a dependency changes only the working
-order until the user syncs that order to the game.
+The **Load Order Advisor** is the optional, experimental layer. When enabled, it adds cautious
+placement checks based on exact package declarations and Redux's offline ordering knowledge.
+**Organize Active Load Order** can preview one of three policies:
 
-For a missing dependency, Redux can open a known Nexus page when its reviewed database contains an
-exact module-UUID match. Unknown dependencies retain the copy-UUID fallback; Redux does not install
-them automatically.
+- preserve current separators and sort only within them;
+- replace them with non-empty suggested separators; or
+- remove active separators and organize the full numbered list.
 
-The Load Order Advisor is the optional, experimental part of this system and is disabled by default.
-It checks dependency placement and cycles using installed package metadata plus exact offline
-records. It also recognizes reviewed dependency aliases, substitutes, intentional late-loading
-dependencies, and explicit mod-author load-after guidance. **Organize Active Load Order** can turn
-those facts into a preview that preserves your separators, creates suggested separators, or removes
-separators. Applying a preview is one undoable, unsaved edit; the resulting separator names,
-membership, and load-order ranges are shown before applying. Individual placement recommendations
-can be ignored and restored later. Redux never silently reorders the list or changes the game's
-load order.
+Nothing is applied silently. The preview shows moves, resulting separators, and relationships that
+need review. Applying it creates one undoable, unsaved edit; individual recommendations can be
+ignored and restored later.
 
-## Redux Modlists
+### Safer load-order changes
 
-A `.bg3redux` Modlist can contain:
+- Explicit working state with an unsaved indicator and close protection.
+- Named order creation, renaming, deletion, comparison, and history.
+- Bounded Undo/Redo for activation, deactivation, movement, separators, organizer changes, and
+  guarded game-file changes.
+- Staged and validated writes for saved orders, settings, imports, backups, and `modsettings.lsx`.
+- Per-profile restore points before confirmed game changes.
+- External-change protection: Redux will not undo over a game file changed afterward by BG3 or
+  another manager.
 
-- a saved load order;
-- custom categories, descriptions, assignments, and display order;
-- separators, descriptions, positions, and collapsed states;
+### Save Game Manager
+
+Open **Tools > Save Game Manager...** or use the **Save Games** toolbar group. Redux groups story
+saves by campaign and shows available thumbnails, dates, sizes, and difficulty metadata. Honour
+campaigns receive a gold crown; Tactician campaigns receive a skull badge. Campaign collapse state
+is remembered, and its expand/collapse motion follows the Reduce Motion preference.
+
+Redux accepts a save folder, loose `.lsv`, or supported ZIP, 7z, RAR, TAR, or GZip-family archive
+through the picker or drag and drop. Save drops receive a distinct review so they cannot be confused
+with mod installation. Archive paths and sizes are checked, imports are staged, existing names
+require confirmation, and deletion uses the Windows Recycle Bin.
+
+> [!NOTE]
+> Redux does not edit or validate save contents. Close BG3 before changing saves, keep independent
+> backups, and remember that Steam Cloud may restore files removed locally.
+
+### Redux Modlists
+
+A `.bg3redux` Modlist can carry a saved order plus selected Redux presentation data:
+
+- category definitions, descriptions, assignments, and display order;
+- separators, descriptions, positions, membership, and collapse state;
 - reusable custom PNG icons;
 - public Nexus Mods or mod.io source references; and
-- mod notes when explicitly selected during export.
+- private notes only when explicitly included.
 
-Import and export previews show what will change. A Redux Modlist does not contain `.pak` files or
-`modsettings.lsx`, and importing one does not install missing mods. Source-link import is off by
-default because the recipient may have installed the same mod UUID from a different provider.
-When explicitly enabled, imported links replace the local source association for matching UUIDs.
+Import and export previews show what will change. A Redux Modlist never contains installed PAKs,
+profiles, saves, API keys, or `modsettings.lsx`, and importing one does not install missing mods.
+Source-link import is off by default so a recipient's existing provider association is preserved.
 
-**Back Up Active Mods to ZIP** always asks where to save the archive and reminds users to keep it
-private unless every included mod author permits redistribution.
+**Back Up Active Mods to ZIP** is a separate personal-backup feature. It asks where to save and
+reminds users that redistributing mod files requires permission from every relevant author.
 
-## Help improve offline mod recognition
+## Offline mod recognition
 
-Redux includes a curated offline mod database that connects exact package fingerprints and
-reviewed module identities to their Nexus Mods projects. It helps Redux recognize existing
-installations without relying entirely on a live provider request. Matching is deliberately
-conservative: when the evidence is unclear, a mod remains **Local** instead of being assigned a
-potentially incorrect source.
+Redux includes a curated offline database that connects exact package fingerprints and reviewed
+module identities to Nexus Mods projects. Matching is intentionally conservative: uncertain mods
+remain **Local** rather than being assigned a potentially incorrect source. The same database also
+contains exact dependency and ordering facts used only when Load Order Advisor is enabled.
 
-Use **Tools > Generate Redux Database Contribution...** to create a `.bg3redux-report` from your
-installed user mods. The report contains sanitized mod identity, known provider IDs, and exact PAK
-fingerprints that maintainers can review. It does **not** include mod packages, profiles, load-order
-positions, settings, API keys, or private filesystem paths, and generating it does not change your
-installation.
+Use **Tools > Generate Redux Database Contribution...** to create a privacy-limited
+`.bg3redux-report`. It contains sanitized mod identity, known provider IDs, and exact PAK
+fingerprints for maintainer review. It does **not** include packages, profiles, load-order positions,
+settings, API keys, notes, or private filesystem paths, and generating it changes nothing locally.
 
-Contributed reports make it possible to recognize more versions and releases accurately in future
-Redux builds, reducing the number of mods that need to be linked manually. If you are comfortable
-helping, send the generated report to the project maintainers through the
-[issue tracker](https://github.com/circleainn/BG3ModManager-Redux/issues). Reports are reviewed
-before anything is added to the bundled database; they are never imported automatically. Please
-share only the `.bg3redux-report`, not the original mod archives or `.pak` files.
+If you would like to help improve recognition, attach only the generated report—not archives or
+PAKs—to an [issue](https://github.com/circleainn/BG3ModManager-Redux/issues). Reports are reviewed;
+they are never imported into the bundled database automatically. The full trust and contribution
+model is documented in the [Redux mod database guide](docs/REDUX_MOD_DATABASE.md).
 
 ## Themes and accessibility
 
-- Choose Redux Dark, Redux Light, or Parchment, or create and share a custom theme. The active theme
-  can use solid action colors or gradients generated from its semantic colors; gradients are the
-  default for Redux Dark and Light, while Parchment uses solid actions.
-- Choose Compact, Default, or Large text and one of the bundled fonts, or import `.ttf` and `.otf`
-  files. Some imported fonts may not display correctly.
-- Configure category-colored selection, colored text, icons, and icon-only labels.
-- Reduce motion or disable background blur and dimming.
-- Use selectable dialog text, configurable shortcuts, keyboard-accessible dialogs, and the
-  inherited speech commands.
+- Redux Dark, Redux Light, Parchment, and importable custom themes.
+- Solid semantic action colors or theme-generated gradients.
+- Compact, Default, and Large text with bundled or imported `.ttf` / `.otf` fonts.
+- Optional category-colored interactions, colored text, icons, and icon-only labels.
+- Reduce Motion for scrolling, sliding, scaling, and animated transitions while preserving clear
+  hover and selection states.
+- Independently removable background blur and dimming.
+- Configurable shortcuts, keyboard-operable dialogs, selectable dialog text, screen-reader helpers,
+  and inherited speech commands.
 
-The first launch opens one setup window for choosing a theme, optional source linking and Load Order
-Advisor guidance, API keys, and accessibility options. Optional features begin disabled and can be
-enabled there or later in Preferences. Built-in diagnostics remain active. The setup can be reopened
-from Help.
-Provider API keys are masked in the interface, protected for the current Windows account, and kept
-out of ordinary settings files and diagnostic exports.
+The first launch provides one setup window for theme, optional source linking, optional Load Order
+Advisor guidance, API keys, and accessibility choices. Optional online and advisor features begin
+disabled. Provider keys are masked, encrypted for the current Windows account, and excluded from
+ordinary settings and diagnostic exports.
 
 ## Built on BG3 Mod Manager
 
-Redux is a fork, not a from-scratch replacement. These systems come from LaughingLeader and other
-upstream BG3MM contributors:
+Redux is a fork, not a from-scratch replacement. It retains substantial work from LaughingLeader
+and other BG3MM contributors, including:
 
-- active and inactive lists, profiles, campaigns, saved orders, filtering, and load-order export;
-- `.pak` and archive import through LSLib and the established file workflows;
-- BG3 path detection, launch behavior, override packages, dependencies, UUID checks, Osiris and
-  Mod Fixer detection, and Script Extender management;
-- Nexus Mods integration, caching, links, images, metadata, and update checks;
-- configurable shortcuts, package extraction, metadata tools, and version generation; and
-- CrossSpeak, Windows speech fallback, screen-reader helpers, and speech commands.
+- profiles, campaigns, active/inactive lists, saved orders, and the core load-order model;
+- PAK and archive handling through LSLib;
+- BG3 path detection, launch workflows, overrides, dependency parsing, Osiris and Mod Fixer
+  detection, and Script Extender integration;
+- Nexus Mods integration, caching, metadata, images, links, and update foundations; and
+- configurable shortcuts, developer utilities, CrossSpeak, Windows speech fallback, and
+  screen-reader support.
 
 Redux reworks and extends many of these systems while retaining their credit. See
-[Changes from upstream BG3 Mod Manager](docs/CHANGES_FROM_UPSTREAM.md) for the detailed distinction.
+[Changes from upstream BG3 Mod Manager](docs/CHANGES_FROM_UPSTREAM.md) for a precise comparison.
 
 ## For mod authors
 
-Redux retains BG3MM's package extraction, UUID and folder-name copying, metadata inspection, custom
-`meta.lsx` tags, and encoded version generator.
+**Tools > Inspect Mod Package** performs a read-only release preflight on a PAK or common release
+archive. It reviews module identity, declared dependencies, embedded creator metadata, Script
+Extender and Osiris signals, override behavior, and common development debris without installing
+or modifying the package. A clean result is not a guarantee of in-game compatibility.
 
-Use **Tools > Inspect Mod Package** to run a read-only release preflight on a `.pak` or common
-release archive. It reports module identity, declared dependencies, embedded creator metadata,
-Script Extender or Osiris signals, override behavior, and common development files without
-installing or modifying the package. The result is a conservative packaging check, not a guarantee
-of in-game compatibility.
-
-A mod author may also place an optional root-level
+Authors may also include an optional root-level
 [`redux.mod.json`](docs/REDUX_CREATOR_MANIFEST.md) inside a PAK. Redux validates its module claim
 against parsed `meta.lsx` data before using it for Nexus Mods or mod.io identification. Invalid
-claims are ignored and reported without changing user files or load orders.
+claims are ignored and reported without changing packages or load orders.
 
-## Requirements and current limits
+## Requirements and alpha status
 
 - Windows 10 or Windows 11, x64
 - [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
 - Baldur's Gate 3
 
-Linux, macOS, Wine, and Proton are not supported. The application is framework-dependent and is not
+Linux, macOS, Wine, and Proton are not supported. Redux is framework-dependent and is not
 distributed as a self-contained build.
 
-During the private alpha:
-
-- Nexus authentication uses a personal API key rather than public SSO.
-- Online matching, automatic categories, dependency data, and conflict data may be incomplete.
-- mod.io author profile links cannot always be resolved.
-- Imported fonts may have incomplete metadata or render differently in WPF.
-- Uncommon display scales and dense layouts may still expose visual issues.
-- Clean-machine packaging and migration behavior need broader testing.
-
-Users are responsible for permission to use or share imported fonts and PNG icons. Imported assets
-are local data and are not included in application packages.
+Known private-alpha limits include personal Nexus API-key authentication instead of public SSO,
+incomplete provider/category/dependency coverage, imported-font variability, incomplete mod.io
+author links, and limited clean-machine testing. Uncommon scaling and extremely dense layouts may
+still expose visual issues. Imported fonts and PNG icons remain the user's responsibility to license.
 
 ## Documentation
 
-- [Changes from upstream BG3 Mod Manager](docs/CHANGES_FROM_UPSTREAM.md)
-- [Optional features](docs/REDUX_OPTIONAL_MODULES.md)
-- [Redux mod database](docs/REDUX_MOD_DATABASE.md)
-- [Mod developer tools](docs/MOD_DEVELOPER_TOOLS.md)
-- [Creator manifest reference](docs/REDUX_CREATOR_MANIFEST.md)
-- [Creator manifest JSON schema](docs/schemas/redux.mod.schema.json)
+| Guide | Audience | Purpose |
+|:--|:--|:--|
+| [Documentation index](docs/README.md) | Everyone | Find the right user, author, or maintainer guide |
+| [Changes from upstream](docs/CHANGES_FROM_UPSTREAM.md) | Users and contributors | Understand what Redux retains and changes |
+| [Optional features](docs/REDUX_OPTIONAL_MODULES.md) | Contributors | Understand feature boundaries and safety rules |
+| [Redux mod database](docs/REDUX_MOD_DATABASE.md) | Contributors and maintainers | Recognition, advisor knowledge, and reports |
+| [Mod developer tools](docs/MOD_DEVELOPER_TOOLS.md) | Mod authors | Inspect releases before distribution |
+| [Creator manifest](docs/REDUX_CREATOR_MANIFEST.md) | Mod authors | Add a validated source identity to a PAK |
 
 ## Reporting problems
 
-Use the [issue tracker](https://github.com/circleainn/BG3ModManager-Redux/issues) for
-reproducible bugs. Include the Redux version, reproduction steps, relevant logs, screenshots, and
-affected mod names or UUIDs. Never post API keys or private filesystem information.
+Use the [issue tracker](https://github.com/circleainn/BG3ModManager-Redux/issues) for reproducible
+bugs. Include the Redux version, the smallest reliable reproduction steps, relevant screenshots or
+logs, and affected mod names or UUIDs. Never post API keys or unreviewed private path information.
 
 ## Credits and license
 
-Redux exists because of LaughingLeader's original project and retains substantial upstream code and
-behavior.
-
-- [Original BG3 Mod Manager](https://github.com/LaughingLeader/BG3ModManager)
-- [LaughingLeader](https://github.com/LaughingLeader)
-- [Support LaughingLeader on Ko-fi](https://ko-fi.com/LaughingLeader)
+Redux exists because of [LaughingLeader's original BG3 Mod Manager](https://github.com/LaughingLeader/BG3ModManager).
+You can also [support LaughingLeader on Ko-fi](https://ko-fi.com/LaughingLeader).
 
 Bundled dependencies and assets include LSLib, CrossSpeak, AdonisUI, ReactiveUI,
-GongSolutions.WPF.DragDrop, Lucide, and the bundled open fonts. Attribution and license terms are in
+GongSolutions.WPF.DragDrop, Lucide, and the bundled open fonts. Attribution and full terms are in
 [Third-Party Notices](licenses/Third-Party-Notices.md).
 
 Baldur's Gate 3 is developed and published by Larian Studios. Redux is an unofficial community

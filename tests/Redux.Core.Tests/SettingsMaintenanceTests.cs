@@ -1,6 +1,8 @@
 using DivinityModManager.Models;
 using DivinityModManager.Util;
 
+using Newtonsoft.Json;
+
 using System;
 using System.Collections.Generic;
 
@@ -8,6 +10,19 @@ namespace Redux.Core.Tests;
 
 public sealed class SettingsMaintenanceTests
 {
+	public void SaveGameCampaignCollapseStateRoundTripsWithoutDuplicates()
+	{
+		var settings = new DivinityModManagerSettings
+		{
+			CollapsedSaveGameCampaigns = new List<string> { "Shadowheart", "shadowheart", "  ", "Tav" }
+		};
+
+		var restored = JsonConvert.DeserializeObject<DivinityModManagerSettings>(JsonConvert.SerializeObject(settings));
+
+		RegressionAssert.True(restored != null);
+		RegressionAssert.SequenceEqual(new[] { "Shadowheart", "Tav" }, restored!.CollapsedSaveGameCampaigns);
+	}
+
 	public void RestoringAutomaticCategoriesClearsCurrentAndLegacyAssignmentsOnly()
 	{
 		var settings = new DivinityModManagerSettings

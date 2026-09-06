@@ -30,6 +30,8 @@
 	WindowStartupLocation="CenterScreen"
 	FontFamily="{DynamicResource Redux.FontFamily.UI}" FontSize="{DynamicResource Redux.FontSize.12}"
 	FontWeight="Medium"
+	AllowDrop="True"
+	PreviewDrop="MainWindow_PreviewDrop"
 	TextOptions.TextFormattingMode="Ideal"
 	TextOptions.TextRenderingMode="ClearType"
     d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel}"

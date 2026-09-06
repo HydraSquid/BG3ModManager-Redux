@@ -98,6 +98,11 @@ public partial class CustomThemeEditorWindow : AdonisWindow
 		Theme.UseIconsOnly = false;
 	}
 
+	private void PresentationCheckBox_Click(object sender, RoutedEventArgs e)
+	{
+		if (!_initializing) PreviewChanged?.Invoke(Theme);
+	}
+
 	private void GeneratedGradientsCheckBox_Click(object sender, RoutedEventArgs e)
 	{
 		Theme.UsesGeneratedGradients = GeneratedGradientsCheckBox.IsChecked == true;
@@ -124,13 +129,12 @@ public partial class CustomThemeEditorWindow : AdonisWindow
 		// picker remains fluid even while the main Redux surface updates behind it.
 		var previewTimer = new DispatcherTimer(DispatcherPriority.Background, Dispatcher)
 		{
-			Interval = TimeSpan.FromMilliseconds(50)
+			Interval = TimeSpan.FromMilliseconds(75)
 		};
 		previewTimer.Tick += (_, _) =>
 		{
 			previewTimer.Stop();
 			ReduxThemeService.PreviewColors(dialog.Resources, Theme);
-			ReduxThemeService.PreviewColors(Resources, Theme);
 			ColorPreviewChanged?.Invoke(Theme);
 		};
 		dialog.ColorPreviewChanged += color =>

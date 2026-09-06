@@ -10,6 +10,37 @@ namespace Redux.Core.Tests;
 
 internal sealed class NxmBatchInstallPlannerTests
 {
+	public void NativeBatchOrdersOnlySelectedLoaderBeforePluginsAndKeepsPakSupport()
+	{
+		var wasd = new NxmInstallCandidate(new NxmDownloadItem { ModId = 781 }, []);
+		var camera = new NxmInstallCandidate(new NxmDownloadItem { ModId = 945 }, []);
+		var loader = new NxmInstallCandidate(new NxmDownloadItem { ModId = 944 }, []);
+		var pak = Candidate(Mod("Ordinary PAK"));
+		var plan = NxmBatchInstallPlanner.Build([wasd, camera, pak, loader], []);
+		RegressionAssert.Equal(0, plan.Blocked.Count);
+		RegressionAssert.Equal(4, plan.Ordered.Count);
+		var ordered = plan.Ordered.ToList();
+		RegressionAssert.True(ordered.IndexOf(loader) < ordered.IndexOf(wasd));
+		RegressionAssert.True(ordered.IndexOf(loader) < ordered.IndexOf(camera));
+		RegressionAssert.True(plan.Prerequisites[wasd.Download].Contains(loader.Download));
+		RegressionAssert.Equal(2, NxmBatchInstallPlanner.Build([wasd, camera, pak], []).Blocked.Count);
+		RegressionAssert.Equal(0, NxmBatchInstallPlanner.Build([wasd, camera], [], nativeLoaderPresent: true).Blocked.Count);
+	}
+
+	public void NativeBatchRejectsAmbiguousLoadersAndSkipsPluginsAfterDeclineOrRemoval()
+	{
+		var wasd = new NxmInstallCandidate(new NxmDownloadItem { ModId = 781 }, []);
+		var loader = new NxmInstallCandidate(new NxmDownloadItem { ModId = 944 }, []);
+		var duplicate = new NxmInstallCandidate(new NxmDownloadItem { ModId = 944 }, []);
+		RegressionAssert.Equal(3, NxmBatchInstallPlanner.Build([wasd, loader, duplicate], [], true).Blocked.Count);
+		var plan = NxmBatchInstallPlanner.Build([wasd, loader], []);
+		var successful = new HashSet<NxmDownloadItem>();
+		RegressionAssert.True(NxmBatchInstallPlanner.GetExecutionBlockReason(plan, wasd, successful, [], true) != null);
+		successful.Add(loader.Download);
+		RegressionAssert.True(NxmBatchInstallPlanner.GetExecutionBlockReason(plan, wasd, successful, [], false) != null);
+		RegressionAssert.True(NxmBatchInstallPlanner.GetExecutionBlockReason(plan, wasd, successful, [], true) == null);
+	}
+
 	public void ReverseDownloadedChainInstallsPrerequisitesBeforeAllDependents()
 	{
 		var fix = Mod("Music performance fix");

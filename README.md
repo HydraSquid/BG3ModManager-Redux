@@ -39,6 +39,17 @@ This is development source, not a separate stable release.
   queued, and possible same-project requirements. Reviewed UUID mappings offer **Open Nexus Files**;
   unknown UUIDs get **Copy UUID** instead of a guessed link. Files and variants are never chosen or
   downloaded automatically. Queue identities come from this session's package inspections.
+- **Supported native components:** Tools > Native Mod Loader and Plugins installs reviewed ZIP
+  layouts for [Native Mod Loader](https://www.nexusmods.com/baldursgate3/mods/944),
+  [WASD Character Movement](https://www.nexusmods.com/baldursgate3/mods/781), and
+  [Native Camera Tweaks](https://www.nexusmods.com/baldursgate3/mods/945). Their Nexus downloads
+  use the same native installer, with explicit game-directory review, backups, and guarded restore.
+  Selected batches put the loader before its plugins. These are DLL components, not PAK load-order
+  entries; other DLL mods and arbitrary archive layouts are not supported.
+- **Native requirements:** Downloads and Native Mods tools distinguish a Redux-verified loader,
+  an external/unverified pair, and missing or changed files. No loader version or universal game
+  compatibility is inferred from filenames. Supported plugin installs require BG3 Hotfix 34
+  (`4.1.1.6931813`) or newer and the loader; Script Extender is not their prerequisite.
 - **Source-association fixes:** explicit Nexus installs remain Nexus even before metadata is
   fetched or when the PAK also contains a mod.io identifier. Provider-neutral **Link Mod Page**
   validates BG3 Nexus/mod.io URLs and supports manual mod.io links without an API key.
@@ -52,6 +63,13 @@ This is development source, not a separate stable release.
 
 Keep backups before testing and keep runtime `Data`, `Orders`, and `_Logs` folders private.
 Downloads require a declared HTTP response length and are limited to 32 GiB per archive.
+Native installation is deliberately narrower: ZIP archives up to 128 MiB, only the catalogued
+DLL/TOML paths, and bounded extraction. Keep BG3 closed and obtain native code from its author;
+format checks do not authenticate a publisher. An initial loader installation requires the current
+game Bink DLL to match the archive's packaged original; unknown replacements and mismatches after
+game updates require manual review rather than a forced overwrite. Existing TOML settings are kept.
+Restore refuses externally modified files and will not remove the loader while plugin DLLs remain.
+Private native ownership records and recovery copies live under `Data/NativeInstalls`; preserve them.
 
 The fork includes regression coverage for the changes above. From a Windows checkout with the
 upstream build prerequisites and submodules installed, run `./Test-Redux.ps1`.

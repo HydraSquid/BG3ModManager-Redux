@@ -180,6 +180,9 @@ public class AppKeys : ReactiveObject
 	[MenuSettings("Tools", "Install Script Extender...")]
 	public Hotkey DownloadScriptExtender { get; private set; } = new Hotkey(Key.T, ModifierKeys.Control | ModifierKeys.Shift | ModifierKeys.Alt);
 
+	[MenuSettings("Tools", "Native Mod Loader and Plugins...", Tooltip = "Install or restore the supported Native Mod Loader, WASD, and Camera Tweaks ZIP packages; inspect loader status.")]
+	public Hotkey ManageNativeMods { get; private set; } = new Hotkey(Key.None);
+
 	[MenuSettings("Accessibility", "Read Active Load Order Aloud")]
 	public Hotkey SpeakActiveModOrder { get; private set; } = new Hotkey(Key.Home, ModifierKeys.Control);
 

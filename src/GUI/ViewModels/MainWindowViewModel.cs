@@ -53,7 +53,7 @@ using ZstdSharp;
 
 namespace DivinityModManager.ViewModels;
 
-public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, IDivinityAppViewModel
+public partial class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, IDivinityAppViewModel
 {
 	[Reactive] public MainWindow Window { get; private set; }
 	[Reactive] public MainViewControl View { get; private set; }
@@ -630,6 +630,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				return accepted;
 			}), Modules.SourceIntegrationsEnabled);
 		NxmDownloads = _nxmDownloadManager.Items;
+		((INotifyCollectionChanged)NxmDownloads).CollectionChanged += (_, _) => Application.Current.Dispatcher.BeginInvoke(new Action(RefreshNativeDownloadBadges));
 		_nxmDownloadManager.FocusRequested += id => Application.Current.Dispatcher.BeginInvoke(new Action(() =>
 		{
 			NxmDownloadsPaneVisible = true;
@@ -637,6 +638,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			if (item != null) item.IsSelected = true;
 		}));
 		await _nxmDownloadManager.InitializeAsync();
+		RefreshNativeDownloadBadges();
 	}
 
 	private Task EnsureNxmDownloadsInitializedAsync()
@@ -676,6 +678,11 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			await using var archiveGuard = expectedArchiveHash == null ? null : File.Open(archivePath, FileMode.Open, FileAccess.Read, FileShare.Read);
 			if (archiveGuard != null && !expectedArchiveHash.SequenceEqual(await System.Security.Cryptography.SHA256.HashDataAsync(archiveGuard)))
 				throw new NexusDownloadedModValidationException("archive-changed", "The archive changed after batch inspection. Inspect the new file and start a new installation batch.");
+			if (NativeModCatalog.Find(item.ModId) != null)
+			{
+				await InstallNativeDownloadCoreAsync(item, archivePath);
+				return;
+			}
 			await _nxmDownloadManager.SetStateAsync(item.Id, NxmDownloadState.Installing);
 			var source = new NexusModManagerLink(item.ModId, item.FileId, null, null, null);
 			var builtinMods = DivinityApp.IgnoredMods.Items.SafeToDictionary(entry => entry.Folder, entry => entry);
@@ -764,6 +771,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	public async Task ShowNxmDownloadDetailsAsync(NxmDownloadItem item)
 	{
 		if (item == null) return;
+		if (NativeModCatalog.Find(item.ModId) != null) { ShowNativeMods(item.ModId); return; }
 		IReadOnlyList<DivinityModData> inspectedMods = [];
 		var summary = item.FailureDetails;
 		if (item.State is (NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview or NxmDownloadState.InstallFailed)
@@ -889,6 +897,12 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 					var path = GetNxmArchivePath(item);
 					await using var archiveGuard = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
 					hashes[item] = await System.Security.Cryptography.SHA256.HashDataAsync(archiveGuard);
+					if (NativeModCatalog.Find(item.ModId) != null)
+					{
+						await CreateNativeModInstaller().InspectArchiveAsync(item.ModId, path, CancellationToken.None);
+						candidates.Add(new(item, []));
+						continue;
+					}
 					var importer = NexusDownloadedModImporter.Create(PathwayData.AppDataModsPath,
 						Path.Combine(PathwayData.AppDataGameFolder, "Mods_Old_ModManager"), mods.Items, builtinMods);
 					IReadOnlyList<DivinityModData> inspected;
@@ -908,7 +922,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				}
 				catch (Exception ex) { blocked[item] = NexusDownloadedModValidationException.Describe(ex).Details; }
 			}
-			var plan = NxmBatchInstallPlanner.Build(candidates, mods.Items.Concat(DivinityApp.IgnoredMods.Items));
+			var plan = NxmBatchInstallPlanner.Build(candidates, mods.Items.Concat(DivinityApp.IgnoredMods.Items),
+				candidates.Any(candidate => NativeModCatalog.Find(candidate.Download.ModId) != null) && GetNativeLoaderStatus().IsPresent);
 			foreach (var issue in plan.Blocked) blocked[issue.Key] = issue.Value;
 			var summary = $"Checked {selected.Length} selected archives. {plan.Ordered.Count} can proceed in prerequisite-first order.\n\n"
 				+ String.Join("\n", plan.Ordered.Select((candidate, index) => $"{index + 1}. {candidate.Download.FileDisplayName}"));
@@ -932,7 +947,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 					blocked[item] = "Skipped because this download is no longer available, or a selected prerequisite was skipped or failed.";
 					continue;
 				}
-				var reason = NxmBatchInstallPlanner.GetExecutionBlockReason(plan, candidate, installed, mods.Items.Concat(DivinityApp.IgnoredMods.Items));
+				var reason = NxmBatchInstallPlanner.GetExecutionBlockReason(plan, candidate, installed, mods.Items.Concat(DivinityApp.IgnoredMods.Items),
+					NativeModCatalog.Find(item.ModId) != null && GetNativeLoaderStatus().IsPresent);
 				if (reason != null) { blocked[item] = reason; continue; }
 				await InstallNxmDownloadCoreAsync(item, showDependencyReview: false, expectedArchiveHash: hashes[item]);
 				if (item.State == NxmDownloadState.Installed) installed.Add(item);
@@ -1690,6 +1706,9 @@ Directory the zip will be extracted to:
 
 		var canDownloadScriptExtender = this.WhenAnyValue(x => x.PathwayData.ScriptExtenderLatestReleaseUrl, (p) => !String.IsNullOrEmpty(p));
 		Keys.DownloadScriptExtender.AddAction(() => AskToDownloadScriptExtender(), canDownloadScriptExtender);
+		Keys.ManageNativeMods.AddAction(() => ShowNativeMods());
+		Settings.WhenAnyValue(x => x.GameExecutablePath).ObserveOn(RxApp.MainThreadScheduler).Subscribe(_ => RefreshNativeDownloadBadges());
+		this.WhenAnyValue(x => x.NxmDownloadsPaneVisible).Where(visible => visible).ObserveOn(RxApp.MainThreadScheduler).Subscribe(_ => RefreshNativeDownloadBadges());
 
 		var canOpenModsFolder = this.WhenAnyValue(x => x.PathwayData.AppDataModsPath, x => x.DirectoryExists());
 		Keys.OpenModsFolder.AddAction(() =>

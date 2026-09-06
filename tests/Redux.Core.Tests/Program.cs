@@ -26,6 +26,7 @@ internal static class Program
 		var failureRecovery = new NxmFailureRecoveryTests();
 		var dependencies = new DependencyAssistanceTests();
 		var batchInstall = new NxmBatchInstallPlannerTests();
+		var nativeInstaller = new NativeModInstallerTests();
 		var bundle = new ReduxBundleTests();
 		var contribution = new ContributionReportPrivacyTests();
 		var comparison = new LoadOrderComparisonTests();
@@ -56,6 +57,24 @@ internal static class Program
 		var loadOrderWorkflow = new LoadOrderWorkflowTests();
 		var tests = new (string Name, Action Run)[]
 		{
+			(nameof(nativeInstaller.CatalogContainsOnlyTheApprovedNativeProjects), nativeInstaller.CatalogContainsOnlyTheApprovedNativeProjects),
+			(nameof(nativeInstaller.AtomicReplacementRejectsSourceChangedSinceItsReviewedHash), nativeInstaller.AtomicReplacementRejectsSourceChangedSinceItsReviewedHash),
+			(nameof(nativeInstaller.ZipValidationRejectsOtherFormatsTraversalAndUnexpectedFilesWithoutChangingGameFiles), nativeInstaller.ZipValidationRejectsOtherFormatsTraversalAndUnexpectedFilesWithoutChangingGameFiles),
+			(nameof(nativeInstaller.OversizedZipEntriesAreRejectedBeforeTheyCanBeStaged), nativeInstaller.OversizedZipEntriesAreRejectedBeforeTheyCanBeStaged),
+			(nameof(nativeInstaller.NativePluginsRequireAKnownSupportedGameVersionAndLoader), nativeInstaller.NativePluginsRequireAKnownSupportedGameVersionAndLoader),
+			(nameof(nativeInstaller.InspectArchiveAllowsDeferredLoaderPrerequisiteButStillChecksGameVersion), nativeInstaller.InspectArchiveAllowsDeferredLoaderPrerequisiteButStillChecksGameVersion),
+			(nameof(nativeInstaller.LoaderInstallStagesWithoutChangingGameFilesThenCommitsAsReduxVerified), nativeInstaller.LoaderInstallStagesWithoutChangingGameFilesThenCommitsAsReduxVerified),
+			(nameof(nativeInstaller.ExternalLoaderPairIsPresentButUnverifiedAndUnmanagedOriginalConflicts), nativeInstaller.ExternalLoaderPairIsPresentButUnverifiedAndUnmanagedOriginalConflicts),
+			(nameof(nativeInstaller.ChangedReduxOwnedLoaderBlocksDependentPluginInstallation), nativeInstaller.ChangedReduxOwnedLoaderBlocksDependentPluginInstallation),
+			(nameof(nativeInstaller.CommitRejectsArchiveAndDestinationChangesAfterReview), nativeInstaller.CommitRejectsArchiveAndDestinationChangesAfterReview),
+			(nameof(nativeInstaller.PluginCommitRejectsRemovedLoaderAfterReview), nativeInstaller.PluginCommitRejectsRemovedLoaderAfterReview),
+			(nameof(nativeInstaller.PluginCommitRejectsChangedLoaderAfterReview), nativeInstaller.PluginCommitRejectsChangedLoaderAfterReview),
+			(nameof(nativeInstaller.CommitRejectsStaleOwnershipManifestFromAnotherTransaction), nativeInstaller.CommitRejectsStaleOwnershipManifestFromAnotherTransaction),
+			(nameof(nativeInstaller.CommitFailureRollsBackEveryWrittenTarget), nativeInstaller.CommitFailureRollsBackEveryWrittenTarget),
+			(nameof(nativeInstaller.PluginInstallPreservesExistingTomlConfiguration), nativeInstaller.PluginInstallPreservesExistingTomlConfiguration),
+			(nameof(nativeInstaller.RestoreRefusesActivePluginsThenRestoresOnlyOwnedFiles), nativeInstaller.RestoreRefusesActivePluginsThenRestoresOnlyOwnedFiles),
+			(nameof(batchInstall.NativeBatchOrdersOnlySelectedLoaderBeforePluginsAndKeepsPakSupport), batchInstall.NativeBatchOrdersOnlySelectedLoaderBeforePluginsAndKeepsPakSupport),
+			(nameof(batchInstall.NativeBatchRejectsAmbiguousLoadersAndSkipsPluginsAfterDeclineOrRemoval), batchInstall.NativeBatchRejectsAmbiguousLoadersAndSkipsPluginsAfterDeclineOrRemoval),
 			(nameof(batchInstall.ReverseDownloadedChainInstallsPrerequisitesBeforeAllDependents), batchInstall.ReverseDownloadedChainInstallsPrerequisitesBeforeAllDependents),
 			(nameof(batchInstall.CyclesAndTheirDependentsAreBlockedWithoutBlockingUnrelatedArchives), batchInstall.CyclesAndTheirDependentsAreBlockedWithoutBlockingUnrelatedArchives),
 			(nameof(batchInstall.MissingAndUnselectedPrerequisitesBlockTheirWholeChain), batchInstall.MissingAndUnselectedPrerequisitesBlockTheirWholeChain),

@@ -12,13 +12,17 @@ public sealed record NxmBatchInstallPlan(
 
 public static class NxmBatchInstallPlanner
 {
-	public static NxmBatchInstallPlan Build(IReadOnlyList<NxmInstallCandidate> candidates, IEnumerable<DivinityModData> installedMods)
+	public static NxmBatchInstallPlan Build(IReadOnlyList<NxmInstallCandidate> candidates, IEnumerable<DivinityModData> installedMods, bool nativeLoaderPresent = false)
 	{
 		var installed = installedMods.Where(mod => mod != null && !mod.IsVisualDivider).ToArray();
 		var blocked = new Dictionary<NxmDownloadItem, string>();
 		var prerequisites = candidates.ToDictionary(candidate => candidate.Download, _ => new HashSet<NxmDownloadItem>());
 		var modules = candidates.SelectMany(candidate => candidate.Modules.Select(mod => (Candidate: candidate, Mod: mod))).ToArray();
 		var providers = modules.Where(entry => Uuid(entry.Mod.UUID) != null).ToLookup(entry => Uuid(entry.Mod.UUID));
+		var native = candidates.Where(candidate => NativeModCatalog.Find(candidate.Download.ModId) != null).ToArray();
+		foreach (var duplicates in native.GroupBy(candidate => candidate.Download.ModId).Where(group => group.Count() > 1))
+			foreach (var candidate in duplicates)
+				blocked[candidate.Download] = "Multiple archives for the same supported native mod are selected. Select only the intended version.";
 		foreach (var group in providers.Where(group => group.Count() > 1))
 			foreach (var entry in group)
 				blocked[entry.Candidate.Download] = $"Multiple selected packages provide UUID {group.Key}. Select one version or variant, then retry.";
@@ -30,6 +34,18 @@ public static class NxmBatchInstallPlanner
 
 		foreach (var candidate in candidates)
 		{
+			var definition = NativeModCatalog.Find(candidate.Download.ModId);
+			if (definition != null)
+			{
+				if (definition.RequiresLoader)
+				{
+					var loaders = native.Where(entry => entry.Download.ModId == 944).ToArray();
+					if (loaders.Length == 1) prerequisites[candidate.Download].Add(loaders[0].Download);
+					else if (loaders.Length > 1 || !nativeLoaderPresent)
+						blocked[candidate.Download] = "Native Mod Loader is missing, changed, or ambiguous. Select one supported loader archive or install it through Native Mods tools first.";
+				}
+				continue;
+			}
 			if (candidate.Modules.Count == 0) blocked[candidate.Download] = "No readable packages were identified in this archive.";
 			foreach (var mod in candidate.Modules)
 			{
@@ -90,11 +106,11 @@ public static class NxmBatchInstallPlanner
 	}
 
 	public static string GetExecutionBlockReason(NxmBatchInstallPlan plan, NxmInstallCandidate candidate,
-		ISet<NxmDownloadItem> successful, IEnumerable<DivinityModData> installedMods)
+		ISet<NxmDownloadItem> successful, IEnumerable<DivinityModData> installedMods, bool nativeLoaderPresent = false)
 	{
 		if (plan.Prerequisites[candidate.Download].Any(prerequisite => !successful.Contains(prerequisite)))
 			return "A selected prerequisite was skipped or failed. Its dependent archives were not installed.";
-		return Build([candidate], installedMods).Blocked.GetValueOrDefault(candidate.Download);
+		return Build([candidate], installedMods, nativeLoaderPresent).Blocked.GetValueOrDefault(candidate.Download);
 	}
 
 	private static string Uuid(string value) => Guid.TryParse(value, out var uuid) && uuid != Guid.Empty ? uuid.ToString("D") : null;

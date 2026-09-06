@@ -45,7 +45,7 @@
 						FontWeight="{DynamicResource Redux.FontWeight.Title}"
 						Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="Review Nexus download" />
 					<TextBlock Margin="0,5,0,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}"
-						Text="Redux will download this file, inspect every PAK, and back up files it replaces."
+						Text="{Binding InstallationDescription}"
 						TextWrapping="Wrap" />
 				</StackPanel>
 				<Border Grid.Row="1" Margin="0,18,0,18" Padding="18,16"

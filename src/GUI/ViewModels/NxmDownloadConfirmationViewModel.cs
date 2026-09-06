@@ -10,10 +10,14 @@ public sealed class NxmDownloadConfirmationViewModel
 	public string Version { get; }
 	public string Size { get; }
 	public Uri NexusPage { get; }
+	public string InstallationDescription { get; }
 
 	public NxmDownloadConfirmationViewModel(NxmDownloadDescriptor descriptor)
 	{
 		ProjectName = descriptor.ProjectName;
+		InstallationDescription = AppServices.NativeModCatalog.Find(descriptor.ModId) != null
+			? "Redux will download this native-code archive. Installation requires a separate game-directory review; it will not enter the PAK load order."
+			: "Redux will download this file, inspect every PAK, and back up files it replaces.";
 		Author = String.IsNullOrWhiteSpace(descriptor.Author) ? "Unknown" : descriptor.Author;
 		FileName = descriptor.FileDisplayName;
 		Version = String.IsNullOrWhiteSpace(descriptor.Version) ? "Unspecified" : descriptor.Version;

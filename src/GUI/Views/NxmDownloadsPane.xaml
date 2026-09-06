@@ -205,7 +205,13 @@
 								<GridViewColumn.CellTemplate><DataTemplate><Grid Height="28" Margin="8,0" HorizontalAlignment="Stretch"><ProgressBar HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsIndeterminate="False" Maximum="1" Style="{StaticResource DownloadProgressBarStyle}" Value="{Binding Progress}" /><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource ReduxTextPrimaryBrush}" IsHitTestVisible="False" Text="{Binding Progress, StringFormat={}{0:P0}}" /></Grid></DataTemplate></GridViewColumn.CellTemplate>
 							</GridViewColumn>
 							<GridViewColumn Width="175" Header="Status" HeaderTemplate="{StaticResource GridViewTextblockHeaderTemplate}">
-								<GridViewColumn.CellTemplate><DataTemplate><TextBlock Margin="10,0,6,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}" Text="{Binding StatusText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FailureDetails}" /></DataTemplate></GridViewColumn.CellTemplate>
+								<GridViewColumn.CellTemplate><DataTemplate><StackPanel Margin="10,0,6,0">
+									<TextBlock Foreground="{DynamicResource ReduxTextSecondaryBrush}" Text="{Binding StatusText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FailureDetails}" />
+									<Border Margin="0,3,0,0" Padding="4,1" CornerRadius="3" BorderThickness="1" ToolTip="{Binding NativeRequirementStatus}">
+										<Border.Style><Style TargetType="Border"><Setter Property="BorderBrush" Value="{DynamicResource ReduxSuccessBrush}" /><Style.Triggers><DataTrigger Binding="{Binding NativeRequirementWarning}" Value="True"><Setter Property="BorderBrush" Value="{DynamicResource ReduxWarningBrush}" /></DataTrigger><DataTrigger Binding="{Binding NativeRequirementLabel}" Value=""><Setter Property="Visibility" Value="Collapsed" /></DataTrigger></Style.Triggers></Style></Border.Style>
+										<TextBlock FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextSecondaryBrush}" Text="{Binding NativeRequirementLabel}" TextTrimming="CharacterEllipsis" />
+									</Border>
+								</StackPanel></DataTemplate></GridViewColumn.CellTemplate>
 							</GridViewColumn>
 							<GridViewColumn x:Name="ActionsColumn" Header="Actions" HeaderTemplate="{StaticResource GridViewTextblockHeaderTemplate}">
 								<GridViewColumn.HeaderContainerStyle>

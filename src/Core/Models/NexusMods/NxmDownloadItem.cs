@@ -85,6 +85,9 @@ public sealed class NxmDownloadItem : ReactiveObject
 	[IgnoreDataMember] public NxmArchiveInspection Inspection { get; set; }
 	[IgnoreDataMember, Reactive] public double BytesPerSecond { get; set; }
 	[IgnoreDataMember, Reactive] public double Progress { get; set; }
+	[IgnoreDataMember, Reactive] public string NativeRequirementStatus { get; set; } = String.Empty;
+	[IgnoreDataMember, Reactive] public string NativeRequirementLabel { get; set; } = String.Empty;
+	[IgnoreDataMember, Reactive] public bool NativeRequirementWarning { get; set; }
 
 	public string Identity => $"{ModId}:{FileId}";
 	public string StatusText => State switch

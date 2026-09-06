@@ -92,6 +92,7 @@ public partial class MainViewControl : MainViewControlViewBase
 			[nameof(AppKeys.ToggleVersionGeneratorWindow)] = ("Redux.Icon.Build", true, null),
 			[nameof(AppKeys.InspectFileOverlaps)] = ("Redux.Icon.Blocks", true, null),
 			[nameof(AppKeys.DownloadScriptExtender)] = ("Redux.Icon.Download", true, null),
+			[nameof(AppKeys.ManageNativeMods)] = ("Redux.Icon.Build", true, null),
 			[nameof(AppKeys.SpeakActiveModOrder)] = ("Redux.Icon.VolumeHigh", true, null),
 			[nameof(AppKeys.StopSpeaking)] = ("Redux.Icon.StopCircle", true, "ReduxErrorBrush"),
 			[nameof(AppKeys.CheckForUpdates)] = ("Redux.Icon.Download", true, null),

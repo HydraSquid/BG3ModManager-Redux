@@ -118,7 +118,13 @@ internal sealed class TableStripingTests
 				new NxmDownloadItem { ProjectName = "Ready archive", FileDisplayName = "Ready.zip", State = NxmDownloadState.Downloaded },
 				new NxmDownloadItem { ProjectName = "Active transfer", FileDisplayName = "Downloading.zip", State = NxmDownloadState.Downloading },
 				new NxmDownloadItem { ProjectName = "Paused transfer", FileDisplayName = "Paused.zip", State = NxmDownloadState.Paused },
-				new NxmDownloadItem { ProjectName = "Installed package", FileDisplayName = "Installed.zip", State = NxmDownloadState.Installed }
+				new NxmDownloadItem { ProjectName = "Installed package", FileDisplayName = "Installed.zip", State = NxmDownloadState.Installed },
+				new NxmDownloadItem { ModId = 781, ProjectName = "WASD Character Movement", FileDisplayName = "WASD.zip", State = NxmDownloadState.Downloaded,
+					NativeRequirementLabel = "Loader missing / blocked", NativeRequirementStatus = "Requires Native Mod Loader: not installed", NativeRequirementWarning = true },
+				new NxmDownloadItem { ModId = 945, ProjectName = "Native Camera Tweaks", FileDisplayName = "Camera.zip", State = NxmDownloadState.Downloaded,
+					NativeRequirementLabel = "Loader unverified", NativeRequirementStatus = "Requires Native Mod Loader: external installation, unverified", NativeRequirementWarning = true },
+				new NxmDownloadItem { ModId = 944, ProjectName = "Native Mod Loader", FileDisplayName = "Loader.zip", State = NxmDownloadState.Installed,
+					NativeRequirementLabel = "Loader verified", NativeRequirementStatus = "Native Mod Loader: verified Redux installation", NativeRequirementWarning = false }
 			};
 			var downloads = new NxmDownloadsPane { DataContext = new { NxmDownloads = downloadItems } };
 			host.Child = downloads;
@@ -231,6 +237,19 @@ internal sealed class TableStripingTests
 			if (downloadsRight > panes.ActualWidth + 0.5) throw new InvalidOperationException("Downloads overflows the actual view after window resizing.");
 			RegressionAssert.True(((ColumnDefinition)panes.FindName("ActiveModsColumn")).ActualWidth >= 180);
 			RegressionAssert.True(((ColumnDefinition)panes.FindName("InactiveModsColumn")).ActualWidth >= 180);
+
+			var nativeWindow = new NativeModsWindow(window, null!, 781) { ShowActivated = false, Left = -15000, Top = -15000, WindowStartupLocation = WindowStartupLocation.Manual };
+			try
+			{
+				nativeWindow.Show();
+				Layout((FrameworkElement)nativeWindow.Content, 760);
+				Capture((FrameworkElement)nativeWindow.Content, "native-mods-wide");
+				Layout((FrameworkElement)nativeWindow.Content, 560);
+				Capture((FrameworkElement)nativeWindow.Content, "native-mods-compact");
+				RegressionAssert.True(((TextBlock)nativeWindow.FindName("GameVersionText")).Text.Contains("Hotfix 34"));
+				RegressionAssert.True(((TextBlock)nativeWindow.FindName("TargetFilesText")).Text.Contains("BG3WASD.dll"));
+			}
+			finally { nativeWindow.Close(); }
 
 			var requirements = new[]
 			{

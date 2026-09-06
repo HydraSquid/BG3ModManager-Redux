@@ -1,0 +1,49 @@
+<adonisUI:AdonisWindow x:Class="DivinityModManager.Views.NativeModsWindow"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:adonisUI="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
+	xmlns:controls="clr-namespace:DivinityModManager.Controls"
+	xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+	Title="Native Mod Loader and Plugins" Width="760" Height="580" MinWidth="560" MinHeight="440"
+	ShowInTaskbar="False" WindowStartupLocation="CenterOwner" ResizeMode="CanResize"
+	FontFamily="{DynamicResource Redux.FontFamily.UI}" FontSize="{DynamicResource Redux.FontSize.12}"
+	Template="{DynamicResource ReduxWindowTemplate}" Background="{DynamicResource ReduxWindowBrush}">
+	<shell:WindowChrome.WindowChrome><shell:WindowChrome CaptionHeight="0" CornerRadius="0" GlassFrameThickness="0" ResizeBorderThickness="6" UseAeroCaptionButtons="False" /></shell:WindowChrome.WindowChrome>
+	<Window.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries><ResourceDictionary Source="../Themes/MainResourceDictionary.xaml" /></ResourceDictionary.MergedDictionaries></ResourceDictionary></Window.Resources>
+	<Grid>
+		<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+		<controls:ReduxWindowTitleBar IconData="{DynamicResource Redux.Icon.Build}" />
+		<Border Grid.Row="1" Padding="22,18" Background="{DynamicResource ReduxAppBackgroundBrush}">
+			<Grid>
+				<Grid.RowDefinitions><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+				<ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+					<StackPanel>
+						<TextBlock Text="Native game components" FontSize="{DynamicResource Redux.FontSize.20}" FontWeight="SemiBold" Foreground="{DynamicResource ReduxTextPrimaryBrush}" />
+						<TextBlock Margin="0,8,0,16" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextSecondaryBrush}"
+							Text="Explicit support for these three projects only. Their DLLs execute inside the game and are not part of the PAK load order. Keep the game closed during installation or restore." />
+						<ComboBox x:Name="Projects" DisplayMemberPath="Name" SelectionChanged="Projects_SelectionChanged" AutomationProperties.Name="Supported native mod" />
+						<Border Margin="0,16,0,0" Padding="16" Style="{StaticResource ReduxDialogSummaryCardStyle}">
+							<StackPanel>
+								<TextBlock Text="Native Mod Loader status" FontWeight="SemiBold" Foreground="{DynamicResource ReduxTextPrimaryBrush}" />
+								<TextBlock x:Name="LoaderStatusText" Margin="0,7,0,0" TextWrapping="Wrap" Foreground="{DynamicResource ReduxWarningBrush}" />
+								<TextBlock x:Name="GameVersionText" Margin="0,10,0,0" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextSecondaryBrush}" />
+								<TextBlock x:Name="GameDirectoryText" Margin="0,10,0,0" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextSecondaryBrush}" />
+								<TextBlock x:Name="TargetFilesText" Margin="0,10,0,0" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextSecondaryBrush}" />
+							</StackPanel>
+						</Border>
+						<TextBlock Margin="0,14,0,0" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextSecondaryBrush}"
+							Text="Install from the author's ZIP, or download through Nexus and click Install in Downloads. Every native install gets its own file-change review. Unknown replacement DLLs are not overwritten; existing plugin TOML settings are preserved." />
+						<TextBlock x:Name="ResultText" Margin="0,12,0,12" TextWrapping="Wrap" Foreground="{DynamicResource ReduxWarningBrush}" />
+					</StackPanel>
+				</ScrollViewer>
+				<WrapPanel x:Name="Actions" Grid.Row="1" Margin="0,16,0,0">
+					<Button Margin="0,0,8,8" Style="{StaticResource ReduxPrimaryActionButtonStyle}" Click="Install_Click"><StackPanel Orientation="Horizontal"><controls:ReduxIcon StrokeData="{DynamicResource Redux.Icon.Package}" Margin="0,0,6,0" /><TextBlock Text="Install from ZIP..." /></StackPanel></Button>
+					<Button Margin="0,0,8,8" Style="{StaticResource ReduxSecondaryActionButtonStyle}" Click="Restore_Click"><StackPanel Orientation="Horizontal"><controls:ReduxIcon StrokeData="{DynamicResource Redux.Icon.RefreshStroke}" Margin="0,0,6,0" /><TextBlock Text="Restore previous files..." /></StackPanel></Button>
+					<Button x:Name="NexusButton" Margin="0,0,8,8" Style="{StaticResource ReduxSecondaryActionButtonStyle}" Click="Nexus_Click" Content="Nexus page" />
+					<Button Margin="0,0,8,8" Style="{StaticResource ReduxSecondaryActionButtonStyle}" Click="Refresh_Click" Content="Refresh status" />
+					<Button Margin="0,0,8,8" Style="{StaticResource ReduxSecondaryActionButtonStyle}" Click="RecoveryFolder_Click" Content="Recovery folder" />
+				</WrapPanel>
+			</Grid>
+		</Border>
+	</Grid>
+</adonisUI:AdonisWindow>

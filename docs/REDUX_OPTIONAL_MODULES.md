@@ -81,17 +81,23 @@ the copy-only fallback, and source actions remain hidden when online mod informa
 
 ### Experimental load-order guidance
 
-Load-order guidance is an experimental, opt-in Mod Diagnostics rule family—not an automatic sorting
-system. **Include experimental load-order guidance** is disabled by default and does not run unless
-Mod Diagnostics is enabled.
+Load-order guidance is an experimental, opt-in Mod Diagnostics rule family. **Include experimental
+load-order guidance** is disabled by default and does not run unless Mod Diagnostics is enabled.
 
 These rules report when an active package's explicitly declared dependency is positioned later in
 the numbered order and when active declared dependency metadata forms a cycle that no linear order
-can satisfy. They do not infer category, author, framework, patch, or compatibility ordering and do
-not move mods. Inactive packages and always-loaded override packages are excluded because neither
+can satisfy. They do not infer category, author, framework, patch, or compatibility ordering.
+Inactive packages and always-loaded override packages are excluded because neither
 has a meaningful position in the normal `modsettings.lsx` order. The rules remain registered
 separately from the default checks so the experimental family can be omitted without changing the
 rest of Mod Diagnostics.
+
+When guidance is enabled, **Organize Active Load Order** can create a user-reviewed preview from
+those exact relationships and Redux's bundled offline ordering knowledge. The preview can preserve
+current separators, create named suggested separators, or remove separators. Nothing changes until
+the user applies the preview; applying it creates one undoable, unsaved action and never exports to
+the game automatically. Placement recommendations can be ignored individually and restored later.
+The organizer action and its status indicator are absent when load-order guidance is disabled.
 
 All enabled findings share one toolbar status, compact top-menu indicator, grouped finding popup,
 selected-mod presentation, and severity language. The unified interface does not remove the

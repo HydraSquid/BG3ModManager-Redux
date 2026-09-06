@@ -103,6 +103,11 @@ public sealed class ReduxLoadOrderAdvisorKnowledge
 		return !String.IsNullOrWhiteSpace(groupName) && _groupPositions.TryGetValue(groupName.Trim(), out position);
 	}
 
+	public string GetGroupName(string uuid) =>
+		TryGetEntry(uuid, out var entry) && !String.IsNullOrWhiteSpace(entry.Group)
+			? entry.Group.Trim()
+			: null;
+
 	/// <summary>
 	/// Resolves a declared requirement to an installed package using exact UUIDs,
 	/// curated substitutes, then exact normalized aliases. Approximate matching is

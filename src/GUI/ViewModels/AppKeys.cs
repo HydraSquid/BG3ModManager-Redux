@@ -55,6 +55,13 @@ public class AppKeys : ReactiveObject
 	public Hotkey CompareLoadOrders { get; private set; } = new Hotkey(Key.None);
 
 	[MenuSettings(
+		"Tools",
+		"Organize Active Load Order...",
+		false,
+		"Preview advisor-guided ordering while preserving, replacing, or removing separators.")]
+	public Hotkey OrganizeLoadOrder { get; private set; } = new Hotkey(Key.None);
+
+	[MenuSettings(
 		"File",
 		"Load Order History...",
 		true,
@@ -102,10 +109,12 @@ public class AppKeys : ReactiveObject
 	[MenuSettings("File", "Refresh Mod Updates")]
 	public Hotkey RefreshModUpdates { get; private set; } = new Hotkey(Key.None);
 
-	[MenuSettings("Edit", "Undo Load Order Change")]
+	[MenuSettings("Edit", "Undo Last Action", false,
+		"Undo the last activation, deactivation, reorder, separator, or advisor organization change.")]
 	public Hotkey UndoLoadOrderChange { get; private set; } = new Hotkey(Key.Z, ModifierKeys.Control);
 
-	[MenuSettings("Edit", "Redo Load Order Change", true)]
+	[MenuSettings("Edit", "Redo Last Action", true,
+		"Redo the last activation, deactivation, reorder, separator, or advisor organization change.")]
 	public Hotkey RedoLoadOrderChange { get; private set; } = new Hotkey(Key.Y, ModifierKeys.Control);
 
 	[MenuSettings("Edit", "Move Selected Mods to Other List", true)]

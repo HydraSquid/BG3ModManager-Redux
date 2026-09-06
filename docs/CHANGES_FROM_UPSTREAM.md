@@ -54,12 +54,17 @@ Redux adds a persistent organization layer that upstream does not provide:
 - explicit reset and fallback behavior for removed colors, icons, fonts, or categories.
 
 Redux also adds named visual separators to the active load order. Separators support colors,
-descriptions, icons, persistent collapse state, and durable section membership. They are strictly
+descriptions, icons, persistent collapse state, and durable separator membership. They are strictly
 presentation data: they are never written to `modsettings.lsx` or treated as mods. Expanded
 separator drags move only the marker. Collapsed separators move with their sealed contents as one
 group, remain closed after the move, and do not absorb unrelated rows at their destination. Rows
-placed next to a closed separator remain visible until the separator is expanded and its section
+placed next to a closed separator remain visible until the separator is expanded and its separator
 boundaries are recalculated.
+
+The opt-in Load Order Advisor can preview conservative organization using exact dependency and
+offline ordering knowledge. A user can preserve existing separators, create suggested separators,
+or remove separators before applying the preview as one undoable, unsaved action. Recommendations
+can be ignored individually and restored later; Redux never applies or exports a preview silently.
 
 ## Load-order workflow and portable data
 
@@ -67,6 +72,7 @@ Redux extends the inherited load-order workflow with:
 
 - an explicit working-order state that changes only the selected saved order when the user presses
   Save, with a close warning while changes remain unsaved;
+- bounded Undo/Redo history for reversible active-list, separator, and organizer actions;
 - named saved-order creation, renaming, deletion, and direct access to the order folder;
 - portable Redux Modlists containing a saved order, optional Redux presentation data, and public
   source references;

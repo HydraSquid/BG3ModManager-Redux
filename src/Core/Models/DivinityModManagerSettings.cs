@@ -323,6 +323,7 @@ public class DivinityModManagerSettings : ReactiveObject
 	[DefaultValue(false)]
 	[SettingsEntry("Include Load Order Advisor", "Check whether mods load before their required dependencies. It never reorders mods automatically.")]
 	[DataMember, Reactive] public bool EnableLoadOrderAdvisor { get; set; }
+	[DataMember, Reactive] public List<string> IgnoredLoadOrderAdvisorFindingKeys { get; set; } = new();
 
 	[DefaultValue(false)]
 	[SettingsEntry("Mod Developer Mode", "This enables features for mod developers, such as being able to copy a mod's UUID in context menus, and additional Script Extender options", HideFromUI = true)]
@@ -468,6 +469,10 @@ public class DivinityModManagerSettings : ReactiveObject
 			? new Dictionary<string, string>(ModListVisualDividers, StringComparer.OrdinalIgnoreCase)
 			: new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		VisualModListDividers ??= new List<ModListVisualDividerData>();
+		IgnoredLoadOrderAdvisorFindingKeys = (IgnoredLoadOrderAdvisorFindingKeys ?? [])
+			.Where(key => !String.IsNullOrWhiteSpace(key))
+			.Distinct(StringComparer.OrdinalIgnoreCase)
+			.ToList();
 		foreach (var legacyAssignment in ModCategoryOverrides.Where(entry => !String.IsNullOrWhiteSpace(entry.Value)))
 		{
 			if (!ModCategoryAssignments.ContainsKey(legacyAssignment.Key))

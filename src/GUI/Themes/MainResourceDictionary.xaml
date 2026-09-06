@@ -1495,6 +1495,45 @@
 			</Setter.Value>
 		</Setter>
 	</Style>
+	<Style TargetType="{x:Type PasswordBox}">
+		<Setter Property="Background" Value="{DynamicResource ReduxSurfaceMutedBrush}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource ReduxBorderStrongBrush}" />
+		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" />
+		<Setter Property="CaretBrush" Value="{DynamicResource ReduxAccentBrush}" />
+		<Setter Property="SelectionBrush" Value="{DynamicResource ReduxAccentSoftBrush}" />
+		<Setter Property="MinHeight" Value="30" />
+		<Setter Property="Padding" Value="8,3" />
+		<Setter Property="VerticalContentAlignment" Value="Center" />
+		<Setter Property="FocusVisualStyle" Value="{x:Null}" />
+		<Setter Property="adonisExtensions:CornerRadiusExtension.CornerRadius" Value="{DynamicResource Redux.CornerRadius.Control}" />
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="{x:Type PasswordBox}">
+					<Border x:Name="FieldChrome"
+						Background="{TemplateBinding Background}"
+						BorderBrush="{TemplateBinding BorderBrush}"
+						BorderThickness="{TemplateBinding BorderThickness}"
+						CornerRadius="{TemplateBinding adonisExtensions:CornerRadiusExtension.CornerRadius}">
+						<ScrollViewer x:Name="PART_ContentHost"
+							VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+							Focusable="False"
+							HorizontalScrollBarVisibility="Hidden"
+							VerticalScrollBarVisibility="Hidden" />
+					</Border>
+					<ControlTemplate.Triggers>
+						<Trigger Property="IsMouseOver" Value="True">
+							<Setter TargetName="FieldChrome" Property="BorderBrush" Value="{DynamicResource ReduxAccentHoverBrush}" />
+						</Trigger>
+						<Trigger Property="IsKeyboardFocused" Value="True">
+							<Setter TargetName="FieldChrome" Property="BorderBrush" Value="{DynamicResource ReduxAccentBrush}" />
+						</Trigger>
+						<Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.55" /></Trigger>
+					</ControlTemplate.Triggers>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
 	<!--  Bridge legacy AdonisUI controls into the Redux semantic palette.  -->
 	<SolidColorBrush x:Key="{x:Static adonisUI:Brushes.ForegroundBrush}" Color="{DynamicResource ReduxTextPrimaryColor}" />
 	<SolidColorBrush x:Key="{x:Static adonisUI:Brushes.DisabledForegroundBrush}" Color="{DynamicResource ReduxTextMutedColor}" />

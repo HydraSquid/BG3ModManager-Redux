@@ -40,6 +40,7 @@ internal static class Program
 		var fileSafety = new FileSafetyTests();
 		var loadOrderWorkflow = new LoadOrderWorkflowTests();
 		var undoRedoHistory = new UndoRedoHistoryTests();
+		var loadOrderOrganizer = new LoadOrderAdvisorOrganizerTests();
 		var tests = new (string Name, Action Run)[]
 		{
 			(nameof(source.ReviewedModuleUuidResolvesItsProject), source.ReviewedModuleUuidResolvesItsProject),
@@ -235,7 +236,15 @@ internal static class Program
 			(nameof(loadOrderWorkflow.RenameRequiresConfirmationBeforeReplacingAnotherSavedOrder), loadOrderWorkflow.RenameRequiresConfirmationBeforeReplacingAnotherSavedOrder),
 			(nameof(undoRedoHistory.UndoAndRedoRestoreTheExpectedState), undoRedoHistory.UndoAndRedoRestoreTheExpectedState),
 			(nameof(undoRedoHistory.ANewEditClearsTheRedoBranch), undoRedoHistory.ANewEditClearsTheRedoBranch),
-			(nameof(undoRedoHistory.HistoryDropsItsOldestEntryAtCapacity), undoRedoHistory.HistoryDropsItsOldestEntryAtCapacity)
+			(nameof(undoRedoHistory.HistoryDropsItsOldestEntryAtCapacity), undoRedoHistory.HistoryDropsItsOldestEntryAtCapacity),
+			(nameof(loadOrderOrganizer.PreserveSeparatorsSortsInsideButNeverAcrossUserBoundaries), loadOrderOrganizer.PreserveSeparatorsSortsInsideButNeverAcrossUserBoundaries),
+			(nameof(loadOrderOrganizer.PreserveSeparatorsReportsRelationshipsItCannotSafelyApply), loadOrderOrganizer.PreserveSeparatorsReportsRelationshipsItCannotSafelyApply),
+			(nameof(loadOrderOrganizer.PreserveSeparatorsAcceptsRelationshipsAlreadySatisfiedAcrossSeparators), loadOrderOrganizer.PreserveSeparatorsAcceptsRelationshipsAlreadySatisfiedAcrossSeparators),
+			(nameof(loadOrderOrganizer.SuggestedSeparatorsUseOnlyNonemptyOfflineGroups), loadOrderOrganizer.SuggestedSeparatorsUseOnlyNonemptyOfflineGroups),
+			(nameof(loadOrderOrganizer.RemoveSeparatorsGloballySortsWithoutReturningMarkers), loadOrderOrganizer.RemoveSeparatorsGloballySortsWithoutReturningMarkers),
+			(nameof(loadOrderOrganizer.UnknownModsRetainTheirRelativeOrder), loadOrderOrganizer.UnknownModsRetainTheirRelativeOrder),
+			(nameof(loadOrderOrganizer.PreserveSeparatorsDoesNotAdoptAVisibleRowBelowAClosedSeparator), loadOrderOrganizer.PreserveSeparatorsDoesNotAdoptAVisibleRowBelowAClosedSeparator),
+			(nameof(loadOrderOrganizer.IgnoringOneRelationshipDoesNotSuppressOtherAdvisorKnowledge), loadOrderOrganizer.IgnoringOneRelationshipDoesNotSuppressOtherAdvisorKnowledge)
 		};
 
 		var failures = 0;

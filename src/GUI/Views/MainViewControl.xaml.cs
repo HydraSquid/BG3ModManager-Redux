@@ -62,6 +62,7 @@ public partial class MainViewControl : MainViewControlViewBase
 			[nameof(AppKeys.SaveNewOrder)] = ("Redux.Icon.Duplicate", true, null),
 			[nameof(AppKeys.NewOrder)] = ("Redux.Icon.DocumentText", true, null),
 			[nameof(AppKeys.CompareLoadOrders)] = ("Redux.Icon.SwapHorizontalStroke", true, null),
+			[nameof(AppKeys.OrganizeLoadOrder)] = ("Redux.Icon.ReorderStroke", true, null),
 			[nameof(AppKeys.RestorePoints)] = ("Redux.Icon.ScrollText", true, null),
 			[nameof(AppKeys.ImportOrderFromSave)] = ("Redux.Icon.FolderOpen", true, null),
 			[nameof(AppKeys.ImportOrderFromSaveAsNew)] = ("Redux.Icon.AddCircle", true, null),
@@ -280,6 +281,17 @@ public partial class MainViewControl : MainViewControlViewBase
 			if (!String.IsNullOrWhiteSpace(menuSettings.Tooltip))
 			{
 				newEntry.ToolTip = menuSettings.Tooltip;
+			}
+			if (prop.Name == nameof(AppKeys.OrganizeLoadOrder))
+			{
+				BindingOperations.SetBinding(
+					newEntry,
+					MenuItem.VisibilityProperty,
+					new Binding("Modules.LoadOrderGuidanceEnabled")
+					{
+						Source = ViewModel,
+						Converter = new BoolToVisibilityConverter()
+					});
 			}
 			if (!String.IsNullOrWhiteSpace(menuSettings.Style))
 			{
@@ -1446,6 +1458,7 @@ public partial class MainViewControl : MainViewControlViewBase
 					: "Save changes to the selected load order";
 			});
 		this.BindCommand(ViewModel, vm => vm.Keys.SaveNewOrder.Command, view => view.SaveAsOrderButton);
+		this.BindCommand(ViewModel, vm => vm.Keys.OrganizeLoadOrder.Command, view => view.OrganizeLoadOrderButton);
 		this.BindCommand(ViewModel, vm => vm.Keys.UndoLoadOrderChange.Command, view => view.UndoLoadOrderButton);
 		this.BindCommand(ViewModel, vm => vm.Keys.RedoLoadOrderChange.Command, view => view.RedoLoadOrderButton);
 		this.BindCommand(ViewModel, vm => vm.Keys.ExportOrderToGame.Command, view => view.ExportToModSettingsButton);

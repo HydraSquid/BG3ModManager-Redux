@@ -1338,6 +1338,26 @@
 										ToolTip="Delete the selected load order">
 										<controls:ReduxIcon Foreground="{DynamicResource ReduxErrorBrush}" StrokeData="{StaticResource Redux.Icon.Trash}" />
 									</Button>
+									<Button x:Name="OrganizeLoadOrderButton"
+										AutomationProperties.Name="Organize active load order"
+										ToolTip="{Binding LoadOrderAdvisorStatusText}"
+										Visibility="{Binding Modules.LoadOrderGuidanceEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
+										<Button.Style>
+											<Style BasedOn="{StaticResource {x:Type Button}}" TargetType="{x:Type Button}">
+												<Setter Property="Foreground" Value="{DynamicResource ReduxIconBrush}" />
+												<Style.Triggers>
+													<DataTrigger Binding="{Binding HasLoadOrderAdvisorReview}" Value="True">
+														<Setter Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" />
+													</DataTrigger>
+													<DataTrigger Binding="{Binding HasLoadOrderAdvisorErrors}" Value="True">
+														<Setter Property="Foreground" Value="{DynamicResource ReduxErrorBrush}" />
+													</DataTrigger>
+												</Style.Triggers>
+											</Style>
+										</Button.Style>
+										<controls:ReduxIcon Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+											StrokeData="{StaticResource Redux.Icon.ReorderStroke}" />
+									</Button>
 									<Button x:Name="OrderActionsButton"
 										AutomationProperties.Name="More load order actions"
 										Click="OrderActionsButton_Click"
@@ -1375,16 +1395,6 @@
 											</MenuItem>
 										</ContextMenu>
 										</Button.ContextMenu>
-									</Button>
-									<Button x:Name="UndoLoadOrderButton"
-										AutomationProperties.Name="Undo load order change"
-										ToolTip="Undo Load Order Change (Ctrl+Z)">
-										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Undo}" />
-									</Button>
-									<Button x:Name="RedoLoadOrderButton"
-										AutomationProperties.Name="Redo load order change"
-										ToolTip="Redo Load Order Change (Ctrl+Y)">
-										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Redo}" />
 									</Button>
 									<Button x:Name="ExportToModSettingsButton"
 										Style="{StaticResource ToolbarWorkflowButtonStyle}"
@@ -1424,6 +1434,16 @@
 										</Button.ContextMenu>
 									</Button>
 									<Rectangle Width="1" Height="20" />
+									<Button x:Name="UndoLoadOrderButton"
+										AutomationProperties.Name="Undo last action"
+										ToolTip="Undo Last Action (Ctrl+Z)">
+										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Undo}" />
+									</Button>
+									<Button x:Name="RedoLoadOrderButton"
+										AutomationProperties.Name="Redo last action"
+										ToolTip="Redo Last Action (Ctrl+Y)">
+										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Redo}" />
+									</Button>
 									<Button x:Name="RefreshButton" ToolTip="Refresh Mods">
 										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.RefreshStroke}" />
 									</Button>

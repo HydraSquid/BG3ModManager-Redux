@@ -5,7 +5,7 @@ BG3 Mod Manager Redux is a Windows mod manager built on
 original manager's package and load-order foundation while adding a refreshed interface and more
 ways to organize, review, and share mod setups.
 
-**Current build:** `0.1.0-alpha.11`
+**Current build:** `0.1.0-alpha.12`
 
 [Nexus Mods](https://www.nexusmods.com/baldursgate3/mods/23799) | [Report an issue](https://github.com/circleainn/BG3ModManager-Redux/issues) | [Changes from upstream](docs/CHANGES_FROM_UPSTREAM.md)
 
@@ -18,7 +18,7 @@ ways to organize, review, and share mod setups.
 - **A redesigned interface** with Redux Dark, Redux Light, Parchment, custom themes, scalable text,
   imported fonts, shared window styling, and optional reduced motion and background effects.
 - **Categories and separators** with custom names, descriptions, colors, icons, filtering,
-  collapsible sections, and multiple categories per mod.
+  collapsible separators, and multiple categories per mod.
 - **Mod details in one place** through hover cards and a resizable drawer for descriptions,
   requirements, files, changelogs, linked pages, and personal notes.
 - **Online mod information** from Nexus Mods and mod.io, with manual page linking and a reviewed
@@ -39,10 +39,12 @@ ways to organize, review, and share mod setups.
   Quick Access menu (`Ctrl+Q`) with searchable actions and familiar alternate terms.
 - Working changes remain separate from the selected saved order until **Save** is pressed. Redux
   warns before closing with unsaved load-order changes.
+- Undo or redo reversible working-order actions—including activation, deactivation, repositioning,
+  separator changes, and applied organizer previews—with `Ctrl+Z` and `Ctrl+Y`.
 - Assign categories to one mod or a selection, then click category pills to filter both lists.
 - Add separators that remember their placement and collapsed state. Closed separators keep their
   existing contents sealed and move with those mods as one group; newly positioned mods remain
-  visible until the section is expanded.
+  visible until the separator is expanded.
 - Add notes to mods and optionally include them in a Redux Modlist.
 - Compare saved orders or load a recent restore point without changing game files until export.
 - Inspect shared internal PAK paths with **Tools > Active File Overlaps**. Overlaps are reported as
@@ -67,8 +69,11 @@ them automatically.
 The optional Load Order Advisor is experimental and disabled by default. It checks dependency
 placement and cycles using installed package metadata plus exact offline records. It also recognizes
 reviewed dependency aliases, substitutes, intentional late-loading dependencies, and explicit
-mod-author load-after guidance. Category patterns remain advisory data; Redux does not silently
-reorder the load order or treat statistical placement as a hard requirement.
+mod-author load-after guidance. **Organize Active Load Order** can turn those facts into a preview
+that preserves your separators, creates suggested separators, or removes separators. Applying a preview
+is one undoable, unsaved edit; the resulting separator names, membership, and load-order ranges are
+shown before applying. Individual placement recommendations can be ignored and restored later.
+Redux never silently reorders or exports the load order.
 
 ## Redux Modlists
 

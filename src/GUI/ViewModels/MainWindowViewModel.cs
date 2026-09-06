@@ -204,6 +204,9 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	[Reactive] public bool HasActiveDiagnosticAttention { get; set; }
 	[Reactive] public bool HasActiveDiagnosticErrors { get; set; }
 	[Reactive] public string ActiveDiagnosticSummaryText { get; set; } = String.Empty;
+	[Reactive] public bool HasLoadOrderAdvisorReview { get; set; }
+	[Reactive] public bool HasLoadOrderAdvisorErrors { get; set; }
+	[Reactive] public string LoadOrderAdvisorStatusText { get; set; } = "No load-order review is currently recommended.";
 	public ObservableCollectionExtended<DivinityModData> DisplayActiveMods { get; } = new();
 	public ObservableCollectionExtended<DivinityModData> DisplayInactiveMods { get; } = new();
 	private bool _updatingVisualModLists;
@@ -3820,6 +3823,76 @@ Directory the zip will be extracted to:
 		dialog.ShowDialog();
 	}
 
+	private void OpenLoadOrderAdvisorOrganizer()
+	{
+		var dialog = new ReduxLoadOrderAdvisorOrganizerWindow(Window, this);
+		dialog.ShowDialog();
+	}
+
+	public bool ApplyLoadOrderAdvisorPlan(LoadOrderAdvisorPlan plan)
+	{
+		if (plan == null || plan.OrderedMods.Count != ActiveMods.Count
+			|| !plan.OrderedMods.ToHashSet(ReferenceEqualityComparer.Instance)
+				.SetEquals(ActiveMods)) return false;
+
+		EnsureVisualDividerBaseline();
+		EnsureVisualDividerMemberships();
+		var historyBefore = CaptureLoadOrderEditState();
+		_updatingVisualModLists = true;
+		try
+		{
+			ObservableCollectionSynchronizer.Synchronize(
+				ActiveMods,
+				plan.OrderedMods,
+				ReferenceEquals);
+			for (var index = 0; index < ActiveMods.Count; index++)
+			{
+				ActiveMods[index].Index = index;
+				ActiveMods[index].IsActive = true;
+			}
+
+			var inactiveDividers = CloneVisualDividers(
+				Settings.VisualModListDividers?.Where(divider => !divider.IsActiveList));
+			inactiveDividers.AddRange(CloneVisualDividers(plan.Dividers));
+			Settings.VisualModListDividers = inactiveDividers;
+		}
+		finally
+		{
+			_updatingVisualModLists = false;
+		}
+
+		RefreshVisualDividers();
+		HasUnsavedLoadOrderChanges = true;
+		ScheduleModHealthRefresh();
+		ScheduleExportStatusRefresh(immediate: true);
+		QueueSave();
+		RecordLoadOrderEdit(historyBefore);
+		ShowAlert("Applied the advisor preview. Save the load order when you are ready.", AlertType.Success, 10);
+		return true;
+	}
+
+	public bool IgnoreLoadOrderAdvisorFinding(string ignoreKey)
+	{
+		if (String.IsNullOrWhiteSpace(ignoreKey)) return false;
+		Settings.IgnoredLoadOrderAdvisorFindingKeys ??= new List<string>();
+		if (Settings.IgnoredLoadOrderAdvisorFindingKeys.Contains(ignoreKey, StringComparer.OrdinalIgnoreCase))
+			return false;
+		Settings.IgnoredLoadOrderAdvisorFindingKeys.Add(ignoreKey);
+		QueueSave();
+		ScheduleModHealthRefresh();
+		return true;
+	}
+
+	public int RestoreIgnoredLoadOrderAdvisorFindings()
+	{
+		var count = Settings.IgnoredLoadOrderAdvisorFindingKeys?.Count ?? 0;
+		if (count == 0) return 0;
+		Settings.IgnoredLoadOrderAdvisorFindingKeys.Clear();
+		QueueSave();
+		ScheduleModHealthRefresh();
+		return count;
+	}
+
 	private bool IsInternalComparisonEntry(string uuid)
 	{
 		if (String.IsNullOrWhiteSpace(uuid)
@@ -7382,7 +7455,7 @@ Directory the zip will be extracted to:
 		if (!_loadOrderEditHistory.TryUndo(out var state)) return;
 		RestoreLoadOrderEditState(state);
 		UpdateLoadOrderHistoryAvailability();
-		ShowAlert("Undid the last load-order change.", AlertType.Info, 5);
+		ShowAlert("Undid the last action.", AlertType.Info, 5);
 	}
 
 	private void RedoLoadOrderChange()
@@ -7391,7 +7464,7 @@ Directory the zip will be extracted to:
 		if (!_loadOrderEditHistory.TryRedo(out var state)) return;
 		RestoreLoadOrderEditState(state);
 		UpdateLoadOrderHistoryAvailability();
-		ShowAlert("Redid the last load-order change.", AlertType.Info, 5);
+		ShowAlert("Redid the last action.", AlertType.Info, 5);
 	}
 
 	private static bool TryApplyTextEditingCommand(RoutedCommand command)
@@ -8929,8 +9002,19 @@ Directory the zip will be extracted to:
 			_modHealthAnalysisLock.Release();
 		}
 		if (refreshVersion != _modHealthRefreshVersion || !Modules.ModDiagnosticsEnabled) return;
+		var ignoredAdvisorFindings = (Settings.IgnoredLoadOrderAdvisorFindingKeys ?? [])
+			.Where(key => !String.IsNullOrWhiteSpace(key))
+			.ToHashSet(StringComparer.OrdinalIgnoreCase);
 		var snapshots = computedSnapshots.Select(snapshot =>
 		{
+			if (ignoredAdvisorFindings.Count > 0)
+			{
+				var visibleFindings = snapshot.Findings.Where(finding =>
+					!LoadOrderAdvisorFindingIdentity.IsAdvisorFinding(finding)
+					|| !ignoredAdvisorFindings.Contains(
+						LoadOrderAdvisorFindingIdentity.Create(snapshot.Mod.UUID, finding)));
+				snapshot = new ModHealthSnapshot(snapshot.Mod, visibleFindings);
+			}
 			var current = snapshot.Mod.HealthSnapshot;
 			if (current?.HasEquivalentFindings(snapshot) == true) return current;
 			snapshot.Mod.HealthSnapshot = snapshot;
@@ -8978,6 +9062,19 @@ Directory the zip will be extracted to:
 		var activeHealthWarningCount = activeAttentionSnapshots.Sum(snapshot => snapshot.HealthWarningCount);
 		var activeAdvisorCount = activeAttentionSnapshots.Sum(snapshot => snapshot.LoadOrderAdviceCount);
 		HasActiveDiagnosticErrors = activeHealthErrorCount > 0;
+		var activeAdvisorFindings = snapshots
+			.Where(snapshot => activeModUuids.Contains(snapshot.Mod.UUID))
+			.SelectMany(snapshot => snapshot.LoadOrderAdviceFindings)
+			.ToArray();
+		HasLoadOrderAdvisorErrors = activeAdvisorFindings.Any(finding =>
+			finding.Code == ModHealthFindingCode.DependencyCycle);
+		HasLoadOrderAdvisorReview = activeAdvisorFindings.Any(finding =>
+			finding.Code != ModHealthFindingCode.DependencyCycle);
+		LoadOrderAdvisorStatusText = HasLoadOrderAdvisorErrors
+			? "Load-order conflict detected — review the active order."
+			: HasLoadOrderAdvisorReview
+				? "Load-order review recommended."
+				: "No load-order review is currently recommended.";
 		var activeAttentionSummaryParts = new List<string>();
 		if (activeHealthErrorCount > 0)
 			activeAttentionSummaryParts.Add($"{activeHealthErrorCount} error{(activeHealthErrorCount == 1 ? String.Empty : "s")}");
@@ -9026,6 +9123,9 @@ Directory the zip will be extracted to:
 		HasActiveDiagnosticAttention = false;
 		HasActiveDiagnosticErrors = false;
 		ActiveDiagnosticSummaryText = String.Empty;
+		HasLoadOrderAdvisorReview = false;
+		HasLoadOrderAdvisorErrors = false;
+		LoadOrderAdvisorStatusText = "No load-order review is currently recommended.";
 		_lastModHealthDiagnosticSignature = String.Empty;
 		_lastLoadOrderAdvisorDiagnosticSignature = null;
 	}
@@ -9347,6 +9447,11 @@ Directory the zip will be extracted to:
 			OpenLoadOrderComparison,
 			this.WhenAnyValue(x => x.ModOrderList.Count)
 				.CombineLatest(canOpenDialogWindow, (orderCount, canOpen) => orderCount >= 2 && canOpen));
+		Keys.OrganizeLoadOrder.AddAction(
+			OpenLoadOrderAdvisorOrganizer,
+			this.WhenAnyValue(x => x.ActiveMods.Count, x => x.Modules.LoadOrderGuidanceEnabled,
+				(count, enabled) => count > 0 && enabled)
+				.CombineLatest(canOpenDialogWindow, (canOrganize, canOpen) => canOrganize && canOpen));
 		Keys.ImportOrderFromSave.AddAction(ImportOrderFromSaveToCurrent, canOpenDialogWindow);
 		Keys.ImportOrderFromSaveAsNew.AddAction(ImportOrderFromSaveAsNew, canOpenDialogWindow);
 		Keys.ImportOrderFromFile.AddAction(ImportOrderFromFile, canOpenDialogWindow);

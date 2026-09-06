@@ -139,7 +139,9 @@ public partial class ReduxCommandPaletteWindow : AdonisUI.Controls.AdonisWindow
 			.Where(item =>
 				item.Hotkey?.HasActions == true
 				&& item.Settings != null
-				&& item.Property.Name != nameof(AppKeys.OpenCommandPalette))
+				&& item.Property.Name != nameof(AppKeys.OpenCommandPalette)
+				&& (item.Property.Name != nameof(AppKeys.OrganizeLoadOrder)
+					|| viewModel.Modules.LoadOrderGuidanceEnabled))
 			.Select(item =>
 			{
 				var command = (ICommand)item.Hotkey.Command;
@@ -251,6 +253,7 @@ public partial class ReduxCommandPaletteWindow : AdonisUI.Controls.AdonisWindow
 		nameof(AppKeys.SaveAs) => "save as copy order file",
 		nameof(AppKeys.NewOrder) => "new empty clean create order",
 		nameof(AppKeys.CompareLoadOrders) => "diff differences orders",
+		nameof(AppKeys.OrganizeLoadOrder) => "sort autosort advisor arrange separators sections preview",
 		nameof(AppKeys.RestorePoints) => "snapshots restore rollback history",
 		nameof(AppKeys.ImportOrderFromSave) => "game save load order",
 		nameof(AppKeys.ImportOrderFromSaveAsNew) => "game save new copy load order",

@@ -8,7 +8,7 @@ relabeling unrelated local packages.
 
 Source-association records are loaded and queried through `ReduxModDatabaseService`
 (`src/Core/AppServices/ReduxModDatabaseService.cs`). The optional Load Order Advisor lazily loads
-the separate ordering section during its existing background analysis pass. It remains read-only
+the separate ordering data during its existing background analysis pass. It remains read-only
 and never moves a package.
 
 ## Structure
@@ -42,8 +42,13 @@ and never moves a package.
 When enabled, the Load Order Advisor combines installed package declarations with the bundled
 records. It reports reversed dependency placement, exact dependency cycles, and explicit
 mod-author load-after relationships. Known patch-style dependencies that intentionally load after
-their dependants do not produce a false placement warning. Category evidence does not currently
-reorder the list or generate blanket warnings.
+their dependants do not produce a false placement warning. The user-invoked organizer can preview a
+stable ordering from these facts and the ordering groups. Its default mode sorts only within current
+separator membership, while the other modes can create nonempty suggested separators or remove active
+separators. Unknown mods retain their relative order, conflicts blocked by separator placement are reported, and
+applying a preview remains an undoable unsaved edit rather than an automatic export.
+Specific placement relationships can be ignored locally without disabling other advisor knowledge;
+the organizer provides a single action to restore ignored advice.
 
 ## Match order
 

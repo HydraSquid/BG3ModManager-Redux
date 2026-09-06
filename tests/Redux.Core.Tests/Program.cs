@@ -27,6 +27,7 @@ internal static class Program
 		var dependencies = new DependencyAssistanceTests();
 		var batchInstall = new NxmBatchInstallPlannerTests();
 		var nativeInstaller = new NativeModInstallerTests();
+		var nativeWorkflow = new NativeDownloadWorkflowTests();
 		var bundle = new ReduxBundleTests();
 		var contribution = new ContributionReportPrivacyTests();
 		var comparison = new LoadOrderComparisonTests();
@@ -57,6 +58,10 @@ internal static class Program
 		var loadOrderWorkflow = new LoadOrderWorkflowTests();
 		var tests = new (string Name, Action Run)[]
 		{
+			(nameof(nativeWorkflow.NativeGameBuildUsesTheFullProductVersion), nativeWorkflow.NativeGameBuildUsesTheFullProductVersion),
+			(nameof(nativeWorkflow.LoaderDownloadProvidesRatherThanRequiresAnExistingLoader), nativeWorkflow.LoaderDownloadProvidesRatherThanRequiresAnExistingLoader),
+			(nameof(nativeWorkflow.OnlyDependentNativePluginsWarnWhenTheLoaderIsMissing), nativeWorkflow.OnlyDependentNativePluginsWarnWhenTheLoaderIsMissing),
+			(nameof(nativeWorkflow.NativeBatchFailuresKeepTheirReasonWithoutExposingRawIoErrors), nativeWorkflow.NativeBatchFailuresKeepTheirReasonWithoutExposingRawIoErrors),
 			(nameof(nativeInstaller.CatalogContainsOnlyTheApprovedNativeProjects), nativeInstaller.CatalogContainsOnlyTheApprovedNativeProjects),
 			(nameof(nativeInstaller.AtomicReplacementRejectsSourceChangedSinceItsReviewedHash), nativeInstaller.AtomicReplacementRejectsSourceChangedSinceItsReviewedHash),
 			(nameof(nativeInstaller.ZipValidationRejectsOtherFormatsTraversalAndUnexpectedFilesWithoutChangingGameFiles), nativeInstaller.ZipValidationRejectsOtherFormatsTraversalAndUnexpectedFilesWithoutChangingGameFiles),

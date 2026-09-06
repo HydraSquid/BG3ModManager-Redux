@@ -24,12 +24,26 @@ public partial class MainWindowViewModel
 		try
 		{
 			var info = FileVersionInfo.GetVersionInfo(Environment.ExpandEnvironmentVariables(Settings.GameExecutablePath));
-			// BG3's build component exceeds a 16-bit Win32 version word. Use the full
-			// version string rather than truncating it through FilePrivatePart.
-			return System.Version.TryParse(info.FileVersion, out var version) ? version : null;
+			// BG3 stores the game build in ProductVersion; FileVersion may be 1.0.0.0,
+			// and the numeric Win32 version words do not represent the full build.
+			return ParseNativeGameVersion(info.ProductVersion);
 		}
 		catch { return null; }
 	}
+
+	public static System.Version ParseNativeGameVersion(string productVersion) =>
+		System.Version.TryParse(productVersion?.Trim(), out var version) ? version : null;
+
+	public static (string Label, string Description, bool Warning) GetNativeRequirementPresentation(NativeModDefinition definition, NativeLoaderStatus status)
+	{
+		if (!definition.RequiresLoader && !status.IsVerified)
+			return ("Installs Native Mod Loader", "This archive supplies Native Mod Loader; no existing loader is required. Install it directly from Downloads. Existing DLL conflicts are still checked.\n\n" + status.Description, false);
+		var prefix = definition.RequiresLoader ? "Requires Native Mod Loader: " : "Native Mod Loader: ";
+		return (status.IsVerified ? "Loader verified" : status.IsPresent ? "Loader unverified" : "Loader missing / blocked", prefix + status.Description, !status.IsVerified);
+	}
+
+	public static string DescribeNxmInspectionFailure(long projectId, Exception ex) => NativeModCatalog.Find(projectId) != null
+		? NativeInstallError(ex) : NexusDownloadedModValidationException.Describe(ex).Details;
 
 	public NativeLoaderStatus GetNativeLoaderStatus()
 	{
@@ -50,10 +64,10 @@ public partial class MainWindowViewModel
 		var status = GetNativeLoaderStatus();
 		foreach (var item in items)
 		{
-			var prefix = NativeModCatalog.Find(item.ModId).RequiresLoader ? "Requires Native Mod Loader: " : "Native Mod Loader: ";
-			item.NativeRequirementWarning = !status.IsVerified;
-			item.NativeRequirementLabel = status.IsVerified ? "Loader verified" : status.IsPresent ? "Loader unverified" : "Loader missing / blocked";
-			item.NativeRequirementStatus = prefix + status.Description;
+			var presentation = GetNativeRequirementPresentation(NativeModCatalog.Find(item.ModId), status);
+			item.NativeRequirementWarning = presentation.Warning;
+			item.NativeRequirementLabel = presentation.Label;
+			item.NativeRequirementStatus = presentation.Description;
 		}
 	}
 

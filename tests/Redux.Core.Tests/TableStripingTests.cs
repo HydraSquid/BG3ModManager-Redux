@@ -124,7 +124,9 @@ internal sealed class TableStripingTests
 				new NxmDownloadItem { ModId = 945, ProjectName = "Native Camera Tweaks", FileDisplayName = "Camera.zip", State = NxmDownloadState.Downloaded,
 					NativeRequirementLabel = "Loader unverified", NativeRequirementStatus = "Requires Native Mod Loader: external installation, unverified", NativeRequirementWarning = true },
 				new NxmDownloadItem { ModId = 944, ProjectName = "Native Mod Loader", FileDisplayName = "Loader.zip", State = NxmDownloadState.Installed,
-					NativeRequirementLabel = "Loader verified", NativeRequirementStatus = "Native Mod Loader: verified Redux installation", NativeRequirementWarning = false }
+					NativeRequirementLabel = "Loader verified", NativeRequirementStatus = "Native Mod Loader: verified Redux installation", NativeRequirementWarning = false },
+				new NxmDownloadItem { ModId = 944, ProjectName = "Native Mod Loader installer", FileDisplayName = "New loader.zip", State = NxmDownloadState.Downloaded,
+					NativeRequirementLabel = "Installs Native Mod Loader", NativeRequirementStatus = "No existing loader is required. Install directly from Downloads.", NativeRequirementWarning = false }
 			};
 			var downloads = new NxmDownloadsPane { DataContext = new { NxmDownloads = downloadItems } };
 			host.Child = downloads;

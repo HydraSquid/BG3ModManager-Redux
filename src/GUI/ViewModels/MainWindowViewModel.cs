@@ -920,7 +920,7 @@ public partial class MainWindowViewModel : BaseHistoryViewModel, IActivatableVie
 					ModDependencyAssistanceService.RememberInspection(item, NxmDownloadsDirectory, inspected);
 					candidates.Add(new(item, inspected));
 				}
-				catch (Exception ex) { blocked[item] = NexusDownloadedModValidationException.Describe(ex).Details; }
+				catch (Exception ex) { blocked[item] = DescribeNxmInspectionFailure(item.ModId, ex); }
 			}
 			var plan = NxmBatchInstallPlanner.Build(candidates, mods.Items.Concat(DivinityApp.IgnoredMods.Items),
 				candidates.Any(candidate => NativeModCatalog.Find(candidate.Download.ModId) != null) && GetNativeLoaderStatus().IsPresent);

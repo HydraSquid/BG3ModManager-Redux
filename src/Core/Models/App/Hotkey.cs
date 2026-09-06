@@ -27,6 +27,7 @@ public class Hotkey : ReactiveObject, IHotkey
 	public string ToolTip => _tooltip.Value;
 
 	[Reactive] public string DisplayBindingText { get; private set; }
+	public string MenuDisplayBindingText => Key == Key.None ? String.Empty : DisplayBindingText;
 
 	[DataMember]
 	[Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
@@ -104,6 +105,7 @@ public class Hotkey : ReactiveObject, IHotkey
 	public void UpdateDisplayBindingText()
 	{
 		DisplayBindingText = ToString();
+		this.RaisePropertyChanged(nameof(MenuDisplayBindingText));
 	}
 
 	public Hotkey(Key key = Key.None, ModifierKeys modifiers = ModifierKeys.None)

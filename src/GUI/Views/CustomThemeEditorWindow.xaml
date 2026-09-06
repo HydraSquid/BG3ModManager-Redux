@@ -416,10 +416,10 @@
 									</Grid>
 								</CheckBox>
 
-								<CheckBox x:Name="InterfaceIconsCheckBox" Grid.Column="2"
-									IsChecked="{Binding ShowCategoryIconsInPills}"
+								<CheckBox x:Name="HideIconsCheckBox" Grid.Column="2"
+									IsChecked="{Binding ShowCategoryIconsInPills, Converter={StaticResource InverseBooleanConverter}}"
 									Style="{StaticResource ReduxCheckBoxStyle}"
-									Unchecked="InterfaceIconsCheckBox_Unchecked">
+									Checked="HideIconsCheckBox_Checked">
 									<Grid Margin="4,0,12,0">
 										<Grid.ColumnDefinitions>
 											<ColumnDefinition Width="Auto" />
@@ -432,9 +432,9 @@
 											Foreground="{DynamicResource ReduxAccentBrush}"
 											StrokeData="{StaticResource Redux.Icon.ListStroke}" />
 										<StackPanel Grid.Column="1">
-											<TextBlock FontWeight="SemiBold" Text="Show icons" />
+											<TextBlock FontWeight="SemiBold" Text="Hide icons" />
 											<TextBlock Margin="0,3,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}"
-												Text="Show category, source, and status icons in lists, cards, and details."
+												Text="Remove decorative icons from lists, cards, details, and menus."
 												TextWrapping="Wrap" />
 										</StackPanel>
 									</Grid>
@@ -458,7 +458,7 @@
 										<StackPanel Grid.Column="1">
 											<TextBlock FontWeight="SemiBold" Text="Colored text" />
 											<TextBlock Margin="0,3,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}"
-												Text="Use contextual category and source colors for text throughout lists, cards, and details."
+												Text="Use contextual colors for text and menu icons throughout Redux."
 												TextWrapping="Wrap" />
 										</StackPanel>
 									</Grid>
@@ -467,7 +467,7 @@
 								<CheckBox Grid.Row="1" Grid.Column="2"
 									Margin="0,10,0,0"
 									IsChecked="{Binding UseIconsOnly}"
-									IsEnabled="{Binding IsChecked, ElementName=InterfaceIconsCheckBox}"
+									IsEnabled="{Binding ShowCategoryIconsInPills}"
 									Style="{StaticResource ReduxCheckBoxStyle}">
 									<Grid Margin="4,0,12,0">
 										<Grid.ColumnDefinitions>

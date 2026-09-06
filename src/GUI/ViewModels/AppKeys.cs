@@ -161,7 +161,7 @@ public class AppKeys : ReactiveObject
 	[MenuSettings("Settings", "Show or Hide Toolbar")]
 	public Hotkey ToggleToolbar { get; private set; } = new Hotkey(Key.T, ModifierKeys.Control);
 
-	[MenuSettings("Settings", "Show or Hide Updates")]
+	[MenuSettings("Tools", "Show or Hide Mod Updates")]
 	public Hotkey ToggleUpdatesView { get; private set; } = new Hotkey();
 
 	[MenuSettings("Go", "Open Mods Folder")]

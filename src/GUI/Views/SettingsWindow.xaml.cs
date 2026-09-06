@@ -68,7 +68,7 @@ public partial class SettingsWindow : SettingsWindowBase
 	private bool _updatingCustomThemeSelection;
 	private bool _updatingTypographySelection;
 
-	private void InterfaceIconsCheckBox_Unchecked(object sender, RoutedEventArgs e)
+	private void HideIconsCheckBox_Checked(object sender, RoutedEventArgs e)
 	{
 		if (ViewModel?.Settings != null)
 		{

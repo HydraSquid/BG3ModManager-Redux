@@ -319,7 +319,7 @@
 
 			<Grid Margin="{TemplateBinding Padding}">
 				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="22" />
+					<ColumnDefinition x:Name="IconColumn" Width="22" />
 					<ColumnDefinition Width="*" MinWidth="130" />
 					<ColumnDefinition Width="Auto" />
 					<ColumnDefinition Width="16" />
@@ -426,6 +426,19 @@
 				<Setter TargetName="IconPresenter" Property="Visibility" Value="Collapsed" />
 				<Setter TargetName="CheckMarkPresenter" Property="Visibility" Value="Visible" />
 			</Trigger>
+			<DataTrigger Binding="{Binding Path=(dapp:DivinityApp.ShowInterfaceIcons)}" Value="False">
+				<!-- Keep the checkmark column available for checkable settings, but remove all
+				     decorative and platform icons from popup/context-menu rows. -->
+				<Setter TargetName="IconPresenter" Property="Visibility" Value="Collapsed" />
+				<Setter TargetName="IconColumn" Property="Width" Value="0" />
+			</DataTrigger>
+			<MultiDataTrigger>
+				<MultiDataTrigger.Conditions>
+					<Condition Binding="{Binding Path=(dapp:DivinityApp.ShowInterfaceIcons)}" Value="False" />
+					<Condition Binding="{Binding IsCheckable, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
+				</MultiDataTrigger.Conditions>
+				<Setter TargetName="IconColumn" Property="Width" Value="22" />
+			</MultiDataTrigger>
 			<Trigger Property="IsHighlighted" Value="True">
 				<Trigger.EnterActions>
 					<BeginStoryboard>
@@ -1833,6 +1846,7 @@
 	<SolidColorBrush x:Key="{x:Static adonisUI:Brushes.Layer4InteractionForegroundBrush}" Color="{DynamicResource ReduxTextPrimaryColor}" />
 	<conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
 	<conv:BoolToVisibilityConverterReversed x:Key="BoolToVisibilityConverterReversed" />
+	<conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
 	<conv:ModExistsConverter x:Key="ModExistsConverter" />
 	<conv:ModIsActiveConverter x:Key="ModIsActiveConverter" />
 	<conv:StringToUriConverter x:Key="StringToUriConverter" />

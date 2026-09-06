@@ -606,7 +606,7 @@
 							Visibility="{Binding Settings.HideToolbar, Converter={StaticResource BoolToVisibilityConverter}}">
 							<MenuItem Header="Setup">
 								<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Settings}" /></MenuItem.Icon>
-								<MenuItem Command="{Binding Keys.ImportMod.Command}" Header="Install Mod..." InputGestureText="{Binding Keys.ImportMod.DisplayBindingText}">
+								<MenuItem Command="{Binding Keys.ImportMod.Command}" Header="Install Mod..." InputGestureText="{Binding Keys.ImportMod.MenuDisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.AddCircle}" /></MenuItem.Icon>
 								</MenuItem>
 								<MenuItem x:Name="ToolbarProfileMenu"
@@ -649,23 +649,23 @@
 									</MenuItem.ItemContainerStyle>
 								</MenuItem>
 								<Separator />
-								<MenuItem Command="{Binding Keys.Save.Command}" Header="Save Current Order" InputGestureText="{Binding Keys.Save.DisplayBindingText}">
+								<MenuItem Command="{Binding Keys.Save.Command}" Header="Save Current Order" InputGestureText="{Binding Keys.Save.MenuDisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Save}" /></MenuItem.Icon>
 								</MenuItem>
-								<MenuItem Command="{Binding Keys.SaveAs.Command}" Header="Save Load Order to File..." InputGestureText="{Binding Keys.SaveAs.DisplayBindingText}">
+								<MenuItem Command="{Binding Keys.SaveAs.Command}" Header="Save Load Order to File..." InputGestureText="{Binding Keys.SaveAs.MenuDisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Duplicate}" /></MenuItem.Icon>
 								</MenuItem>
-								<MenuItem Command="{Binding Keys.NewOrder.Command}" Header="Create Blank Load Order" InputGestureText="{Binding Keys.NewOrder.DisplayBindingText}">
+								<MenuItem Command="{Binding Keys.NewOrder.Command}" Header="Create Blank Load Order" InputGestureText="{Binding Keys.NewOrder.MenuDisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.DocumentText}" /></MenuItem.Icon>
 								</MenuItem>
-								<MenuItem Command="{Binding Keys.RenameOrder.Command}" Header="Rename Load Order..." InputGestureText="{Binding Keys.RenameOrder.DisplayBindingText}">
+								<MenuItem Command="{Binding Keys.RenameOrder.Command}" Header="Rename Load Order..." InputGestureText="{Binding Keys.RenameOrder.MenuDisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Create}" /></MenuItem.Icon>
 								</MenuItem>
 								<Separator />
-								<MenuItem Command="{Binding Keys.ImportOrderFromFile.Command}" Header="Import Load Order from File..." InputGestureText="{Binding Keys.ImportOrderFromFile.DisplayBindingText}">
+								<MenuItem Command="{Binding Keys.ImportOrderFromFile.Command}" Header="Import Load Order from File..." InputGestureText="{Binding Keys.ImportOrderFromFile.MenuDisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" /></MenuItem.Icon>
 								</MenuItem>
-								<MenuItem Command="{Binding Keys.ImportReduxLoadOrder.Command}" Header="Import Redux Modlist..." InputGestureText="{Binding Keys.ImportReduxLoadOrder.DisplayBindingText}">
+								<MenuItem Command="{Binding Keys.ImportReduxLoadOrder.Command}" Header="Import Redux Modlist..." InputGestureText="{Binding Keys.ImportReduxLoadOrder.MenuDisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Download}" /></MenuItem.Icon>
 								</MenuItem>
 								<Separator />
@@ -679,14 +679,14 @@
 							</MenuItem>
 							<MenuItem Header="Export">
 								<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.CloudUpload}" /></MenuItem.Icon>
-								<MenuItem Command="{Binding Keys.ExportOrderToGame.Command}" Header="Sync Load Order to Game" InputGestureText="{Binding Keys.ExportOrderToGame.DisplayBindingText}">
+								<MenuItem Command="{Binding Keys.ExportOrderToGame.Command}" Header="Sync Load Order to Game" InputGestureText="{Binding Keys.ExportOrderToGame.MenuDisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.CloudUpload}" /></MenuItem.Icon>
 								</MenuItem>
-								<MenuItem Command="{Binding Keys.ExportOrderToZip.Command}" Header="Back Up Active Mods to ZIP..." InputGestureText="{Binding Keys.ExportOrderToZip.DisplayBindingText}">
+								<MenuItem Command="{Binding Keys.ExportOrderToZip.Command}" Header="Back Up Active Mods to ZIP..." InputGestureText="{Binding Keys.ExportOrderToZip.MenuDisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Archive}" /></MenuItem.Icon>
 								</MenuItem>
 								<Separator />
-								<MenuItem Command="{Binding Keys.Refresh.Command}" Header="Refresh Mods" InputGestureText="{Binding Keys.Refresh.DisplayBindingText}">
+								<MenuItem Command="{Binding Keys.Refresh.Command}" Header="Refresh Mods" InputGestureText="{Binding Keys.Refresh.MenuDisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.RefreshStroke}" /></MenuItem.Icon>
 								</MenuItem>
 							</MenuItem>
@@ -705,31 +705,31 @@
 										</Style>
 									</MenuItem.ItemContainerStyle>
 								</MenuItem>
-								<MenuItem Command="{Binding Keys.LaunchGame.Command}" Header="Launch Game" InputGestureText="{Binding Keys.LaunchGame.DisplayBindingText}">
+								<MenuItem Command="{Binding Keys.LaunchGame.Command}" Header="Launch Game" InputGestureText="{Binding Keys.LaunchGame.MenuDisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.GameController}" /></MenuItem.Icon>
 								</MenuItem>
 							</MenuItem>
 							<Separator />
-							<MenuItem Command="{Binding Keys.ToggleToolbar.Command}" Header="Show Toolbar" InputGestureText="{Binding Keys.ToggleToolbar.DisplayBindingText}">
+							<MenuItem Command="{Binding Keys.ToggleToolbar.Command}" Header="Show Toolbar" InputGestureText="{Binding Keys.ToggleToolbar.MenuDisplayBindingText}">
 								<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Desktop}" /></MenuItem.Icon>
 							</MenuItem>
 						</MenuItem>
 						<MenuItem Header="Shortcuts">
 							<MenuItem Command="{Binding Keys.OpenCommandPalette.Command}"
 								Header="Quick Access..."
-								InputGestureText="{Binding Keys.OpenCommandPalette.DisplayBindingText}"
+								InputGestureText="{Binding Keys.OpenCommandPalette.MenuDisplayBindingText}"
 								ToolTip="Find an action, mod, profile, order, or category.">
 								<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Flash}" /></MenuItem.Icon>
 							</MenuItem>
 							<Separator />
 							<MenuItem Header="FOLDERS" IsEnabled="False" />
-							<MenuItem Command="{Binding Keys.OpenModsFolder.Command}" Header="Mods Folder" InputGestureText="{Binding Keys.OpenModsFolder.DisplayBindingText}">
+							<MenuItem Command="{Binding Keys.OpenModsFolder.Command}" Header="Mods Folder" InputGestureText="{Binding Keys.OpenModsFolder.MenuDisplayBindingText}">
 								<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" /></MenuItem.Icon>
 							</MenuItem>
-							<MenuItem Command="{Binding Keys.OpenGameFolder.Command}" Header="Game Folder" InputGestureText="{Binding Keys.OpenGameFolder.DisplayBindingText}">
+							<MenuItem Command="{Binding Keys.OpenGameFolder.Command}" Header="Game Folder" InputGestureText="{Binding Keys.OpenGameFolder.MenuDisplayBindingText}">
 								<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.GameController}" /></MenuItem.Icon>
 							</MenuItem>
-							<MenuItem Command="{Binding Keys.OpenLogsFolder.Command}" Header="Extender Logs Folder" InputGestureText="{Binding Keys.OpenLogsFolder.DisplayBindingText}">
+							<MenuItem Command="{Binding Keys.OpenLogsFolder.Command}" Header="Extender Logs Folder" InputGestureText="{Binding Keys.OpenLogsFolder.MenuDisplayBindingText}">
 								<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.DocumentText}" /></MenuItem.Icon>
 							</MenuItem>
 							<MenuItem Header="Save Games Folder" Click="OpenSaveGamesFolder_Click">
@@ -1397,7 +1397,7 @@
 												<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.CloudUpload}" /></MenuItem.Icon>
 											</MenuItem>
 											<Separator />
-											<MenuItem Command="{Binding Keys.ExportOrderToZip.Command}" Header="Back Up Active Mods to ZIP..." InputGestureText="{Binding Keys.ExportOrderToZip.DisplayBindingText}">
+											<MenuItem Command="{Binding Keys.ExportOrderToZip.Command}" Header="Back Up Active Mods to ZIP..." InputGestureText="{Binding Keys.ExportOrderToZip.MenuDisplayBindingText}">
 												<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Archive}" /></MenuItem.Icon>
 											</MenuItem>
 											<Separator />

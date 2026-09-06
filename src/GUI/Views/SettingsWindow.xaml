@@ -687,16 +687,16 @@
 							</StackPanel>
 						</Grid>
 									</CheckBox>
-					<CheckBox x:Name="InterfaceIconsCheckBox" Margin="0,0,10,0"
-										IsChecked="{Binding Settings.ShowCategoryIconsInPills, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-										Unchecked="InterfaceIconsCheckBox_Unchecked">
+					<CheckBox x:Name="HideIconsCheckBox" Margin="0,0,10,0"
+										IsChecked="{Binding Settings.ShowCategoryIconsInPills, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource InverseBooleanConverter}}"
+										Checked="HideIconsCheckBox_Checked">
 						<Grid Margin="6,0,0,0">
 							<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
 							<controls:ReduxIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"
 								Foreground="{DynamicResource ReduxAccentBrush}" StrokeData="{StaticResource Redux.Icon.ListStroke}" />
 							<StackPanel Grid.Column="1">
-								<TextBlock FontWeight="SemiBold" Text="Show icons" />
-								<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Show category, source, and status icons in lists, cards, and details." TextWrapping="Wrap" />
+								<TextBlock FontWeight="SemiBold" Text="Hide icons" />
+								<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Remove decorative icons from lists, cards, details, and menus." TextWrapping="Wrap" />
 							</StackPanel>
 						</Grid>
 									</CheckBox>
@@ -708,13 +708,13 @@
 								Foreground="{DynamicResource ReduxAccentBrush}" StrokeData="{StaticResource Redux.Icon.Pricetag}" />
 							<StackPanel Grid.Column="1">
 								<TextBlock FontWeight="SemiBold" Text="Colored text" />
-								<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Use contextual category and source colors for text throughout lists, cards, and details." TextWrapping="Wrap" />
+								<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Use contextual colors for text and menu icons throughout Redux." TextWrapping="Wrap" />
 							</StackPanel>
 						</Grid>
 									</CheckBox>
 					<CheckBox Margin="0,8,10,0"
 										IsChecked="{Binding Settings.UseIconsOnly, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-										IsEnabled="{Binding IsChecked, ElementName=InterfaceIconsCheckBox}">
+										IsEnabled="{Binding Settings.ShowCategoryIconsInPills}">
 						<Grid Margin="6,0,0,0">
 							<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
 							<controls:ReduxIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"

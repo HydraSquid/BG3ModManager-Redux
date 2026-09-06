@@ -2,6 +2,7 @@ using DivinityModManager.Controls;
 
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Media;
 
 namespace DivinityModManager.Util;
@@ -34,7 +35,8 @@ public static class ReduxMenuItemExtension
 
 		DivinityApp.StaticPropertyChanged += (_, args) =>
 		{
-			if (args.PropertyName == nameof(DivinityApp.UseCategoryColorsForInteractions))
+			if (args.PropertyName == nameof(DivinityApp.UseCategoryColorsForInteractions)
+				|| args.PropertyName == nameof(DivinityApp.UseCategoryColorsForText))
 			{
 				RefreshSemanticHoverItems();
 			}
@@ -158,11 +160,31 @@ public static class ReduxMenuItemExtension
 		{
 			menuItem.SetCurrentValue(HoverBrushProperty, GetSemanticHoverBrush(menuItem));
 			menuItem.SetCurrentValue(RailBrushProperty, GetSemanticRailBrush(menuItem));
-			return;
+		}
+		else
+		{
+			menuItem.ClearValue(HoverBrushProperty);
+			menuItem.ClearValue(RailBrushProperty);
 		}
 
-		menuItem.ClearValue(HoverBrushProperty);
-		menuItem.ClearValue(RailBrushProperty);
+		if (menuItem.Icon is ReduxIcon icon)
+		{
+			if (GetUseSemanticHover(menuItem) && DivinityApp.UseCategoryColorsForText)
+			{
+				BindingOperations.SetBinding(
+					icon,
+					Control.ForegroundProperty,
+					new Binding
+					{
+						Path = new PropertyPath(SemanticRailBrushProperty),
+						Source = menuItem
+					});
+			}
+			else
+			{
+				BindingOperations.ClearBinding(icon, Control.ForegroundProperty);
+			}
+		}
 	}
 
 	public static void ApplySemanticHoverToMenu(ItemsControl menu)
@@ -185,6 +207,8 @@ public static class ReduxMenuItemExtension
 			ApplySemanticHover(menuItem);
 			return;
 		}
+		// Parent rows describe a group; semantic colour belongs to the command rows inside it.
+		if (menuItem.HasItems) return;
 
 		var header = menuItem.Header switch
 		{
@@ -214,10 +238,6 @@ public static class ReduxMenuItemExtension
 		{
 			hoverBrushResource = "ReduxSuccessPillBackground";
 			railBrushResource = "ReduxSuccessBrush";
-			if (menuItem.Icon is ReduxIcon positiveIcon)
-			{
-				positiveIcon.SetResourceReference(Control.ForegroundProperty, "ReduxSuccessBrush");
-			}
 		}
 		if (hoverBrushResource == null || railBrushResource == null)
 		{
@@ -246,13 +266,11 @@ public static class ReduxMenuItemExtension
 	{
 		if (String.IsNullOrWhiteSpace(header)) return false;
 
-		// Reserve green for the small number of actions that commit the user's current
-		// work to its primary destination. Treating every Save/Export variant as positive
-		// made file-management menus visually noisy and weakened the meaning of the colour.
-		return header.Equals("Save Current Order", StringComparison.OrdinalIgnoreCase)
-			|| header.Equals("Export Load Order to Game", StringComparison.OrdinalIgnoreCase)
-			|| header.Equals("Export to Game", StringComparison.OrdinalIgnoreCase)
-			|| header.Equals("Sync Load Order to Game", StringComparison.OrdinalIgnoreCase)
+		return (header.StartsWith("Save ", StringComparison.OrdinalIgnoreCase)
+				&& !header.EndsWith(" Folder", StringComparison.OrdinalIgnoreCase))
+			|| header.StartsWith("Export ", StringComparison.OrdinalIgnoreCase)
+			|| header.StartsWith("Sync ", StringComparison.OrdinalIgnoreCase)
+			|| header.StartsWith("Back Up ", StringComparison.OrdinalIgnoreCase)
 			|| header.StartsWith("Generate Redux Database Contribution", StringComparison.OrdinalIgnoreCase);
 	}
 }

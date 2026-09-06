@@ -61,6 +61,7 @@ public partial class MainViewControl : MainViewControlViewBase
 			[nameof(AppKeys.SaveAs)] = ("Redux.Icon.Duplicate", true, null),
 			[nameof(AppKeys.SaveNewOrder)] = ("Redux.Icon.Duplicate", true, null),
 			[nameof(AppKeys.NewOrder)] = ("Redux.Icon.DocumentText", true, null),
+			[nameof(AppKeys.RenameOrder)] = ("Redux.Icon.Create", true, null),
 			[nameof(AppKeys.CompareLoadOrders)] = ("Redux.Icon.SwapHorizontalStroke", true, null),
 			[nameof(AppKeys.OrganizeLoadOrder)] = ("Redux.Icon.ReorderStroke", true, null),
 			[nameof(AppKeys.RestorePoints)] = ("Redux.Icon.ScrollText", true, null),
@@ -74,6 +75,7 @@ public partial class MainViewControl : MainViewControlViewBase
 			[nameof(AppKeys.ExportReduxLoadOrder)] = ("Redux.Icon.CloudUpload", true, null),
 			[nameof(AppKeys.ExportOrderToZip)] = ("Redux.Icon.Archive", true, null),
 			[nameof(AppKeys.Refresh)] = ("Redux.Icon.RefreshStroke", true, null),
+			[nameof(AppKeys.RefreshModUpdates)] = ("Redux.Icon.RefreshStroke", true, null),
 			[nameof(AppKeys.UndoLoadOrderChange)] = ("Redux.Icon.Undo", true, null),
 			[nameof(AppKeys.RedoLoadOrderChange)] = ("Redux.Icon.Redo", true, null),
 			[nameof(AppKeys.Confirm)] = ("Redux.Icon.SwapHorizontalStroke", true, null),
@@ -88,6 +90,7 @@ public partial class MainViewControl : MainViewControlViewBase
 			[nameof(AppKeys.OpenKeybindings)] = ("Redux.Icon.Key", true, null),
 			[nameof(AppKeys.ToggleViewTheme)] = ("Redux.Icon.ColorPalette", true, null),
 			[nameof(AppKeys.ToggleToolbar)] = ("Redux.Icon.Desktop", true, null),
+			[nameof(AppKeys.ToggleUpdatesView)] = ("Redux.Icon.RefreshStroke", true, null),
 			[nameof(AppKeys.ExtractSelectedMods)] = ("Redux.Icon.Archive", true, null),
 			[nameof(AppKeys.ExtractSelectedAdventure)] = ("Redux.Icon.Archive", true, null),
 			[nameof(AppKeys.ToggleVersionGeneratorWindow)] = ("Redux.Icon.Build", true, null),
@@ -267,7 +270,7 @@ public partial class MainViewControl : MainViewControlViewBase
 			BindingOperations.SetBinding(
 				newEntry,
 				MenuItem.InputGestureTextProperty,
-				new Binding { Path = new PropertyPath(nameof(Hotkey.DisplayBindingText)), Source = key });
+				new Binding { Path = new PropertyPath(nameof(Hotkey.MenuDisplayBindingText)), Source = key });
 			if (MenuIconMap.TryGetValue(prop.Name, out var iconSpec))
 			{
 				newEntry.Icon = ReduxIcon.FromResource(iconSpec.Resource, iconSpec.UseStroke, iconSpec.Foreground);
@@ -290,6 +293,19 @@ public partial class MainViewControl : MainViewControlViewBase
 					new Binding("Modules.LoadOrderGuidanceEnabled")
 					{
 						Source = ViewModel,
+						Converter = new BoolToVisibilityConverter()
+					});
+			}
+			else if (prop.Name == nameof(AppKeys.ToggleUpdatesView))
+			{
+				// Do not show a disabled, context-free updates action when there are no
+				// results. It remains available while its drawer is open so it can be closed.
+				BindingOperations.SetBinding(
+					newEntry,
+					MenuItem.VisibilityProperty,
+					new Binding(nameof(Hotkey.CanExecuteCommand))
+					{
+						Source = key,
 						Converter = new BoolToVisibilityConverter()
 					});
 			}

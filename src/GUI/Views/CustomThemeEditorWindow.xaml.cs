@@ -93,7 +93,7 @@ public partial class CustomThemeEditorWindow : AdonisWindow
 		TypographyFontComboBox_SelectionChanged(TypographyFontComboBox, null);
 	}
 
-	private void InterfaceIconsCheckBox_Unchecked(object sender, RoutedEventArgs e)
+	private void HideIconsCheckBox_Checked(object sender, RoutedEventArgs e)
 	{
 		Theme.UseIconsOnly = false;
 	}

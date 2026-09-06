@@ -17,7 +17,6 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 	private readonly ReduxThemeType _initialTheme;
 	private readonly ReduxCustomTheme _initialCustomTheme;
 	private readonly bool _initialLocalOnlyMode;
-	private readonly bool _initialDiagnosticsEnabled;
 	private readonly bool _initialGuidanceEnabled;
 	private readonly bool _initialReduceMotion;
 	private readonly bool _initialDisableBackgroundEffects;
@@ -35,8 +34,7 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 			? ReduxThemeType.ReduxLight
 			: ReduxThemeType.Parchment;
 	public bool SelectedLocalOnlyMode => SourceIntegrationsCheckBox.IsChecked != true;
-	public bool SelectedDiagnosticsEnabled => DiagnosticsCheckBox.IsChecked == true;
-	public bool SelectedGuidanceEnabled => SelectedDiagnosticsEnabled && GuidanceCheckBox.IsChecked == true;
+	public bool SelectedGuidanceEnabled => GuidanceCheckBox.IsChecked == true;
 	public bool SelectedReduceMotion => ReduceMotionCheckBox.IsChecked == true;
 	public bool SelectedDisableBackgroundEffects => DisableBackgroundEffectsCheckBox.IsChecked == true;
 	public string SelectedNexusApiKey => NexusApiKeyTextBox.Password?.Trim() ?? String.Empty;
@@ -52,7 +50,6 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 		_initialTheme = settings?.ColorTheme ?? ReduxThemeType.ReduxDark;
 		_initialCustomTheme = ReduxThemeService.GetActiveTheme(settings);
 		_initialLocalOnlyMode = settings?.LocalOnlyMode == true;
-		_initialDiagnosticsEnabled = settings?.EnableModHealth == true;
 		_initialGuidanceEnabled = settings?.EnableLoadOrderAdvisor == true;
 		_initialReduceMotion = settings?.ReduceMotion == true;
 		_initialDisableBackgroundEffects = settings?.DisableBackgroundEffects == true;
@@ -70,8 +67,7 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 			ReduxLightThemeCard.IsChecked = settings.ColorTheme == ReduxThemeType.ReduxLight;
 			ParchmentThemeCard.IsChecked = settings.ColorTheme == ReduxThemeType.Parchment;
 			SourceIntegrationsCheckBox.IsChecked = !settings.LocalOnlyMode;
-			DiagnosticsCheckBox.IsChecked = settings.EnableModHealth;
-			GuidanceCheckBox.IsChecked = settings.EnableModHealth && settings.EnableLoadOrderAdvisor;
+			GuidanceCheckBox.IsChecked = settings.EnableLoadOrderAdvisor;
 			NexusApiKeyTextBox.Password = settings.NexusModsAPIKey ?? String.Empty;
 			ModioApiKeyTextBox.Password = settings.ModioAPIKey ?? String.Empty;
 			ReduceMotionCheckBox.IsChecked = settings.ReduceMotion;
@@ -80,12 +76,11 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 		else
 		{
 			ReduxDarkThemeCard.IsChecked = true;
-			SourceIntegrationsCheckBox.IsChecked = true;
-			DiagnosticsCheckBox.IsChecked = true;
+			SourceIntegrationsCheckBox.IsChecked = false;
+			GuidanceCheckBox.IsChecked = false;
 		}
 
 		_isInitializing = false;
-		UpdateDiagnosticsState();
 		UpdateSourceIntegrationState();
 	}
 
@@ -199,15 +194,6 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 		panel.BeginAnimation(UIElement.OpacityProperty, opacityAnimation, HandoffBehavior.SnapshotAndReplace);
 	}
 
-	private void DiagnosticsCheckBox_Changed(object sender, RoutedEventArgs e)
-	{
-		if (!_isInitializing)
-		{
-			UpdateDiagnosticsState();
-			ApplyModulePreview();
-		}
-	}
-
 	private void GuidanceCheckBox_Changed(object sender, RoutedEventArgs e)
 	{
 		if (!_isInitializing)
@@ -224,23 +210,8 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 		}
 
 		_settings.LocalOnlyMode = SelectedLocalOnlyMode;
-		_settings.EnableModHealth = SelectedDiagnosticsEnabled;
 		_settings.EnableLoadOrderAdvisor = SelectedGuidanceEnabled;
 		_modulePreviewActive = true;
-	}
-
-	private void UpdateDiagnosticsState()
-	{
-		if (GuidanceCheckBox == null || DiagnosticsCheckBox == null)
-		{
-			return;
-		}
-
-		GuidanceCheckBox.IsEnabled = DiagnosticsCheckBox.IsChecked == true;
-		if (!GuidanceCheckBox.IsEnabled)
-		{
-			GuidanceCheckBox.IsChecked = false;
-		}
 	}
 
 	private void AccessibilityCheckBox_Changed(object sender, RoutedEventArgs e)
@@ -285,7 +256,6 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 		if (!ApplyChanges && _modulePreviewActive && _settings != null)
 		{
 			_settings.LocalOnlyMode = _initialLocalOnlyMode;
-			_settings.EnableModHealth = _initialDiagnosticsEnabled;
 			_settings.EnableLoadOrderAdvisor = _initialGuidanceEnabled;
 		}
 		if (!ApplyChanges && _accessibilityPreviewActive)

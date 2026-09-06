@@ -23,12 +23,11 @@ internal sealed class ReduxModuleStateTests
 		RegressionAssert.False(modules.LoadOrderGuidanceEnabled);
 	}
 
-	public void FirstRunOnboardingStartsWithEveryOptionalFeatureOff()
+	public void FirstRunOnboardingStartsWithIntegrationsAndGuidanceOff()
 	{
 		var settings = new DivinityModManagerSettings
 		{
 			LocalOnlyMode = false,
-			EnableModHealth = true,
 			EnableLoadOrderAdvisor = true,
 			HasSeenReduxWelcome = false
 		};
@@ -36,7 +35,7 @@ internal sealed class ReduxModuleStateTests
 		ReduxOnboardingPolicy.ApplyFirstRunDefaults(settings);
 
 		RegressionAssert.True(settings.LocalOnlyMode);
-		RegressionAssert.False(settings.EnableModHealth);
+		RegressionAssert.True(settings.EnableModHealth);
 		RegressionAssert.False(settings.EnableLoadOrderAdvisor);
 	}
 
@@ -45,7 +44,6 @@ internal sealed class ReduxModuleStateTests
 		var settings = new DivinityModManagerSettings
 		{
 			LocalOnlyMode = false,
-			EnableModHealth = true,
 			EnableLoadOrderAdvisor = true,
 			HasSeenReduxWelcome = true
 		};
@@ -61,7 +59,6 @@ internal sealed class ReduxModuleStateTests
 	{
 		var settings = new DivinityModManagerSettings
 		{
-			EnableModHealth = true,
 			EnableLoadOrderAdvisor = true
 		};
 		using var modules = new ReduxModuleState(settings);
@@ -229,32 +226,27 @@ internal sealed class ReduxModuleStateTests
 		RegressionAssert.Equal(expected.B, actual.B);
 	}
 
-	public void LoadOrderGuidanceRequiresDiagnosticsWithoutLosingItsPreference()
+	public void LoadOrderGuidanceFollowsItsOwnPreference()
 	{
 		var settings = new DivinityModManagerSettings
 		{
-			EnableModHealth = true,
 			EnableLoadOrderAdvisor = true
 		};
 		using var modules = new ReduxModuleState(settings);
 
-		settings.EnableModHealth = false;
-
-		RegressionAssert.False(modules.ModDiagnosticsEnabled);
-		RegressionAssert.False(modules.LoadOrderGuidanceEnabled);
-		RegressionAssert.True(settings.EnableLoadOrderAdvisor);
-
-		settings.EnableModHealth = true;
-
 		RegressionAssert.True(modules.ModDiagnosticsEnabled);
 		RegressionAssert.True(modules.LoadOrderGuidanceEnabled);
+
+		settings.EnableLoadOrderAdvisor = false;
+
+		RegressionAssert.True(modules.ModDiagnosticsEnabled);
+		RegressionAssert.False(modules.LoadOrderGuidanceEnabled);
 	}
 
 	public void DisposedModuleStateStopsTrackingSettings()
 	{
 		var settings = new DivinityModManagerSettings
 		{
-			EnableModHealth = true,
 			EnableLoadOrderAdvisor = false,
 			LocalOnlyMode = false
 		};
@@ -262,7 +254,6 @@ internal sealed class ReduxModuleStateTests
 
 		modules.Dispose();
 		settings.LocalOnlyMode = true;
-		settings.EnableModHealth = false;
 		settings.EnableLoadOrderAdvisor = true;
 
 		RegressionAssert.True(modules.SourceIntegrationsEnabled);

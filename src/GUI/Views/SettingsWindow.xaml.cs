@@ -106,9 +106,8 @@ public partial class SettingsWindow : SettingsWindowBase
 			nameof(DivinityModManagerSettings.ReduceMotion),
 			nameof(DivinityModManagerSettings.DisableBackgroundEffects)),
 		new("Optional features",
-			"Control source linking, read-only diagnostics, and experimental load-order guidance.",
+			"Control source linking and experimental load-order guidance. Core diagnostics remain active.",
 			nameof(DivinityModManagerSettings.LocalOnlyMode),
-			nameof(DivinityModManagerSettings.EnableModHealth),
 			nameof(DivinityModManagerSettings.DisableModioWarnings),
 			nameof(DivinityModManagerSettings.EnableLoadOrderAdvisor)),
 		new("Metadata services",
@@ -706,22 +705,6 @@ public partial class SettingsWindow : SettingsWindowBase
 					if (prop.Attribute.IsDebug)
 					{
 						cb.SetBinding(CheckBox.VisibilityProperty, debugModeBinding);
-					}
-					// These optional diagnostic details only apply while Mod Diagnostics is running.
-					if (prop.Property.Name == nameof(DivinityModManagerSettings.EnableLoadOrderAdvisor)
-						|| prop.Property.Name == nameof(DivinityModManagerSettings.DisableModioWarnings))
-					{
-						var modHealthEnabledBinding = new Binding(nameof(DivinityModManagerSettings.EnableModHealth))
-						{
-							Source = source,
-							Mode = BindingMode.OneWay
-						};
-						cb.SetBinding(CheckBox.IsEnabledProperty, modHealthEnabledBinding);
-						tb.SetBinding(TextBlock.IsEnabledProperty, new Binding(nameof(DivinityModManagerSettings.EnableModHealth))
-						{
-							Source = source,
-							Mode = BindingMode.OneWay
-						});
 					}
 					targetGrid.Children.Add(cb);
 					Grid.SetRow(cb, targetRow);

@@ -1,17 +1,19 @@
 # Optional features
 
 Redux preserves the inherited mod-manager core and layers newer features around it. Provider
-metadata and diagnostics must not become prerequisites for scanning packages, managing the active
-list, importing or exporting load orders, detecting game paths, using LSLib, or performing normal
-file operations.
+metadata and load-order guidance must not become prerequisites for scanning packages, managing the
+active list, importing or exporting load orders, detecting game paths, using LSLib, or performing
+normal file operations.
 
 At runtime, `ReduxModuleState` is the central reactive contract for optional-module availability.
-Provider services and source-related UI consume `SourceIntegrationsEnabled`; diagnostics consume
-`ModDiagnosticsEnabled` and `LoadOrderGuidanceEnabled`. Feature code should not reinterpret the
-underlying preference values independently.
+Provider services and source-related UI consume `SourceIntegrationsEnabled`. Built-in diagnostics
+remain available through `ModDiagnosticsEnabled`; experimental ordering rules and organizer UI
+consume `LoadOrderGuidanceEnabled`. Feature code should not reinterpret the underlying preference
+values independently.
 
-The first-run setup is also available from Help. Source linking, Mod Diagnostics, and experimental
-load-order guidance begin disabled so each optional feature is explicitly enabled by the user.
+The first-run setup is also available from Help. Source linking and experimental load-order guidance
+begin disabled so each optional feature is explicitly enabled by the user. Mod Diagnostics is a
+built-in Redux feature and has no enable/disable setting.
 Returning users keep their saved choices. Theme, motion, and background effects preview live and
 return to their previous values if the window is dismissed. API keys and settings are stored only
 after **Save & Continue**. Provider keys are masked and encrypted for the current Windows account;
@@ -40,7 +42,7 @@ The inherited **Refresh Mod Updates** operation also services Workshop and GitHu
 Disabling online mod information does not cancel the whole shared operation. Nexus Mods and mod.io
 stages that have not started are skipped; unrelated update sources continue normally.
 
-Disabling online information does not disable Mod Diagnostics. Its checks use locally parsed
+Disabling online information does not affect Mod Diagnostics. Its checks use locally parsed
 package information and remain useful offline. Source-specific warnings, such as the mod.io restore
 notice, disappear while online identities are hidden.
 
@@ -51,13 +53,10 @@ mixing its exported order with the in-game/mod.io manager.
 
 ## Mod Diagnostics
 
-Mod Diagnostics is the single user-facing diagnostic and guidance system. It evaluates facts
-Redux has already detected and never repairs, installs, removes, reorders, or rewrites anything.
-**Enable mod diagnostics** can be enabled independently from source linking.
-
-When disabled, Redux cancels pending analysis, clears computed snapshots, and removes diagnostic
-toolbar, row, drawer, hover-card, compact-menu, and debug indicators. Mod loading and core behavior
-continue normally.
+Mod Diagnostics is Redux's built-in user-facing diagnostic system. It evaluates facts Redux or the
+inherited package parser has already detected and never repairs, installs, removes, reorders, or
+rewrites anything. Its findings appear in the toolbar, mod rows, drawer, hover cards, compact menu,
+and relevant review windows.
 
 Checks implement `IModHealthRule` and receive an immutable `ModHealthAnalysisContext`. The
 `IModHealthAnalyzer` composes those rules into display snapshots. This keeps diagnostic rules
@@ -81,8 +80,9 @@ the copy-only fallback, and source actions remain hidden when online mod informa
 
 ### Experimental load-order guidance
 
-Load-order guidance is an experimental, opt-in Mod Diagnostics rule family. **Include experimental
-load-order guidance** is disabled by default and does not run unless Mod Diagnostics is enabled.
+Load-order guidance is an experimental, opt-in Mod Diagnostics rule family. **Enable Load Order
+Advisor** is disabled by default; enabling it adds ordering rules and the organizer without changing
+the built-in diagnostic checks.
 
 These rules report when an active package's explicitly declared dependency is positioned later in
 the numbered order and when active declared dependency metadata forms a cycle that no linear order
@@ -99,13 +99,13 @@ the user applies the preview; applying it creates one undoable, unsaved action a
 the game automatically. Placement recommendations can be ignored individually and restored later.
 The organizer action and its status indicator are absent when load-order guidance is disabled.
 
-All enabled findings share one toolbar status, compact top-menu indicator, grouped finding popup,
+All findings share one toolbar status, compact top-menu indicator, grouped finding popup,
 selected-mod presentation, and severity language. The unified interface does not remove the
 internal rule boundary or the saved opt-in preference.
 
 ## Extension requirements
 
-Optional features must remain:
+Optional feature extensions must remain:
 
 - reversible through a clear preference;
 - read-only unless a separate, explicit user action authorizes a change;

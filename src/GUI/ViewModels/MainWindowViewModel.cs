@@ -3420,7 +3420,6 @@ Directory the zip will be extracted to:
 			}
 
 			Settings.LocalOnlyMode = welcomeWindow.SelectedLocalOnlyMode;
-			Settings.EnableModHealth = welcomeWindow.SelectedDiagnosticsEnabled;
 			Settings.EnableLoadOrderAdvisor = welcomeWindow.SelectedGuidanceEnabled;
 			Settings.NexusModsAPIKey = welcomeWindow.SelectedNexusApiKey;
 			Settings.ModioAPIKey = welcomeWindow.SelectedModioApiKey;

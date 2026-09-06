@@ -96,7 +96,7 @@ package provenance.
 
 ## Diagnostics and dependency assistance
 
-Redux replaces scattered status presentation with a unified, read-only Mod Diagnostics system. It
+Redux replaces scattered status presentation with a built-in, read-only Mod Diagnostics system. It
 can report dependency, UUID, Script Extender, creator-manifest, declared-conflict, Mod Fixer,
 override, and mod.io safety conditions without automatically changing the installation or load
 order.

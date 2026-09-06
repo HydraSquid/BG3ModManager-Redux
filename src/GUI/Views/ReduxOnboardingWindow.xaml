@@ -227,35 +227,20 @@
 											</StackPanel>
 										</Grid>
 									</CheckBox>
-									<StackPanel Grid.Column="2">
-										<CheckBox x:Name="DiagnosticsCheckBox"
-											Style="{StaticResource ReduxCheckBoxStyle}"
-											Checked="DiagnosticsCheckBox_Changed"
-											Unchecked="DiagnosticsCheckBox_Changed">
-											<Grid>
-												<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-												<controls:ReduxIcon Width="17" Height="17" Margin="0,1,9,0" Foreground="{DynamicResource ReduxSuccessBrush}" StrokeData="{DynamicResource Redux.Icon.SearchAlert}" />
-												<StackPanel Grid.Column="1">
-													<TextBlock Style="{StaticResource WelcomeChoiceTitleStyle}" Text="Mod Diagnostics" />
-													<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}" Text="Run conservative, read-only package and dependency checks. Findings appear only when something may need review." />
-												</StackPanel>
-											</Grid>
-										</CheckBox>
-										<CheckBox x:Name="GuidanceCheckBox"
-											Margin="0,9,0,0"
-											Style="{StaticResource ReduxCheckBoxStyle}"
-											Checked="GuidanceCheckBox_Changed"
-											Unchecked="GuidanceCheckBox_Changed">
-											<Grid>
-												<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-												<controls:ReduxIcon Width="17" Height="17" Margin="0,1,9,0" Foreground="{DynamicResource ReduxWarningBrush}" StrokeData="{DynamicResource Redux.Icon.Flag}" />
-												<StackPanel Grid.Column="1">
-													<TextBlock Style="{StaticResource WelcomeChoiceTitleStyle}" Text="Experimental load-order guidance" />
-													<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}" Text="Check whether a mod loads before its required dependencies. The manager never sorts or changes the order automatically." />
-												</StackPanel>
-											</Grid>
-										</CheckBox>
-									</StackPanel>
+									<CheckBox x:Name="GuidanceCheckBox"
+										Grid.Column="2"
+										Style="{StaticResource ReduxCheckBoxStyle}"
+										Checked="GuidanceCheckBox_Changed"
+										Unchecked="GuidanceCheckBox_Changed">
+										<Grid>
+											<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+											<controls:ReduxIcon Width="17" Height="17" Margin="0,1,9,0" Foreground="{DynamicResource ReduxWarningBrush}" StrokeData="{DynamicResource Redux.Icon.Flag}" />
+											<StackPanel Grid.Column="1">
+												<TextBlock Style="{StaticResource WelcomeChoiceTitleStyle}" Text="Load Order Advisor (experimental)" />
+												<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}" Text="Add placement checks and organizer suggestions. Redux never changes the order unless you review and apply them." />
+											</StackPanel>
+										</Grid>
+									</CheckBox>
 								</Grid>
 								<Border x:Name="SourceCredentialsPanel"
 									Margin="0,11,0,0"

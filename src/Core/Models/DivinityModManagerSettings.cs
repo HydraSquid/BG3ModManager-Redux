@@ -334,15 +334,20 @@ public class DivinityModManagerSettings : ReactiveObject
 	[DataMember, Reactive] public bool DisableMissingModWarnings { get; set; }
 
 	[DefaultValue(true)]
-	[SettingsEntry("Enable mod diagnostics", "Check packages, dependencies, Script Extender requirements, overrides, and optional load-order issues. This never edits mods or the load order.")]
-	[DataMember, Reactive] public bool EnableModHealth { get; set; } = true;
+	[SettingsEntry("Mod diagnostics", "Compatibility setting retained for older Redux preferences.", HideFromUI = true)]
+	[DataMember(Name = "EnableModHealth")]
+	public bool EnableModHealth
+	{
+		get => true;
+		set { /* Diagnostics are a built-in Redux feature. Retain the old field for settings compatibility. */ }
+	}
 
 	[DefaultValue(false)]
 	[SettingsEntry("Disable mod.io warnings", "Hide the warning that BG3 or Steam Cloud may restore mod.io files, including cached files after unsubscribing. Online mod information is unaffected.")]
 	[DataMember, Reactive] public bool DisableModioWarnings { get; set; }
 
 	[DefaultValue(false)]
-	[SettingsEntry("Include Load Order Advisor", "Check whether mods load before their required dependencies. It never reorders mods automatically.")]
+	[SettingsEntry("Enable Load Order Advisor", "Add experimental placement checks and the optional load-order organizer. Redux never reorders mods automatically.")]
 	[DataMember, Reactive] public bool EnableLoadOrderAdvisor { get; set; }
 	[DataMember, Reactive] public List<string> IgnoredLoadOrderAdvisorFindingKeys { get; set; } = new();
 

@@ -23,9 +23,9 @@ ways to organize, review, and share mod setups.
   requirements, files, changelogs, linked pages, and personal notes.
 - **Online mod information** from Nexus Mods and mod.io, with manual page linking and a reviewed
   local database for some existing Nexus installs. It can be disabled without removing saved links.
-- **Mod Diagnostics** for detectable package, dependency, Script Extender, Mod Fixer, override,
-  creator-manifest, conflict, and mod.io conditions. Optional Load Order Advisor checks add cautious
-  guidance from package declarations and Redux's offline ordering knowledge.
+- **Mod checks and load-order guidance** that bring BG3MM's package detection into Redux's unified
+  warnings, hover details, and review tools. The optional Load Order Advisor adds experimental
+  placement guidance from declared dependencies and Redux's offline knowledge.
 - **Safer order changes** with a game-order review, restore points, order comparison, staged imports,
   backups, validated writes, and guarded Undo/Redo for changes applied to `modsettings.lsx`.
 - **Redux Modlists** (`.bg3redux`) for moving an order, categories, separators, optional source
@@ -54,10 +54,13 @@ ways to organize, review, and share mod setups.
 Categories, separators, and notes are Redux data. They are never written to the game's
 `modsettings.lsx`.
 
-## Mod Diagnostics
+## Mod checks and Load Order Advisor
 
-Mod Diagnostics reports conditions Redux can detect from installed packages and available mod
-information. It does not download, install, delete, repair, or reorder mods automatically.
+BG3MM already parses package metadata and identifies dependencies, overrides, Mod Fixer behavior,
+and Script Extender requirements. Redux keeps that foundation and presents the results through its
+built-in Mod Diagnostics: unified warnings, severity indicators, hover details, drawer information,
+and relevant follow-up actions. Diagnostics never download, install, delete, repair, or reorder
+mods automatically.
 
 When a dependency is already installed, an available action can reveal it, copy its UUID, open its
 linked page, or activate it after confirmation. Activating a dependency changes only the working
@@ -67,14 +70,15 @@ For a missing dependency, Redux can open a known Nexus page when its reviewed da
 exact module-UUID match. Unknown dependencies retain the copy-UUID fallback; Redux does not install
 them automatically.
 
-The optional Load Order Advisor is experimental and disabled by default. It checks dependency
-placement and cycles using installed package metadata plus exact offline records. It also recognizes
-reviewed dependency aliases, substitutes, intentional late-loading dependencies, and explicit
-mod-author load-after guidance. **Organize Active Load Order** can turn those facts into a preview
-that preserves your separators, creates suggested separators, or removes separators. Applying a preview
-is one undoable, unsaved edit; the resulting separator names, membership, and load-order ranges are
-shown before applying. Individual placement recommendations can be ignored and restored later.
-Redux never silently reorders the list or changes the game's load order.
+The Load Order Advisor is the optional, experimental part of this system and is disabled by default.
+It checks dependency placement and cycles using installed package metadata plus exact offline
+records. It also recognizes reviewed dependency aliases, substitutes, intentional late-loading
+dependencies, and explicit mod-author load-after guidance. **Organize Active Load Order** can turn
+those facts into a preview that preserves your separators, creates suggested separators, or removes
+separators. Applying a preview is one undoable, unsaved edit; the resulting separator names,
+membership, and load-order ranges are shown before applying. Individual placement recommendations
+can be ignored and restored later. Redux never silently reorders the list or changes the game's
+load order.
 
 ## Redux Modlists
 
@@ -128,9 +132,10 @@ share only the `.bg3redux-report`, not the original mod archives or `.pak` files
 - Use selectable dialog text, configurable shortcuts, keyboard-accessible dialogs, and the
   inherited speech commands.
 
-The first launch opens one setup window for choosing a theme, optional source linking and
-diagnostics, API keys, and accessibility options. Optional features begin disabled and can be
-enabled there or later in Preferences. The setup can be reopened from Help.
+The first launch opens one setup window for choosing a theme, optional source linking and Load Order
+Advisor guidance, API keys, and accessibility options. Optional features begin disabled and can be
+enabled there or later in Preferences. Built-in diagnostics remain active. The setup can be reopened
+from Help.
 Provider API keys are masked in the interface, protected for the current Windows account, and kept
 out of ordinary settings files and diagnostic exports.
 

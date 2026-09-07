@@ -1,0 +1,75 @@
+name: Feature request
+description: Suggest a focused improvement to BG3 Mod Manager Redux
+title: "[Feature]: "
+labels: ["feature-work"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping shape BG3 Mod Manager Redux.
+
+        Explain the problem first, then describe the smallest useful improvement. Please do not include API keys, credentials, private paths, or save data.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or limitation
+      description: What is difficult, unclear, repetitive, or currently impossible?
+      placeholder: Describe the user problem and when it occurs.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Suggested improvement
+      description: Describe the behavior you would like Redux to provide.
+      placeholder: Explain the proposed workflow or result.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Related area
+      options:
+        - Mod installation or management
+        - Active or inactive mod lists
+        - Load orders, categories, or separators
+        - Saving or syncing the game load order
+        - Mod Diagnostics or Load Order Advisor
+        - Redux Modlists
+        - Save Game Manager
+        - Preferences, themes, or accessibility
+        - Nexus Mods, mod.io, or metadata
+        - Keyboard shortcuts or Quick Access
+        - Documentation or contributor tooling
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Current workaround or alternatives
+      description: Optional. Explain how you handle this today or any alternatives you considered.
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Optional. Add mockups, screenshots, examples, or related links. Remove private information before posting.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmation
+      options:
+        - label: I searched the existing issues for a similar request.
+          required: true
+        - label: I have not included API keys, credentials, private paths, or save data.
+          required: true

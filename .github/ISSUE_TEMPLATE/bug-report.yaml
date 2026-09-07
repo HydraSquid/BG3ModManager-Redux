@@ -56,7 +56,7 @@ body:
       options:
         - Startup or mod loading
         - Active or inactive mod lists
-        - Load order or export
+        - Load-order saving or game sync
         - Mod installation, import, or deletion
         - Categories or separators
         - Mod diagnostics

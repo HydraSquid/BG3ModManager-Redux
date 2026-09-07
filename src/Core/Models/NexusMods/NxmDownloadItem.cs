@@ -175,9 +175,7 @@ public sealed class NxmDownloadItem : ReactiveObject
 		NxmDownloadState.Downloaded => "Ready to install",
 		NxmDownloadState.NeedsReview => "Needs attention",
 		NxmDownloadState.Installing => "Installing",
-		NxmDownloadState.Installed => String.IsNullOrWhiteSpace(InstallDestination)
-			? "Installed"
-			: $"Installed to {InstallDestination}",
+		NxmDownloadState.Installed => "Installed",
 		NxmDownloadState.NeedsFreshLink => "New link needed",
 		NxmDownloadState.Failed => "Failed",
 		NxmDownloadState.InstallFailed => ErrorCode switch
@@ -236,7 +234,7 @@ public sealed class NxmDownloadItem : ReactiveObject
 		{
 			if (PreserveExistingModPlacement
 				|| (State == NxmDownloadState.Installed && DetectedDestination == "Inactive Mods"))
-				return "Reinstall · Keep Placement";
+				return "Reinstall";
 			var prefix = State switch
 			{
 				NxmDownloadState.InstallFailed => "Try Again",

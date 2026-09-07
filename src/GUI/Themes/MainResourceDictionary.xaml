@@ -3399,8 +3399,8 @@
 									<Condition Binding="{Binding IsForceLoadedMergedMod}" Value="False" />
 									<Condition Binding="{Binding ForceAllowInLoadOrder}" Value="False" />
 								</MultiDataTrigger.Conditions>
-								<Setter Property="Background" Value="{DynamicResource ReduxAccentPillBackground}" />
-								<Setter Property="BorderBrush" Value="{DynamicResource ReduxAccentBrush}" />
+								<Setter Property="Background" Value="{DynamicResource ReduxInfoPillBackground}" />
+								<Setter Property="BorderBrush" Value="{DynamicResource ReduxInfoPillBorderBrush}" />
 							</MultiDataTrigger>
 							<MultiDataTrigger>
 								<MultiDataTrigger.Conditions>
@@ -3435,7 +3435,7 @@
 												<Condition Binding="{Binding IsForceLoadedMergedMod}" Value="False" />
 												<Condition Binding="{Binding ForceAllowInLoadOrder}" Value="False" />
 											</MultiDataTrigger.Conditions>
-											<Setter Property="Foreground" Value="{DynamicResource ReduxAccentHoverBrush}" />
+											<Setter Property="Foreground" Value="{DynamicResource ReduxInfoBrush}" />
 										</MultiDataTrigger>
 										<MultiDataTrigger>
 											<MultiDataTrigger.Conditions>
@@ -3461,7 +3461,7 @@
 											<Condition Binding="{Binding IsForceLoadedMergedMod}" Value="False" />
 											<Condition Binding="{Binding ForceAllowInLoadOrder}" Value="False" />
 										</MultiDataTrigger.Conditions>
-										<Setter Property="Foreground" Value="{DynamicResource ReduxAccentHoverBrush}" />
+										<Setter Property="Foreground" Value="{DynamicResource ReduxInfoBrush}" />
 										<Setter Property="Text" Value="Always Loaded" />
 									</MultiDataTrigger>
 									<!-- Presentation color is optional; status remains communicated by

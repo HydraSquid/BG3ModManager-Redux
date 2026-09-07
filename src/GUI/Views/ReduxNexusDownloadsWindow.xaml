@@ -184,9 +184,19 @@
 							</Grid>
 							<TextBlock Margin="0,4,0,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}"
 								Text="{Binding FileDisplayName}" TextTrimming="CharacterEllipsis" />
-							<TextBlock Margin="0,2,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}"
-								Text="{Binding MetadataText}" TextTrimming="CharacterEllipsis"
-								Visibility="{Binding MetadataText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" />
+							<WrapPanel Margin="0,2,0,0" VerticalAlignment="Center">
+								<TextBlock FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}"
+									Text="{Binding MetadataText}" TextTrimming="CharacterEllipsis"
+									Visibility="{Binding MetadataText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" />
+								<StackPanel x:Name="InstalledStatus" Margin="9,0,0,0" VerticalAlignment="Center"
+									Orientation="Horizontal" Visibility="Collapsed">
+									<controls:ReduxIcon Width="9" Height="9" Margin="0,0,4,0" VerticalAlignment="Center"
+										Foreground="{DynamicResource ReduxSuccessBrush}" StrokeData="{StaticResource Redux.Icon.CircleCheck}"
+										Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
+									<TextBlock VerticalAlignment="Center" FontSize="{DynamicResource Redux.FontSize.10}"
+										FontWeight="SemiBold" Foreground="{DynamicResource ReduxSuccessBrush}" Text="Installed" />
+								</StackPanel>
+							</WrapPanel>
 							<TextBlock Margin="0,2,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextSecondaryBrush}"
 								Text="{Binding DownloadDetailText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding DownloadDetailText}"
 								Visibility="{Binding DownloadDetailText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" />
@@ -227,7 +237,7 @@
 					<DataTrigger Binding="{Binding State}" Value="Paused"><Setter TargetName="DownloadProgress" Property="Visibility" Value="Visible" /></DataTrigger>
 					<DataTrigger Binding="{Binding State}" Value="RetryWaiting"><Setter TargetName="DownloadProgress" Property="Visibility" Value="Visible" /><Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" /><Setter TargetName="StatusIcon" Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" /><Setter TargetName="StatusIcon" Property="StrokeData" Value="{StaticResource Redux.Icon.Warning}" /></DataTrigger>
 					<DataTrigger Binding="{Binding State}" Value="Downloaded"><Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource ReduxSuccessBrush}" /><Setter TargetName="StatusIcon" Property="Foreground" Value="{DynamicResource ReduxSuccessBrush}" /><Setter TargetName="StatusIcon" Property="StrokeData" Value="{StaticResource Redux.Icon.CircleCheck}" /></DataTrigger>
-					<DataTrigger Binding="{Binding State}" Value="Installed"><Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource ReduxSuccessBrush}" /><Setter TargetName="StatusIcon" Property="Foreground" Value="{DynamicResource ReduxSuccessBrush}" /><Setter TargetName="StatusIcon" Property="StrokeData" Value="{StaticResource Redux.Icon.CircleCheck}" /></DataTrigger>
+					<DataTrigger Binding="{Binding State}" Value="Installed"><Setter TargetName="StatusPill" Property="Visibility" Value="Collapsed" /><Setter TargetName="InstalledStatus" Property="Visibility" Value="Visible" /></DataTrigger>
 					<DataTrigger Binding="{Binding State}" Value="NeedsReview"><Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" /><Setter TargetName="StatusIcon" Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" /><Setter TargetName="StatusIcon" Property="StrokeData" Value="{StaticResource Redux.Icon.Warning}" /></DataTrigger>
 					<DataTrigger Binding="{Binding State}" Value="NeedsFreshLink"><Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" /><Setter TargetName="StatusIcon" Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" /><Setter TargetName="StatusIcon" Property="StrokeData" Value="{StaticResource Redux.Icon.LinkStroke}" /></DataTrigger>
 					<DataTrigger Binding="{Binding State}" Value="Failed"><Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource ReduxErrorBrush}" /><Setter TargetName="StatusIcon" Property="Foreground" Value="{DynamicResource ReduxErrorBrush}" /><Setter TargetName="StatusIcon" Property="StrokeData" Value="{StaticResource Redux.Icon.Warning}" /></DataTrigger>

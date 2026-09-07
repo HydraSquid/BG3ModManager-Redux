@@ -325,7 +325,7 @@ public sealed class InteractionBehaviorTests
 
 			var deleteButton = (Button)deleteFiles.FindName("DeleteActionButton");
 			var deleteIcon = (ReduxIcon)deleteFiles.FindName("DeleteActionIcon");
-			deleteButton.IsEnabled = false;
+			RegressionAssert.True(deleteButton.IsEnabled);
 			RegressionAssert.Equal(
 				((SolidColorBrush)deleteFiles.FindResource("ReduxErrorBrush")).Color,
 				((SolidColorBrush)deleteIcon.Foreground).Color);

@@ -147,8 +147,16 @@ public class DeleteFilesViewData : BaseProgressViewModel
 		_removeFromLoadOrderVisibility = this.WhenAnyValue(x => x.IsDeletingDuplicates).Select(x => x ? Visibility.Collapsed : Visibility.Visible).ToProperty(this, nameof(RemoveFromLoadOrderVisibility), true, RxApp.MainThreadScheduler);
 		_title = this.WhenAnyValue(x => x.IsDeletingDuplicates).Select(b => !b ? "Files to Delete" : "Duplicate Mods to Delete").ToProperty(this, nameof(Title), true, RxApp.MainThreadScheduler);
 
-		var filesChanged = this.Files.ToObservableChangeSet().AutoRefresh(x => x.IsSelected).ToCollection().Throttle(TimeSpan.FromMilliseconds(50)).ObserveOn(RxApp.MainThreadScheduler);
-		_anySelected = filesChanged.Select(x => x.Any(y => y.IsSelected)).ToProperty(this, nameof(AnySelected));
+		// Selection controls a destructive command, so publish it immediately. The
+		// previous throttle could leave a fully populated dialog displaying the
+		// correct selection summary while RunCommand still held its initial disabled
+		// state.
+		var filesChanged = this.Files.ToObservableChangeSet()
+			.AutoRefresh(x => x.IsSelected)
+			.ToCollection()
+			.ObserveOn(RxApp.MainThreadScheduler);
+		var anySelected = filesChanged.Select(files => files.Any(file => file.IsSelected));
+		_anySelected = anySelected.ToProperty(this, nameof(AnySelected), false, RxApp.MainThreadScheduler);
 
 		_allSelected = filesChanged.Select(x => x.All(y => y.IsSelected)).ToProperty(this, nameof(AllSelected), true, RxApp.MainThreadScheduler);
 		_selectAllTooltip = this.WhenAnyValue(x => x.AllSelected).Select(b => $"{(b ? "Deselect" : "Select")} All").ToProperty(this, nameof(SelectAllTooltip), true, RxApp.MainThreadScheduler);
@@ -162,6 +170,6 @@ public class DeleteFilesViewData : BaseProgressViewModel
 
 		SelectAllCommand = ReactiveCommand.Create(ToggleSelectAll, this.RunCommand.IsExecuting.Select(b => !b), RxApp.MainThreadScheduler);
 
-		this.WhenAnyValue(x => x.AnySelected).BindTo(this, x => x.CanRun);
+		anySelected.BindTo(this, x => x.CanRun);
 	}
 }

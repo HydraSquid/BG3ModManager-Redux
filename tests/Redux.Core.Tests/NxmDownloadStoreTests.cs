@@ -75,7 +75,7 @@ internal sealed class NxmDownloadStoreTests
 		var restored = fixture.Store.ReconcileAsync().GetAwaiter().GetResult().Single();
 
 		RegressionAssert.Equal(NxmDownloadState.Installed, restored.State);
-		RegressionAssert.Equal("Installed to Inactive Mods", restored.StatusText);
+		RegressionAssert.Equal("Installed", restored.StatusText);
 	}
 
 	public void DetailedInstallFailureSurvivesRestartAndMissingFileInvalidation()

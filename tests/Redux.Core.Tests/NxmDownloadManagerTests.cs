@@ -418,7 +418,7 @@ internal sealed class NxmDownloadManagerTests
 		RegressionAssert.True(manager.ShutdownAsync().Wait(TimeSpan.FromSeconds(2)));
 
 		RegressionAssert.Equal(NxmDownloadState.Installed, manager.Items.Single().State);
-		RegressionAssert.Equal("Installed to Inactive Mods", manager.Items.Single().StatusText);
+		RegressionAssert.Equal("Installed", manager.Items.Single().StatusText);
 		resolver.Release.Set();
 		manager.DrainAsync().GetAwaiter().GetResult();
 	}
@@ -467,7 +467,7 @@ internal sealed class NxmDownloadManagerTests
 			HasAvailableArchive = true
 		};
 
-		RegressionAssert.Contains(item.InstallActionText, "Keep Placement");
+		RegressionAssert.Equal("Reinstall", item.InstallActionText);
 		RegressionAssert.Contains(item.InstallActionToolTip, "active or inactive state");
 	}
 

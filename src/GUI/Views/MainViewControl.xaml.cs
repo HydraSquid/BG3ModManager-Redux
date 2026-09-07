@@ -93,6 +93,7 @@ public partial class MainViewControl : MainViewControlViewBase
 			[nameof(AppKeys.ToggleToolbar)] = ("Redux.Icon.Desktop", true, null),
 			[nameof(AppKeys.ToggleUpdatesView)] = ("Redux.Icon.RefreshStroke", true, null),
 			[nameof(AppKeys.OpenSaveGameManager)] = ("Redux.Icon.BookOpen", true, null),
+			[nameof(AppKeys.OpenGameDirectoryModManager)] = ("Redux.Icon.Blocks", true, null),
 			[nameof(AppKeys.ExtractSelectedMods)] = ("Redux.Icon.Archive", true, null),
 			[nameof(AppKeys.ExtractSelectedAdventure)] = ("Redux.Icon.Archive", true, null),
 			[nameof(AppKeys.ToggleVersionGeneratorWindow)] = ("Redux.Icon.Build", true, null),

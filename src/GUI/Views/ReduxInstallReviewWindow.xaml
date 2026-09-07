@@ -43,7 +43,8 @@
 							CornerRadius="{DynamicResource Redux.CornerRadius.Pill}">
 							<StackPanel Orientation="Horizontal">
 								<controls:ReduxIcon x:Name="StatusIcon" Width="13" Height="13" Margin="0,0,6,0"
-									Foreground="{DynamicResource ReduxInfoBrush}" IconKey="add-circle" />
+									Foreground="{DynamicResource ReduxInfoBrush}" IconKey="add-circle"
+									Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
 								<TextBlock x:Name="StatusText" VerticalAlignment="Center" FontWeight="SemiBold"
 									Foreground="{DynamicResource ReduxInfoBrush}" Text="{Binding Status}"
 									TextTrimming="CharacterEllipsis" ToolTip="{Binding Status}" />
@@ -98,7 +99,8 @@
 					<Grid>
 						<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
 						<Border Width="34" Height="34" Margin="0,0,11,0" Background="{DynamicResource ReduxAccentPillBackground}" CornerRadius="8">
-							<controls:ReduxIcon x:Name="SummaryIcon" Width="16" Height="16" Foreground="{DynamicResource ReduxAccentHoverBrush}" />
+							<controls:ReduxIcon x:Name="SummaryIcon" Width="16" Height="16" Foreground="{DynamicResource ReduxAccentHoverBrush}"
+								Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
 						</Border>
 						<StackPanel Grid.Column="1" VerticalAlignment="Center">
 							<TextBlock x:Name="SummaryText" FontWeight="SemiBold" Foreground="{DynamicResource ReduxTextPrimaryBrush}" />

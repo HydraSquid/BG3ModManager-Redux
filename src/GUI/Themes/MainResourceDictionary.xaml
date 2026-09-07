@@ -1790,7 +1790,7 @@
 						ContentTemplate="{TemplateBinding ContentTemplate}"
 						RecognizesAccessKey="True" />
 					<Border x:Name="FocusRing"
-						BorderBrush="{DynamicResource ReduxAccentBrush}"
+						BorderBrush="{TemplateBinding BorderBrush}"
 						BorderThickness="1"
 						CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
 						IsHitTestVisible="False"

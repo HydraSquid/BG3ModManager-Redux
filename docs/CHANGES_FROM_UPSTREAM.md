@@ -24,6 +24,7 @@ claim that every visible behavior originated in Redux.
 | Guidance | Parsed dependency facts | Optional Load Order Advisor and separator-aware organization previews |
 | Portability | Existing order formats | `.bg3redux` Modlists for selected Redux presentation and public source data |
 | Saves | Profile and save-path discovery | Profile-aware Save Game Manager with campaign grouping and guarded imports |
+| Game-directory mods | Game-path and Script Extender foundations | Reviewed native-package catalog with staged placement, ownership, rollback, and a separate manager |
 | Interface | Existing WPF application and accessibility foundations | Redux design system, themes, custom appearance, Quick Access, motion controls |
 
 ## The upstream core Redux preserves
@@ -157,6 +158,35 @@ through a picker or drag and drop. Save and mod drops use distinct structured re
 are rejected rather than guessed. Imports are staged, unsafe or oversized archive content is
 rejected, existing names require confirmation, and deletion uses the Windows Recycle Bin. Redux
 does not modify save contents or include saves in portable Modlists.
+
+## Game-directory mod management
+
+Redux adds a separate manager for reviewed packages that place native or root-level files under the
+BG3 installation. These files do not participate in PAK ordering and never appear as reorderable
+Active or Inactive Mods entries.
+
+The reusable Core transaction layer validates canonical destinations, archive bounds, exact
+catalog layouts, link and traversal safety, and AMD64 DLL headers. It stages files first, fingerprints
+the archive, prerequisites, current destinations, and ownership state, then revalidates immediately
+before commit. BG3 must be closed. Writes receive transaction backups and a durable journal;
+partial failures roll back completed writes, while unresolved interruptions are surfaced as a
+recovery-required state.
+
+Redux's versioned ownership record distinguishes managed, externally installed, changed, and
+missing files. Removal is offered only while current managed files still match what Redux installed;
+files Redux added are deleted, while recoverable originals are restored without overwriting unrelated
+external edits. User configuration files are placed only when missing, remain user-owned, and survive
+updates or removal. Mixed native-and-PAK archives route the PAK portion through the existing normal
+mod importer rather than bypassing package validation.
+
+The manager is available from Tools, Quick Access, the Setup toolbar, and the assignable shortcut
+system. Its compact entries use the same semantic pills, source identity, destructive actions, and
+hover or selection language as Redux's other mod surfaces.
+
+The initial catalog is intentionally narrow and based on reviewed archive layouts. Matching a
+layout and executable architecture does not establish publisher provenance or guarantee that a mod
+is safe for a particular system. Script Extender continues to use Redux's existing dedicated
+workflow.
 
 ## Filesystem and privacy hardening
 

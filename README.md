@@ -113,6 +113,32 @@ require confirmation, and deletion uses the Windows Recycle Bin.
 > Redux does not edit or validate save contents. Close BG3 before changing saves, keep independent
 > backups, and remember that Steam Cloud may restore files removed locally.
 
+### Game-Directory Mod Manager
+
+Open **Tools > Game-Directory Mod Manager...**, its Setup-toolbar shortcut, or **Quick Access** to
+review supported native and root-level mods that install beside BG3 rather than into the ordinary
+Mods folder. The action is also available in the shortcut editor if you want to assign your own key
+combination. These packages stay outside the PAK load-order panes. Redux shows every managed
+destination before applying a change and clearly warns that native DLLs execute inside the game.
+
+The first alpha.14 catalog recognizes reviewed layouts for Native Mod Loader, WASD and camera
+plugins, Achievement Enabler, Baldur's Priority, Improved Camera, Best of Hands, BG3WASD Camera
+Follow, True Third-Person Camera, and bg3fgvk. Script Extender archives are directed to Redux's
+existing Script Extender workflow. Mixed native-and-PAK packages send their companion PAK through
+the normal inactive-mod import path.
+
+Archives may be selected in the manager or dropped onto Redux. Installation is staged and bounded;
+paths, layouts, AMD64 DLL headers, prerequisites, the source archive, and destination files are
+rechecked before commit. Redux records only files it actually manages, keeps recoverable originals
+when replacing game files, and refuses removal if doing so would overwrite files changed outside
+Redux. User-editable `.toml` and `.ini` configuration is preserved and left in place during updates
+or removal.
+
+> [!CAUTION]
+> Layout validation is not a publisher signature or malware scan. Install native code only from a
+> source you trust, close BG3 first, and use the manager's status and recovery information instead
+> of manually deleting Redux-owned files.
+
 ### Redux Modlists
 
 A `.bg3redux` Modlist can carry a saved order plus selected Redux presentation data:

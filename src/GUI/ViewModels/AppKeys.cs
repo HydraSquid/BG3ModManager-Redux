@@ -183,6 +183,13 @@ public class AppKeys : ReactiveObject
 		"Browse, install, and safely remove story saves for the selected profile.")]
 	public Hotkey OpenSaveGameManager { get; private set; } = new Hotkey(Key.None);
 
+	[MenuSettings(
+		"Tools",
+		"Game-Directory Mod Manager...",
+		false,
+		"Install, review, and safely remove supported native or root-level BG3 mods outside the PAK load order.")]
+	public Hotkey OpenGameDirectoryModManager { get; private set; } = new Hotkey(Key.None);
+
 	[MenuSettings("Go", "Open Mods Folder", false, "Open the configured Baldur's Gate 3 Mods folder.")]
 	public Hotkey OpenModsFolder { get; private set; } = new Hotkey(Key.D1, ModifierKeys.Control);
 

@@ -43,6 +43,7 @@ internal static class Program
 		var undoRedoHistory = new UndoRedoHistoryTests();
 		var loadOrderOrganizer = new LoadOrderAdvisorOrganizerTests();
 		var saveGames = new SaveGameServiceTests();
+		var nativeMods = new ReduxGameDirectoryInstallServiceTests();
 		var tests = new (string Name, Action Run)[]
 		{
 			(nameof(source.ReviewedModuleUuidResolvesItsProject), source.ReviewedModuleUuidResolvesItsProject),
@@ -265,7 +266,33 @@ internal static class Program
 			(nameof(saveGames.DiscoversSaveMetadataAndMatchingThumbnail), saveGames.DiscoversSaveMetadataAndMatchingThumbnail),
 			(nameof(saveGames.InstallsNestedZipAsOneSaveFolder), saveGames.InstallsNestedZipAsOneSaveFolder),
 			(nameof(saveGames.RejectsUnsafeArchivePathsBeforeImport), saveGames.RejectsUnsafeArchivePathsBeforeImport),
-			(nameof(saveGames.ExistingSaveIsPreservedUntilReplacementIsRequested), saveGames.ExistingSaveIsPreservedUntilReplacementIsRequested)
+			(nameof(saveGames.ExistingSaveIsPreservedUntilReplacementIsRequested), saveGames.ExistingSaveIsPreservedUntilReplacementIsRequested),
+			(nameof(nativeMods.AtomicReplacementRejectsSourceChangedSinceItsReviewedHash), nativeMods.AtomicReplacementRejectsSourceChangedSinceItsReviewedHash),
+			(nameof(nativeMods.CatalogContainsReviewedNativeProjectsAndRoutesExistingWorkflows), nativeMods.CatalogContainsReviewedNativeProjectsAndRoutesExistingWorkflows),
+			(nameof(nativeMods.ArchiveRecognitionUsesReviewedLayoutAndCorroboratesOverlappingProjects), nativeMods.ArchiveRecognitionUsesReviewedLayoutAndCorroboratesOverlappingProjects),
+			(nameof(nativeMods.ArchiveRecognitionRoutesScriptExtenderToItsExistingReduxWorkflow), nativeMods.ArchiveRecognitionRoutesScriptExtenderToItsExistingReduxWorkflow),
+			(nameof(nativeMods.UnreviewedDllArchiveIsNeverTreatedAsAnOrdinaryModArchive), nativeMods.UnreviewedDllArchiveIsNeverTreatedAsAnOrdinaryModArchive),
+			(nameof(nativeMods.EveryReviewedCatalogLayoutHasARecognizableFixture), nativeMods.EveryReviewedCatalogLayoutHasARecognizableFixture),
+			(nameof(nativeMods.ZipValidationRejectsOtherFormatsTraversalAndUnexpectedFilesWithoutChangingGameFiles), nativeMods.ZipValidationRejectsOtherFormatsTraversalAndUnexpectedFilesWithoutChangingGameFiles),
+			(nameof(nativeMods.OversizedZipEntriesAreRejectedBeforeTheyCanBeStaged), nativeMods.OversizedZipEntriesAreRejectedBeforeTheyCanBeStaged),
+			(nameof(nativeMods.NativePluginsRequireAKnownSupportedGameVersionAndLoader), nativeMods.NativePluginsRequireAKnownSupportedGameVersionAndLoader),
+			(nameof(nativeMods.InspectArchiveAllowsDeferredLoaderPrerequisiteButStillChecksGameVersion), nativeMods.InspectArchiveAllowsDeferredLoaderPrerequisiteButStillChecksGameVersion),
+			(nameof(nativeMods.LoaderInstallStagesWithoutChangingGameFilesThenCommitsAsReduxVerified), nativeMods.LoaderInstallStagesWithoutChangingGameFilesThenCommitsAsReduxVerified),
+			(nameof(nativeMods.ExternalLoaderPairIsPresentButUnverifiedAndUnmanagedOriginalConflicts), nativeMods.ExternalLoaderPairIsPresentButUnverifiedAndUnmanagedOriginalConflicts),
+			(nameof(nativeMods.ChangedReduxOwnedLoaderBlocksDependentPluginInstallation), nativeMods.ChangedReduxOwnedLoaderBlocksDependentPluginInstallation),
+			(nameof(nativeMods.ManagerStatusDistinguishesManagedChangedAndExternalFiles), nativeMods.ManagerStatusDistinguishesManagedChangedAndExternalFiles),
+			(nameof(nativeMods.ManagerSurfacesUnknownNativeDllsWithoutClaimingOwnership), nativeMods.ManagerSurfacesUnknownNativeDllsWithoutClaimingOwnership),
+			(nameof(nativeMods.CommitRejectsArchiveAndDestinationChangesAfterReview), nativeMods.CommitRejectsArchiveAndDestinationChangesAfterReview),
+			(nameof(nativeMods.PluginCommitRejectsRemovedLoaderAfterReview), nativeMods.PluginCommitRejectsRemovedLoaderAfterReview),
+			(nameof(nativeMods.PluginCommitRejectsChangedLoaderAfterReview), nativeMods.PluginCommitRejectsChangedLoaderAfterReview),
+			(nameof(nativeMods.CommitRejectsStaleOwnershipManifestFromAnotherTransaction), nativeMods.CommitRejectsStaleOwnershipManifestFromAnotherTransaction),
+			(nameof(nativeMods.CommitFailureRollsBackEveryWrittenTarget), nativeMods.CommitFailureRollsBackEveryWrittenTarget),
+			(nameof(nativeMods.PluginInstallPreservesExistingTomlConfiguration), nativeMods.PluginInstallPreservesExistingTomlConfiguration),
+			(nameof(nativeMods.UserConfigurationEditsNeverBlockNativePluginRestore), nativeMods.UserConfigurationEditsNeverBlockNativePluginRestore),
+			(nameof(nativeMods.RelatedProjectUpdateKeepsOneReduxOwnershipRecord), nativeMods.RelatedProjectUpdateKeepsOneReduxOwnershipRecord),
+			(nameof(nativeMods.MixedPackageStagesOnlyNativeFilesAndReportsItsCompanionPak), nativeMods.MixedPackageStagesOnlyNativeFilesAndReportsItsCompanionPak),
+			(nameof(nativeMods.TrueThirdPersonCameraRefusesLegacyCameraFiles), nativeMods.TrueThirdPersonCameraRefusesLegacyCameraFiles),
+			(nameof(nativeMods.RestoreRefusesActivePluginsThenRestoresOnlyOwnedFiles), nativeMods.RestoreRefusesActivePluginsThenRestoresOnlyOwnedFiles)
 		};
 
 		var failures = 0;
@@ -310,6 +337,19 @@ internal static class RegressionAssert
 	{
 		if (value?.Contains(expectedSubstring, StringComparison.OrdinalIgnoreCase) != true)
 			throw new InvalidOperationException($"Expected '{value}' to contain '{expectedSubstring}'.");
+	}
+
+	public static TException Throws<TException>(Action action) where TException : Exception
+	{
+		try
+		{
+			action();
+		}
+		catch (TException exception)
+		{
+			return exception;
+		}
+		throw new InvalidOperationException($"Expected {typeof(TException).Name}.");
 	}
 
 	public static void SequenceEqual<T>(IEnumerable<T> expected, IEnumerable<T> actual)

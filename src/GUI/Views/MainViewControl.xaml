@@ -1290,6 +1290,13 @@
 											</ContextMenu>
 										</Button.ContextMenu>
 									</Button>
+									<Button Margin="0,0,9,0"
+										AutomationProperties.Name="Open Game-Directory Mod Manager"
+										Command="{Binding Keys.OpenGameDirectoryModManager.Command}"
+										Style="{StaticResource ToolbarUtilityButtonStyle}"
+										ToolTip="{Binding Keys.OpenGameDirectoryModManager.CommandToolTip}">
+										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Blocks}" />
+									</Button>
 									<controls:ReduxIcon Margin="0,0,5,0" StrokeData="{StaticResource Redux.Icon.Person}" Foreground="{DynamicResource ReduxTextSecondaryBrush}" />
 									<ComboBox x:Name="ProfilesComboBox"
 										Width="116"
@@ -1593,8 +1600,13 @@
 								<StackPanel Grid.Row="1" VerticalAlignment="Center" Orientation="Horizontal">
 									<Button Click="SaveGameManagerButton_Click"
 										AutomationProperties.Name="Open Save Game Manager"
-										Content="Manage" Style="{StaticResource ToolbarWorkflowButtonStyle}"
-										ToolTip="Browse, install, and remove saves for the selected profile" />
+										Style="{StaticResource ToolbarWorkflowButtonStyle}"
+										ToolTip="Browse, install, and remove saves for the selected profile">
+										<StackPanel Orientation="Horizontal">
+											<controls:ReduxIcon Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Save}" Style="{StaticResource ToolbarWorkflowIconStyle}" />
+											<TextBlock Text="Manage" />
+										</StackPanel>
+									</Button>
 									<Button Click="ImportSaveGameButton_Click"
 										AutomationProperties.Name="Install save from file"
 										Style="{StaticResource ToolbarUtilityButtonStyle}"

@@ -237,7 +237,7 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 		});
 	}
 
-	private void MainWindow_PreviewDrop(object sender, DragEventArgs e)
+	private async void MainWindow_PreviewDrop(object sender, DragEventArgs e)
 	{
 		if (!e.Data.GetDataPresent(DataFormats.FileDrop)
 			|| e.Data.GetData(DataFormats.FileDrop) is not string[] paths
@@ -246,6 +246,53 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 
 		try
 		{
+			var gameDirectoryArchives = new List<string>();
+			var unsupportedGameDirectoryArchives = new List<string>();
+			foreach (var path in paths)
+			{
+				try
+				{
+					if (File.Exists(path)
+						&& ReduxGameDirectoryInstallService.TryInspectKnownArchive(path, computeArchiveHash: false) != null)
+						gameDirectoryArchives.Add(path);
+				}
+				catch (ReduxUnsupportedGameDirectoryArchiveException)
+				{
+					unsupportedGameDirectoryArchives.Add(Path.GetFileName(path));
+				}
+				catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
+				{
+					// Unrecognized or malformed archives remain available to the normal mod-drop review.
+				}
+			}
+			if (unsupportedGameDirectoryArchives.Count > 0)
+			{
+				ReduxMessageBox.Show(this,
+					$"Redux found native DLLs in {String.Join(", ", unsupportedGameDirectoryArchives)} but the archive layout is not reviewed. No files were installed.",
+					"Unsupported Game-Directory Package", System.Windows.MessageBoxButton.OK,
+					System.Windows.MessageBoxImage.Warning, System.Windows.MessageBoxResult.OK);
+				e.Handled = true;
+				return;
+			}
+			if (gameDirectoryArchives.Count > 0)
+			{
+				// Stop the routed drop before staging yields; otherwise the underlying mod
+				// list can begin its ordinary PAK import for the same archive.
+				e.Handled = true;
+				if (gameDirectoryArchives.Count != paths.Length)
+				{
+					ReduxMessageBox.Show(this,
+						"This drop mixes game-directory packages with ordinary mods or saves. Drop each install type separately so Redux can show the correct destinations and safeguards.",
+						"Separate Install Types", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning, System.Windows.MessageBoxResult.OK);
+				}
+				else
+				{
+					foreach (var path in gameDirectoryArchives)
+						await ReduxGameDirectoryModManagerWindow.ReviewAndInstallAsync(this, ViewModel, path);
+				}
+				return;
+			}
+
 			var saveSources = paths
 				.Where(Bg3SaveGameService.IsSupportedSaveInput)
 				.Select(path => new { Path = path, Names = Bg3SaveGameService.GetImportFolderNames(path) })
@@ -627,6 +674,10 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 			ViewModel.Keys.OpenSaveGameManager.AddAction(
 				() => MainView.ShowSaveManager(),
 				ViewModel.WhenAnyValue(x => x.SelectedProfile).Select(profile => profile != null));
+			ViewModel.Keys.OpenGameDirectoryModManager.AddAction(
+				OpenGameDirectoryModManager,
+				ViewModel.WhenAnyValue(x => x.Settings.GameExecutablePath)
+					.Select(_ => ReduxGameDirectoryModManagerWindow.CanOpen(ViewModel)));
 			ViewModel.Keys.OpenAboutWindow.AddAction(ToggleAboutWindow);
 
 			ViewModel.Keys.ToggleVersionGeneratorWindow.AddAction(() =>
@@ -652,6 +703,20 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 
 			MainView.OnActivated();
 		});
+	}
+
+	private void OpenGameDirectoryModManager()
+	{
+		try
+		{
+			var manager = new ReduxGameDirectoryModManagerWindow(this, ViewModel);
+			ReduxWindowBehavior.ShowDialogWithOwnerBackdrop(manager, this);
+		}
+		catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+		{
+			ReduxMessageBox.Show(this, ex.Message, "Could Not Open Game-Directory Mod Manager",
+				System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error, System.Windows.MessageBoxResult.OK);
+		}
 	}
 
 	private void OpenCommandPalette()

@@ -9761,6 +9761,11 @@ Directory the zip will be extracted to:
 		Keys.ImportOrderFromZipFile.AddAction(ImportOrderFromArchive, canOpenDialogWindow);
 		Keys.InspectFileOverlaps.AddAction(OpenFileOverlapInspector, canOpenDialogWindow);
 
+		Keys.OpenReduxDonationLink.AddAction(() =>
+		{
+			ProcessHelper.TryOpenUrl(DivinityApp.URL_REDUX_DONATION);
+		});
+
 		Keys.OpenDonationLink.AddAction(() =>
 		{
 			ProcessHelper.TryOpenUrl(DivinityApp.URL_DONATION);

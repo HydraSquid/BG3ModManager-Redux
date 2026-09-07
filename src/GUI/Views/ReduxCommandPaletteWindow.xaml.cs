@@ -309,7 +309,7 @@ public partial class ReduxCommandPaletteWindow : AdonisUI.Controls.AdonisWindow
 		nameof(AppKeys.SpeakActiveModOrder) => "audio",
 		nameof(AppKeys.StopSpeaking) => "stop",
 		nameof(AppKeys.CheckForUpdates) => "refresh",
-		nameof(AppKeys.OpenDonationLink) => "heart",
+		nameof(AppKeys.OpenReduxDonationLink) or nameof(AppKeys.OpenDonationLink) => "heart",
 		nameof(AppKeys.OpenAboutWindow) => "info",
 		nameof(AppKeys.OpenRepositoryPage) => "database",
 		_ => "terminal"
@@ -373,6 +373,8 @@ public partial class ReduxCommandPaletteWindow : AdonisUI.Controls.AdonisWindow
 		nameof(AppKeys.SpeakActiveModOrder) => "voice accessibility aloud",
 		nameof(AppKeys.StopSpeaking) => "voice accessibility silence",
 		nameof(AppKeys.CheckForUpdates) => "redux app new version",
+		nameof(AppKeys.OpenReduxDonationLink) => "support donate donation ko-fi circleain redux maintainer",
+		nameof(AppKeys.OpenDonationLink) => "support donate donation ko-fi laughingleader original upstream developer",
 		nameof(AppKeys.OpenAboutWindow) => "redux version information credits",
 		_ => String.Empty
 	};

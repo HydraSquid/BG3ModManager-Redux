@@ -216,7 +216,10 @@ public class AppKeys : ReactiveObject
 	[MenuSettings("Help", "Check for Updates")]
 	public Hotkey CheckForUpdates { get; private set; } = new Hotkey(Key.F7);
 
-	[MenuSettings("Help", "Open Donation Page (Ko-fi)...", Tooltip = "Open https://ko-fi.com/laughingleader to send a tip to the developer")]
+	[MenuSettings("Help", "Support circleain on Ko-fi...", Tooltip = "Support BG3 Mod Manager Redux at https://ko-fi.com/circleain")]
+	public Hotkey OpenReduxDonationLink { get; private set; } = new Hotkey(Key.None);
+
+	[MenuSettings("Help", "Support LaughingLeader on Ko-fi...", Tooltip = "Support the original BG3 Mod Manager developer at https://ko-fi.com/laughingleader")]
 	public Hotkey OpenDonationLink { get; private set; } = new Hotkey(Key.None);
 
 	[MenuSettings("Help", "About")]

@@ -307,6 +307,7 @@ public partial class MainViewControl : MainViewControlViewBase
 			// destinations live under Credits and Quick Links, while their hotkeys remain active.
 			if (menuSettings.Parent.Equals("Go", StringComparison.OrdinalIgnoreCase) ||
 				prop.Name == nameof(AppKeys.OpenCommandPalette) ||
+				prop.Name == nameof(AppKeys.OpenReduxDonationLink) ||
 				prop.Name == nameof(AppKeys.OpenDonationLink) ||
 				prop.Name == nameof(AppKeys.OpenRepositoryPage))
 			{
@@ -519,9 +520,9 @@ public partial class MainViewControl : MainViewControlViewBase
 			var reduxSupportItem = new MenuItem
 			{
 				Header = "Support circleain on Ko-fi",
+				Command = ViewModel.Keys.OpenReduxDonationLink.Command,
 				Icon = ReduxIcon.FromResource("Redux.Icon.Heart", true)
 			};
-			reduxSupportItem.Click += (_, _) => ProcessHelper.TryOpenUrl(DivinityApp.URL_REDUX_DONATION);
 			creditsMenu.Items.Add(reduxSupportItem);
 			creditsMenu.Items.Add(new Separator());
 			creditsMenu.Items.Add(new MenuItem

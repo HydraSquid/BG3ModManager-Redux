@@ -16,7 +16,6 @@
 	xmlns:primitives="clr-namespace:System.Windows.Controls.Primitives;assembly=PresentationFramework"
     xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
     xmlns:sys="clr-namespace:System;assembly=mscorlib"
-    xmlns:templateSelectors="clr-namespace:DivinityModManager.Controls.TemplateSelectors"
     xmlns:updates="clr-namespace:DivinityModManager.Models.Updates;assembly=DivinityModManagerCore"
     xmlns:xc="http://schemas.xceed.com/wpf/xaml/toolkit"
     xmlns:xcprimitives="clr-namespace:Xceed.Wpf.Toolkit.Primitives;assembly=DotNetProjects.Wpf.Extended.Toolkit"
@@ -1967,7 +1966,6 @@
 			</Setter.Value>
 		</Setter>
 	</Style>
-	<templateSelectors:TagTemplateSelector x:Key="TagTemplateSelector" />
 	<BitmapImage x:Key="AlertBar_Close" UriSource="pack://application:,,,/Resources/Icons/AlertBar_Close.png" />
 	<BitmapImage x:Key="AlertBar_Close_Hover" UriSource="pack://application:,,,/Resources/Icons/AlertBar_Close_Hover.png" />
 	<BitmapImage x:Key="AlertBar_Danger" UriSource="pack://application:,,,/Resources/Icons/AlertBar_Danger_16x.png" />
@@ -3047,36 +3045,19 @@
 			</Trigger>
 		</Style.Triggers>
 	</Style>
-	<!-- Legacy metadata tags now use the same semantic pill chrome as the rest of Redux. -->
-	<Style x:Key="ReduxLegacyTagChromeStyle" BasedOn="{StaticResource ReduxPillBaseStyle}" TargetType="{x:Type Border}">
+	<!-- Package/provider tags are quiet classification facts. Keep them subordinate to
+	     the category pills and semantic status indicators around them. -->
+	<Style x:Key="ReduxPackageTagChromeStyle" BasedOn="{StaticResource ReduxPillBaseStyle}" TargetType="{x:Type Border}">
 		<Setter Property="Margin" Value="0,0,5,4" />
 	</Style>
-	<Style x:Key="ReduxLegacyTagTextStyle" BasedOn="{StaticResource Redux.Text.Body}" TargetType="{x:Type TextBlock}">
+	<Style x:Key="ReduxPackageTagTextStyle" BasedOn="{StaticResource Redux.Text.Body}" TargetType="{x:Type TextBlock}">
 		<Setter Property="FontSize" Value="{DynamicResource Redux.FontSize.11}" />
 	</Style>
-	<DataTemplate x:Key="TagTemplate">
-		<Border Style="{StaticResource ReduxLegacyTagChromeStyle}"
-			Background="{DynamicResource ReduxInfoPillBackground}"
-			BorderBrush="{DynamicResource ReduxInfoBrush}">
-			<TextBlock Style="{StaticResource ReduxLegacyTagTextStyle}"
-				Foreground="{DynamicResource ReduxInfoBrush}"
-				Text="{Binding}" />
-		</Border>
-	</DataTemplate>
-	<DataTemplate x:Key="ModeTagTemplate">
-		<Border Style="{StaticResource ReduxLegacyTagChromeStyle}"
-			Background="{DynamicResource ReduxAccentPillBackground}"
-			BorderBrush="{DynamicResource ReduxAccentBrush}">
-			<TextBlock Style="{StaticResource ReduxLegacyTagTextStyle}"
-				Foreground="{DynamicResource ReduxAccentBrush}"
-				Text="{Binding}" />
-		</Border>
-	</DataTemplate>
-	<DataTemplate x:Key="CustomTagTemplate">
-		<Border Style="{StaticResource ReduxLegacyTagChromeStyle}"
+	<DataTemplate x:Key="ReduxPackageTagTemplate">
+		<Border Style="{StaticResource ReduxPackageTagChromeStyle}"
 			Background="{DynamicResource ReduxSurfaceMutedBrush}"
 			BorderBrush="{DynamicResource ReduxBorderStrongBrush}">
-			<TextBlock Style="{StaticResource ReduxLegacyTagTextStyle}"
+			<TextBlock Style="{StaticResource ReduxPackageTagTextStyle}"
 				Foreground="{DynamicResource ReduxTextSecondaryBrush}"
 				Text="{Binding}" />
 		</Border>
@@ -3622,6 +3603,13 @@
 					<TextBlock Grid.Row="2" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Source updated" /><TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Metadata.UpdatedLabel}" />
 					<TextBlock Grid.Row="3" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Linked packages" /><TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SourceComponentCount}" />
 				</Grid>
+				<ItemsControl Margin="6,0,6,2"
+					ItemTemplate="{StaticResource ReduxPackageTagTemplate}"
+					ItemsSource="{Binding Tags}">
+					<ItemsControl.ItemsPanel>
+						<ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+					</ItemsControl.ItemsPanel>
+				</ItemsControl>
 			</StackPanel>
 			<StackPanel Margin="2,5,2,2" Orientation="Vertical" Visibility="{Binding DependencyVisibility, FallbackValue=Collapsed}">
 				<TextBlock Margin="2,0,2,5" FontWeight="SemiBold" Text="Dependencies" />
@@ -3660,22 +3648,6 @@
 						</ListBox.Style>
 					</ListBox>
 				</Border>
-			</StackPanel>
-			<StackPanel Margin="2" DataContext="{Binding}" Orientation="Vertical">
-				<ItemsControl Margin="0,0,0,-4" ItemTemplateSelector="{StaticResource TagTemplateSelector}" ItemsSource="{Binding Tags}">
-					<ItemsControl.ItemsPanel>
-						<ItemsPanelTemplate>
-							<WrapPanel />
-						</ItemsPanelTemplate>
-					</ItemsControl.ItemsPanel>
-					<ItemsControl.Style>
-						<Style>
-							<Style.Triggers>
-								<DataTrigger Binding="{Binding}" />
-							</Style.Triggers>
-						</Style>
-					</ItemsControl.Style>
-				</ItemsControl>
 			</StackPanel>
 			<TextBlock Margin="6,4" Foreground="{DynamicResource ReduxWarningBrush}" Text="{Binding ScriptExtenderSupportToolTipText}" Visibility="{Binding ExtenderStatusVisibility}" />
 			<StackPanel Margin="2" Orientation="Vertical" Visibility="{Binding IsForceLoaded, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}">

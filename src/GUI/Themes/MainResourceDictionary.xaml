@@ -2754,7 +2754,7 @@
 										<Style TargetType="{x:Type Border}">
 											<Setter Property="Visibility" Value="Visible" />
 											<Style.Triggers>
-												<DataTrigger Binding="{Binding DataContext.Settings.ReduceMotion, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}" Value="True">
+								<DataTrigger Binding="{Binding Path=(dapp:DivinityApp.ReduceMotionEnabled)}" Value="True">
 													<Setter Property="Visibility" Value="Collapsed" />
 												</DataTrigger>
 											</Style.Triggers>
@@ -2780,7 +2780,7 @@
 						<MultiDataTrigger>
 							<MultiDataTrigger.Conditions>
 								<Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
-								<Condition Binding="{Binding DataContext.Settings.ReduceMotion, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}" Value="False" />
+								<Condition Binding="{Binding Path=(dapp:DivinityApp.ReduceMotionEnabled)}" Value="False" />
 							</MultiDataTrigger.Conditions>
 							<MultiDataTrigger.EnterActions>
 								<BeginStoryboard>
@@ -2816,7 +2816,7 @@
 						<MultiDataTrigger>
 							<MultiDataTrigger.Conditions>
 								<Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
-								<Condition Binding="{Binding DataContext.Settings.ReduceMotion, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}" Value="True" />
+								<Condition Binding="{Binding Path=(dapp:DivinityApp.ReduceMotionEnabled)}" Value="True" />
 							</MultiDataTrigger.Conditions>
 							<Setter TargetName="RowHoverSurface" Property="Opacity" Value="0.62" />
 							<Setter TargetName="RowHoverRail" Property="Opacity" Value="1" />

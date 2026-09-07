@@ -1,4 +1,6 @@
 using DivinityModManager.AppServices;
+using DivinityModManager.Models;
+using DivinityModManager.Models.NexusMods;
 using DivinityModManager.Util;
 using DivinityModManager.ViewModels;
 
@@ -12,18 +14,24 @@ namespace DivinityModManager.Views;
 public sealed record ReduxGameDirectoryModListItem(
 	ReduxGameDirectoryModEntry Entry,
 	string FileSummary,
-	bool HasSource)
+	string SourceUrl,
+	string Summary,
+	string DetailsText,
+	string ThumbnailUrl)
 {
-	public string Name => Entry.Name;
+	public string Name { get; init; } = Entry.Name;
 	public ReduxGameDirectoryModStatus Status => Entry.Status;
 	public string StatusText => Entry.StatusText;
 	public bool CanRestore => Entry.CanRestore;
+	public bool HasSource => !String.IsNullOrWhiteSpace(SourceUrl);
 }
 
 public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.AdonisWindow
 {
 	private readonly MainWindowViewModel _viewModel;
 	private readonly ReduxGameDirectoryInstallService _installer;
+	private readonly Dictionary<long, NexusModsModData> _sourceDetails = new();
+	private readonly CancellationTokenSource _sourceDetailsCancellation = new();
 
 	public ReduxGameDirectoryModManagerWindow(MainWindow owner, MainWindowViewModel viewModel)
 	{
@@ -37,6 +45,8 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 		_installer = CreateInstaller(viewModel);
 		GamePathText.Text = _installer.GameBin;
 		RefreshList();
+		Loaded += async (_, _) => await LoadSourceDetailsAsync();
+		Closed += (_, _) => _sourceDetailsCancellation.Cancel();
 	}
 
 	public static bool CanOpen(MainWindowViewModel viewModel) =>
@@ -156,15 +166,7 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 	{
 		try
 		{
-			var entries = _installer.GetInstalledMods().Select(entry => new ReduxGameDirectoryModListItem(
-				entry,
-				entry.Files.Count == 0 ? "Open Recovery Files for details"
-					: String.Join(" · ", new[]
-					{
-						String.IsNullOrWhiteSpace(entry.ArchiveName) ? null : entry.ArchiveName,
-						String.Join(", ", entry.Files.Select(path => Path.GetFileName(path)))
-					}.Where(value => !String.IsNullOrWhiteSpace(value))),
-				Uri.TryCreate(entry.SourceUrl, UriKind.Absolute, out _))).ToArray();
+			var entries = _installer.GetInstalledMods().Select(CreateListItem).ToArray();
 			InstalledList.ItemsSource = entries;
 			InstalledList.Visibility = entries.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
 			EmptyText.Visibility = entries.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -176,6 +178,77 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 			EmptyText.Visibility = Visibility.Visible;
 			EmptyText.Text = $"Redux could not safely read game-directory install state.\n{ex.Message}";
 		}
+	}
+
+	private ReduxGameDirectoryModListItem CreateListItem(ReduxGameDirectoryModEntry entry)
+	{
+		var definition = ReduxGameDirectoryModCatalog.Find(entry.NexusModId);
+		var metadata = ResolveSourceDetails(entry.NexusModId);
+		var sourceUrl = !String.IsNullOrWhiteSpace(entry.SourceUrl) ? entry.SourceUrl : definition?.SourceUrl ?? String.Empty;
+		var summary = !String.IsNullOrWhiteSpace(metadata?.Summary) ? metadata.Summary.Trim()
+			: definition?.Requirements ?? (entry.Status == ReduxGameDirectoryModStatus.RecoveryRequired
+				? "Redux found an interrupted game-directory operation that needs attention."
+				: "Native files detected in the game directory.");
+		var kind = definition?.Kind switch
+		{
+			ReduxGameDirectoryModKind.NativeLoader => "Native loader",
+			ReduxGameDirectoryModKind.NativePlugin => "Native plugin",
+			ReduxGameDirectoryModKind.ExistingReduxWorkflow => "Script Extender",
+			_ => "Game-directory files"
+		};
+		var creator = !String.IsNullOrWhiteSpace(metadata?.Author) ? metadata.Author : metadata?.UploadedBy;
+		var details = String.Join(" · ", new[]
+		{
+			kind,
+			String.IsNullOrWhiteSpace(sourceUrl) ? null : "Nexus Mods",
+			String.IsNullOrWhiteSpace(creator) ? null : $"by {creator}",
+			String.IsNullOrWhiteSpace(metadata?.Version) ? null : $"v{metadata.Version}",
+			metadata?.UpdatedAt is DateTime updated ? $"Updated {updated:g}" : null
+		}.Where(value => !String.IsNullOrWhiteSpace(value)));
+		var files = entry.Files.Count == 0 ? "No installed-file details are available"
+			: String.Join(" · ", new[]
+			{
+				String.IsNullOrWhiteSpace(entry.ArchiveName) ? null : entry.ArchiveName,
+				String.Join(", ", entry.Files.Select(path => Path.GetFileName(path)))
+			}.Where(value => !String.IsNullOrWhiteSpace(value)));
+		return new ReduxGameDirectoryModListItem(entry, files, sourceUrl, summary, details,
+			metadata?.PreviewImageUrl ?? String.Empty)
+		{
+			Name = !String.IsNullOrWhiteSpace(metadata?.Name) ? metadata.Name.Trim() : entry.Name
+		};
+	}
+
+	private NexusModsModData ResolveSourceDetails(long nexusModId)
+	{
+		if (nexusModId < DivinityApp.NEXUSMODS_MOD_ID_START) return null;
+		if (_sourceDetails.TryGetValue(nexusModId, out var loaded)) return loaded;
+		return _viewModel.UpdateHandler.Nexus.CacheData.Mods.Values
+			.Where(metadata => metadata?.ModId == nexusModId)
+			.OrderByDescending(metadata => metadata.IsUpdated)
+			.FirstOrDefault();
+	}
+
+	private async Task LoadSourceDetailsAsync()
+	{
+		if (!_viewModel.Modules.SourceIntegrationsEnabled || !_viewModel.UpdateHandler.Nexus.IsEnabled
+			|| !NexusModsDataLoader.CanFetchData) return;
+		var projectIds = _installer.GetInstalledMods()
+			.Select(entry => entry.NexusModId)
+			.Where(id => id >= DivinityApp.NEXUSMODS_MOD_ID_START && ResolveSourceDetails(id) == null)
+			.Distinct().ToArray();
+		if (projectIds.Length == 0) return;
+
+		var probes = projectIds.Select(id =>
+		{
+			var mod = new DivinityModData { UUID = $"redux-game-directory-{id}" };
+			mod.NexusModsData.SetModVersion(id);
+			return mod;
+		}).ToArray();
+		var result = await NexusModsDataLoader.LoadAllModsDataAsync(probes, _sourceDetailsCancellation.Token);
+		if (_sourceDetailsCancellation.IsCancellationRequested || !IsLoaded) return;
+		foreach (var mod in result.UpdatedMods.Where(mod => mod?.NexusModsData?.ModId >= DivinityApp.NEXUSMODS_MOD_ID_START))
+			_sourceDetails[mod.NexusModsData.ModId] = mod.NexusModsData;
+		if (_sourceDetails.Count > 0) RefreshList();
 	}
 
 	private async void InstallButton_Click(object sender, RoutedEventArgs e)
@@ -222,7 +295,7 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 	private void SourceButton_Click(object sender, RoutedEventArgs e)
 	{
 		if (sender is FrameworkElement { DataContext: ReduxGameDirectoryModListItem item } && item.HasSource)
-			ProcessHelper.TryOpenUrl(item.Entry.SourceUrl);
+			ProcessHelper.TryOpenUrl(item.SourceUrl);
 	}
 
 	private void OpenGameFolderButton_Click(object sender, RoutedEventArgs e) =>

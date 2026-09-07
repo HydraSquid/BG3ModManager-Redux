@@ -4,6 +4,7 @@
 	xmlns:adonisUI="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
 	xmlns:controls="clr-namespace:DivinityModManager.Controls"
 	xmlns:dapp="clr-namespace:DivinityModManager;assembly=DivinityModManagerCore"
+	xmlns:util="clr-namespace:DivinityModManager.Util"
 	xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
 	Title="Save Game Manager" Width="820" Height="620" MinWidth="680" MinHeight="480"
 	AllowDrop="True" Drop="Window_Drop" DragOver="Window_DragOver"
@@ -31,14 +32,50 @@
 				<Setter Property="Template">
 					<Setter.Value>
 						<ControlTemplate TargetType="{x:Type ListBoxItem}">
-							<Border x:Name="Card" Padding="9" Background="{DynamicResource ReduxSurfaceBrush}"
+							<Border x:Name="Card" Background="{DynamicResource ReduxSurfaceBrush}"
 								BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1"
-								CornerRadius="{DynamicResource Redux.CornerRadius.Control}">
-								<ContentPresenter />
+								CornerRadius="{DynamicResource Redux.CornerRadius.Control}" ClipToBounds="True"
+								RenderTransformOrigin="0.5,0.5" util:ReduxWindowBehavior.HoverLift="1">
+								<Border.RenderTransform><TranslateTransform Y="0" /></Border.RenderTransform>
+								<Grid>
+									<Border x:Name="SelectionSurface" Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
+										Background="{DynamicResource ReduxAccentSoftBrush}"
+										CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}"
+										OpacityMask="{StaticResource Redux.Hover.WashMask}" IsHitTestVisible="False" Opacity="0" />
+									<Border x:Name="SelectionRail" Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
+										BorderBrush="{DynamicResource ReduxAccentBrush}" BorderThickness="{DynamicResource Redux.Rail.Thickness}"
+										CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}" IsHitTestVisible="False" Opacity="0" />
+									<Border x:Name="HoverSurface" Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
+										Background="{DynamicResource ReduxAccentSoftBrush}"
+										CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}"
+										OpacityMask="{StaticResource Redux.Hover.WashMask}" IsHitTestVisible="False" Opacity="0" />
+									<Border x:Name="HoverRail" Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
+										BorderBrush="{DynamicResource ReduxAccentBrush}" BorderThickness="{DynamicResource Redux.Rail.Thickness}"
+										CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}" IsHitTestVisible="False" Opacity="0" />
+									<ContentPresenter Margin="9" />
+								</Grid>
 							</Border>
 							<ControlTemplate.Triggers>
-								<Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Card" Property="Background" Value="{DynamicResource ReduxSurfaceElevatedBrush}" /></Trigger>
-								<Trigger Property="IsSelected" Value="True"><Setter TargetName="Card" Property="Background" Value="{DynamicResource ReduxAccentSoftBrush}" /><Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource ReduxAccentBrush}" /></Trigger>
+								<Trigger Property="IsMouseOver" Value="True">
+									<Setter TargetName="Card" Property="BorderBrush" Value="Transparent" />
+									<Trigger.EnterActions><BeginStoryboard><Storyboard>
+										<DoubleAnimation Storyboard.TargetName="HoverSurface" Storyboard.TargetProperty="Opacity" To="0.62"
+											Duration="{StaticResource Redux.Motion.Fast}" EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
+										<DoubleAnimation Storyboard.TargetName="HoverRail" Storyboard.TargetProperty="Opacity" To="1"
+											Duration="{StaticResource Redux.Motion.Fast}" EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
+									</Storyboard></BeginStoryboard></Trigger.EnterActions>
+									<Trigger.ExitActions><BeginStoryboard><Storyboard>
+										<DoubleAnimation Storyboard.TargetName="HoverSurface" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Redux.Motion.Standard}" />
+										<DoubleAnimation Storyboard.TargetName="HoverRail" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Redux.Motion.Standard}" />
+									</Storyboard></BeginStoryboard></Trigger.ExitActions>
+								</Trigger>
+								<Trigger Property="IsSelected" Value="True">
+									<Setter TargetName="Card" Property="BorderBrush" Value="Transparent" />
+									<Setter TargetName="SelectionSurface" Property="Opacity" Value="0.62" />
+									<Setter TargetName="SelectionRail" Property="Opacity" Value="1" />
+									<Setter TargetName="HoverSurface" Property="Background" Value="Transparent" />
+									<Setter TargetName="HoverRail" Property="BorderBrush" Value="Transparent" />
+								</Trigger>
 							</ControlTemplate.Triggers>
 						</ControlTemplate>
 					</Setter.Value>
@@ -62,12 +99,18 @@
 									Background="Transparent" BorderThickness="0" Cursor="Hand" FocusVisualStyle="{x:Null}">
 									<ToggleButton.Template>
 										<ControlTemplate TargetType="{x:Type ToggleButton}">
-											<Border x:Name="HeaderSurface" Padding="7,6" Background="Transparent" CornerRadius="{DynamicResource Redux.CornerRadius.Control}">
-												<Grid>
+										<Border x:Name="HeaderSurface" Background="Transparent" CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
+											RenderTransformOrigin="0.5,0.5" util:ReduxWindowBehavior.HoverLift="1">
+											<Border.RenderTransform><TranslateTransform Y="0" /></Border.RenderTransform>
+											<Grid>
+												<Border x:Name="HeaderHoverSurface" Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
+													Background="{DynamicResource ReduxAccentSoftBrush}" CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}"
+													OpacityMask="{StaticResource Redux.Hover.WashMask}" IsHitTestVisible="False" Opacity="0" />
+												<Grid Margin="7,6">
 													<Grid.ColumnDefinitions><ColumnDefinition Width="20" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
 													<controls:ReduxIcon Width="14" Height="14" VerticalAlignment="Center"
-														Foreground="{DynamicResource ReduxAccentHoverBrush}" StrokeData="{StaticResource Redux.Icon.ChevronRightStroke}"
-														RenderTransformOrigin="0.5,0.5">
+													Foreground="{DynamicResource ReduxAccentHoverBrush}" StrokeData="{StaticResource Redux.Icon.ChevronRightStroke}"
+													RenderTransformOrigin="0.5,0.5">
 														<controls:ReduxIcon.Style>
 															<Style BasedOn="{StaticResource {x:Type controls:ReduxIcon}}" TargetType="{x:Type controls:ReduxIcon}">
 																<Setter Property="RenderTransform"><Setter.Value><RotateTransform Angle="0" /></Setter.Value></Setter>
@@ -88,10 +131,19 @@
 													</controls:ReduxIcon>
 													<ContentPresenter Grid.Column="1" VerticalAlignment="Center" ContentSource="Content" />
 												</Grid>
-											</Border>
-											<ControlTemplate.Triggers>
-												<Trigger Property="IsMouseOver" Value="True"><Setter TargetName="HeaderSurface" Property="Background" Value="{DynamicResource ReduxSurfaceElevatedBrush}" /></Trigger>
-											</ControlTemplate.Triggers>
+											</Grid>
+										</Border>
+										<ControlTemplate.Triggers>
+											<Trigger Property="IsMouseOver" Value="True">
+												<Trigger.EnterActions><BeginStoryboard><Storyboard>
+													<DoubleAnimation Storyboard.TargetName="HeaderHoverSurface" Storyboard.TargetProperty="Opacity" To="0.45"
+														Duration="{StaticResource Redux.Motion.Fast}" EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
+												</Storyboard></BeginStoryboard></Trigger.EnterActions>
+												<Trigger.ExitActions><BeginStoryboard><Storyboard>
+													<DoubleAnimation Storyboard.TargetName="HeaderHoverSurface" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Redux.Motion.Standard}" />
+												</Storyboard></BeginStoryboard></Trigger.ExitActions>
+											</Trigger>
+										</ControlTemplate.Triggers>
 										</ControlTemplate>
 									</ToggleButton.Template>
 									<ContentPresenter ContentSource="Header" />

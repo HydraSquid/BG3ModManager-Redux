@@ -53,12 +53,19 @@
 				<Setter Property="Template">
 					<Setter.Value>
 						<ControlTemplate TargetType="{x:Type ListBoxItem}">
-							<Border x:Name="RowChrome" MinHeight="58" Background="{DynamicResource ReduxSurfaceBrush}"
+							<Border x:Name="RowChrome" MinHeight="78" Background="{DynamicResource ReduxSurfaceBrush}"
 								BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1"
 								CornerRadius="{DynamicResource Redux.CornerRadius.Control}" ClipToBounds="True"
 								util:ReduxWindowBehavior.HoverLift="1" RenderTransformOrigin="0.5,0.5">
 								<Border.RenderTransform><TranslateTransform Y="0" /></Border.RenderTransform>
 								<Grid>
+									<Border x:Name="SelectionSurface" Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
+										Background="{DynamicResource ReduxAccentSoftBrush}"
+										CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}"
+										OpacityMask="{StaticResource Redux.Hover.WashMask}" IsHitTestVisible="False" Opacity="0" />
+									<Border x:Name="SelectionRail" Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
+										BorderBrush="{DynamicResource ReduxAccentBrush}" BorderThickness="{DynamicResource Redux.Rail.Thickness}"
+										CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}" IsHitTestVisible="False" Opacity="0" />
 									<Border x:Name="HoverSurface" Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
 										Background="{DynamicResource ReduxAccentSoftBrush}"
 										CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}"
@@ -86,8 +93,11 @@
 									</Storyboard></BeginStoryboard></Trigger.ExitActions>
 								</Trigger>
 								<Trigger Property="IsSelected" Value="True">
-									<Setter TargetName="HoverSurface" Property="Opacity" Value="0.62" />
-									<Setter TargetName="HoverRail" Property="Opacity" Value="1" />
+									<Setter TargetName="RowChrome" Property="BorderBrush" Value="Transparent" />
+									<Setter TargetName="SelectionSurface" Property="Opacity" Value="0.62" />
+									<Setter TargetName="SelectionRail" Property="Opacity" Value="1" />
+									<Setter TargetName="HoverSurface" Property="Background" Value="Transparent" />
+									<Setter TargetName="HoverRail" Property="BorderBrush" Value="Transparent" />
 								</Trigger>
 							</ControlTemplate.Triggers>
 						</ControlTemplate>
@@ -95,17 +105,29 @@
 				</Setter>
 			</Style>
 			<DataTemplate x:Key="InstalledModTemplate">
-				<Border Padding="12,8" Background="Transparent">
+				<Border Padding="10,8" Background="Transparent">
 					<Grid>
 						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="52" />
 							<ColumnDefinition Width="*" />
 							<ColumnDefinition Width="Auto" />
 						</Grid.ColumnDefinitions>
-						<StackPanel>
-							<StackPanel Orientation="Horizontal">
+						<Border Width="52" Height="52" VerticalAlignment="Center"
+							Background="{DynamicResource ReduxSurfaceMutedBrush}"
+							BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1"
+							CornerRadius="{DynamicResource Redux.CornerRadius.Control}" ClipToBounds="True">
+							<Grid>
+								<controls:ReduxIcon Width="20" Height="20" Foreground="{DynamicResource ReduxTextMutedBrush}"
+									StrokeData="{StaticResource Redux.Icon.Blocks}" />
+								<Image Source="{Binding ThumbnailUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+							</Grid>
+						</Border>
+						<StackPanel Grid.Column="1" Margin="11,0,0,0" VerticalAlignment="Center">
+							<Grid>
+								<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
 								<TextBlock VerticalAlignment="Center" FontWeight="SemiBold" FontSize="{DynamicResource Redux.FontSize.12}"
-									Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="{Binding Name}" />
-								<Border x:Name="StatusPill" Margin="8,0,0,0" Style="{StaticResource ReduxStatusPillBaseStyle}"
+									Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+								<Border x:Name="StatusPill" Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource ReduxStatusPillBaseStyle}"
 									Background="{DynamicResource ReduxSuccessPillBackground}" BorderBrush="{DynamicResource ReduxSuccessBrush}"
 									BorderThickness="1.5">
 									<StackPanel Orientation="Horizontal">
@@ -115,11 +137,15 @@
 											FontWeight="SemiBold" Text="{Binding StatusText}" />
 									</StackPanel>
 								</Border>
-							</StackPanel>
-							<TextBlock Margin="0,3,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}"
+							</Grid>
+							<TextBlock Margin="0,3,0,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}"
+								Text="{Binding Summary}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Summary}" />
+							<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}"
+								Text="{Binding DetailsText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding DetailsText}" />
+							<TextBlock Margin="0,2,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}"
 								Text="{Binding FileSummary}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FileSummary}" />
 						</StackPanel>
-						<StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Orientation="Horizontal">
+						<StackPanel Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" Orientation="Horizontal">
 							<Button Margin="0,0,6,0" Padding="9,5" Style="{StaticResource ReduxSourceButtonStyle}"
 								Click="SourceButton_Click" IsEnabled="{Binding HasSource}">
 								<StackPanel Orientation="Horizontal">

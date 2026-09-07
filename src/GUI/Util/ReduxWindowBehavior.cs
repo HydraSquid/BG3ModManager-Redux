@@ -930,6 +930,28 @@ public static class ReduxWindowBehavior
 		}
 		state.PreviousEffect = null;
 		state.PreviousOpacity = 1;
+		RestoreOwnerActivation(owner);
+	}
+
+	private static void RestoreOwnerActivation(Window owner)
+	{
+		if (owner == null || !owner.IsVisible || owner.WindowState == WindowState.Minimized)
+		{
+			return;
+		}
+
+		// Closing and hiding owned windows can leave Windows without an active Redux
+		// surface. Defer until WPF has completed the native dismissal and re-enabled a
+		// modal owner; activating synchronously from Closed/Hide can be immediately undone.
+		owner.Dispatcher.BeginInvoke(new Action(() =>
+		{
+			if (!owner.IsVisible || owner.WindowState == WindowState.Minimized || !owner.IsEnabled)
+			{
+				return;
+			}
+			owner.Activate();
+			owner.Focus();
+		}), System.Windows.Threading.DispatcherPriority.ContextIdle);
 	}
 
 	private static void RefreshActiveBackdrops()

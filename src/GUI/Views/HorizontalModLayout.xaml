@@ -1972,8 +1972,18 @@
 								<ColumnDefinition Width="Auto" />
 							</Grid.ColumnDefinitions>
 							<c:ReduxIcon Width="13" Height="13" Margin="0,0,7,0" VerticalAlignment="Center"
-								IconKey="shield-alert" Foreground="{Binding OverrideModsCategoryColor, Converter={StaticResource StringToSolidBrushConverter}}"
-								Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
+								IconKey="{Binding OverrideModsCategoryIcon}"
+								Foreground="{Binding OverrideModsCategoryColor, Converter={StaticResource StringToSolidBrushConverter}}">
+								<c:ReduxIcon.Style>
+									<Style BasedOn="{StaticResource ReduxOptionalInterfaceIconStyle}" TargetType="{x:Type c:ReduxIcon}">
+										<Style.Triggers>
+											<DataTrigger Binding="{Binding OverrideModsCategoryHasIcon}" Value="False">
+												<Setter Property="Visibility" Value="Collapsed" />
+											</DataTrigger>
+										</Style.Triggers>
+									</Style>
+								</c:ReduxIcon.Style>
+							</c:ReduxIcon>
 							<TextBlock Grid.Column="1" VerticalAlignment="Center"
 								FontSize="{DynamicResource Redux.FontSize.12}" FontWeight="SemiBold" Text="Override Mods">
 								<TextBlock.Style>

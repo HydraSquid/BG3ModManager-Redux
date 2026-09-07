@@ -597,7 +597,15 @@
 							<Style BasedOn="{StaticResource ReduxMenuItemStyle}" TargetType="{x:Type MenuItem}" />
 						</Menu.Resources>
 						<MenuItem x:Name="FileMenuItem" Header="File" />
-						<MenuItem x:Name="EditMenuItem" Header="Edit" />
+						<MenuItem x:Name="EditMenuItem" Header="Edit">
+							<MenuItem Command="{Binding Keys.OpenCommandPalette.Command}"
+								Header="Quick Access..."
+								InputGestureText="{Binding Keys.OpenCommandPalette.MenuDisplayBindingText}"
+								ToolTip="Find an action, mod, profile, order, or category.">
+								<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Flash}" /></MenuItem.Icon>
+							</MenuItem>
+							<Separator />
+						</MenuItem>
 						<MenuItem x:Name="SettingsMenuItem" Header="Settings" />
 						<MenuItem x:Name="AccessibilityMenuItem" Header="Accessibility" />
 						<MenuItem x:Name="ToolsMenuItem" Header="Tools" Style="{StaticResource MenuItemHighlightBlink}" />
@@ -758,20 +766,7 @@
 								<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Desktop}" /></MenuItem.Icon>
 							</MenuItem>
 						</MenuItem>
-						<MenuItem Header="Shortcuts">
-							<MenuItem Command="{Binding Keys.OpenCommandPalette.Command}"
-								Header="Quick Access..."
-								InputGestureText="{Binding Keys.OpenCommandPalette.MenuDisplayBindingText}"
-								ToolTip="Find an action, mod, profile, order, or category.">
-								<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Flash}" /></MenuItem.Icon>
-							</MenuItem>
-							<MenuItem Command="{Binding Keys.OpenThemeAppearance.Command}"
-								Header="Theme &amp; Appearance..."
-								InputGestureText="{Binding Keys.OpenThemeAppearance.MenuDisplayBindingText}"
-								ToolTip="{Binding Keys.OpenThemeAppearance.Description}">
-								<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.ColorPalette}" /></MenuItem.Icon>
-							</MenuItem>
-							<Separator />
+						<MenuItem Header="Quick Links">
 							<MenuItem Header="FOLDERS" IsEnabled="False" />
 							<MenuItem Command="{Binding Keys.OpenModsFolder.Command}" Header="Mods Folder" InputGestureText="{Binding Keys.OpenModsFolder.MenuDisplayBindingText}">
 								<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" /></MenuItem.Icon>

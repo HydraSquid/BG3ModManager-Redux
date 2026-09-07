@@ -430,16 +430,6 @@ public partial class MainViewControl : MainViewControlViewBase
 			accessibilityMenuItem.Items.Add(reduceMotionItem);
 			accessibilityMenuItem.Items.Add(disableBackgroundEffectsItem);
 
-			var keyboardShortcutsItem = new MenuItem
-			{
-				Header = "Keyboard Shortcuts...",
-				Command = ViewModel.Keys.OpenKeybindings.Command,
-				ToolTip = "Open Preferences to customize keyboard shortcuts.",
-				Icon = ReduxIcon.FromResource("Redux.Icon.Key", true)
-			};
-
-			accessibilityMenuItem.Items.Add(new Separator());
-			accessibilityMenuItem.Items.Add(keyboardShortcutsItem);
 		}
 
 		if (menuItems.TryGetValue("Tools", out var toolsMenuItem))

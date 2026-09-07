@@ -152,7 +152,7 @@ public class AppKeys : ReactiveObject
 	public Hotkey OpenKeybindings { get; private set; } = new Hotkey(Key.K, ModifierKeys.Control);
 
 	[MenuSettings(
-		"Shortcuts",
+		"Edit",
 		"Quick Access...",
 		false,
 		"Find an action, mod, profile, order, or category.")]

@@ -61,6 +61,13 @@
 				<Setter Property="Foreground" Value="{DynamicResource ReduxTextMutedBrush}" />
 				<Setter Property="TextWrapping" Value="Wrap" />
 			</Style>
+			<Style x:Key="WelcomeFeatureCardStyle" TargetType="Border">
+				<Setter Property="Padding" Value="10" />
+				<Setter Property="Background" Value="{DynamicResource ReduxSurfaceElevatedBrush}" />
+				<Setter Property="BorderBrush" Value="{DynamicResource ReduxBorderBrush}" />
+				<Setter Property="BorderThickness" Value="1" />
+				<Setter Property="CornerRadius" Value="{DynamicResource Redux.CornerRadius.Control}" />
+			</Style>
 			<Style x:Key="WelcomeThemeCardStyle" TargetType="RadioButton">
 				<Setter Property="Margin" Value="0,0,8,0" />
 				<Setter Property="Cursor" Value="Hand" />
@@ -206,6 +213,46 @@
 										</Grid>
 									</RadioButton>
 								</UniformGrid>
+							</StackPanel>
+						</Border>
+
+						<Border Margin="0,0,0,10" Style="{StaticResource WelcomeSectionStyle}">
+							<StackPanel>
+								<TextBlock Style="{StaticResource WelcomeSectionTitleStyle}" Text="A quick map of Redux" />
+								<TextBlock Margin="0,3,0,0"
+									Foreground="{DynamicResource ReduxTextMutedBrush}"
+									Text="The essentials stay close at hand; deeper tools remain available when you need them."
+									TextWrapping="Wrap" />
+								<Grid Margin="0,9,0,0">
+									<Grid.ColumnDefinitions>
+										<ColumnDefinition Width="*" />
+										<ColumnDefinition Width="8" />
+										<ColumnDefinition Width="*" />
+										<ColumnDefinition Width="8" />
+										<ColumnDefinition Width="*" />
+									</Grid.ColumnDefinitions>
+									<Border Style="{StaticResource WelcomeFeatureCardStyle}">
+										<StackPanel>
+											<controls:ReduxIcon Width="17" Height="17" HorizontalAlignment="Left" Foreground="{DynamicResource ReduxAccentHoverBrush}" StrokeData="{DynamicResource Redux.Icon.ReorderStroke}" />
+											<TextBlock Margin="0,7,0,0" Style="{StaticResource WelcomeChoiceTitleStyle}" Text="Arrange with confidence" />
+											<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}" Text="Install mods, organize categories and separators, then undo or redo list changes when needed." />
+										</StackPanel>
+									</Border>
+									<Border Grid.Column="2" Style="{StaticResource WelcomeFeatureCardStyle}">
+										<StackPanel>
+											<controls:ReduxIcon Width="17" Height="17" HorizontalAlignment="Left" Foreground="{DynamicResource ReduxSuccessBrush}" StrokeData="{DynamicResource Redux.Icon.Save}" />
+											<TextBlock Margin="0,7,0,0" Style="{StaticResource WelcomeChoiceTitleStyle}" Text="Save, then apply" />
+											<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}" Text="Save Current Order keeps your Redux order. Sync Load Order to Game applies its changes to Baldur's Gate 3." />
+										</StackPanel>
+									</Border>
+									<Border Grid.Column="4" Style="{StaticResource WelcomeFeatureCardStyle}">
+										<StackPanel>
+											<controls:ReduxIcon Width="17" Height="17" HorizontalAlignment="Left" Foreground="{DynamicResource ReduxInfoBrush}" StrokeData="{DynamicResource Redux.Icon.Package}" />
+											<TextBlock Margin="0,7,0,0" Style="{StaticResource WelcomeChoiceTitleStyle}" Text="Use more when useful" />
+											<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}" Text="Manage saves, share Redux Modlists, and review built-in Mod Diagnostics. The optional Advisor adds ordering guidance." />
+										</StackPanel>
+									</Border>
+								</Grid>
 							</StackPanel>
 						</Border>
 

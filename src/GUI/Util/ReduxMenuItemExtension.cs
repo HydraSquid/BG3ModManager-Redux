@@ -262,15 +262,20 @@ public static class ReduxMenuItemExtension
 			|| header.StartsWith("Stop ", StringComparison.OrdinalIgnoreCase);
 	}
 
-	private static bool IsPositiveCommitAction(string header)
+	public static bool IsPositiveCommitAction(string header)
 	{
 		if (String.IsNullOrWhiteSpace(header)) return false;
 
-		return (header.StartsWith("Save ", StringComparison.OrdinalIgnoreCase)
-				&& !header.EndsWith(" Folder", StringComparison.OrdinalIgnoreCase))
+		return IsSaveCommitAction(header)
 			|| header.StartsWith("Export ", StringComparison.OrdinalIgnoreCase)
 			|| header.StartsWith("Sync ", StringComparison.OrdinalIgnoreCase)
 			|| header.StartsWith("Back Up ", StringComparison.OrdinalIgnoreCase)
 			|| header.StartsWith("Generate Redux Database Contribution", StringComparison.OrdinalIgnoreCase);
 	}
+
+	private static bool IsSaveCommitAction(string header) =>
+		header.Equals("Save", StringComparison.OrdinalIgnoreCase)
+		|| header.StartsWith("Save Current ", StringComparison.OrdinalIgnoreCase)
+		|| header.StartsWith("Save Load Order ", StringComparison.OrdinalIgnoreCase)
+		|| header.StartsWith("Save as ", StringComparison.OrdinalIgnoreCase);
 }

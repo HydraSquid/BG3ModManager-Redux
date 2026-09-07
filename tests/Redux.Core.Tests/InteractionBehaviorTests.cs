@@ -140,4 +140,12 @@ public sealed class InteractionBehaviorTests
 
 		RegressionAssert.True(mod.CategoryMetadataRevision > initialRevision);
 	}
+
+	public void MenuSemanticColorDistinguishesSavingFromSaveNavigation()
+	{
+		RegressionAssert.True(ReduxMenuItemExtension.IsPositiveCommitAction("Save Current Order"));
+		RegressionAssert.True(ReduxMenuItemExtension.IsPositiveCommitAction("Export Redux Modlist..."));
+		RegressionAssert.False(ReduxMenuItemExtension.IsPositiveCommitAction("Save Game Manager..."));
+		RegressionAssert.False(ReduxMenuItemExtension.IsPositiveCommitAction("Save Games Folder"));
+	}
 }

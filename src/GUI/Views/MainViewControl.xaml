@@ -609,6 +609,10 @@
 								<MenuItem Command="{Binding Keys.ImportMod.Command}" Header="Install Mod..." InputGestureText="{Binding Keys.ImportMod.MenuDisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.AddCircle}" /></MenuItem.Icon>
 								</MenuItem>
+								<MenuItem Command="{Binding Keys.OpenModsFolder.Command}" Header="Mods Folder" InputGestureText="{Binding Keys.OpenModsFolder.MenuDisplayBindingText}">
+									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" /></MenuItem.Icon>
+								</MenuItem>
+								<Separator />
 								<MenuItem x:Name="ToolbarProfileMenu"
 									Header="Profile"
 									DisplayMemberPath="Name"
@@ -668,6 +672,15 @@
 								<MenuItem Command="{Binding Keys.ImportReduxLoadOrder.Command}" Header="Import Redux Modlist..." InputGestureText="{Binding Keys.ImportReduxLoadOrder.MenuDisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Download}" /></MenuItem.Icon>
 								</MenuItem>
+								<MenuItem Command="{Binding Keys.ExportReduxLoadOrder.Command}" Header="Export Redux Modlist..." InputGestureText="{Binding Keys.ExportReduxLoadOrder.MenuDisplayBindingText}">
+									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.CloudUpload}" /></MenuItem.Icon>
+								</MenuItem>
+								<MenuItem Command="{Binding Keys.OrganizeLoadOrder.Command}"
+									Header="Organize Active Load Order..."
+									InputGestureText="{Binding Keys.OrganizeLoadOrder.MenuDisplayBindingText}"
+									Visibility="{Binding Modules.LoadOrderGuidanceEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
+									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.ReorderStroke}" /></MenuItem.Icon>
+								</MenuItem>
 								<Separator />
 								<MenuItem Command="{Binding OpenLoadOrderFolderCommand}" Header="Open Load Order Folder">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" /></MenuItem.Icon>
@@ -685,9 +698,40 @@
 								<MenuItem Command="{Binding Keys.ExportOrderToZip.Command}" Header="Back Up Active Mods to ZIP..." InputGestureText="{Binding Keys.ExportOrderToZip.MenuDisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Archive}" /></MenuItem.Icon>
 								</MenuItem>
+							</MenuItem>
+							<MenuItem Header="Save Games">
+								<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.BookOpen}" /></MenuItem.Icon>
+								<MenuItem Header="Save Game Manager..." Click="SaveGameManagerButton_Click">
+									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.BookOpen}" /></MenuItem.Icon>
+								</MenuItem>
+								<MenuItem Header="Install Save..." Click="ImportSaveGameButton_Click">
+									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Download}" /></MenuItem.Icon>
+								</MenuItem>
+								<MenuItem Header="Install Save Folder..." Click="ImportSaveGameFolder_Click">
+									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" /></MenuItem.Icon>
+								</MenuItem>
+								<Separator />
+								<MenuItem Header="Open Save Games Folder" Click="OpenSaveGamesFolder_Click">
+									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" /></MenuItem.Icon>
+								</MenuItem>
+								<MenuItem Header="Copy Save Folder Path" Click="CopySaveGamesFolderPath_Click">
+									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Copy}" /></MenuItem.Icon>
+								</MenuItem>
+							</MenuItem>
+							<MenuItem Header="Actions">
+								<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Flash}" /></MenuItem.Icon>
+								<MenuItem Command="{Binding Keys.UndoLoadOrderChange.Command}" Header="Undo Last Action" InputGestureText="{Binding Keys.UndoLoadOrderChange.MenuDisplayBindingText}">
+									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Undo}" /></MenuItem.Icon>
+								</MenuItem>
+								<MenuItem Command="{Binding Keys.RedoLoadOrderChange.Command}" Header="Redo Last Action" InputGestureText="{Binding Keys.RedoLoadOrderChange.MenuDisplayBindingText}">
+									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Redo}" /></MenuItem.Icon>
+								</MenuItem>
 								<Separator />
 								<MenuItem Command="{Binding Keys.Refresh.Command}" Header="Refresh Mods" InputGestureText="{Binding Keys.Refresh.MenuDisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.RefreshStroke}" /></MenuItem.Icon>
+								</MenuItem>
+								<MenuItem Command="{Binding Keys.OpenLogsFolder.Command}" Header="Extender Logs Folder" InputGestureText="{Binding Keys.OpenLogsFolder.MenuDisplayBindingText}">
+									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.DocumentText}" /></MenuItem.Icon>
 								</MenuItem>
 							</MenuItem>
 							<MenuItem Header="Play">
@@ -1235,6 +1279,16 @@
 											<TextBlock Text="Install Mod" />
 										</StackPanel>
 									</Button>
+									<Button x:Name="OpenModsFolderButton" Style="{StaticResource ToolbarUtilityButtonStyle}" ToolTip="Open Mods Folder">
+										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" />
+										<Button.ContextMenu>
+											<ContextMenu>
+												<MenuItem Command="{Binding CopyPathToClipboardCommand}" CommandParameter="{Binding PathwayData.AppDataModsPath}" Header="Copy Path to Clipboard">
+													<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Copy}" /></MenuItem.Icon>
+												</MenuItem>
+											</ContextMenu>
+										</Button.ContextMenu>
+									</Button>
 									<controls:ReduxIcon Margin="2,0,5,0" StrokeData="{StaticResource Redux.Icon.Person}" Foreground="{DynamicResource ReduxTextSecondaryBrush}" />
 									<ComboBox x:Name="ProfilesComboBox"
 										Width="116"
@@ -1487,16 +1541,6 @@
 									</Button>
 									<Button x:Name="RefreshButton" Style="{StaticResource ToolbarUtilityButtonStyle}" ToolTip="Refresh Mods">
 										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.RefreshStroke}" />
-									</Button>
-									<Button x:Name="OpenModsFolderButton" Style="{StaticResource ToolbarUtilityButtonStyle}" ToolTip="Open Mods Folder">
-										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" />
-										<Button.ContextMenu>
-											<ContextMenu>
-												<MenuItem Command="{Binding CopyPathToClipboardCommand}" CommandParameter="{Binding PathwayData.AppDataModsPath}" Header="Copy Path to Clipboard">
-													<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Copy}" /></MenuItem.Icon>
-												</MenuItem>
-											</ContextMenu>
-										</Button.ContextMenu>
 									</Button>
 									<Button x:Name="OpenExtenderLogsFolderButton" Style="{StaticResource ToolbarUtilityButtonStyle}" ToolTip="Open Logs Folder">
 										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.DocumentText}" />

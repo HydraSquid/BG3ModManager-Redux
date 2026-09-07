@@ -620,6 +620,7 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 			this.OneWayBind(ViewModel, vm => vm.MainProgressIsActive, view => view.TaskbarItemInfo.ProgressState, BoolToTaskbarItemProgressState);
 
 			ViewModel.Keys.OpenPreferences.AddAction(() => OpenPreferences(false));
+			ViewModel.Keys.OpenThemeAppearance.AddAction(() => OpenPreferences(SettingsWindowTab.Appearance));
 			ViewModel.Keys.OpenKeybindings.AddAction(() => OpenPreferences(SettingsWindowTab.Keybindings));
 			ViewModel.Keys.OpenCommandPalette.AddAction(OpenCommandPalette);
 			ViewModel.Keys.OpenAboutWindow.AddAction(ToggleAboutWindow);

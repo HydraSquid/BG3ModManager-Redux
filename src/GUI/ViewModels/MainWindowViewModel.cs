@@ -9773,18 +9773,7 @@ Directory the zip will be extracted to:
 
 		Keys.ToggleViewTheme.AddAction(() =>
 		{
-			Settings.ActiveCustomThemeId = String.Empty;
-			var nextTheme = Settings.ColorTheme switch
-			{
-				ReduxThemeType.ReduxDark => ReduxThemeType.ReduxLight,
-				ReduxThemeType.ReduxLight => ReduxThemeType.Parchment,
-				_ => ReduxThemeType.ReduxDark
-			};
-			Settings.TypographyFont = ReduxTypographyFont.Manrope;
-			Settings.TextSize = ReduxTextSize.Default;
-			ReduxThemeService.ApplyBuiltInCategoryPresentation(Settings, nextTheme);
-			Settings.ColorTheme = nextTheme;
-			Settings.UsesGeneratedGradients = nextTheme != ReduxThemeType.Parchment;
+			ReduxThemeService.CycleTheme(Settings);
 		});
 
 		Keys.ToggleToolbar.AddAction(() => Settings.HideToolbar = !Settings.HideToolbar);

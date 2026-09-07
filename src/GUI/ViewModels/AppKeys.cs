@@ -144,6 +144,10 @@ public class AppKeys : ReactiveObject
 	[MenuSettings("Settings", "Preferences...")]
 	public Hotkey OpenPreferences { get; private set; } = new Hotkey(Key.P, ModifierKeys.Control);
 
+	[MenuSettings("Settings", "Theme & Appearance...", false,
+		"Open Preferences directly to theme, typography, and interface appearance settings.")]
+	public Hotkey OpenThemeAppearance { get; private set; } = new Hotkey(Key.None);
+
 	[MenuSettings("Settings", "Keyboard Shortcuts...", true)]
 	public Hotkey OpenKeybindings { get; private set; } = new Hotkey(Key.K, ModifierKeys.Control);
 
@@ -155,7 +159,8 @@ public class AppKeys : ReactiveObject
 	public Hotkey OpenCommandPalette { get; private set; } =
 		new Hotkey(Key.Q, ModifierKeys.Control);
 
-	[MenuSettings("Settings", "Change Theme")]
+	[MenuSettings("Settings", "Cycle Theme", false,
+		"Switch to the next built-in or custom theme.")]
 	public Hotkey ToggleViewTheme { get; private set; } = new Hotkey(Key.L, ModifierKeys.Control);
 
 	[MenuSettings("Settings", "Show or Hide Toolbar")]

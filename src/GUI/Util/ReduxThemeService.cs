@@ -44,6 +44,79 @@ public static class ReduxThemeService
 		settings?.CustomThemes?.FirstOrDefault(theme =>
 			theme.Id.Equals(settings.ActiveCustomThemeId, StringComparison.OrdinalIgnoreCase));
 
+	/// <summary>
+	/// Advances through built-in themes followed by valid custom themes in their saved order.
+	/// Missing, invalid, and duplicate custom-theme identities are ignored.
+	/// </summary>
+	public static void CycleTheme(DivinityModManagerSettings settings)
+	{
+		if (settings == null) return;
+
+		var customThemes = (settings.CustomThemes ?? [])
+			.Where(theme => theme != null
+				&& !String.IsNullOrWhiteSpace(theme.Id)
+				&& TryValidate(theme, out _))
+			.GroupBy(theme => theme.Id, StringComparer.OrdinalIgnoreCase)
+			.Select(group => group.First())
+			.ToList();
+		var activeCustomIndex = customThemes.FindIndex(theme =>
+			theme.Id.Equals(settings.ActiveCustomThemeId, StringComparison.OrdinalIgnoreCase));
+
+		if (activeCustomIndex >= 0)
+		{
+			if (activeCustomIndex + 1 < customThemes.Count)
+			{
+				ApplyCustomThemeSelection(settings, customThemes[activeCustomIndex + 1]);
+				return;
+			}
+
+			ApplyBuiltInThemeSelection(settings, ReduxThemeType.ReduxDark);
+			return;
+		}
+
+		if (settings.ColorTheme == ReduxThemeType.ReduxDark)
+		{
+			ApplyBuiltInThemeSelection(settings, ReduxThemeType.ReduxLight);
+		}
+		else if (settings.ColorTheme == ReduxThemeType.ReduxLight)
+		{
+			ApplyBuiltInThemeSelection(settings, ReduxThemeType.Parchment);
+		}
+		else if (customThemes.Count > 0)
+		{
+			ApplyCustomThemeSelection(settings, customThemes[0]);
+		}
+		else
+		{
+			ApplyBuiltInThemeSelection(settings, ReduxThemeType.ReduxDark);
+		}
+	}
+
+	private static void ApplyBuiltInThemeSelection(
+		DivinityModManagerSettings settings,
+		ReduxThemeType theme)
+	{
+		settings.ActiveCustomThemeId = String.Empty;
+		settings.TypographyFont = ReduxTypographyFont.Manrope;
+		settings.CustomTypographyFont = String.Empty;
+		settings.TextSize = ReduxTextSize.Default;
+		ApplyBuiltInCategoryPresentation(settings, theme);
+		settings.ColorTheme = theme;
+		settings.UsesGeneratedGradients = theme != ReduxThemeType.Parchment;
+	}
+
+	private static void ApplyCustomThemeSelection(
+		DivinityModManagerSettings settings,
+		ReduxCustomTheme theme)
+	{
+		settings.ActiveCustomThemeId = theme.Id;
+		settings.ColorTheme = theme.BaseTheme;
+		settings.TypographyFont = theme.TypographyFont;
+		settings.CustomTypographyFont = theme.CustomTypographyFont;
+		settings.TextSize = theme.TextSize;
+		ApplyCustomCategoryPresentation(settings, theme);
+	}
+
 	// Must mirror the manager's own settings serializer. IgnoreAndPopulate in particular is
 	// load-bearing: the settings file omits any value equal to its DefaultValue, so a user on
 	// the default theme has no ColorTheme key at all. Without IgnoreAndPopulate, ColorTheme

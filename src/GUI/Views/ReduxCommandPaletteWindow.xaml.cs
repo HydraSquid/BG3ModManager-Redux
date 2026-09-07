@@ -277,6 +277,7 @@ public partial class ReduxCommandPaletteWindow : AdonisUI.Controls.AdonisWindow
 		nameof(AppKeys.ToggleFilterFocus) => "find search mods",
 		nameof(AppKeys.DeleteSelectedMods) => "remove uninstall mods",
 		nameof(AppKeys.OpenPreferences) => "settings options configuration",
+		nameof(AppKeys.OpenThemeAppearance) => "theme appearance colors typography font gradients custom",
 		nameof(AppKeys.OpenKeybindings) => "hotkeys controls keys",
 		nameof(AppKeys.ToggleViewTheme) => "appearance color light dark parchment",
 		nameof(AppKeys.ToggleToolbar) => "toggle show hide top bar topbar",

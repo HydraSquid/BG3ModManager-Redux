@@ -87,6 +87,7 @@ public partial class MainViewControl : MainViewControlViewBase
 			[nameof(AppKeys.ToggleFilterFocus)] = ("Redux.Icon.Funnel", true, null),
 			[nameof(AppKeys.DeleteSelectedMods)] = ("Redux.Icon.Trash", true, "ReduxErrorBrush"),
 			[nameof(AppKeys.OpenPreferences)] = ("Redux.Icon.Settings", true, null),
+			[nameof(AppKeys.OpenThemeAppearance)] = ("Redux.Icon.ColorPalette", true, null),
 			[nameof(AppKeys.OpenKeybindings)] = ("Redux.Icon.Key", true, null),
 			[nameof(AppKeys.ToggleViewTheme)] = ("Redux.Icon.ColorPalette", true, null),
 			[nameof(AppKeys.ToggleToolbar)] = ("Redux.Icon.Desktop", true, null),

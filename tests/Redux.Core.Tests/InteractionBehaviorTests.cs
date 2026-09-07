@@ -167,4 +167,27 @@ public sealed class InteractionBehaviorTests
 			"Save Current Order\nSave changes to the selected load order.",
 			hotkey.CommandToolTip);
 	}
+
+	public void ThemeCyclingIncludesValidCustomThemesInSavedOrder()
+	{
+		var settings = new DivinityModManagerSettings
+		{
+			ColorTheme = ReduxThemeType.Parchment
+		};
+		var first = ReduxThemeService.CreateFromBase("First", ReduxThemeType.ReduxDark);
+		var invalid = ReduxThemeService.CreateFromBase("Invalid", ReduxThemeType.ReduxLight);
+		invalid.Name = String.Empty;
+		var second = ReduxThemeService.CreateFromBase("Second", ReduxThemeType.ReduxLight);
+		settings.CustomThemes.Add(first);
+		settings.CustomThemes.Add(invalid);
+		settings.CustomThemes.Add(second);
+
+		ReduxThemeService.CycleTheme(settings);
+		RegressionAssert.Equal(first.Id, settings.ActiveCustomThemeId);
+		ReduxThemeService.CycleTheme(settings);
+		RegressionAssert.Equal(second.Id, settings.ActiveCustomThemeId);
+		ReduxThemeService.CycleTheme(settings);
+		RegressionAssert.Equal(String.Empty, settings.ActiveCustomThemeId);
+		RegressionAssert.Equal(ReduxThemeType.ReduxDark, settings.ColorTheme);
+	}
 }

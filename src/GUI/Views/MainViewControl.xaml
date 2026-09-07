@@ -765,6 +765,12 @@
 								ToolTip="Find an action, mod, profile, order, or category.">
 								<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Flash}" /></MenuItem.Icon>
 							</MenuItem>
+							<MenuItem Command="{Binding Keys.OpenThemeAppearance.Command}"
+								Header="Theme &amp; Appearance..."
+								InputGestureText="{Binding Keys.OpenThemeAppearance.MenuDisplayBindingText}"
+								ToolTip="{Binding Keys.OpenThemeAppearance.Description}">
+								<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.ColorPalette}" /></MenuItem.Icon>
+							</MenuItem>
 							<Separator />
 							<MenuItem Header="FOLDERS" IsEnabled="False" />
 							<MenuItem Command="{Binding Keys.OpenModsFolder.Command}" Header="Mods Folder" InputGestureText="{Binding Keys.OpenModsFolder.MenuDisplayBindingText}">

@@ -1318,6 +1318,113 @@
 					</Border>
 				</Grid>
 			</DataTemplate>
+			<DataTemplate x:Key="ModDetailsDebugTemplate" DataType="{x:Type data:DivinityModData}">
+				<ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+					<StackPanel Margin="18,12">
+						<TextBlock FontSize="{DynamicResource Redux.FontSize.16}" FontWeight="SemiBold" Text="Technical mod state" />
+						<TextBlock Margin="0,2,0,10" Foreground="{DynamicResource ReduxTextMutedBrush}"
+							Text="Read-only values used to identify this package and diagnose its current Redux state."
+							TextWrapping="Wrap" />
+						<UniformGrid Columns="2">
+							<Border Margin="0,0,5,8" Padding="11,9" Background="{DynamicResource ReduxListInteriorBrush}"
+								BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1" CornerRadius="{DynamicResource Redux.CornerRadius.Control}">
+								<StackPanel>
+									<TextBlock FontWeight="SemiBold" Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="Package identity" />
+									<Grid Margin="0,7,0,0">
+										<Grid.ColumnDefinitions><ColumnDefinition Width="92" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+										<Grid.RowDefinitions><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /></Grid.RowDefinitions>
+										<TextBlock Foreground="{DynamicResource ReduxTextMutedBrush}" Text="UUID" />
+										<TextBlock Grid.Column="1" Text="{Binding UUID}" TextTrimming="CharacterEllipsis" ToolTip="{Binding UUID}" />
+										<TextBlock Grid.Row="1" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Folder" />
+										<TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Folder}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Folder}" />
+										<TextBlock Grid.Row="2" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="PAK" />
+										<TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding FileName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FilePath}" />
+										<TextBlock Grid.Row="3" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Type" />
+										<TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding ModType, TargetNullValue=Unknown}" />
+										<TextBlock Grid.Row="4" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Publish ID" />
+										<TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding PublishHandle}" />
+									</Grid>
+								</StackPanel>
+							</Border>
+							<Border Margin="5,0,0,8" Padding="11,9" Background="{DynamicResource ReduxListInteriorBrush}"
+								BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1" CornerRadius="{DynamicResource Redux.CornerRadius.Control}">
+								<StackPanel>
+									<TextBlock FontWeight="SemiBold" Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="Load-order state" />
+									<Grid Margin="0,7,0,0">
+										<Grid.ColumnDefinitions><ColumnDefinition Width="104" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+										<Grid.RowDefinitions><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /></Grid.RowDefinitions>
+										<TextBlock Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Position" />
+										<TextBlock Grid.Column="1" Text="{Binding LoadOrderDisplayText}" />
+										<TextBlock Grid.Row="1" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Active" />
+										<TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding IsActive}" />
+										<TextBlock Grid.Row="2" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Always loaded" />
+										<TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding IsForceLoaded}" />
+										<TextBlock Grid.Row="3" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Merged override" />
+										<TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding IsForceLoadedMergedMod}" />
+										<TextBlock Grid.Row="4" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Order allowed" />
+										<TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding CanAddToLoadOrder}" />
+									</Grid>
+								</StackPanel>
+							</Border>
+							<Border Margin="0,0,5,8" Padding="11,9" Background="{DynamicResource ReduxListInteriorBrush}"
+								BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1" CornerRadius="{DynamicResource Redux.CornerRadius.Control}">
+								<StackPanel>
+									<TextBlock FontWeight="SemiBold" Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="Source recognition" />
+									<Grid Margin="0,7,0,0">
+										<Grid.ColumnDefinitions><ColumnDefinition Width="98" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+										<Grid.RowDefinitions><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /></Grid.RowDefinitions>
+										<TextBlock Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Resolved source" />
+										<TextBlock Grid.Column="1" Text="{Binding Metadata.SourceLabel}" />
+										<TextBlock Grid.Row="1" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Provenance" />
+										<TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Metadata.LinkStatus}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Metadata.LinkStatus}" />
+										<TextBlock Grid.Row="2" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Nexus ID" />
+										<TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding NexusModsData.ModId}" />
+										<TextBlock Grid.Row="3" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Nexus origin" />
+										<TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding NexusModsData.MetadataOrigin}" />
+										<TextBlock Grid.Row="4" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="mod.io ID" />
+										<TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding ModioData.ModId}" />
+									</Grid>
+								</StackPanel>
+							</Border>
+							<Border Margin="5,0,0,8" Padding="11,9" Background="{DynamicResource ReduxListInteriorBrush}"
+								BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1" CornerRadius="{DynamicResource Redux.CornerRadius.Control}">
+								<StackPanel>
+									<TextBlock FontWeight="SemiBold" Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="Classification" />
+									<TextBlock Margin="0,7,0,2" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Resolved categories" />
+									<ItemsControl ItemsSource="{Binding DisplayCategories}">
+										<ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+										<ItemsControl.ItemTemplate>
+											<DataTemplate><Border Margin="0,2,5,2" Padding="7,2" Background="{Binding SoftColor}" CornerRadius="{DynamicResource Redux.CornerRadius.Pill}"><TextBlock Foreground="{Binding Color}" Text="{Binding Name}" /></Border></DataTemplate>
+										</ItemsControl.ItemTemplate>
+									</ItemsControl>
+									<TextBlock Margin="0,7,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Creator manifest" />
+									<TextBlock Text="{Binding CreatorManifest.State}" />
+								</StackPanel>
+							</Border>
+						</UniformGrid>
+						<Border Padding="11,9" Background="{DynamicResource ReduxListInteriorBrush}"
+							BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1" CornerRadius="{DynamicResource Redux.CornerRadius.Control}">
+							<StackPanel>
+								<TextBlock FontWeight="SemiBold" Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="Diagnostics and advisor findings" />
+								<TextBlock Margin="0,3,0,6" Foreground="{DynamicResource ReduxTextMutedBrush}"
+									Text="{Binding HealthSnapshot.FindingCountSummary, TargetNullValue='Diagnostics have not run for this mod.'}" />
+								<ItemsControl ItemsSource="{Binding HealthSnapshot.Findings}">
+									<ItemsControl.ItemTemplate>
+										<DataTemplate>
+											<Border Margin="0,3,0,0" Padding="9,6" Background="{DynamicResource ReduxSurfaceMutedBrush}" CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}">
+												<Grid><Grid.ColumnDefinitions><ColumnDefinition Width="120" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+													<TextBlock Foreground="{DynamicResource ReduxTextMutedBrush}" Text="{Binding Code}" />
+													<StackPanel Grid.Column="1"><TextBlock FontWeight="SemiBold" Text="{Binding Title}" /><TextBlock Foreground="{DynamicResource ReduxTextSecondaryBrush}" Text="{Binding Message}" TextWrapping="Wrap" /></StackPanel>
+												</Grid>
+											</Border>
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+							</StackPanel>
+						</Border>
+					</StackPanel>
+				</ScrollViewer>
+			</DataTemplate>
 			<DataTemplate x:Key="ModDetailsTabbedTemplate" DataType="{x:Type data:DivinityModData}">
 				<TabControl ItemContainerStyle="{StaticResource ReduxContentTabItemStyle}"
 					SelectedIndex="0"
@@ -1333,6 +1440,10 @@
 					</TabItem>
 					<TabItem Header="Files">
 						<ContentControl Content="{Binding}" ContentTemplate="{StaticResource ModDetailsFilesTemplate}" />
+					</TabItem>
+					<TabItem Header="Debug"
+						Visibility="{Binding DataContext.Settings.DebugModeEnabled, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}, Converter={StaticResource BoolToVisibilityConverter}}">
+						<ContentControl Content="{Binding}" ContentTemplate="{StaticResource ModDetailsDebugTemplate}" />
 					</TabItem>
 					<TabItem Header="Changelog">
 						<ContentControl Content="{Binding}" ContentTemplate="{StaticResource ModDetailsChangelogTemplate}" />

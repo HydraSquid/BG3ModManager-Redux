@@ -444,6 +444,23 @@ public partial class MainViewControl : MainViewControlViewBase
 		if (menuItems.TryGetValue("Tools", out var toolsMenuItem))
 		{
 			if (toolsMenuItem.Items.Count > 0) toolsMenuItem.Items.Add(new Separator());
+			var debugInformationItem = new MenuItem
+			{
+				Header = "Debug Information...",
+				ToolTip = "Review a read-only snapshot of Redux state for troubleshooting.",
+				Icon = ReduxIcon.FromResource("Redux.Icon.Terminal", true)
+			};
+			BindingOperations.SetBinding(
+				debugInformationItem,
+				MenuItem.VisibilityProperty,
+				new Binding("Settings.DebugModeEnabled")
+				{
+					Source = ViewModel,
+					Converter = FindResource("BoolToVisibilityConverter") as IValueConverter
+				});
+			debugInformationItem.Click += (_, _) => new ReduxDebugInformationWindow(main, ViewModel).ShowDialog();
+			toolsMenuItem.Items.Add(debugInformationItem);
+
 			var packagePreflightItem = new MenuItem
 			{
 				Header = "Inspect Mod Package...",

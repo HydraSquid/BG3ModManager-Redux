@@ -358,7 +358,7 @@ public class DivinityModManagerSettings : ReactiveObject
 	[DataMember, Reactive] public List<string> IgnoredLoadOrderAdvisorFindingKeys { get; set; } = new();
 
 	[DefaultValue(false)]
-	[SettingsEntry("Mod Developer Mode", "This enables features for mod developers, such as being able to copy a mod's UUID in context menus, and additional Script Extender options", HideFromUI = true)]
+	[SettingsEntry("Debug Mode", "Show additional read-only technical details and write more diagnostic logging while troubleshooting Redux.", HideFromUI = true)]
 	[Reactive, DataMember] public bool DebugModeEnabled { get; set; }
 
 	[DefaultValue("")]

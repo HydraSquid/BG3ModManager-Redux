@@ -1312,7 +1312,7 @@
 											behavior:TextBlockSettingsEntryAttributeBehavior.Property="DebugModeEnabled"
 											behavior:TextBlockSettingsEntryAttributeBehavior.TargetType="{x:Type data:DivinityModManagerSettings}" />
 										<TextBlock Foreground="{DynamicResource ReduxTextMutedBrush}"
-											Text="Show extra logging and Load Order Advisor details."
+											Text="Expose read-only troubleshooting details, privacy-aware session information, and additional diagnostic logging."
 											TextWrapping="Wrap" />
 									</StackPanel>
 									<CheckBox x:Name="DebugModeCheckBox" Grid.Column="1"

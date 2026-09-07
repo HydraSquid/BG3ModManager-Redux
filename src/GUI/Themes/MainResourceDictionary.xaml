@@ -2749,7 +2749,18 @@
 									Background="{Binding DisplayCategories[0].Color, Converter={StaticResource StringToSolidBrushConverter}, ConverterParameter=4D, FallbackValue=#4D9676FF}"
 									CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}"
 									IsHitTestVisible="False"
-									Opacity="0" />
+									Opacity="0">
+									<Border.Style>
+										<Style TargetType="{x:Type Border}">
+											<Setter Property="Visibility" Value="Visible" />
+											<Style.Triggers>
+												<DataTrigger Binding="{Binding DataContext.Settings.ReduceMotion, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}" Value="True">
+													<Setter Property="Visibility" Value="Collapsed" />
+												</DataTrigger>
+											</Style.Triggers>
+										</Style>
+									</Border.Style>
+								</Border>
 								<GridViewRowPresenter x:Name="ModRowPresenter"
 									Margin="{TemplateBinding Padding}"
 									Columns="{Binding Path=View.Columns, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}"
@@ -2765,7 +2776,13 @@
 								background/border through creates a muddy fill and duplicate line. -->
 							<Setter TargetName="RowBorder" Property="Background" Value="Transparent" />
 							<Setter TargetName="RowBorder" Property="BorderBrush" Value="Transparent" />
-							<Trigger.EnterActions>
+						</Trigger>
+						<MultiDataTrigger>
+							<MultiDataTrigger.Conditions>
+								<Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
+								<Condition Binding="{Binding DataContext.Settings.ReduceMotion, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}" Value="False" />
+							</MultiDataTrigger.Conditions>
+							<MultiDataTrigger.EnterActions>
 								<BeginStoryboard>
 									<Storyboard>
 										<DoubleAnimation Storyboard.TargetName="RowHoverSurface"
@@ -2780,8 +2797,8 @@
 											EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
 									</Storyboard>
 								</BeginStoryboard>
-							</Trigger.EnterActions>
-							<Trigger.ExitActions>
+							</MultiDataTrigger.EnterActions>
+							<MultiDataTrigger.ExitActions>
 								<BeginStoryboard>
 									<Storyboard>
 										<DoubleAnimation Storyboard.TargetName="RowHoverSurface"
@@ -2794,8 +2811,16 @@
 											Duration="{StaticResource Redux.Motion.Standard}" />
 									</Storyboard>
 								</BeginStoryboard>
-							</Trigger.ExitActions>
-						</Trigger>
+							</MultiDataTrigger.ExitActions>
+						</MultiDataTrigger>
+						<MultiDataTrigger>
+							<MultiDataTrigger.Conditions>
+								<Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
+								<Condition Binding="{Binding DataContext.Settings.ReduceMotion, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}" Value="True" />
+							</MultiDataTrigger.Conditions>
+							<Setter TargetName="RowHoverSurface" Property="Opacity" Value="0.62" />
+							<Setter TargetName="RowHoverRail" Property="Opacity" Value="1" />
+						</MultiDataTrigger>
 						<Trigger Property="IsSelected" Value="True">
 							<Setter TargetName="RowBorder" Property="Background" Value="Transparent" />
 							<Setter TargetName="RowBorder" Property="BorderBrush" Value="Transparent" />

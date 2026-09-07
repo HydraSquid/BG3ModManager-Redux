@@ -1,21 +1,23 @@
-<local:DeleteFilesConfirmationViewBase x:Class="DivinityModManager.Views.DeleteFilesConfirmationView"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:adonisUI="clr-namespace:AdonisUI;assembly=AdonisUI"
-    xmlns:behavior="clr-namespace:DivinityModManager.Controls.Behavior"
-    xmlns:controls="clr-namespace:DivinityModManager.Controls"
-    xmlns:conv="clr-namespace:DivinityModManager.Converters"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:data="clr-namespace:DivinityModManager.Models;assembly=DivinityModManagerCore"
-    xmlns:dapp="clr-namespace:DivinityModManager;assembly=DivinityModManagerCore"
-    xmlns:dd="urn:gong-wpf-dragdrop"
-    xmlns:local="clr-namespace:DivinityModManager.Views"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:reactiveui="http://reactiveui.net"
-    xmlns:vm="clr-namespace:DivinityModManager.ViewModels"
-    xmlns:xc="http://schemas.xceed.com/wpf/xaml/toolkit"
-    mc:Ignorable="d">
-	<UserControl.Resources>
+<adonisUI:AdonisWindow x:Class="DivinityModManager.Views.DeleteFilesConfirmationView"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:adonisUI="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
+	xmlns:controls="clr-namespace:DivinityModManager.Controls"
+	xmlns:dapp="clr-namespace:DivinityModManager;assembly=DivinityModManagerCore"
+	xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+	Title="{Binding Title}"
+	Width="820" Height="600" MinWidth="660" MinHeight="470" MaxWidth="1080" MaxHeight="820"
+	FontFamily="{DynamicResource Redux.FontFamily.UI}" FontSize="{DynamicResource Redux.FontSize.12}"
+	FontWeight="{DynamicResource Redux.FontWeight.Body}" ResizeMode="CanResize" ShowInTaskbar="False"
+	WindowStartupLocation="CenterOwner" WindowStyle="SingleBorderWindow"
+	Template="{DynamicResource ReduxWindowTemplate}" Background="{DynamicResource ReduxWindowBrush}"
+	Foreground="{DynamicResource ReduxTextPrimaryBrush}"
+	UseLayoutRounding="True" SnapsToDevicePixels="True">
+	<shell:WindowChrome.WindowChrome>
+		<shell:WindowChrome CaptionHeight="0" CornerRadius="0" GlassFrameThickness="0"
+			ResizeBorderThickness="6" UseAeroCaptionButtons="False" />
+	</shell:WindowChrome.WindowChrome>
+	<Window.Resources>
 		<ResourceDictionary>
 			<ResourceDictionary.MergedDictionaries>
 				<ResourceDictionary Source="../Themes/MainResourceDictionary.xaml" />
@@ -25,242 +27,175 @@
 			</Style>
 			<Style x:Key="DeleteFilesListItemStyle" BasedOn="{StaticResource {x:Type ListViewItem}}" TargetType="{x:Type ListViewItem}">
 				<Setter Property="MinHeight" Value="36" />
-				<Setter Property="Padding" Value="0" />
+				<Setter Property="Padding" Value="0,6" />
 				<Setter Property="HorizontalContentAlignment" Value="Stretch" />
 				<Setter Property="VerticalContentAlignment" Value="Center" />
 				<Setter Property="Background" Value="Transparent" />
 				<Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" />
 				<Setter Property="BorderBrush" Value="{DynamicResource ReduxBorderBrush}" />
 				<Setter Property="BorderThickness" Value="0,0,0,1" />
-				<Setter Property="FocusVisualStyle" Value="{x:Null}" />
-				<Setter Property="Template">
-					<Setter.Value>
-						<ControlTemplate TargetType="{x:Type ListViewItem}">
-							<Border x:Name="RowChrome"
-								Background="{TemplateBinding Background}"
-								BorderBrush="{TemplateBinding BorderBrush}"
-								BorderThickness="{TemplateBinding BorderThickness}">
-								<ContentPresenter Margin="{TemplateBinding Padding}"
-									HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-									VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
-							</Border>
-							<ControlTemplate.Triggers>
-								<Trigger Property="IsMouseOver" Value="True">
-									<Setter TargetName="RowChrome" Property="Background" Value="{DynamicResource ReduxAccentSoftBrush}" />
-								</Trigger>
-								<Trigger Property="IsSelected" Value="True">
-									<Setter TargetName="RowChrome" Property="Background" Value="{DynamicResource ReduxSelectionBrush}" />
-								</Trigger>
-								<Trigger Property="IsKeyboardFocused" Value="True">
-									<Setter TargetName="RowChrome" Property="BorderBrush" Value="{DynamicResource ReduxAccentBrush}" />
-									<Setter TargetName="RowChrome" Property="BorderThickness" Value="1" />
-								</Trigger>
-							</ControlTemplate.Triggers>
-						</ControlTemplate>
-					</Setter.Value>
-				</Setter>
 				<Style.Triggers>
-					<Trigger Property="IsEnabled" Value="False">
-						<Setter Property="Opacity" Value="0.55" />
+					<Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource ReduxAccentSoftBrush}" /></Trigger>
+					<Trigger Property="IsSelected" Value="True">
+						<Setter Property="Background" Value="{DynamicResource ReduxSelectionBrush}" />
+						<Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" />
 					</Trigger>
+					<Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.55" /></Trigger>
 				</Style.Triggers>
 			</Style>
 		</ResourceDictionary>
-	</UserControl.Resources>
-	<UserControl.Style>
-		<Style BasedOn="{StaticResource {x:Type UserControl}}" TargetType="UserControl">
-			<Setter Property="Background" Value="Transparent" />
-			<Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" />
-		</Style>
-	</UserControl.Style>
-	<xc:BusyIndicator x:Name="ProgressIndicator" Style="{StaticResource BusyIndicatorProgressStyle}">
-		<xc:BusyIndicator.OverlayStyle>
-			<Style TargetType="{x:Type Rectangle}">
-				<Setter Property="Fill" Value="Transparent" />
-				<Setter Property="Opacity" Value="0" />
-			</Style>
-		</xc:BusyIndicator.OverlayStyle>
-		<xc:BusyIndicator.BusyContent>
-			<controls:ReduxOperationProgress x:Name="TaskProgressContent"
-				IconBrush="{DynamicResource ReduxErrorBrush}"
-				IconKey="trash"
-				/>
-		</xc:BusyIndicator.BusyContent>
-		<Grid Background="Transparent" UseLayoutRounding="True">
-			<Border Width="820"
-				MaxHeight="640"
-				Margin="26"
-				HorizontalAlignment="Center"
-				VerticalAlignment="Center"
-				Background="{DynamicResource ReduxAppBackgroundBrush}"
-				BorderBrush="{DynamicResource ReduxBorderStrongBrush}"
-				BorderThickness="1"
-				CornerRadius="{DynamicResource Redux.CornerRadius.Card}"
-				ClipToBounds="True">
-				<Border.Style>
-					<Style TargetType="{x:Type Border}">
-						<Setter Property="Visibility" Value="Visible" />
-						<Style.Triggers>
-							<DataTrigger Binding="{Binding IsRunning}" Value="True">
-								<Setter Property="Visibility" Value="Collapsed" />
-							</DataTrigger>
-						</Style.Triggers>
-					</Style>
-				</Border.Style>
-				<Grid Margin="20,18,20,17">
+	</Window.Resources>
+
+	<Grid>
+		<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+		<controls:ReduxWindowTitleBar IconData="{DynamicResource Redux.Icon.Trash}">
+			<controls:ReduxWindowTitleBar.Style>
+				<Style TargetType="{x:Type controls:ReduxWindowTitleBar}">
+					<Setter Property="IsEnabled" Value="True" />
+					<Style.Triggers>
+						<DataTrigger Binding="{Binding IsRunning}" Value="True"><Setter Property="IsEnabled" Value="False" /></DataTrigger>
+					</Style.Triggers>
+				</Style>
+			</controls:ReduxWindowTitleBar.Style>
+		</controls:ReduxWindowTitleBar>
+
+		<Border Grid.Row="1" Padding="20,18,20,17" Background="{DynamicResource ReduxAppBackgroundBrush}"
+			BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1">
+			<Grid>
+				<Grid x:Name="ConfirmationContent">
+					<Grid.Style>
+						<Style TargetType="{x:Type Grid}">
+							<Setter Property="Visibility" Value="Visible" />
+							<Style.Triggers>
+								<DataTrigger Binding="{Binding IsRunning}" Value="True"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
+							</Style.Triggers>
+						</Style>
+					</Grid.Style>
 					<Grid.RowDefinitions>
-						<RowDefinition Height="Auto" />
-						<RowDefinition Height="*" />
-						<RowDefinition Height="Auto" />
-						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" /><RowDefinition Height="*" />
+						<RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
 					</Grid.RowDefinitions>
+
 					<Grid Margin="0,0,0,14">
-						<Grid.ColumnDefinitions>
-							<ColumnDefinition Width="Auto" />
-							<ColumnDefinition Width="*" />
-						</Grid.ColumnDefinitions>
+						<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
 						<Border Width="38" Height="38" Margin="0,0,12,0"
-							Background="{DynamicResource ReduxErrorPillBackground}"
-							BorderBrush="{DynamicResource ReduxErrorBrush}"
-							BorderThickness="1"
-							CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
+							Background="{DynamicResource ReduxErrorPillBackground}" BorderBrush="{DynamicResource ReduxErrorBrush}"
+							BorderThickness="1" CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
 							Visibility="{Binding Path=(dapp:DivinityApp.ShowInterfaceIcons), Converter={StaticResource BoolToVisibilityConverter}}">
-							<controls:ReduxIcon Width="18" Height="18"
-								Foreground="{DynamicResource ReduxErrorBrush}"
+							<controls:ReduxIcon Width="18" Height="18" Foreground="{DynamicResource ReduxErrorBrush}"
 								StrokeData="{StaticResource Redux.Icon.Trash}" />
 						</Border>
 						<StackPanel Grid.Column="1" VerticalAlignment="Center">
-							<TextBlock x:Name="TitleTextBlock"
-								Foreground="{DynamicResource ReduxTextPrimaryBrush}"
-								FontSize="{DynamicResource Redux.FontSize.20}"
-								FontWeight="{DynamicResource Redux.FontWeight.Title}" />
-							<TextBlock Margin="0,3,0,0"
-								Foreground="{DynamicResource ReduxTextSecondaryBrush}"
-								Text="Review the selected mod files and deletion options before continuing."
-								TextWrapping="Wrap" />
+							<TextBlock FontSize="{DynamicResource Redux.FontSize.20}" FontWeight="{DynamicResource Redux.FontWeight.Title}"
+								Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="{Binding Title}" />
+							<TextBlock Margin="0,3,0,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}"
+								Text="Review the selected mod files and deletion options before continuing." TextWrapping="Wrap" />
 						</StackPanel>
 					</Grid>
 
-					<Border Grid.Row="1"
-						MinHeight="210"
-						Background="{DynamicResource ReduxListInteriorBrush}"
-						BorderBrush="{DynamicResource ReduxBorderBrush}"
-						BorderThickness="1"
-						CornerRadius="{DynamicResource Redux.CornerRadius.Card}"
-						ClipToBounds="True">
-						<ListView x:Name="FilesListView"
-							Background="Transparent"
-							BorderThickness="0"
-							Foreground="{DynamicResource ReduxTextPrimaryBrush}"
-							ItemContainerStyle="{StaticResource DeleteFilesListItemStyle}"
-							ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-							ScrollViewer.VerticalScrollBarVisibility="Auto"
-							VirtualizingPanel.IsVirtualizing="True"
-							VirtualizingPanel.VirtualizationMode="Recycling">
-				<ListView.View>
-					<GridView x:Name="FileListGridView" AllowsColumnReorder="False" ColumnHeaderContainerStyle="{StaticResource GridViewLeftContainerStyle}">
-						<GridView.Columns>
-							<GridViewColumn Width="Auto" HeaderContainerStyle="{StaticResource GridViewCenteredContainerStyle}">
-								<GridViewColumn.Header>
-									<CheckBox Command="{Binding SelectAllCommand}" IsChecked="{Binding AllSelected, Mode=OneWay}" Style="{StaticResource DeleteFilesCheckBoxStyle}" ToolTip="{Binding SelectAllTooltip}" />
-								</GridViewColumn.Header>
-								<GridViewColumn.CellTemplate>
-									<DataTemplate>
-										<CheckBox HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="{Binding IsSelected}" Style="{StaticResource DeleteFilesCheckBoxStyle}" ToolTip="Select this file" />
-									</DataTemplate>
-								</GridViewColumn.CellTemplate>
-							</GridViewColumn>
-							<GridViewColumn Width="Auto">
-								<GridViewColumn.Header>
-									<TextBlock Text="Name" />
-								</GridViewColumn.Header>
-								<GridViewColumn.CellTemplate>
-									<DataTemplate>
-										<TextBlock Margin="10,0" VerticalAlignment="Center" FontWeight="{DynamicResource Redux.FontWeight.Control}"
-											Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding DisplayName}" />
-									</DataTemplate>
-								</GridViewColumn.CellTemplate>
-							</GridViewColumn>
-							<GridViewColumn Width="Auto" Header="Path" HeaderTemplate="{StaticResource GridViewTextblockHeaderTemplate}">
-								<GridViewColumn.CellTemplate>
-									<DataTemplate>
-										<TextBlock Margin="10,0" VerticalAlignment="Center" Foreground="{DynamicResource ReduxTextMutedBrush}"
-											Text="{Binding FilePath}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FilePath}" />
-									</DataTemplate>
-								</GridViewColumn.CellTemplate>
-							</GridViewColumn>
-							<GridViewColumn x:Name="DuplicatesColumn"
-							    Width="Auto"
-							    Header="Duplicate Of"
-							    HeaderTemplate="{StaticResource GridViewTextblockHeaderTemplate}">
-								<GridViewColumn.CellTemplate>
-									<DataTemplate>
-										<TextBlock Margin="10,0" VerticalAlignment="Center" Foreground="{DynamicResource ReduxTextMutedBrush}"
-											Text="{Binding Duplicates}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Duplicates}" />
-									</DataTemplate>
-								</GridViewColumn.CellTemplate>
-							</GridViewColumn>
-						</GridView.Columns>
-					</GridView>
-				</ListView.View>
+					<Border Grid.Row="1" MinHeight="210" Background="{DynamicResource ReduxListInteriorBrush}"
+						BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1"
+						CornerRadius="{DynamicResource Redux.CornerRadius.Card}" ClipToBounds="True">
+						<ListView x:Name="FilesListView" ItemsSource="{Binding Files}" Background="Transparent" BorderThickness="0"
+							Foreground="{DynamicResource ReduxTextPrimaryBrush}" ItemContainerStyle="{StaticResource DeleteFilesListItemStyle}"
+							ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto"
+							VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+							<ListView.View>
+								<GridView x:Name="FileListGridView" AllowsColumnReorder="False"
+									ColumnHeaderContainerStyle="{StaticResource GridViewLeftContainerStyle}">
+									<GridView.Columns>
+										<GridViewColumn Width="Auto" HeaderContainerStyle="{StaticResource GridViewCenteredContainerStyle}">
+											<GridViewColumn.Header>
+												<CheckBox Command="{Binding SelectAllCommand}" IsChecked="{Binding AllSelected, Mode=OneWay}"
+													Style="{StaticResource DeleteFilesCheckBoxStyle}" ToolTip="{Binding SelectAllTooltip}" />
+											</GridViewColumn.Header>
+											<GridViewColumn.CellTemplate><DataTemplate>
+												<CheckBox HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="{Binding IsSelected}"
+													Style="{StaticResource DeleteFilesCheckBoxStyle}" ToolTip="Select this file" />
+											</DataTemplate></GridViewColumn.CellTemplate>
+										</GridViewColumn>
+										<GridViewColumn Width="220">
+											<GridViewColumn.Header><TextBlock Text="Name" /></GridViewColumn.Header>
+											<GridViewColumn.CellTemplate><DataTemplate>
+												<TextBlock Margin="10,0" VerticalAlignment="Center" FontWeight="{DynamicResource Redux.FontWeight.Control}"
+													Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding DisplayName}" />
+											</DataTemplate></GridViewColumn.CellTemplate>
+										</GridViewColumn>
+										<GridViewColumn Width="Auto" Header="Path" HeaderTemplate="{StaticResource GridViewTextblockHeaderTemplate}">
+											<GridViewColumn.CellTemplate><DataTemplate>
+												<TextBlock Margin="10,0" VerticalAlignment="Center" Foreground="{DynamicResource ReduxTextMutedBrush}"
+													Text="{Binding FilePath}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FilePath}" />
+											</DataTemplate></GridViewColumn.CellTemplate>
+										</GridViewColumn>
+										<GridViewColumn x:Name="DuplicatesColumn" Width="Auto" Header="Duplicate Of"
+											HeaderTemplate="{StaticResource GridViewTextblockHeaderTemplate}">
+											<GridViewColumn.CellTemplate><DataTemplate>
+												<TextBlock Margin="10,0" VerticalAlignment="Center" Foreground="{DynamicResource ReduxTextMutedBrush}"
+													Text="{Binding Duplicates}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Duplicates}" />
+											</DataTemplate></GridViewColumn.CellTemplate>
+										</GridViewColumn>
+									</GridView.Columns>
+								</GridView>
+							</ListView.View>
 						</ListView>
 					</Border>
 
-					<Border Grid.Row="2" Margin="0,12,0,0" Padding="13,10"
-						Background="{DynamicResource ReduxSurfaceBrush}"
-						BorderBrush="{DynamicResource ReduxBorderBrush}"
-						BorderThickness="1"
+					<Border Grid.Row="2" Margin="0,12,0,0" Padding="13,10" Background="{DynamicResource ReduxSurfaceBrush}"
+						BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1"
 						CornerRadius="{DynamicResource Redux.CornerRadius.Control}">
 						<WrapPanel VerticalAlignment="Center">
-						<CheckBox x:Name="DeletionOptionCheckbox"
-						    Margin="0,0,22,0"
-						    Content="Permanent"
-						    Style="{StaticResource DeleteFilesCheckBoxStyle}"
-						    ToolTip="Delete files permanently instead of moving them to the Recycle Bin." />
-						<CheckBox x:Name="RemoveFromLoadOrderCheckbox"
-						    Content="Remove from Load Order"
-						    Style="{StaticResource DeleteFilesCheckBoxStyle}"
-						    ToolTip="Remove deleted mods from the active load order." />
+							<CheckBox Margin="0,0,22,0" Content="Permanent" IsChecked="{Binding PermanentlyDelete, Mode=TwoWay}"
+								Style="{StaticResource DeleteFilesCheckBoxStyle}"
+								ToolTip="Delete files permanently instead of moving them to the Recycle Bin." />
+							<CheckBox Content="Remove from Load Order" IsChecked="{Binding RemoveFromLoadOrder, Mode=TwoWay}"
+								Visibility="{Binding RemoveFromLoadOrderVisibility}" Style="{StaticResource DeleteFilesCheckBoxStyle}"
+								ToolTip="Remove deleted mods from the active load order." />
 						</WrapPanel>
 					</Border>
 
 					<Grid Grid.Row="3" Margin="0,14,0,0">
-						<Grid.ColumnDefinitions>
-							<ColumnDefinition Width="*" />
-							<ColumnDefinition Width="Auto" />
-						</Grid.ColumnDefinitions>
-						<TextBlock VerticalAlignment="Center" Foreground="{DynamicResource ReduxTextMutedBrush}"
-							Text="{Binding SelectionSummary}" />
+						<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+						<TextBlock VerticalAlignment="Center" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="{Binding SelectionSummary}" />
 						<StackPanel Grid.Column="1" Orientation="Horizontal">
-						<Button x:Name="CancelButton"
-							MinWidth="88"
-							Style="{StaticResource ReduxMinorActionButtonStyle}"
-							IsCancel="True">
-							<StackPanel Orientation="Horizontal">
-								<controls:ReduxIcon Width="14" Height="14" Margin="0,0,7,0"
-									Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
-									StrokeData="{StaticResource Redux.Icon.Close}"
-									Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
-								<TextBlock Text="Cancel" />
-							</StackPanel>
-						</Button>
-						<Button x:Name="ConfirmButton"
-							MinWidth="96"
-						    Margin="8,0,0,0"
-						    Style="{StaticResource ReduxMinorDestructiveActionButtonStyle}"
-							IsDefault="True">
-							<StackPanel Orientation="Horizontal">
-								<controls:ReduxIcon Width="14" Height="14" Margin="0,0,7,0"
-									Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
-									StrokeData="{StaticResource Redux.Icon.Trash}"
-									Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
-								<TextBlock Text="Delete" />
-							</StackPanel>
-						</Button>
+							<Button MinWidth="88" Command="{Binding CloseCommand}" IsCancel="True" Style="{StaticResource ReduxMinorActionButtonStyle}">
+								<StackPanel Orientation="Horizontal">
+									<controls:ReduxIcon Width="14" Height="14" Margin="0,0,7,0"
+										Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+										StrokeData="{StaticResource Redux.Icon.Close}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
+									<TextBlock Text="Cancel" />
+								</StackPanel>
+							</Button>
+							<Button x:Name="DeleteActionButton" MinWidth="96" Margin="8,0,0,0" Command="{Binding RunCommand}" IsDefault="True"
+								Style="{StaticResource ReduxMinorDestructiveActionButtonStyle}">
+								<StackPanel Orientation="Horizontal">
+									<controls:ReduxIcon x:Name="DeleteActionIcon" Width="14" Height="14" Margin="0,0,7,0"
+										Foreground="{DynamicResource ReduxErrorBrush}"
+										StrokeData="{StaticResource Redux.Icon.Trash}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
+									<TextBlock Text="Delete" />
+								</StackPanel>
+							</Button>
 						</StackPanel>
 					</Grid>
 				</Grid>
-			</Border>
-		</Grid>
-	</xc:BusyIndicator>
-</local:DeleteFilesConfirmationViewBase>
+
+				<Grid Panel.ZIndex="2">
+					<Grid.Style>
+						<Style TargetType="{x:Type Grid}">
+							<Setter Property="Visibility" Value="Collapsed" />
+							<Style.Triggers>
+								<DataTrigger Binding="{Binding IsRunning}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+							</Style.Triggers>
+						</Style>
+					</Grid.Style>
+					<Border MaxWidth="620" MinWidth="380" Margin="24" Padding="22" HorizontalAlignment="Center" VerticalAlignment="Center"
+						Background="{DynamicResource ReduxSurfaceElevatedBrush}" BorderBrush="{DynamicResource ReduxBorderStrongBrush}"
+						BorderThickness="1" CornerRadius="{DynamicResource Redux.CornerRadius.Card}">
+						<controls:ReduxOperationProgress IconBrush="{DynamicResource ReduxErrorBrush}" IconKey="trash"
+							Title="{Binding ProgressTitle}" Status="{Binding ProgressWorkText}" ProgressValue="{Binding ProgressValue}"
+							CancelCommand="{Binding CancelRunCommand}" />
+					</Border>
+				</Grid>
+			</Grid>
+		</Border>
+	</Grid>
+</adonisUI:AdonisWindow>

@@ -378,8 +378,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	private readonly ObservableAsPropertyHelper<bool> _hasForceLoadedMods;
 	public bool HasForceLoadedMods => _hasForceLoadedMods.Value;
 
-	private readonly ObservableAsPropertyHelper<bool> _isDeletingFiles;
-	public bool IsDeletingFiles => _isDeletingFiles.Value;
+	[Reactive] public bool IsDeletingFiles { get; private set; }
 
 	#region Progress
 	[Reactive] public string MainProgressTitle { get; set; }
@@ -9105,15 +9104,43 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 	private void DeleteMods(List<DivinityModData> targetMods, bool isDeletingDuplicates = false, List<DivinityModData> loadedMods = null)
 	{
-		if (!IsDeletingFiles)
+		if (IsDeletingFiles || targetMods == null || targetMods.Count == 0) return;
+
+		var dialog = new DeleteFilesConfirmationView(Window);
+		dialog.ViewModel.IsDeletingDuplicates = isDeletingDuplicates;
+		dialog.ViewModel.Files.AddRange(targetMods.Select(mod =>
+			ModFileDeletionData.FromMod(mod, isDeletingDuplicates, loadedMods)));
+		dialog.ViewModel.FileDeletionComplete += HandleFileDeletionComplete;
+
+		IsDeletingFiles = true;
+		try
 		{
-			var targetUUIDs = targetMods.Select(x => x.UUID).ToHashSet();
+			ReduxWindowBehavior.ShowDialogWithOwnerBackdrop(dialog, Window);
+		}
+		finally
+		{
+			dialog.ViewModel.FileDeletionComplete -= HandleFileDeletionComplete;
+			IsDeletingFiles = false;
+		}
+	}
 
-			var deleteFilesData = targetMods.Select(x => ModFileDeletionData.FromMod(x, isDeletingDuplicates, loadedMods));
-			this.View.DeleteFilesView.ViewModel.IsDeletingDuplicates = isDeletingDuplicates;
-			this.View.DeleteFilesView.ViewModel.Files.AddRange(deleteFilesData);
+	private void HandleFileDeletionComplete(object sender, FileDeletionCompleteEventArgs e)
+	{
+		DivinityApp.Log($"Deleted {e.TotalFilesDeleted} file(s).");
+		if (e.TotalFilesDeleted > 0 && !e.IsDeletingDuplicates)
+		{
+			var deletedUUIDs = e.DeletedFiles.Select(x => x.UUID).ToHashSet();
+			RemoveDeletedMods(deletedUUIDs, e.RemoveFromLoadOrder);
+		}
 
-			this.View.DeleteFilesView.ViewModel.IsVisible = true;
+		if (e.FailureMessages.Count > 0)
+		{
+			var firstFailure = e.FailureMessages[0];
+			var additional = e.FailureMessages.Count > 1
+				? $" (+{e.FailureMessages.Count - 1} more; see the log)"
+				: String.Empty;
+			ShowAlert($"Could not delete {e.FailureMessages.Count} mod file(s). {firstFailure}{additional}",
+				AlertType.Danger, 60);
 		}
 	}
 
@@ -9132,8 +9159,6 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		var eligibleMods = selectedMods.Where(mod => mod.CanDelete).ToList();
 		if (eligibleMods.Count > 0)
 			DeleteMods(eligibleMods);
-		else
-			View.DeleteFilesView.ViewModel.Close();
 
 		if (selectedMods.Any(mod => mod.IsEditorMod))
 			ShowAlert("Toolkit projects cannot be deleted here.", AlertType.Warning, 60);
@@ -10665,8 +10690,6 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		});
 
 		SaveSettingsSilentlyCommand = ReactiveCommand.Create(SaveSettings);
-
-		_isDeletingFiles = this.WhenAnyValue(x => x.View.DeleteFilesView.ViewModel.IsVisible).ToProperty(this, nameof(IsDeletingFiles), false, RxApp.MainThreadScheduler);
 
 		var forceLoadedModsConnection = this.ForceLoadedMods.ToObservableChangeSet().ObserveOn(RxApp.MainThreadScheduler);
 		_hasForceLoadedMods = forceLoadedModsConnection.Count().StartWith(0).Select(x => x > 0).ToProperty(this, nameof(HasForceLoadedMods), false, true, RxApp.MainThreadScheduler);

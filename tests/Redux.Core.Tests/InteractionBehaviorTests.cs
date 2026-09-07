@@ -287,6 +287,15 @@ public sealed class InteractionBehaviorTests
 				ThumbnailUrl = ""
 			}
 		};
+		var deleteFiles = new DeleteFilesConfirmationView(null);
+		ReduxThemeService.Apply(deleteFiles.Resources, ReduxThemeType.ReduxDark);
+		deleteFiles.ViewModel.Files.Add(new ModFileDeletionData
+		{
+			DisplayName = "Runtime template check",
+			FilePath = @"C:\Mods\runtime-template-check.pak",
+			UUID = "runtime-template-check",
+			IsSelected = true
+		});
 
 		var windows = new Window[]
 		{
@@ -301,7 +310,8 @@ public sealed class InteractionBehaviorTests
 				0,
 				0)),
 			nexusDownloads,
-			installReview
+			installReview,
+			deleteFiles
 		};
 
 		try
@@ -312,6 +322,13 @@ public sealed class InteractionBehaviorTests
 				window.Arrange(new Rect(0, 0, 860, 700));
 				window.UpdateLayout();
 			}
+
+			var deleteButton = (Button)deleteFiles.FindName("DeleteActionButton");
+			var deleteIcon = (ReduxIcon)deleteFiles.FindName("DeleteActionIcon");
+			deleteButton.IsEnabled = false;
+			RegressionAssert.Equal(
+				((SolidColorBrush)deleteFiles.FindResource("ReduxErrorBrush")).Color,
+				((SolidColorBrush)deleteIcon.Foreground).Color);
 		}
 		finally
 		{

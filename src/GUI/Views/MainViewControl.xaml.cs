@@ -1568,7 +1568,6 @@ public partial class MainViewControl : MainViewControlViewBase
 			.ObserveOn(RxApp.MainThreadScheduler)
 			.Subscribe(_ => Mouse.Synchronize());
 
-		this.OneWayBind(ViewModel, vm => vm.IsDeletingFiles, view => view.ModListRectangle.Visibility, BoolToVisibilityConverter.FromBool);
 		this.WhenAnyValue(
 			view => view.ViewModel.MainProgressIsActive,
 			view => view.ViewModel.DownloadManagerInstallIsActive,
@@ -1656,27 +1655,6 @@ public partial class MainViewControl : MainViewControlViewBase
 		whenUpdatesViewData.BindTo(this, x => x.ModUpdaterPanel.DataContext);
 
 		RegisterKeyBindings();
-
-		this.DeleteFilesView.ViewModel.FileDeletionComplete += (o, e) =>
-		{
-			DivinityApp.Log($"Deleted {e.TotalFilesDeleted} file(s).");
-			if (e.TotalFilesDeleted > 0)
-			{
-				if (!e.IsDeletingDuplicates)
-				{
-					var deletedUUIDs = e.DeletedFiles.Select(x => x.UUID).ToHashSet();
-					ViewModel.RemoveDeletedMods(deletedUUIDs, e.RemoveFromLoadOrder);
-				}
-				main.Activate();
-			}
-			if (e.FailureMessages.Count > 0)
-			{
-				var firstFailure = e.FailureMessages[0];
-				var additional = e.FailureMessages.Count > 1 ? $" (+{e.FailureMessages.Count - 1} more; see the log)" : String.Empty;
-				ViewModel.ShowAlert($"Could not delete {e.FailureMessages.Count} mod file(s). {firstFailure}{additional}", AlertType.Danger, 60);
-				main.Activate();
-			}
-		};
 
 		FocusManager.SetFocusedElement(this, ModOrderPanel);
 	}

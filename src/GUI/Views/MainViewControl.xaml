@@ -497,24 +497,6 @@
 					<RowDefinition Height="Auto" />
 					<RowDefinition Height="*" />
 				</Grid.RowDefinitions>
-				<local:DeleteFilesConfirmationView x:Name="DeleteFilesView" Grid.RowSpan="3" Panel.ZIndex="99" />
-				<Rectangle x:Name="ModListRectangle"
-				    Grid.RowSpan="3"
-				    HorizontalAlignment="Stretch"
-				    VerticalAlignment="Stretch"
-				    Panel.ZIndex="98"
-				    Fill="{DynamicResource ReduxWindowBrush}"
-				    Opacity="0.64">
-					<Rectangle.Style>
-						<Style TargetType="{x:Type Rectangle}">
-							<Style.Triggers>
-								<DataTrigger Binding="{Binding Settings.DisableBackgroundEffects}" Value="True">
-									<Setter Property="Opacity" Value="0" />
-								</DataTrigger>
-							</Style.Triggers>
-						</Style>
-					</Rectangle.Style>
-				</Rectangle>
 				<Grid Background="{DynamicResource ReduxWindowBrush}">
 					<Grid.ColumnDefinitions>
 						<ColumnDefinition Width="*" />

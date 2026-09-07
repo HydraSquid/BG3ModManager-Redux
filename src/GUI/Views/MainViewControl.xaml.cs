@@ -506,6 +506,14 @@ public partial class MainViewControl : MainViewControlViewBase
 				Header = "Credits & Attribution",
 				Icon = ReduxIcon.FromResource("Redux.Icon.Information", true)
 			};
+			var reduxSupportItem = new MenuItem
+			{
+				Header = "Support circleain on Ko-fi",
+				Icon = ReduxIcon.FromResource("Redux.Icon.Heart", true)
+			};
+			reduxSupportItem.Click += (_, _) => ProcessHelper.TryOpenUrl(DivinityApp.URL_REDUX_DONATION);
+			creditsMenu.Items.Add(reduxSupportItem);
+			creditsMenu.Items.Add(new Separator());
 			creditsMenu.Items.Add(new MenuItem
 			{
 				Header = "Original BG3 Mod Manager on GitHub",

@@ -124,6 +124,7 @@
 								<RowDefinition MinHeight="29" />
 								<RowDefinition MinHeight="29" />
 								<RowDefinition MinHeight="29" />
+								<RowDefinition MinHeight="29" />
 							</Grid.RowDefinitions>
 							<TextBlock Style="{StaticResource AboutLabelStyle}" Text="Project" />
 							<c:HyperlinkText Grid.Column="1" Style="{StaticResource AboutLinkStyle}" DisplayText="Open on GitHub" URL="{x:Static app:DivinityApp.URL_REDUX_REPO}" />
@@ -133,6 +134,8 @@
 							<c:HyperlinkText Grid.Row="2" Grid.Column="1" Style="{StaticResource AboutLinkStyle}" DisplayText="Report an issue" URL="{x:Static app:DivinityApp.URL_REDUX_BUG_REPORT}" />
 							<TextBlock Grid.Row="3" Style="{StaticResource AboutLabelStyle}" Text="License" />
 							<c:HyperlinkText Grid.Row="3" Grid.Column="1" Style="{StaticResource AboutLinkStyle}" DisplayText="MIT License" URL="{x:Static app:DivinityApp.URL_REDUX_LICENSE}" />
+							<TextBlock Grid.Row="4" Style="{StaticResource AboutLabelStyle}" Text="Support" />
+							<c:HyperlinkText Grid.Row="4" Grid.Column="1" Style="{StaticResource AboutLinkStyle}" DisplayText="Support circleain on Ko-fi" URL="{x:Static app:DivinityApp.URL_REDUX_DONATION}" />
 						</Grid>
 					</StackPanel>
 				</Border>

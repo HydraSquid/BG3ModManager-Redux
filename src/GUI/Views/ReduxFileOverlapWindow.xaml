@@ -3,7 +3,7 @@
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:adonisUI="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
 	xmlns:controls="clr-namespace:DivinityModManager.Controls"
-	xmlns:dapp="clr-namespace:DivinityModManager;assembly=DivinityModManager.Core"
+	xmlns:dapp="clr-namespace:DivinityModManager;assembly=DivinityModManagerCore"
 	xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
 	Title="Active File Overlaps"
 	Width="820" Height="650" MinWidth="640" MinHeight="500" MaxWidth="1080" MaxHeight="880"

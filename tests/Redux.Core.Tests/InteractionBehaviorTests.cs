@@ -199,6 +199,40 @@ public sealed class InteractionBehaviorTests
 		}
 	}
 
+	public void ReduxDialogTemplatesResolveCoreBindingsAtRuntime()
+	{
+		var windows = new Window[]
+		{
+			new ReduxSaveManagerWindow(null!, null!),
+			new ReduxFileOverlapWindow(null!, Array.Empty<DivinityModData>()),
+			new ReduxExportReviewWindow(null!, new ReduxExportReviewData(
+				"Current",
+				"Public",
+				null!,
+				0,
+				0,
+				0,
+				0))
+		};
+
+		try
+		{
+			foreach (var window in windows)
+			{
+				window.Measure(new Size(860, 700));
+				window.Arrange(new Rect(0, 0, 860, 700));
+				window.UpdateLayout();
+			}
+		}
+		finally
+		{
+			foreach (var window in windows)
+			{
+				window.Close();
+			}
+		}
+	}
+
 	public void ThemeCyclingIncludesValidCustomThemesInSavedOrder()
 	{
 		var settings = new DivinityModManagerSettings

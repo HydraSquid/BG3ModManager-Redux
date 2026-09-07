@@ -158,18 +158,20 @@
 									<ToggleButton.Template>
 										<ControlTemplate TargetType="{x:Type ToggleButton}">
 											<Border x:Name="HeaderSurface"
-												Margin="4,5,4,2"
-												Padding="8,5"
+												Margin="4,6,4,3"
 												Background="{DynamicResource ReduxSurfaceMutedBrush}"
 												BorderBrush="{DynamicResource ReduxBorderBrush}"
 												BorderThickness="1"
-												CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}">
+												CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
+												ClipToBounds="True">
 												<Grid>
 													<Grid.ColumnDefinitions>
+														<ColumnDefinition Width="3" />
 														<ColumnDefinition Width="Auto" />
 														<ColumnDefinition Width="*" />
 													</Grid.ColumnDefinitions>
-													<controls:ReduxIcon Width="13" Height="13" Margin="0,0,8,0"
+													<Border Background="{DynamicResource ReduxAccentBrush}" />
+													<controls:ReduxIcon Grid.Column="1" Width="13" Height="13" Margin="10,0,8,0"
 														Foreground="{DynamicResource ReduxAccentHoverBrush}">
 														<controls:ReduxIcon.Style>
 															<Style BasedOn="{StaticResource {x:Type controls:ReduxIcon}}" TargetType="{x:Type controls:ReduxIcon}">
@@ -182,7 +184,7 @@
 															</Style>
 														</controls:ReduxIcon.Style>
 													</controls:ReduxIcon>
-													<ContentPresenter Grid.Column="1"
+													<ContentPresenter Grid.Column="2" Margin="0,7,10,7"
 														VerticalAlignment="Center"
 														ContentSource="Content" />
 												</Grid>
@@ -199,15 +201,15 @@
 										</ControlTemplate>
 									</ToggleButton.Template>
 								</ToggleButton>
-								<ContentPresenter x:Name="ExpandSite" Grid.Row="1"
-									ContentSource="Content"
-									KeyboardNavigation.TabNavigation="Continue" />
+								<Border x:Name="AnimatedContentHost" Grid.Row="1" ClipToBounds="True">
+									<Border.RenderTransform>
+										<TranslateTransform Y="0" />
+									</Border.RenderTransform>
+									<ContentPresenter x:Name="ExpandSite"
+										ContentSource="Content"
+										KeyboardNavigation.TabNavigation="Continue" />
+								</Border>
 							</Grid>
-							<ControlTemplate.Triggers>
-								<Trigger Property="IsExpanded" Value="False">
-									<Setter TargetName="ExpandSite" Property="Visibility" Value="Collapsed" />
-								</Trigger>
-							</ControlTemplate.Triggers>
 						</ControlTemplate>
 					</Setter.Value>
 				</Setter>

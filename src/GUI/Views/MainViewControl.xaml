@@ -1285,7 +1285,7 @@
 											<TextBlock Text="Install Mod" />
 										</StackPanel>
 									</Button>
-									<Button x:Name="OpenModsFolderButton" Style="{StaticResource ToolbarUtilityButtonStyle}" ToolTip="{Binding Keys.OpenModsFolder.CommandToolTip}">
+									<Button x:Name="OpenModsFolderButton" Margin="0,0,9,0" Style="{StaticResource ToolbarUtilityButtonStyle}" ToolTip="{Binding Keys.OpenModsFolder.CommandToolTip}">
 										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" />
 										<Button.ContextMenu>
 											<ContextMenu>
@@ -1295,7 +1295,7 @@
 											</ContextMenu>
 										</Button.ContextMenu>
 									</Button>
-									<controls:ReduxIcon Margin="2,0,5,0" StrokeData="{StaticResource Redux.Icon.Person}" Foreground="{DynamicResource ReduxTextSecondaryBrush}" />
+									<controls:ReduxIcon Margin="0,0,5,0" StrokeData="{StaticResource Redux.Icon.Person}" Foreground="{DynamicResource ReduxTextSecondaryBrush}" />
 									<ComboBox x:Name="ProfilesComboBox"
 										Width="116"
 										DisplayMemberPath="Name"

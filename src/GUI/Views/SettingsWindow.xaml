@@ -158,44 +158,53 @@
 									<ToggleButton.Template>
 										<ControlTemplate TargetType="{x:Type ToggleButton}">
 											<Border x:Name="HeaderSurface"
-												Margin="4,6,4,3"
-												Background="{DynamicResource ReduxSurfaceMutedBrush}"
-												BorderBrush="{DynamicResource ReduxBorderBrush}"
-												BorderThickness="1"
-												CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
-												ClipToBounds="True">
+												Margin="4,8,4,3"
+												Padding="6,3"
+												Background="Transparent"
+												CornerRadius="{DynamicResource Redux.CornerRadius.Control}">
 												<Grid>
 													<Grid.ColumnDefinitions>
-														<ColumnDefinition Width="3" />
+														<ColumnDefinition Width="Auto" />
 														<ColumnDefinition Width="Auto" />
 														<ColumnDefinition Width="*" />
+														<ColumnDefinition Width="Auto" />
 													</Grid.ColumnDefinitions>
-													<Border Background="{DynamicResource ReduxAccentBrush}" />
-													<controls:ReduxIcon Grid.Column="1" Width="13" Height="13" Margin="10,0,8,0"
-														Foreground="{DynamicResource ReduxAccentHoverBrush}">
-														<controls:ReduxIcon.Style>
-															<Style BasedOn="{StaticResource {x:Type controls:ReduxIcon}}" TargetType="{x:Type controls:ReduxIcon}">
-																<Setter Property="StrokeData" Value="{StaticResource Redux.Icon.ChevronRightStroke}" />
-																<Style.Triggers>
-																	<DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="True">
-																		<Setter Property="StrokeData" Value="{StaticResource Redux.Icon.ChevronDownStroke}" />
-																	</DataTrigger>
-																</Style.Triggers>
-															</Style>
-														</controls:ReduxIcon.Style>
-													</controls:ReduxIcon>
-													<ContentPresenter Grid.Column="2" Margin="0,7,10,7"
+													<Border Width="24" Height="24"
+														Background="{DynamicResource ReduxSurfaceElevatedBrush}"
+														BorderBrush="{DynamicResource ReduxBorderBrush}"
+														BorderThickness="1"
+														CornerRadius="{DynamicResource Redux.CornerRadius.Pill}">
+														<controls:ReduxIcon Width="12" Height="12" Foreground="{DynamicResource ReduxAccentHoverBrush}">
+															<controls:ReduxIcon.Style>
+																<Style BasedOn="{StaticResource {x:Type controls:ReduxIcon}}" TargetType="{x:Type controls:ReduxIcon}">
+																	<Setter Property="StrokeData" Value="{StaticResource Redux.Icon.ChevronRightStroke}" />
+																	<Style.Triggers>
+																		<DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="True">
+																			<Setter Property="StrokeData" Value="{StaticResource Redux.Icon.ChevronDownStroke}" />
+																		</DataTrigger>
+																	</Style.Triggers>
+																</Style>
+															</controls:ReduxIcon.Style>
+														</controls:ReduxIcon>
+													</Border>
+													<ContentPresenter Grid.Column="1" Margin="9,0,0,0"
 														VerticalAlignment="Center"
 														ContentSource="Content" />
+													<Border Grid.Column="2" Height="1" Margin="12,0"
+														VerticalAlignment="Center"
+														Background="{DynamicResource ReduxBorderStrongBrush}" />
+													<Border Grid.Column="3" MinWidth="25" Padding="7,2"
+														Background="{DynamicResource ReduxAccentPillBackground}"
+														CornerRadius="{DynamicResource Redux.CornerRadius.Pill}">
+														<TextBlock HorizontalAlignment="Center"
+															Foreground="{DynamicResource ReduxAccentHoverBrush}"
+															Text="{Binding Content.ItemCount, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
+													</Border>
 												</Grid>
 											</Border>
 											<ControlTemplate.Triggers>
 												<Trigger Property="IsMouseOver" Value="True">
-													<Setter TargetName="HeaderSurface" Property="Background" Value="{DynamicResource ReduxAccentSoftBrush}" />
-													<Setter TargetName="HeaderSurface" Property="BorderBrush" Value="{DynamicResource ReduxAccentBrush}" />
-												</Trigger>
-												<Trigger Property="IsKeyboardFocused" Value="True">
-													<Setter TargetName="HeaderSurface" Property="BorderBrush" Value="{DynamicResource ReduxAccentBrush}" />
+													<Setter TargetName="HeaderSurface" Property="Background" Value="{DynamicResource ReduxHoverBrush}" />
 												</Trigger>
 											</ControlTemplate.Triggers>
 										</ControlTemplate>
@@ -1074,23 +1083,12 @@
 																Loaded="ShortcutGroupExpander_Loaded"
 																Expanded="ShortcutGroupExpander_ExpansionChanged"
 																Collapsed="ShortcutGroupExpander_ExpansionChanged">
-																<Expander.HeaderTemplate>
-																	<DataTemplate>
-																		<Grid>
-																			<Grid.ColumnDefinitions>
-																				<ColumnDefinition Width="*" />
-																				<ColumnDefinition Width="Auto" />
-																			</Grid.ColumnDefinitions>
-																			<TextBlock Foreground="{DynamicResource ReduxTextPrimaryBrush}"
-																				FontWeight="{DynamicResource Redux.FontWeight.Control}"
-																				Text="{Binding Name}" />
-																			<Border Grid.Column="1" MinWidth="24" Margin="10,0,0,0" Padding="6,1"
-																				Background="{DynamicResource ReduxSurfaceElevatedBrush}"
-																				CornerRadius="{DynamicResource Redux.CornerRadius.Pill}">
-																				<TextBlock HorizontalAlignment="Center" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="{Binding ItemCount}" />
-																			</Border>
-																		</Grid>
-																	</DataTemplate>
+														<Expander.HeaderTemplate>
+															<DataTemplate>
+																<TextBlock Foreground="{DynamicResource ReduxTextPrimaryBrush}"
+																	FontWeight="{DynamicResource Redux.FontWeight.Control}"
+																	Text="{Binding Name}" />
+															</DataTemplate>
 																</Expander.HeaderTemplate>
 																<ItemsPresenter />
 															</Expander>
@@ -1115,65 +1113,37 @@
 										<Setter Property="Template">
 											<Setter.Value>
 												<ControlTemplate TargetType="{x:Type ListViewItem}">
-											<Grid x:Name="HotkeyRowRoot" Background="Transparent"
-												util:ReduxWindowBehavior.HoverLift="1"
-												SnapsToDevicePixels="True" RenderTransformOrigin="0.5,0.5">
-												<Grid.RenderTransform>
-													<TranslateTransform x:Name="HotkeyRowTranslate" Y="0" />
-												</Grid.RenderTransform>
-												<Border x:Name="RowChrome"
-													Margin="4,1"
-															Background="{TemplateBinding Background}"
-															BorderBrush="{TemplateBinding BorderBrush}"
-													BorderThickness="{TemplateBinding BorderThickness}"
-													CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}" />
-												<Border x:Name="RowHoverSurface"
-													Margin="4,1"
-													Background="{DynamicResource ReduxAccentSoftBrush}"
-													BorderBrush="{DynamicResource ReduxAccentBrush}"
-													BorderThickness="{DynamicResource Redux.Rail.Thickness}"
-													CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}"
-													OpacityMask="{StaticResource Redux.Hover.WashMask}"
-													IsHitTestVisible="False"
-													Opacity="0" />
-												<Border x:Name="SelectionRail"
-															Width="2"
-															Margin="4,5,0,5"
-															HorizontalAlignment="Left"
-															Background="{DynamicResource ReduxAccentBrush}"
-															CornerRadius="1"
-															Opacity="0" />
-														<ContentPresenter
-															HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-															VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-															Content="{TemplateBinding Content}"
-															ContentTemplate="{TemplateBinding ContentTemplate}"
-															ContentTemplateSelector="{TemplateBinding ContentTemplateSelector}" />
-													</Grid>
+													<Border x:Name="RowChrome"
+														Margin="5,2"
+														Background="Transparent"
+														BorderBrush="Transparent"
+														BorderThickness="1"
+														CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
+														ClipToBounds="True"
+														SnapsToDevicePixels="True">
+														<Grid>
+															<Border x:Name="SelectionRail"
+																Width="3"
+																HorizontalAlignment="Left"
+																Background="{DynamicResource ReduxAccentBrush}"
+																Opacity="0" />
+															<ContentPresenter
+																HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+																VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+																Content="{TemplateBinding Content}"
+																ContentTemplate="{TemplateBinding ContentTemplate}"
+																ContentTemplateSelector="{TemplateBinding ContentTemplateSelector}" />
+														</Grid>
+													</Border>
 												<ControlTemplate.Triggers>
-												<Trigger Property="IsMouseOver" Value="True">
-														<Trigger.EnterActions>
-															<BeginStoryboard>
-																<Storyboard>
-																	<DoubleAnimation Storyboard.TargetName="RowHoverSurface" Storyboard.TargetProperty="Opacity"
-																		To="0.62" Duration="{StaticResource Redux.Motion.Fast}"
-																		EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
-																</Storyboard>
-															</BeginStoryboard>
-														</Trigger.EnterActions>
-														<Trigger.ExitActions>
-															<BeginStoryboard>
-																<Storyboard>
-																	<DoubleAnimation Storyboard.TargetName="RowHoverSurface" Storyboard.TargetProperty="Opacity"
-																		To="0" Duration="{StaticResource Redux.Motion.Standard}"
-																		EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
-																</Storyboard>
-															</BeginStoryboard>
-														</Trigger.ExitActions>
-												</Trigger>
+													<Trigger Property="IsMouseOver" Value="True">
+														<Setter TargetName="RowChrome" Property="Background" Value="{DynamicResource ReduxHoverBrush}" />
+														<Setter TargetName="RowChrome" Property="BorderBrush" Value="{DynamicResource ReduxBorderBrush}" />
+													</Trigger>
 														<Trigger Property="IsSelected" Value="True">
 															<Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" />
-															<Setter TargetName="RowChrome" Property="Background" Value="{DynamicResource ReduxAccentSoftBrush}" />
+															<Setter TargetName="RowChrome" Property="Background" Value="{DynamicResource ReduxSelectionBrush}" />
+															<Setter TargetName="RowChrome" Property="BorderBrush" Value="{DynamicResource ReduxAccentBrush}" />
 															<Setter TargetName="SelectionRail" Property="Opacity" Value="1" />
 														</Trigger>
 														<Trigger Property="IsEnabled" Value="False">
@@ -1199,7 +1169,7 @@
 								</ListView.ItemContainerStyle>
 								<ListView.ItemTemplate>
 									<DataTemplate>
-										<Grid MinHeight="32" Margin="12,0,8,0">
+										<Grid MinHeight="34" Margin="10,0,6,0">
 											<Grid.ColumnDefinitions>
 												<ColumnDefinition Width="*" />
 												<ColumnDefinition Width="166" />

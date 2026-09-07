@@ -35,7 +35,17 @@ public static partial class ReduxCustomFontService
 	public static IReadOnlyList<ReduxFontChoice> GetChoices()
 	{
 		ProcessPendingDeletions();
-		var choices = Enum.GetValues<ReduxTypographyFont>()
+		// Keep Redux's core faces together at the top and omit retired built-ins.
+		// Their enum values remain readable solely for settings/theme compatibility.
+		ReduxTypographyFont[] builtInFonts =
+		[
+			ReduxTypographyFont.Manrope,
+			ReduxTypographyFont.ArchivoBlack,
+			ReduxTypographyFont.IBMPlexMono,
+			ReduxTypographyFont.AtkinsonHyperlegible,
+			ReduxTypographyFont.SegoeUI
+		];
+		var choices = builtInFonts
 			.Select(font => new ReduxFontChoice(font.GetDescription(), font))
 			.ToList();
 		try

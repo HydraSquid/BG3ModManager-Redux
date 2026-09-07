@@ -105,21 +105,15 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
 		</None>
-		<None Include="..\..\licenses\Monaspace-OFL-1.1.txt">
-			<Link>licenses\Monaspace-OFL-1.1.txt</Link>
-			<TargetPath>licenses\Monaspace-OFL-1.1.txt</TargetPath>
+		<None Include="..\..\licenses\ArchivoBlack-OFL-1.1.txt">
+			<Link>licenses\ArchivoBlack-OFL-1.1.txt</Link>
+			<TargetPath>licenses\ArchivoBlack-OFL-1.1.txt</TargetPath>
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
 		</None>
-		<None Include="..\..\licenses\Minipax-OFL-1.1.txt">
-			<Link>licenses\Minipax-OFL-1.1.txt</Link>
-			<TargetPath>licenses\Minipax-OFL-1.1.txt</TargetPath>
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-		</None>
-		<None Include="..\..\licenses\Chivo-OFL-1.1.txt">
-			<Link>licenses\Chivo-OFL-1.1.txt</Link>
-			<TargetPath>licenses\Chivo-OFL-1.1.txt</TargetPath>
+		<None Include="..\..\licenses\IBMPlexMono-OFL-1.1.txt">
+			<Link>licenses\IBMPlexMono-OFL-1.1.txt</Link>
+			<TargetPath>licenses\IBMPlexMono-OFL-1.1.txt</TargetPath>
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
 		</None>

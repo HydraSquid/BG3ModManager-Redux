@@ -292,7 +292,7 @@ Diagnostic exports and release packaging checks reject credentials and other pri
 Redux retains upstream speech and screen-reader support while adding:
 
 - a top-level Accessibility menu and first-run setup;
-- Atkinson Hyperlegible, other bundled fonts, imported fonts, and adjustable text size;
+- a focused font set—Manrope, Archivo Black, IBM Plex Mono, Atkinson Hyperlegible, and the system-provided Segoe UI—plus imported fonts and adjustable text size;
 - keyboard-operable Redux dialogs and a searchable, grouped shortcut editor with remembered group
   state and group-wide expand/collapse controls;
 - selectable dialog text and consistent focus behavior;

@@ -67,10 +67,9 @@ public static class ReduxTypographyService
 		return selection switch
 		{
 			ReduxTypographyFont.SegoeUI => new FontFamily("Segoe UI"),
+			ReduxTypographyFont.ArchivoBlack => CreateBundledFont("Archivo Black"),
+			ReduxTypographyFont.IBMPlexMono => CreateBundledFont("IBM Plex Mono"),
 			ReduxTypographyFont.AtkinsonHyperlegible => CreateBundledFont("Atkinson Hyperlegible"),
-			ReduxTypographyFont.MonaspaceNeon => CreateBundledFont("Monaspace Neon"),
-			ReduxTypographyFont.Minipax => CreateBundledFont("Minipax"),
-			ReduxTypographyFont.Chivo => CreateBundledFont("Chivo"),
 			_ => CreateBundledFont("Manrope")
 		};
 	}

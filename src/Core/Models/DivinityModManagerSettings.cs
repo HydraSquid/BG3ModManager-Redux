@@ -28,6 +28,8 @@ public enum ReduxTypographyFont
 {
 	[Description("Manrope")]
 	Manrope = 1,
+	// Values 4-6 are retained below so older settings and exported themes
+	// deserialize safely. They are no longer offered by the Redux font selector.
 	[Description("Segoe UI")]
 	SegoeUI = 2,
 	[Description("Atkinson Hyperlegible")]
@@ -37,7 +39,11 @@ public enum ReduxTypographyFont
 	[Description("Minipax")]
 	Minipax = 5,
 	[Description("Chivo")]
-	Chivo = 6
+	Chivo = 6,
+	[Description("Archivo Black")]
+	ArchivoBlack = 7,
+	[Description("IBM Plex Mono")]
+	IBMPlexMono = 8
 }
 
 public enum ReduxTextSize

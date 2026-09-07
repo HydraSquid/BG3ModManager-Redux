@@ -21,9 +21,8 @@ THIRD_PARTY_LICENSE_FILES = (
 	Path("LSLib-MIT.txt"),
 	Path("Manrope-OFL-1.1.txt"),
 	Path("Atkinson-Hyperlegible-OFL-1.1.txt"),
-	Path("Monaspace-OFL-1.1.txt"),
-	Path("Minipax-OFL-1.1.txt"),
-	Path("Chivo-OFL-1.1.txt"),
+	Path("ArchivoBlack-OFL-1.1.txt"),
+	Path("IBMPlexMono-OFL-1.1.txt"),
 )
 
 USER_STATE_DIRECTORIES = {
@@ -76,9 +75,8 @@ REQUIRED_FILES = {
 	Path("THIRD-PARTY-NOTICES.md"),
 	Path("Resources/Fonts/Manrope-Regular.ttf"),
 	Path("Resources/Fonts/AtkinsonHyperlegible-Regular.ttf"),
-	Path("Resources/Fonts/MonaspaceNeon-Regular.otf"),
-	Path("Resources/Fonts/Minipax-Regular.ttf"),
-	Path("Resources/Fonts/Chivo-Regular.ttf"),
+	Path("Resources/Fonts/ArchivoBlack-Regular.ttf"),
+	Path("Resources/Fonts/IBMPlexMono-Regular.ttf"),
 }
 
 BINARY_SUFFIXES = {".dll", ".exe"}

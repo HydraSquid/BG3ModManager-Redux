@@ -623,7 +623,11 @@ public static class ReduxThemeService
 	private static Color Parse(string value) => TryParseColor(value, out var color) ? color : System.Windows.Media.Colors.Magenta;
 	private static string Normalize(string value) => $"#{Parse(value).R:X2}{Parse(value).G:X2}{Parse(value).B:X2}";
 	private static ReduxTypographyFont NormalizeTypography(ReduxTypographyFont value, ReduxThemeType baseTheme) =>
-		Enum.IsDefined(value) && value != 0
+		value is ReduxTypographyFont.Manrope
+			or ReduxTypographyFont.ArchivoBlack
+			or ReduxTypographyFont.IBMPlexMono
+			or ReduxTypographyFont.AtkinsonHyperlegible
+			or ReduxTypographyFont.SegoeUI
 			? value
 			: ReduxTypographyFont.Manrope;
 	private static ReduxTextSize NormalizeTextSize(ReduxTextSize value) =>

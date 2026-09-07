@@ -5,11 +5,28 @@ using Newtonsoft.Json;
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Redux.Core.Tests;
 
 public sealed class SettingsMaintenanceTests
 {
+	public void BuiltInTypographyChoicesKeepTheFocusedReduxOrder()
+	{
+		var builtIns = ReduxCustomFontService.GetChoices()
+			.Where(choice => !choice.IsCustom)
+			.Select(choice => choice.BuiltInFont);
+
+		RegressionAssert.SequenceEqual(new[]
+		{
+			ReduxTypographyFont.Manrope,
+			ReduxTypographyFont.ArchivoBlack,
+			ReduxTypographyFont.IBMPlexMono,
+			ReduxTypographyFont.AtkinsonHyperlegible,
+			ReduxTypographyFont.SegoeUI
+		}, builtIns);
+	}
+
 	public void SaveGameCampaignCollapseStateRoundTripsWithoutDuplicates()
 	{
 		var settings = new DivinityModManagerSettings

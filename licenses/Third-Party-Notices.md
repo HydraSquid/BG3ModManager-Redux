@@ -41,26 +41,19 @@ under the SIL Open Font License. A copy is included in the distribution in
 - Project: https://github.com/googlefonts/atkinson-hyperlegible
 - Braille Institute: https://www.brailleinstitute.org/freefont/
 
-## Monaspace Neon
+## Archivo Black
 
-Redux bundles selected static weights of Monaspace Neon from the Monaspace type system under the
-SIL Open Font License. A copy is included in `THIRD-PARTY-NOTICES.md`.
+Redux bundles the Archivo Black typeface under the SIL Open Font License. A copy is included in
+`THIRD-PARTY-NOTICES.md`.
 
-- Project: https://github.com/githubnext/monaspace
+- Project: https://github.com/Omnibus-Type/ArchivoBlack
 
-## Minipax
+## IBM Plex Mono
 
-Redux bundles selected weights of the Minipax typeface under the SIL Open Font License. A copy is
-included in `THIRD-PARTY-NOTICES.md`.
+Redux bundles selected weights of the IBM Plex Mono typeface, copyright IBM Corp., under the SIL
+Open Font License. A copy is included in `THIRD-PARTY-NOTICES.md`.
 
-- Project: https://github.com/ronotypo/Minipax
-
-## Chivo
-
-Redux bundles selected weights of the Chivo typeface under the SIL Open Font License. A copy is
-included in `THIRD-PARTY-NOTICES.md`.
-
-- Project: https://github.com/Omnibus-Type/Chivo
+- Project: https://github.com/IBM/plex
 
 ## Lucide
 

@@ -8,6 +8,23 @@ using SharpCompress.Readers;
 
 namespace DivinityModManager.Util;
 
+public enum ArchivePackagePreflightKind
+{
+	PakArchive,
+	ReviewedGameDirectory,
+	UnreviewedNative,
+	SaveGame,
+	Mixed
+}
+
+public sealed record ArchiveSavePreflightEntry(
+	string DisplayName,
+	string CampaignName,
+	string FolderName,
+	DateTime ModifiedUtc,
+	long SizeBytes,
+	Bg3SaveDifficulty Difficulty);
+
 public sealed class ArchivePackagePreflightResult
 {
 	public string ArchivePath { get; }
@@ -15,19 +32,31 @@ public sealed class ArchivePackagePreflightResult
 	public long ArchiveSize { get; }
 	public IReadOnlyList<PackagePreflightReport> Packages { get; }
 	public IReadOnlyList<PackagePreflightFinding> Findings { get; }
+	public ArchivePackagePreflightKind Kind { get; }
+	public ReduxGameDirectoryArchiveInspection GameDirectoryInspection { get; }
+	public IReadOnlyList<ArchiveSavePreflightEntry> SaveGames { get; }
+	public IReadOnlyList<string> EntryNames { get; }
 
 	public ArchivePackagePreflightResult(
 		string archivePath,
 		int entryCount,
 		long archiveSize,
 		IEnumerable<PackagePreflightReport> packages,
-		IEnumerable<PackagePreflightFinding> findings)
+		IEnumerable<PackagePreflightFinding> findings,
+		ArchivePackagePreflightKind kind = ArchivePackagePreflightKind.PakArchive,
+		ReduxGameDirectoryArchiveInspection gameDirectoryInspection = null,
+		IEnumerable<ArchiveSavePreflightEntry> saveGames = null,
+		IEnumerable<string> entryNames = null)
 	{
 		ArchivePath = archivePath ?? String.Empty;
 		EntryCount = Math.Max(0, entryCount);
 		ArchiveSize = Math.Max(0, archiveSize);
 		Packages = (packages ?? Enumerable.Empty<PackagePreflightReport>()).ToArray();
 		Findings = (findings ?? Enumerable.Empty<PackagePreflightFinding>()).ToArray();
+		Kind = kind;
+		GameDirectoryInspection = gameDirectoryInspection;
+		SaveGames = (saveGames ?? Enumerable.Empty<ArchiveSavePreflightEntry>()).ToArray();
+		EntryNames = (entryNames ?? Enumerable.Empty<string>()).ToArray();
 	}
 }
 
@@ -72,13 +101,34 @@ public static class ArchivePackagePreflightService
 		var normalizedPath = Path.GetFullPath(archivePath);
 		if (!File.Exists(normalizedPath))
 			return Unreadable(normalizedPath, "Archive file was not found.");
-		if (!IsSupportedArchive(normalizedPath))
+		var isLooseSave = Path.GetExtension(normalizedPath).Equals(".lsv", StringComparison.OrdinalIgnoreCase);
+		if (!isLooseSave && !IsSupportedArchive(normalizedPath))
 			return Unreadable(normalizedPath, "The selected archive format is not supported.");
 
 		var temporaryRoot = CreateTemporaryRoot();
 		try
 		{
 			cancellationToken.ThrowIfCancellationRequested();
+			if (isLooseSave)
+			{
+				try
+				{
+					var looseSaves = await InspectSaveInputAsync(normalizedPath, temporaryRoot, cancellationToken);
+					return CreateSaveResult(normalizedPath, 1, new FileInfo(normalizedPath).Length,
+						looseSaves, [Path.GetFileName(normalizedPath)]);
+				}
+				catch (Exception ex) when (ex is not OperationCanceledException)
+				{
+					DivinityApp.Log($"Loose save preflight failed for '{Path.GetFileName(normalizedPath)}':\n{ex}");
+					return new ArchivePackagePreflightResult(
+						normalizedPath, 1, new FileInfo(normalizedPath).Length,
+						Array.Empty<PackagePreflightReport>(),
+						[new PackagePreflightFinding(ModHealthSeverity.Error, "Save data could not be validated", ex.Message)],
+						ArchivePackagePreflightKind.SaveGame,
+						entryNames: [Path.GetFileName(normalizedPath)]);
+				}
+			}
+
 			await using var fileStream = new FileStream(
 				normalizedPath,
 				FileMode.Open,
@@ -88,10 +138,60 @@ public static class ArchivePackagePreflightService
 				FileOptions.Asynchronous | FileOptions.SequentialScan);
 			using var archive = ArchiveFactory.OpenArchive(fileStream, new ReaderOptions());
 			var entries = archive.Entries.Where(entry => !entry.IsDirectory).ToArray();
-			var findings = AnalyzeEntryNames(entries.Select(entry => entry.Key)).ToList();
+			var entryNames = entries.Select(entry => NormalizeEntryPath(entry.Key)).ToArray();
 			var pakEntries = entries
 				.Where(entry => entry.Key.EndsWith(".pak", StringComparison.OrdinalIgnoreCase))
 				.ToArray();
+			var dllEntries = entryNames.Where(name => name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)).ToArray();
+			var hasSaveEntries = entryNames.Any(name => name.EndsWith(".lsv", StringComparison.OrdinalIgnoreCase));
+			var hasNativeEntries = dllEntries.Length > 0;
+			ReduxGameDirectoryArchiveInspection nativeInspection = null;
+			string unreviewedNativeReason = null;
+			if (hasNativeEntries)
+			{
+				try
+				{
+					nativeInspection = ReduxGameDirectoryInstallService.TryInspectKnownArchive(normalizedPath, computeArchiveHash: false);
+				}
+				catch (ReduxUnsupportedGameDirectoryArchiveException ex)
+				{
+					unreviewedNativeReason = ex.Message;
+				}
+				catch (InvalidDataException ex)
+				{
+					unreviewedNativeReason = ex.Message;
+				}
+			}
+			var kind = nativeInspection != null
+				? pakEntries.Length > 0 ? ArchivePackagePreflightKind.Mixed : ArchivePackagePreflightKind.ReviewedGameDirectory
+				: hasSaveEntries && (pakEntries.Length > 0 || hasNativeEntries)
+					? ArchivePackagePreflightKind.Mixed
+					: hasSaveEntries ? ArchivePackagePreflightKind.SaveGame
+						: hasNativeEntries && pakEntries.Length > 0 ? ArchivePackagePreflightKind.Mixed
+							: hasNativeEntries ? ArchivePackagePreflightKind.UnreviewedNative
+								: ArchivePackagePreflightKind.PakArchive;
+			var findings = AnalyzeEntryNames(entryNames, requirePak: kind == ArchivePackagePreflightKind.PakArchive).ToList();
+			AddNativeFindings(nativeInspection, unreviewedNativeReason, dllEntries, entryNames, findings);
+			IReadOnlyList<ArchiveSavePreflightEntry> saves = [];
+			if (hasSaveEntries)
+			{
+				try
+				{
+					saves = await InspectSaveInputAsync(normalizedPath, temporaryRoot, cancellationToken);
+					findings.Add(new PackagePreflightFinding(
+						ModHealthSeverity.Info,
+						"BG3 save data recognized",
+						$"Redux found {saves.Count} save{(saves.Count == 1 ? String.Empty : "s")}. Install through Save Game Manager rather than the normal mod workflow."));
+				}
+				catch (Exception ex) when (ex is not OperationCanceledException)
+				{
+					DivinityApp.Log($"Save archive preflight failed for '{Path.GetFileName(normalizedPath)}':\n{ex}");
+					findings.Add(new PackagePreflightFinding(
+						ModHealthSeverity.Error,
+						"Save data could not be validated",
+						ex.Message));
+				}
+			}
 			var packages = new List<PackagePreflightReport>(pakEntries.Length);
 
 			for (var index = 0; index < pakEntries.Length; index++)
@@ -142,7 +242,11 @@ public static class ArchivePackagePreflightService
 				entries.Length,
 				new FileInfo(normalizedPath).Length,
 				packages,
-				findings);
+				findings,
+				kind,
+				nativeInspection,
+				saves,
+				entryNames);
 		}
 		catch (OperationCanceledException)
 		{
@@ -162,7 +266,7 @@ public static class ArchivePackagePreflightService
 		}
 	}
 
-	public static IReadOnlyList<PackagePreflightFinding> AnalyzeEntryNames(IEnumerable<string> entryNames)
+	public static IReadOnlyList<PackagePreflightFinding> AnalyzeEntryNames(IEnumerable<string> entryNames, bool requirePak = true)
 	{
 		var entries = (entryNames ?? Enumerable.Empty<string>())
 			.Where(name => !String.IsNullOrWhiteSpace(name))
@@ -173,7 +277,7 @@ public static class ArchivePackagePreflightService
 			.Where(name => name.EndsWith(".pak", StringComparison.OrdinalIgnoreCase))
 			.ToArray();
 
-		if (pakEntries.Length == 0)
+		if (requirePak && pakEntries.Length == 0)
 		{
 			findings.Add(new PackagePreflightFinding(
 				ModHealthSeverity.Error,
@@ -230,6 +334,111 @@ public static class ArchivePackagePreflightService
 
 		return findings;
 	}
+
+	private static void AddNativeFindings(
+		ReduxGameDirectoryArchiveInspection inspection,
+		string unreviewedReason,
+		IReadOnlyList<string> dllEntries,
+		IReadOnlyList<string> entryNames,
+		ICollection<PackagePreflightFinding> findings)
+	{
+		if (inspection == null && dllEntries.Count == 0) return;
+		if (inspection != null)
+		{
+			var definition = inspection.Definition;
+			var destinations = inspection.ManagedFiles.Select(file => file.DestinationPath)
+				.Distinct(StringComparer.OrdinalIgnoreCase).Take(6).ToArray();
+			findings.Add(new PackagePreflightFinding(
+				ModHealthSeverity.Info,
+				"Reviewed game-directory package",
+				$"Redux recognizes {definition.Name} using the reviewed {inspection.LayoutName} layout."));
+			findings.Add(new PackagePreflightFinding(
+				ModHealthSeverity.Info,
+				"Expected game-directory destinations",
+				String.Join(", ", destinations)));
+			if (definition.RequiresLoader)
+			{
+				findings.Add(new PackagePreflightFinding(
+					ModHealthSeverity.Info,
+					"Loader dependency",
+					"This native plugin requires Native Mod Loader. Installation will verify the loader before changing game files."));
+			}
+			if (inspection.PackageEntries.Count > 0)
+			{
+				findings.Add(new PackagePreflightFinding(
+					ModHealthSeverity.Info,
+					"Hybrid native and PAK package",
+					$"Game-directory files use the guarded installer; {String.Join(", ", inspection.PackageEntries.Select(Path.GetFileName))} uses Redux's normal mod workflow."));
+			}
+		}
+		else
+		{
+			findings.Add(new PackagePreflightFinding(
+				ModHealthSeverity.Warning,
+				"Unreviewed native layout",
+				String.IsNullOrWhiteSpace(unreviewedReason)
+					? "DLL files were detected, but Redux cannot confidently identify their package or install destinations."
+					: unreviewedReason));
+		}
+
+		findings.Add(new PackagePreflightFinding(
+			ModHealthSeverity.Info,
+			"Native libraries detected",
+			String.Join(", ", dllEntries.Select(Path.GetFileName).Distinct(StringComparer.OrdinalIgnoreCase).Take(8))));
+		var supportFiles = entryNames.Where(name => Path.GetExtension(name) is var extension
+			&& extension is not null
+			&& (extension.Equals(".toml", StringComparison.OrdinalIgnoreCase)
+				|| extension.Equals(".ini", StringComparison.OrdinalIgnoreCase)
+				|| extension.Equals(".json", StringComparison.OrdinalIgnoreCase)
+				|| extension.Equals(".config", StringComparison.OrdinalIgnoreCase)))
+			.Select(Path.GetFileName).Distinct(StringComparer.OrdinalIgnoreCase).Take(8).ToArray();
+		if (supportFiles.Length > 0)
+		{
+			findings.Add(new PackagePreflightFinding(
+				ModHealthSeverity.Info,
+				"Configuration and support files",
+				String.Join(", ", supportFiles)));
+		}
+	}
+
+	private static async Task<IReadOnlyList<ArchiveSavePreflightEntry>> InspectSaveInputAsync(
+		string sourcePath,
+		string temporaryRoot,
+		CancellationToken cancellationToken)
+	{
+		var saveRoot = Path.Combine(temporaryRoot, "Saves");
+		await Task.Run(() => Bg3SaveGameService.Import(sourcePath, saveRoot, replaceExisting: false), cancellationToken);
+		cancellationToken.ThrowIfCancellationRequested();
+		return Bg3SaveGameService.Discover(saveRoot).Select(save => new ArchiveSavePreflightEntry(
+			save.DisplayName,
+			save.CampaignName,
+			save.FolderName,
+			save.ModifiedUtc,
+			save.SizeBytes,
+			save.Difficulty)).ToArray();
+	}
+
+	private static ArchivePackagePreflightResult CreateSaveResult(
+		string sourcePath,
+		int entryCount,
+		long sourceSize,
+		IReadOnlyList<ArchiveSavePreflightEntry> saves,
+		IReadOnlyList<string> entryNames) => new(
+			sourcePath,
+			entryCount,
+			sourceSize,
+			Array.Empty<PackagePreflightReport>(),
+			new[]
+			{
+				new PackagePreflightFinding(
+					ModHealthSeverity.Info,
+					"BG3 save data recognized",
+					$"Redux found {saves.Count} save{(saves.Count == 1 ? String.Empty : "s")}. Install through Save Game Manager rather than the normal mod workflow.")
+			},
+			ArchivePackagePreflightKind.SaveGame,
+			null,
+			saves,
+			entryNames);
 
 	private static ArchivePackagePreflightResult Unreadable(string archivePath, string message) => new(
 		archivePath,

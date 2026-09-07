@@ -101,7 +101,7 @@
 						Text="Package preflight" />
 					<TextBlock Margin="0,4,0,0"
 						Foreground="{DynamicResource ReduxTextSecondaryBrush}"
-						Text="Inspect release metadata, dependencies, embedded Redux data, and package contents without installing or changing the file."
+						Text="Inspect metadata, expected destinations, dependencies, and package contents without installing or changing the file."
 						TextWrapping="Wrap" />
 				</StackPanel>
 
@@ -181,17 +181,17 @@
 							<StackPanel>
 								<TextBlock FontSize="{DynamicResource Redux.FontSize.18}" FontWeight="{DynamicResource Redux.FontWeight.Title}"
 									Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="{Binding InternalFileCountText}" />
-								<TextBlock Margin="0,2,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Files" />
+								<TextBlock Margin="0,2,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="{Binding PrimaryMetricLabel}" />
 							</StackPanel>
 							<StackPanel Grid.Column="1">
 								<TextBlock FontSize="{DynamicResource Redux.FontSize.18}" FontWeight="{DynamicResource Redux.FontWeight.Title}"
 									Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="{Binding DeclaredDependencyCountText}" />
-								<TextBlock Margin="0,2,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Dependencies" />
+								<TextBlock Margin="0,2,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="{Binding SecondaryMetricLabel}" />
 							</StackPanel>
 							<StackPanel Grid.Column="2">
 								<TextBlock FontSize="{DynamicResource Redux.FontSize.18}" FontWeight="{DynamicResource Redux.FontWeight.Title}"
 									Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="{Binding PackageSizeText}" />
-								<TextBlock Margin="0,2,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Package size" />
+								<TextBlock Margin="0,2,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="{Binding SizeMetricLabel}" />
 							</StackPanel>
 						</Grid>
 					</Border>

@@ -553,7 +553,7 @@ public partial class MainViewControl : MainViewControlViewBase
 		var dialog = new Microsoft.Win32.OpenFileDialog
 		{
 			Title = "Inspect Mod Package",
-			Filter = "Mod packages and archives (*.pak;*.zip;*.7z;*.rar;*.tar;*.gz)|*.pak;*.zip;*.7z;*.7zip;*.rar;*.tar;*.tar.gz;*.tgz;*.gz;*.gzip|Baldur's Gate 3 package (*.pak)|*.pak|Archive files (*.zip;*.7z;*.rar;*.tar;*.gz)|*.zip;*.7z;*.7zip;*.rar;*.tar;*.tar.gz;*.tgz;*.gz;*.gzip|All files (*.*)|*.*",
+			Filter = "BG3 packages, saves, and archives (*.pak;*.lsv;*.zip;*.7z;*.rar;*.tar;*.gz)|*.pak;*.lsv;*.zip;*.7z;*.7zip;*.rar;*.tar;*.tar.gz;*.tgz;*.gz;*.gzip|Baldur's Gate 3 packages (*.pak)|*.pak|BG3 saves (*.lsv)|*.lsv|Archive files (*.zip;*.7z;*.rar;*.tar;*.gz)|*.zip;*.7z;*.7zip;*.rar;*.tar;*.tar.gz;*.tgz;*.gz;*.gzip|All files (*.*)|*.*",
 			DefaultExt = ".pak",
 			AddExtension = true,
 			CheckFileExists = true,

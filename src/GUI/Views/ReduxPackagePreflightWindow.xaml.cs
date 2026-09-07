@@ -128,6 +128,9 @@ public partial class ReduxPackagePreflightWindow : AdonisUI.Controls.AdonisWindo
 		public string AuthorLabel { get; init; } = "Author";
 		public string VersionLabel { get; init; } = "Version";
 		public string UuidLabel { get; init; } = "UUID";
+		public string PrimaryMetricLabel { get; init; } = "Files";
+		public string SecondaryMetricLabel { get; init; } = "Dependencies";
+		public string SizeMetricLabel { get; init; } = "Package size";
 		public string DisplayName { get; init; } = String.Empty;
 		public string Author { get; init; } = String.Empty;
 		public string Version { get; init; } = String.Empty;
@@ -181,12 +184,23 @@ public partial class ReduxPackagePreflightWindow : AdonisUI.Controls.AdonisWindo
 			if (warningCount > 0) summaryParts.Add($"{warningCount} warning{(warningCount == 1 ? String.Empty : "s")}");
 			if (infoCount > 0) summaryParts.Add($"{infoCount} note{(infoCount == 1 ? String.Empty : "s")}");
 
+			if (report.Kind == ArchivePackagePreflightKind.ReviewedGameDirectory
+				|| report.Kind == ArchivePackagePreflightKind.UnreviewedNative
+				|| report.Kind == ArchivePackagePreflightKind.Mixed
+					&& report.EntryNames.Any(name => name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)))
+				return FromNativeArchive(report, findings, summaryParts);
+			if (report.Kind == ArchivePackagePreflightKind.SaveGame
+				|| report.Kind == ArchivePackagePreflightKind.Mixed && report.SaveGames.Count > 0)
+				return FromSaveArchive(report, findings, summaryParts);
+
 			return new PreflightPresentation
 			{
 				IdentityHeader = "ARCHIVE",
 				AuthorLabel = "Packages",
 				VersionLabel = "Readable modules",
 				UuidLabel = "Contents",
+				PrimaryMetricLabel = "Entries",
+				SecondaryMetricLabel = "PAK packages",
 				DisplayName = Path.GetFileName(report.ArchivePath),
 				Author = report.Packages.Count.ToString("N0"),
 				Version = report.Packages.Count(package => package.IsReadable).ToString("N0"),
@@ -204,6 +218,95 @@ public partial class ReduxPackagePreflightWindow : AdonisUI.Controls.AdonisWindo
 						: "Redux could read the archive and its contained packages without detecting a blocking issue.",
 				FindingSummary = summaryParts.Count == 0 ? "No findings" : String.Join(" · ", summaryParts),
 				DetectedFeatures = $"{report.EntryCount:N0} archive entries · {report.Packages.Count:N0} PAK packages",
+				Findings = findings
+			};
+		}
+
+		private static PreflightPresentation FromNativeArchive(
+			ArchivePackagePreflightResult report,
+			IReadOnlyList<PackagePreflightFinding> findings,
+			IReadOnlyList<string> summaryParts)
+		{
+			var inspection = report.GameDirectoryInspection;
+			var definition = inspection?.Definition;
+			var dlls = report.EntryNames.Where(name => name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+				.Select(Path.GetFileName).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+			var kind = definition?.Kind switch
+			{
+				ReduxGameDirectoryModKind.NativeLoader => "Native loader",
+				ReduxGameDirectoryModKind.NativePlugin => "Native plugin",
+				ReduxGameDirectoryModKind.ExistingReduxWorkflow => "Script Extender",
+				_ => report.Kind == ArchivePackagePreflightKind.Mixed ? "Mixed / hybrid archive" : "Unreviewed native archive"
+			};
+			var statusTitle = findings.Any(finding => finding.Severity == ModHealthSeverity.Error)
+				? "Native package needs attention"
+				: findings.Any(finding => finding.Severity == ModHealthSeverity.Warning)
+					? "Native package needs review" : "Reviewed native package recognized";
+			return new PreflightPresentation
+			{
+				IdentityHeader = definition == null ? "NATIVE ARCHIVE" : "GAME-DIRECTORY PACKAGE",
+				AuthorLabel = "Type",
+				VersionLabel = definition == null ? "DLLs" : "Layout",
+				UuidLabel = definition == null ? "Destination" : "Source",
+				PrimaryMetricLabel = "Entries",
+				SecondaryMetricLabel = "Managed files",
+				DisplayName = definition?.Name ?? Path.GetFileName(report.ArchivePath),
+				Author = kind,
+				Version = inspection?.LayoutName ?? (dlls.Length == 0 ? "None detected" : String.Join(", ", dlls)),
+				Uuid = definition?.SourceUrl ?? "Not determined — inspection only",
+				InternalFileCountText = report.EntryCount.ToString("N0"),
+				DeclaredDependencyCountText = (inspection?.ManagedFiles.Count ?? 0).ToString("N0"),
+				PackageSizeText = FormatFileSize(report.ArchiveSize),
+				StatusTitle = statusTitle,
+				StatusDescription = definition != null
+					? "Redux matched this archive to the same reviewed layout used by the guarded game-directory installer."
+					: "Redux detected native libraries but will not guess their identity or install destination.",
+				FindingSummary = summaryParts.Count == 0 ? "No findings" : String.Join(" · ", summaryParts),
+				DetectedFeatures = String.Join(" · ", new[]
+				{
+					$"{dlls.Length:N0} DLL{(dlls.Length == 1 ? String.Empty : "s")}",
+					definition?.RequiresLoader == true ? "Requires Native Mod Loader" : null,
+					inspection?.PackageEntries.Count > 0 ? $"{inspection.PackageEntries.Count:N0} companion PAK{(inspection.PackageEntries.Count == 1 ? String.Empty : "s")}" : null
+				}.Where(value => !String.IsNullOrWhiteSpace(value))),
+				Findings = findings
+			};
+		}
+
+		private static PreflightPresentation FromSaveArchive(
+			ArchivePackagePreflightResult report,
+			IReadOnlyList<PackagePreflightFinding> findings,
+			IReadOnlyList<string> summaryParts)
+		{
+			var saves = report.SaveGames;
+			var first = saves.FirstOrDefault();
+			var campaigns = saves.Select(save => save.CampaignName).Where(name => !String.IsNullOrWhiteSpace(name))
+				.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+			var difficulties = saves.Select(save => save.Difficulty).Where(value => value != Bg3SaveDifficulty.Unknown)
+				.Distinct().Select(value => value.ToString()).ToArray();
+			var totalBytes = saves.Sum(save => save.SizeBytes);
+			var hasErrors = findings.Any(finding => finding.Severity == ModHealthSeverity.Error);
+			return new PreflightPresentation
+			{
+				IdentityHeader = "SAVE GAME",
+				AuthorLabel = "Campaign",
+				VersionLabel = "Difficulty",
+				UuidLabel = "Contents",
+				PrimaryMetricLabel = "Entries",
+				SecondaryMetricLabel = "Save games",
+				DisplayName = saves.Count == 1 ? first.DisplayName : Path.GetFileName(report.ArchivePath),
+				Author = campaigns.Length == 0 ? "Not available" : String.Join(", ", campaigns),
+				Version = difficulties.Length == 0 ? "Not available" : String.Join(", ", difficulties),
+				Uuid = saves.Count == 0 ? "No validated saves" : String.Join(", ", saves.Select(save => save.FolderName)),
+				InternalFileCountText = report.EntryCount.ToString("N0"),
+				DeclaredDependencyCountText = saves.Count.ToString("N0"),
+				PackageSizeText = FormatFileSize(report.ArchiveSize > 0 ? report.ArchiveSize : totalBytes),
+				StatusTitle = hasErrors ? "Save data needs attention" : "BG3 save recognized",
+				StatusDescription = hasErrors
+					? "Redux found save data but could not validate it safely."
+					: "This belongs in Save Game Manager rather than the normal mod-install workflow.",
+				FindingSummary = summaryParts.Count == 0 ? "No findings" : String.Join(" · ", summaryParts),
+				DetectedFeatures = saves.Count == 0 ? "No validated save metadata"
+					: $"{saves.Count:N0} save{(saves.Count == 1 ? String.Empty : "s")} · newest {saves.Max(save => save.ModifiedUtc).ToLocalTime():g}",
 				Findings = findings
 			};
 		}

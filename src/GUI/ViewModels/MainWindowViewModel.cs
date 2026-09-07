@@ -7428,6 +7428,9 @@ Directory the zip will be extracted to:
 		Settings.VisualModListDividers?.Any(divider =>
 			divider.IsActiveList == activeList && divider.IsCollapsed != collapsed) == true;
 
+	public bool? ResolveAllVisualDividersCollapsedTarget(bool activeList) =>
+		VisualDividerStatePolicy.ResolveToggleTarget(Settings.VisualModListDividers, activeList);
+
 	public int SetAllVisualDividersCollapsed(bool activeList, bool collapsed)
 	{
 		if (Settings.VisualModListDividers?.Any(divider =>

@@ -213,6 +213,7 @@ internal static class Program
 			(nameof(visualDividerDrag.ProgressiveExpansionInsertsBeforeUnownedDestinationSuffix), visualDividerDrag.ProgressiveExpansionInsertsBeforeUnownedDestinationSuffix),
 			(nameof(visualDividerDrag.ExpansionRestoresClosedMembersBeforeNewlyAdoptedRows), visualDividerDrag.ExpansionRestoresClosedMembersBeforeNewlyAdoptedRows),
 			(nameof(visualDividerDrag.CollapseAllChangesOnlyTheRequestedPaneAndOnlyOnce), visualDividerDrag.CollapseAllChangesOnlyTheRequestedPaneAndOnlyOnce),
+			(nameof(visualDividerDrag.BulkSeparatorToggleClosesMixedPanesBeforeReopeningThem), visualDividerDrag.BulkSeparatorToggleClosesMixedPanesBeforeReopeningThem),
 			(nameof(visualDividerDrag.LegacyPositionsMigrateToDurableSectionMembership), visualDividerDrag.LegacyPositionsMigrateToDurableSectionMembership),
 			(nameof(visualDividerDrag.LegacyMembershipWaitsForCompletedListLoading), visualDividerDrag.LegacyMembershipWaitsForCompletedListLoading),
 			(nameof(visualDividerDrag.VisualSequencePreservesAuthoritativeModOrder), visualDividerDrag.VisualSequencePreservesAuthoritativeModOrder),

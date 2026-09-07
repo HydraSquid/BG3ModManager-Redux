@@ -1888,14 +1888,30 @@
 						</Style>
 					</TextBlock.Style>
 				</TextBlock>
-				<Button Grid.Column="2"
-					Style="{StaticResource ModPaneHeaderActionButtonStyle}"
-					Click="AddActiveSeparatorButton_Click"
-					AutomationProperties.Name="Insert a separator after the selected mod">
-					<c:ReduxIcon Width="14" Height="14"
-						Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
-						StrokeData="{StaticResource Redux.Icon.AddStroke}" />
-				</Button>
+				<StackPanel Grid.Column="2" Orientation="Horizontal">
+					<Button x:Name="ActiveSeparatorBulkToggleButton"
+						Style="{StaticResource ModPaneHeaderActionButtonStyle}"
+						IsEnabled="False"
+						Click="ActiveSeparatorBulkToggleButton_Click"
+						Loaded="ActiveSeparatorBulkToggleButton_Loaded"
+						MouseEnter="ActiveSeparatorBulkToggleButton_MouseEnter"
+						AutomationProperties.Name="Collapse all active separators"
+						ToolTip="Collapse all active separators">
+						<c:ReduxIcon x:Name="ActiveSeparatorBulkToggleIcon"
+							Width="14"
+							Height="14"
+							Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+							StrokeData="{StaticResource Redux.Icon.ChevronUpStroke}" />
+					</Button>
+					<Button Style="{StaticResource ModPaneHeaderActionButtonStyle}"
+						Click="AddActiveSeparatorButton_Click"
+						AutomationProperties.Name="Insert a separator after the selected mod"
+						ToolTip="Add a separator after the selected active mod">
+						<c:ReduxIcon Width="14" Height="14"
+							Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+							StrokeData="{StaticResource Redux.Icon.AddStroke}" />
+					</Button>
+				</StackPanel>
 				<TextBlock x:Name="ActiveModsFilterResultText"
 					Grid.Column="3"
 					Margin="0,0,8,0"

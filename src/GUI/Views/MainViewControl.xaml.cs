@@ -303,10 +303,11 @@ public partial class MainViewControl : MainViewControlViewBase
 			if (String.IsNullOrEmpty(key.DisplayName))
 				key.DisplayName = menuSettings.DisplayName;
 
-			// Redux consolidates folder navigation into Quick Links. Donation/project
-			// destinations live under Credits and Quick Links, while their hotkeys remain active.
+			// Redux consolidates folder navigation into Quick Links. Direct-surface commands
+			// and donation/project destinations keep their hotkeys without duplicating menus.
 			if (menuSettings.Parent.Equals("Go", StringComparison.OrdinalIgnoreCase) ||
 				prop.Name == nameof(AppKeys.OpenCommandPalette) ||
+				prop.Name == nameof(AppKeys.ToggleAllActiveSeparators) ||
 				prop.Name == nameof(AppKeys.OpenReduxDonationLink) ||
 				prop.Name == nameof(AppKeys.OpenDonationLink) ||
 				prop.Name == nameof(AppKeys.OpenRepositoryPage))
@@ -1487,6 +1488,7 @@ public partial class MainViewControl : MainViewControlViewBase
 	public bool CanEditSelectedCategory => ModLayout.CanEditSelectedCategory;
 	public void ShowEditSelectedCategoryDialog() => ModLayout.ShowEditSelectedCategoryDialog();
 	public void ShowAddActiveSeparatorDialog() => ModLayout.ShowAddActiveSeparatorDialog();
+	public void ToggleAllActiveSeparators() => ModLayout.ToggleAllActiveSeparators();
 	public void SetAllActiveSeparatorsCollapsed(bool collapsed) =>
 		ModLayout.SetAllActiveSeparatorsCollapsed(collapsed);
 

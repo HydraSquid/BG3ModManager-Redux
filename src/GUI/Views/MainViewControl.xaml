@@ -597,7 +597,10 @@
 							<Style BasedOn="{StaticResource ReduxMenuItemStyle}" TargetType="{x:Type MenuItem}" />
 						</Menu.Resources>
 						<MenuItem x:Name="FileMenuItem" Header="File" />
-						<MenuItem x:Name="EditMenuItem" Header="Edit">
+						<MenuItem x:Name="EditMenuItem" Header="Edit" />
+						<MenuItem x:Name="SettingsMenuItem" Header="Settings" />
+						<MenuItem x:Name="AccessibilityMenuItem" Header="Accessibility" />
+						<MenuItem x:Name="ToolsMenuItem" Header="Tools" Style="{StaticResource MenuItemHighlightBlink}">
 							<MenuItem Command="{Binding Keys.OpenCommandPalette.Command}"
 								Header="Quick Access..."
 								InputGestureText="{Binding Keys.OpenCommandPalette.MenuDisplayBindingText}"
@@ -606,9 +609,6 @@
 							</MenuItem>
 							<Separator />
 						</MenuItem>
-						<MenuItem x:Name="SettingsMenuItem" Header="Settings" />
-						<MenuItem x:Name="AccessibilityMenuItem" Header="Accessibility" />
-						<MenuItem x:Name="ToolsMenuItem" Header="Tools" Style="{StaticResource MenuItemHighlightBlink}" />
 						<!-- A compact command surface remains available whenever the visual toolbar is hidden. -->
 						<MenuItem Header="Toolbar"
 							Visibility="{Binding Settings.HideToolbar, Converter={StaticResource BoolToVisibilityConverter}}">

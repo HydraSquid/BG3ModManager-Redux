@@ -995,6 +995,7 @@
 				<Grid Margin="18,14">
 					<Grid.ColumnDefinitions>
 						<ColumnDefinition Width="*" />
+						<ColumnDefinition Width="Auto" />
 						<ColumnDefinition Width="216" />
 					</Grid.ColumnDefinitions>
 					<Grid.RowDefinitions>
@@ -1006,10 +1007,28 @@
 					<TextBlock Grid.Row="1"
 						Style="{StaticResource SettingsPageDescriptionStyle}"
 						Text="Select a shortcut and press Enter, or double-click its row to record a new key combination." />
-					<Grid Grid.Column="1"
+					<Button x:Name="ShortcutGroupsToggleButton"
+						Grid.Column="1"
+						Grid.RowSpan="2"
+						Width="30"
+						MinWidth="30"
+						Margin="12,0,0,10"
+						Padding="7"
+						VerticalAlignment="Center"
+						IsEnabled="False"
+						AutomationProperties.Name="Collapse all shortcut groups"
+						Click="ShortcutGroupsToggleButton_Click"
+						Style="{StaticResource SettingsActionButtonStyle}"
+						ToolTip="Collapse all shortcut groups">
+						<controls:ReduxIcon x:Name="ShortcutGroupsToggleIcon"
+							Width="14"
+							Height="14"
+							StrokeData="{StaticResource Redux.Icon.ChevronUpStroke}" />
+					</Button>
+					<Grid Grid.Column="2"
 						Grid.RowSpan="2"
 						MinHeight="30"
-						Margin="12,0,8,10"
+						Margin="6,0,8,10"
 						VerticalAlignment="Center">
 						<TextBox x:Name="KeybindingsSearchTextBox"
 							Padding="8,2"

@@ -151,6 +151,7 @@ public partial class ReduxCommandPaletteWindow : AdonisUI.Controls.AdonisWindow
 				item.Hotkey?.HasActions == true
 				&& item.Settings != null
 				&& item.Property.Name != nameof(AppKeys.OpenCommandPalette)
+				&& item.Property.Name != nameof(AppKeys.ToggleAllActiveSeparators)
 				&& (item.Property.Name != nameof(AppKeys.OrganizeLoadOrder)
 					|| viewModel.Modules.LoadOrderGuidanceEnabled))
 			.Select(item =>

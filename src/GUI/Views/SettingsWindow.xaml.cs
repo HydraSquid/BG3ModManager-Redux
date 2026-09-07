@@ -941,6 +941,7 @@ public partial class SettingsWindow : SettingsWindowBase
 	{
 		_keybindingsView?.Refresh();
 		RefreshShortcutGroupExpansion();
+		UpdateShortcutGroupToggleButton();
 		if (KeybindingsListView.Items.Count > 0 && KeybindingsListView.SelectedIndex < 0)
 			KeybindingsListView.SelectedIndex = 0;
 	}
@@ -961,6 +962,7 @@ public partial class SettingsWindow : SettingsWindowBase
 		expander.IsExpanded = shouldExpand;
 		_updatingShortcutGroupExpansion = false;
 		SetShortcutGroupVisualState(expander, animate: false);
+		UpdateShortcutGroupToggleButton();
 	}
 
 	private void ShortcutGroupExpander_ExpansionChanged(object sender, RoutedEventArgs e)
@@ -976,6 +978,7 @@ public partial class SettingsWindow : SettingsWindowBase
 		}
 
 		SetShortcutGroupVisualState(expander, animate: !_updatingShortcutGroupExpansion && expander.IsLoaded);
+		UpdateShortcutGroupToggleButton();
 	}
 
 	private void RefreshShortcutGroupExpansion()
@@ -996,7 +999,37 @@ public partial class SettingsWindow : SettingsWindowBase
 				SetShortcutGroupVisualState(expander, animate: false);
 			}
 			_updatingShortcutGroupExpansion = false;
+			UpdateShortcutGroupToggleButton();
 		}), System.Windows.Threading.DispatcherPriority.Loaded);
+	}
+
+	private void ShortcutGroupsToggleButton_Click(object sender, RoutedEventArgs e)
+	{
+		if (HasShortcutFilter) return;
+		var expanders = KeybindingsListView.FindVisualChildren<Expander>().ToList();
+		if (expanders.Count == 0) return;
+		var collapse = expanders.Any(expander => expander.IsExpanded);
+		foreach (var expander in expanders)
+			expander.IsExpanded = !collapse;
+		UpdateShortcutGroupToggleButton();
+	}
+
+	private void UpdateShortcutGroupToggleButton()
+	{
+		if (ShortcutGroupsToggleButton == null || ShortcutGroupsToggleIcon == null || KeybindingsListView == null)
+			return;
+
+		var expanders = KeybindingsListView.FindVisualChildren<Expander>().ToList();
+		var collapse = expanders.Count == 0 || expanders.Any(expander => expander.IsExpanded);
+		var action = collapse ? "Collapse all shortcut groups" : "Expand all shortcut groups";
+		ShortcutGroupsToggleButton.IsEnabled = !HasShortcutFilter && expanders.Count > 0;
+		ShortcutGroupsToggleButton.ToolTip = HasShortcutFilter
+			? "Clear the shortcut filter to expand or collapse all groups"
+			: action;
+		System.Windows.Automation.AutomationProperties.SetName(ShortcutGroupsToggleButton, action);
+		ShortcutGroupsToggleIcon.SetResourceReference(
+			ReduxIcon.StrokeDataProperty,
+			collapse ? "Redux.Icon.ChevronUpStroke" : "Redux.Icon.ChevronDownStroke");
 	}
 
 	private void SetShortcutGroupVisualState(Expander expander, bool animate)

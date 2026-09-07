@@ -462,6 +462,21 @@ public sealed class VisualDividerDragPolicyTests
 			new[] { firstActive, secondActive, inactive }, true, true));
 	}
 
+	public void BulkSeparatorToggleClosesMixedPanesBeforeReopeningThem()
+	{
+		var expanded = new ModListVisualDividerData { IsActiveList = true };
+		var collapsed = new ModListVisualDividerData { IsActiveList = true, IsCollapsed = true };
+		var inactive = new ModListVisualDividerData { IsActiveList = false };
+
+		RegressionAssert.Equal(true, VisualDividerStatePolicy.ResolveToggleTarget(
+			new[] { expanded, collapsed, inactive }, activeList: true));
+		expanded.IsCollapsed = true;
+		RegressionAssert.Equal(false, VisualDividerStatePolicy.ResolveToggleTarget(
+			new[] { expanded, collapsed, inactive }, activeList: true));
+		RegressionAssert.True(VisualDividerStatePolicy.ResolveToggleTarget(
+			Array.Empty<ModListVisualDividerData>(), activeList: true) == null);
+	}
+
 	public void LegacyPositionsMigrateToDurableSectionMembership()
 	{
 		var first = CreateMod("first");

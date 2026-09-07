@@ -141,6 +141,13 @@ public class AppKeys : ReactiveObject
 	[MenuSettings("Edit", "Delete Selected Mods...", AddSeparator = true)]
 	public Hotkey DeleteSelectedMods { get; private set; } = new Hotkey(Key.Delete);
 
+	[MenuSettings(
+		"Edit",
+		"Expand or Collapse All Active Separators",
+		false,
+		"Toggle every separator in the active load order between expanded and collapsed.")]
+	public Hotkey ToggleAllActiveSeparators { get; private set; } = new Hotkey(Key.None);
+
 	[MenuSettings("Settings", "Preferences...")]
 	public Hotkey OpenPreferences { get; private set; } = new Hotkey(Key.P, ModifierKeys.Control);
 
@@ -152,7 +159,7 @@ public class AppKeys : ReactiveObject
 	public Hotkey OpenKeybindings { get; private set; } = new Hotkey(Key.K, ModifierKeys.Control);
 
 	[MenuSettings(
-		"Edit",
+		"Tools",
 		"Quick Access...",
 		false,
 		"Find an action, mod, profile, order, or category.")]

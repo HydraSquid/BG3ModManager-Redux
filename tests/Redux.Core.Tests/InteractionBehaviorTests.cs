@@ -9,6 +9,7 @@ using DivinityModManager.Views;
 
 using System;
 using System.Linq;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -17,6 +18,25 @@ namespace Redux.Core.Tests;
 
 public sealed class InteractionBehaviorTests
 {
+	public void SaveCampaignAnimationReplacesFrozenTransforms()
+	{
+		var content = new Border();
+		var frozen = new TranslateTransform(0, 0);
+		frozen.Freeze();
+		content.RenderTransform = frozen;
+		var method = typeof(ReduxSaveManagerWindow).GetMethod(
+			"EnsureWritableCampaignTransform",
+			BindingFlags.NonPublic | BindingFlags.Static)
+			?? throw new InvalidOperationException("Save campaign transform guard was not found.");
+		var writable = method.Invoke(null, [content]) as TranslateTransform
+			?? throw new InvalidOperationException("Save campaign transform guard returned no transform.");
+
+		RegressionAssert.False(writable.IsFrozen);
+		RegressionAssert.False(ReferenceEquals(frozen, writable));
+		writable.Y = -5;
+		RegressionAssert.Equal(-5d, writable.Y);
+	}
+
 	public void DrawerRetainsASelectedModDuringCrossListTransferOnly()
 	{
 		var displayed = new DivinityModData { UUID = "moving-mod", IsSelected = true };

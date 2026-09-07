@@ -46,6 +46,7 @@ internal static class Program
 		var nativeMods = new ReduxGameDirectoryInstallServiceTests();
 		var tests = new (string Name, Action Run)[]
 		{
+			(nameof(interactionBehavior.SaveCampaignAnimationReplacesFrozenTransforms), interactionBehavior.SaveCampaignAnimationReplacesFrozenTransforms),
 			(nameof(source.ReviewedModuleUuidResolvesItsProject), source.ReviewedModuleUuidResolvesItsProject),
 			(nameof(source.CommunityModuleUuidResolvesItsDependencySource), source.CommunityModuleUuidResolvesItsDependencySource),
 			(nameof(source.CommunityIdentityRequiresTheInstalledPackageNameToAgree), source.CommunityIdentityRequiresTheInstalledPackageNameToAgree),

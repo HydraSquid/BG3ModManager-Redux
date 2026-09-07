@@ -6,6 +6,7 @@ using Microsoft.VisualBasic.FileIO;
 
 using Ookii.Dialogs.Wpf;
 
+using System.Windows.Automation;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -62,6 +63,9 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 	private bool _isImporting;
 	private readonly Dictionary<FrameworkElement, int> _campaignAnimationVersions = new();
 	private readonly HashSet<Expander> _restoringCampaignExpanders = new();
+	private readonly HashSet<Expander> _campaignExpanders = new();
+	private string[] _campaignKeys = [];
+	private bool _isBulkCampaignUpdate;
 
 	public ReduxSaveManagerWindow(Window owner, MainWindowViewModel viewModel, IEnumerable<string> pendingImportPaths = null)
 	{
@@ -92,11 +96,14 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 		var saves = Bg3SaveGameService.Discover(_storyFolder).Select(save => new ReduxSaveGameItem(save)).ToArray();
 		var groupedSaves = new ListCollectionView(saves);
 		groupedSaves.GroupDescriptions.Add(new PropertyGroupDescription(nameof(ReduxSaveGameItem.CampaignGroupName)));
+		_campaignKeys = saves.Select(save => save.CampaignGroupName)
+			.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
 		SaveList.ItemsSource = groupedSaves;
 		if (!String.IsNullOrWhiteSpace(selectedPath))
 			SaveList.SelectedItem = saves.FirstOrDefault(save => save.FolderPath.Equals(selectedPath, StringComparison.OrdinalIgnoreCase));
 		EmptyState.Visibility = saves.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
 		DeleteButton.IsEnabled = SaveList.SelectedItem != null;
+		UpdateCampaignBulkToggleButton();
 	}
 
 	private async void ImportArchiveButton_Click(object sender, RoutedEventArgs e)
@@ -217,6 +224,7 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 	private void CampaignExpander_Loaded(object sender, RoutedEventArgs e)
 	{
 		if (sender is not Expander expander) return;
+		_campaignExpanders.Add(expander);
 		var key = GetCampaignKey(expander);
 		var collapsed = !String.IsNullOrWhiteSpace(key)
 			&& (_viewModel?.Settings?.CollapsedSaveGameCampaigns?.Contains(key, StringComparer.OrdinalIgnoreCase) ?? false);
@@ -227,10 +235,22 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 		{
 			content.BeginAnimation(HeightProperty, null);
 			content.BeginAnimation(OpacityProperty, null);
+			var translate = EnsureWritableCampaignTransform(content);
+			translate.BeginAnimation(TranslateTransform.YProperty, null);
+			translate.Y = 0;
 			content.Height = Double.NaN;
 			content.Opacity = 1;
 			content.Visibility = collapsed ? Visibility.Collapsed : Visibility.Visible;
 		}
+		UpdateCampaignBulkToggleButton();
+	}
+
+	private void CampaignExpander_Unloaded(object sender, RoutedEventArgs e)
+	{
+		if (sender is not Expander expander) return;
+		_campaignExpanders.Remove(expander);
+		if (expander.Template.FindName("ExpandSite", expander) is FrameworkElement content)
+			_campaignAnimationVersions.Remove(content);
 	}
 
 	private async void CampaignExpander_Expanded(object sender, RoutedEventArgs e)
@@ -245,10 +265,17 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 		var version = NextCampaignAnimationVersion(content);
 		content.BeginAnimation(HeightProperty, null);
 		content.BeginAnimation(OpacityProperty, null);
+		var translate = EnsureWritableCampaignTransform(content);
+		translate.BeginAnimation(TranslateTransform.YProperty, null);
+		translate.Y = 0;
 		content.Visibility = Visibility.Visible;
 		content.Opacity = 1;
 		content.Height = Double.NaN;
-		if (_viewModel?.Settings?.ReduceMotion == true) return;
+		if (ShouldReduceCampaignMotion())
+		{
+			UpdateCampaignBulkToggleButton();
+			return;
+		}
 
 		await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Loaded);
 		if (!expander.IsExpanded || !IsCurrentCampaignAnimation(content, version)) return;
@@ -257,7 +284,7 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 		if (targetHeight <= 0) return;
 		content.Height = 0;
 		content.Opacity = 0;
-		if (content.RenderTransform is TranslateTransform translate) translate.Y = -5;
+		translate.Y = -5;
 		var duration = TimeSpan.FromMilliseconds(165);
 		var easing = new QuadraticEase { EasingMode = EasingMode.EaseOut };
 		var height = new DoubleAnimation(targetHeight, duration) { EasingFunction = easing };
@@ -269,8 +296,8 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 		};
 		content.BeginAnimation(HeightProperty, height);
 		content.BeginAnimation(OpacityProperty, new DoubleAnimation(1, TimeSpan.FromMilliseconds(125)));
-		if (content.RenderTransform is TranslateTransform transform)
-			transform.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(0, duration) { EasingFunction = easing });
+		translate.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(0, duration) { EasingFunction = easing });
+		UpdateCampaignBulkToggleButton();
 	}
 
 	private void CampaignExpander_Collapsed(object sender, RoutedEventArgs e)
@@ -283,10 +310,15 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 			return;
 		}
 		var version = NextCampaignAnimationVersion(content);
-		if (_viewModel?.Settings?.ReduceMotion == true)
+		if (ShouldReduceCampaignMotion())
 		{
+			var translate = EnsureWritableCampaignTransform(content);
+			translate.BeginAnimation(TranslateTransform.YProperty, null);
+			translate.Y = 0;
 			content.Visibility = Visibility.Collapsed;
 			content.Height = Double.NaN;
+			content.Opacity = 1;
+			UpdateCampaignBulkToggleButton();
 			return;
 		}
 
@@ -306,8 +338,79 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 		};
 		content.BeginAnimation(HeightProperty, height);
 		content.BeginAnimation(OpacityProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(110)));
-		if (content.RenderTransform is TranslateTransform transform)
-			transform.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(-4, duration) { EasingFunction = easing });
+		var translateTransform = EnsureWritableCampaignTransform(content);
+		translateTransform.BeginAnimation(TranslateTransform.YProperty,
+			new DoubleAnimation(-4, duration) { EasingFunction = easing });
+		UpdateCampaignBulkToggleButton();
+	}
+
+	private static TranslateTransform EnsureWritableCampaignTransform(FrameworkElement content)
+	{
+		if (content.RenderTransform is TranslateTransform { IsFrozen: false } writable) return writable;
+		var replacement = content.RenderTransform is TranslateTransform transform
+			? transform.CloneCurrentValue()
+			: new TranslateTransform();
+		content.RenderTransform = replacement;
+		return replacement;
+	}
+
+	private bool ShouldReduceCampaignMotion() =>
+		_viewModel?.Settings?.ReduceMotion == true
+		|| ReduxWindowBehavior.ReduceMotion
+		|| !SystemParameters.ClientAreaAnimation;
+
+	private void CampaignBulkToggleButton_MouseEnter(object sender, MouseEventArgs e) =>
+		UpdateCampaignBulkToggleButton();
+
+	private void CampaignBulkToggleButton_Click(object sender, RoutedEventArgs e)
+	{
+		if (_campaignKeys.Length < 2 || _viewModel?.Settings == null) return;
+		var collapse = !AreAllCampaignsCollapsed();
+		var saved = _viewModel.Settings.CollapsedSaveGameCampaigns ??= [];
+		if (collapse)
+		{
+			foreach (var key in _campaignKeys)
+				if (!saved.Contains(key, StringComparer.OrdinalIgnoreCase)) saved.Add(key);
+		}
+		else
+		{
+			saved.RemoveAll(savedKey => _campaignKeys.Contains(savedKey, StringComparer.OrdinalIgnoreCase));
+		}
+
+		_isBulkCampaignUpdate = true;
+		try
+		{
+			foreach (var expander in _campaignExpanders.Where(expander => expander.IsLoaded).ToArray())
+				expander.IsExpanded = !collapse;
+		}
+		finally
+		{
+			_isBulkCampaignUpdate = false;
+		}
+		_viewModel.SaveSettings();
+		UpdateCampaignBulkToggleButton();
+	}
+
+	private bool AreAllCampaignsCollapsed()
+	{
+		var saved = _viewModel?.Settings?.CollapsedSaveGameCampaigns;
+		return _campaignKeys.Length > 0 && saved != null
+			&& _campaignKeys.All(key => saved.Contains(key, StringComparer.OrdinalIgnoreCase));
+	}
+
+	private void UpdateCampaignBulkToggleButton()
+	{
+		if (CampaignBulkToggleButton == null) return;
+		var available = _campaignKeys.Length >= 2;
+		CampaignBulkToggleButton.Visibility = available ? Visibility.Visible : Visibility.Collapsed;
+		CampaignBulkToggleButton.IsEnabled = available;
+		if (!available) return;
+		var expand = AreAllCampaignsCollapsed();
+		var label = expand ? "Expand all campaigns" : "Collapse all campaigns";
+		CampaignBulkToggleButton.ToolTip = label;
+		AutomationProperties.SetName(CampaignBulkToggleButton, label);
+		CampaignBulkToggleIcon.StrokeData = FindResource(expand
+			? "Redux.Icon.ChevronDownStroke" : "Redux.Icon.ChevronUpStroke") as Geometry;
 	}
 
 	private int NextCampaignAnimationVersion(FrameworkElement content)
@@ -325,7 +428,7 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 
 	private void RememberCampaignState(Expander expander, bool collapsed)
 	{
-		if (_restoringCampaignExpanders.Contains(expander) || _viewModel?.Settings == null) return;
+		if (_isBulkCampaignUpdate || _restoringCampaignExpanders.Contains(expander) || _viewModel?.Settings == null) return;
 		var key = GetCampaignKey(expander);
 		if (String.IsNullOrWhiteSpace(key)) return;
 		var saved = _viewModel.Settings.CollapsedSaveGameCampaigns ??= [];
@@ -334,6 +437,7 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 		else if (!collapsed && existing >= 0) saved.RemoveAt(existing);
 		else return;
 		_viewModel.SaveSettings();
+		UpdateCampaignBulkToggleButton();
 	}
 
 	private void Window_DragOver(object sender, DragEventArgs e)

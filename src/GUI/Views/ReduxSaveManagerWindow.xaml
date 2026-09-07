@@ -44,6 +44,12 @@
 					</Setter.Value>
 				</Setter>
 			</Style>
+			<Style x:Key="CampaignBulkActionButtonStyle" BasedOn="{StaticResource ReduxSecondaryActionButtonStyle}" TargetType="{x:Type Button}">
+				<Setter Property="Width" Value="34" />
+				<Setter Property="MinWidth" Value="34" />
+				<Setter Property="Padding" Value="0" />
+				<Setter Property="Margin" Value="7,0,0,0" />
+			</Style>
 			<Style x:Key="CampaignExpanderStyle" TargetType="{x:Type Expander}">
 				<Setter Property="HorizontalContentAlignment" Value="Stretch" />
 				<Setter Property="Template">
@@ -130,6 +136,14 @@
 					<Button Click="RefreshButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
 						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="15" Height="15" Margin="0,0,7,0" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{StaticResource Redux.Icon.RefreshStroke}" /><TextBlock Text="Refresh" /></StackPanel>
 					</Button>
+					<Button x:Name="CampaignBulkToggleButton" IsEnabled="False" Visibility="Collapsed"
+						AutomationProperties.Name="Collapse all campaigns" ToolTip="Collapse all campaigns"
+						Click="CampaignBulkToggleButton_Click" MouseEnter="CampaignBulkToggleButton_MouseEnter"
+						Style="{StaticResource CampaignBulkActionButtonStyle}">
+						<controls:ReduxIcon x:Name="CampaignBulkToggleIcon" Width="14" Height="14"
+							Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+							StrokeData="{StaticResource Redux.Icon.ChevronUpStroke}" />
+					</Button>
 				</StackPanel>
 
 				<Grid Grid.Row="2">
@@ -149,6 +163,7 @@
 												<ControlTemplate TargetType="{x:Type GroupItem}">
 											<Expander IsExpanded="True" Style="{StaticResource CampaignExpanderStyle}"
 												Loaded="CampaignExpander_Loaded"
+												Unloaded="CampaignExpander_Unloaded"
 												Expanded="CampaignExpander_Expanded" Collapsed="CampaignExpander_Collapsed">
 													<Expander.Header>
 														<Grid>

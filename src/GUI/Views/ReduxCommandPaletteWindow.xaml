@@ -176,6 +176,24 @@
 								<Trigger Property="IsSelected" Value="True">
 									<Setter TargetName="ItemChrome" Property="Background" Value="{DynamicResource ReduxSelectionBrush}" />
 								</Trigger>
+								<MultiDataTrigger>
+									<MultiDataTrigger.Conditions>
+										<Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
+										<Condition Binding="{Binding HasAccentColor}" Value="True" />
+										<Condition Binding="{Binding Path=(dapp:DivinityApp.UseCategoryColorsForInteractions)}" Value="True" />
+									</MultiDataTrigger.Conditions>
+									<Setter TargetName="ItemChrome" Property="Background"
+										Value="{Binding AccentColor, Converter={StaticResource StringToGradientBrushConverter}, ConverterParameter=28\,10}" />
+								</MultiDataTrigger>
+								<MultiDataTrigger>
+									<MultiDataTrigger.Conditions>
+										<Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
+										<Condition Binding="{Binding HasAccentColor}" Value="True" />
+										<Condition Binding="{Binding Path=(dapp:DivinityApp.UseCategoryColorsForInteractions)}" Value="True" />
+									</MultiDataTrigger.Conditions>
+									<Setter TargetName="ItemChrome" Property="Background"
+										Value="{Binding AccentColor, Converter={StaticResource StringToGradientBrushConverter}, ConverterParameter=42\,22}" />
+								</MultiDataTrigger>
 								<Trigger Property="IsEnabled" Value="False">
 									<Setter TargetName="ItemChrome" Property="Opacity" Value="0.45" />
 								</Trigger>

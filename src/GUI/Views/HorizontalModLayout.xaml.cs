@@ -357,7 +357,21 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 
 		var dragged = _draggedCategory;
 		_draggedCategory = null;
-		DragDrop.DoDragDrop(listBox, dragged, DragDropEffects.Move);
+		try
+		{
+			DragDrop.DoDragDrop(listBox, dragged, DragDropEffects.Move);
+		}
+		finally
+		{
+			// Releasing over the scrollbar, a pane edge, or another invalid target
+			// does not always route MouseUp back through the originating ListBoxItem.
+			// End the interaction explicitly so the original pane cannot retain
+			// capture and intercept the next click elsewhere in the workspace.
+			_draggedCategory = null;
+			ClearCategoryDropIndicator();
+			if (Mouse.Captured != null)
+				Mouse.Capture(null);
+		}
 	}
 
 	private void CategoryListBox_DragOver(object sender, DragEventArgs e)
@@ -515,15 +529,24 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		ClearModListDropIndicator();
 	}
 
-	private void ModListView_PreviewDrop(object sender, DragEventArgs e) =>
+	private void ModListView_PreviewDrop(object sender, DragEventArgs e)
+	{
+		ViewModel.DragHandler?.CompleteDragTracking();
 		ScheduleClearModListDropIndicator(sender as ListView);
+	}
 
 	private void ModListView_PreviewQueryContinueDrag(object sender, QueryContinueDragEventArgs e)
 	{
 		if (e.EscapePressed || e.Action == DragAction.Cancel)
+		{
+			ViewModel.DragHandler?.CompleteDragTracking();
 			ClearModListDropIndicator();
+		}
 		else if (e.Action == DragAction.Drop)
+		{
+			ViewModel.DragHandler?.CompleteDragTracking();
 			ScheduleClearModListDropIndicator(sender as ListView);
+		}
 	}
 
 	private bool TryResolveModListDropSlot(
@@ -2971,6 +2994,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		_inactiveVisualDividerTransition?.Cancel();
 		_activeVisualDividerTransition = null;
 		_inactiveVisualDividerTransition = null;
+		ViewModel.DragHandler?.CompleteDragTracking();
 		ClearCategoryDropIndicator();
 		ClearModListDropIndicator();
 	}

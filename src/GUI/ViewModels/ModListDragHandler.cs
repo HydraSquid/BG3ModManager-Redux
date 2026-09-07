@@ -68,7 +68,16 @@ public class ModListDragHandler : DefaultDragHandler
 		_viewModel.IsDragging = false;
 		_stopDraggingFallbackTask?.Dispose();
 		_stopDraggingFallbackTask = null;
+
+		// A ListBoxItem can retain mouse capture when the pointer is released over
+		// an invalid target or just outside the pane. The drag operation is already
+		// terminal whenever this method runs, so no control should continue owning
+		// capture and blocking interaction in the other panes.
+		if (Mouse.Captured != null)
+			Mouse.Capture(null);
 	}
+
+	public void CompleteDragTracking() => StopDragTracking();
 
 	private void ScheduleStopDraggingFallback()
 	{

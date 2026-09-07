@@ -25,10 +25,12 @@ public sealed class ReduxCommandPaletteItem
 	public string Description { get; }
 	public string Gesture { get; }
 	public string IconKey { get; }
+	public string AccentColor { get; }
 	public ReduxCommandPaletteTone Tone { get; }
 	public string SearchTerms { get; }
 	public int MinimumQueryLength { get; }
 	public bool HasGesture => !String.IsNullOrWhiteSpace(Gesture);
+	public bool HasAccentColor => !String.IsNullOrWhiteSpace(AccentColor);
 	public bool CanExecute => _canExecute();
 
 	private readonly Action _execute;
@@ -44,13 +46,15 @@ public sealed class ReduxCommandPaletteItem
 		Func<bool> canExecute = null,
 		int minimumQueryLength = 0,
 		string searchTerms = null,
-		ReduxCommandPaletteTone tone = ReduxCommandPaletteTone.Neutral)
+		ReduxCommandPaletteTone tone = ReduxCommandPaletteTone.Neutral,
+		string accentColor = null)
 	{
 		Name = name?.Trim() ?? String.Empty;
 		Category = category?.Trim() ?? String.Empty;
 		Description = description?.Trim() ?? String.Empty;
 		Gesture = gesture?.Trim() ?? String.Empty;
 		IconKey = iconKey?.Trim() ?? "terminal";
+		AccentColor = accentColor?.Trim() ?? String.Empty;
 		Tone = tone;
 		SearchTerms = searchTerms?.Trim() ?? String.Empty;
 		MinimumQueryLength = Math.Max(0, minimumQueryLength);
@@ -201,12 +205,13 @@ public partial class ReduxCommandPaletteWindow : AdonisUI.Controls.AdonisWindow
 				"Category filters",
 				"Show mods assigned to this category.",
 				String.Empty,
-				"tag",
+				String.IsNullOrWhiteSpace(category.IconId) ? "tag" : category.IconId,
 				() => viewModel.SelectedModCategory = category.Name,
 				() => !String.Equals(
 					viewModel.SelectedModCategory,
 					category.Name,
-					StringComparison.OrdinalIgnoreCase))));
+					StringComparison.OrdinalIgnoreCase),
+				accentColor: category.Color)));
 
 		if (focusMod != null)
 		{

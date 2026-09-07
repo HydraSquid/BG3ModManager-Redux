@@ -13,7 +13,11 @@ public sealed class CommandPaletteSearchTests
 			string.Empty,
 			"marker-diamond",
 			() => { },
-			searchTerms: "insert new divider section");
+			searchTerms: "insert new divider section",
+			accentColor: "#D7A24B");
+
+		RegressionAssert.True(separator.HasAccentColor);
+		RegressionAssert.Equal("#D7A24B", separator.AccentColor);
 
 		RegressionAssert.True(separator.Matches("create"));
 		RegressionAssert.True(separator.Matches("divider"));

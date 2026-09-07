@@ -59,8 +59,8 @@
 											<Style TargetType="{x:Type Border}">
 												<Setter Property="Background" Value="{DynamicResource ReduxAccentSoftBrush}" />
 												<Style.Triggers>
-													<MultiDataTrigger>
-														<MultiDataTrigger.Conditions>
+											<MultiDataTrigger>
+												<MultiDataTrigger.Conditions>
 															<Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Success}" />
 															<Condition Binding="{Binding Path=(dapp:DivinityApp.UseCategoryColorsForText)}" Value="True" />
 														</MultiDataTrigger.Conditions>
@@ -78,8 +78,15 @@
 															<Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Error}" />
 															<Condition Binding="{Binding Path=(dapp:DivinityApp.UseCategoryColorsForText)}" Value="True" />
 														</MultiDataTrigger.Conditions>
-														<Setter Property="Background" Value="{DynamicResource ReduxErrorPillBackground}" />
-													</MultiDataTrigger>
+												<Setter Property="Background" Value="{DynamicResource ReduxErrorPillBackground}" />
+											</MultiDataTrigger>
+											<MultiDataTrigger>
+												<MultiDataTrigger.Conditions>
+													<Condition Binding="{Binding HasAccentColor}" Value="True" />
+													<Condition Binding="{Binding Path=(dapp:DivinityApp.UseCategoryColorsForText)}" Value="True" />
+												</MultiDataTrigger.Conditions>
+												<Setter Property="Background" Value="{Binding AccentColor, Converter={StaticResource StringToSolidBrushConverter}, ConverterParameter=33}" />
+											</MultiDataTrigger>
 												</Style.Triggers>
 											</Style>
 										</Border.Style>
@@ -91,8 +98,8 @@
 												<Style BasedOn="{StaticResource {x:Type controls:ReduxIcon}}" TargetType="{x:Type controls:ReduxIcon}">
 													<Setter Property="Foreground" Value="{DynamicResource ReduxAccentBrush}" />
 													<Style.Triggers>
-														<MultiDataTrigger>
-															<MultiDataTrigger.Conditions>
+												<MultiDataTrigger>
+													<MultiDataTrigger.Conditions>
 																<Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Success}" />
 																<Condition Binding="{Binding Path=(dapp:DivinityApp.UseCategoryColorsForText)}" Value="True" />
 															</MultiDataTrigger.Conditions>
@@ -110,18 +117,39 @@
 																<Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Error}" />
 																<Condition Binding="{Binding Path=(dapp:DivinityApp.UseCategoryColorsForText)}" Value="True" />
 															</MultiDataTrigger.Conditions>
-															<Setter Property="Foreground" Value="{DynamicResource ReduxErrorBrush}" />
-														</MultiDataTrigger>
+													<Setter Property="Foreground" Value="{DynamicResource ReduxErrorBrush}" />
+												</MultiDataTrigger>
+												<MultiDataTrigger>
+													<MultiDataTrigger.Conditions>
+														<Condition Binding="{Binding HasAccentColor}" Value="True" />
+														<Condition Binding="{Binding Path=(dapp:DivinityApp.UseCategoryColorsForText)}" Value="True" />
+													</MultiDataTrigger.Conditions>
+													<Setter Property="Foreground" Value="{Binding AccentColor, Converter={StaticResource StringToSolidBrushConverter}}" />
+												</MultiDataTrigger>
 													</Style.Triggers>
 												</Style>
 											</controls:ReduxIcon.Style>
 										</controls:ReduxIcon>
 									</Border>
 									<StackPanel Grid.Column="1" Margin="0,0,12,0" VerticalAlignment="Center">
-										<TextBlock Foreground="{DynamicResource ReduxTextPrimaryBrush}"
-											FontWeight="{DynamicResource Redux.FontWeight.Control}"
-											Text="{Binding Name}"
-											TextTrimming="CharacterEllipsis" />
+									<TextBlock FontWeight="{DynamicResource Redux.FontWeight.Control}"
+										Text="{Binding Name}"
+										TextTrimming="CharacterEllipsis">
+										<TextBlock.Style>
+											<Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="{x:Type TextBlock}">
+												<Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" />
+												<Style.Triggers>
+													<MultiDataTrigger>
+														<MultiDataTrigger.Conditions>
+															<Condition Binding="{Binding HasAccentColor}" Value="True" />
+															<Condition Binding="{Binding Path=(dapp:DivinityApp.UseCategoryColorsForText)}" Value="True" />
+														</MultiDataTrigger.Conditions>
+														<Setter Property="Foreground" Value="{Binding AccentColor, Converter={StaticResource StringToSolidBrushConverter}}" />
+													</MultiDataTrigger>
+												</Style.Triggers>
+											</Style>
+										</TextBlock.Style>
+									</TextBlock>
 										<TextBlock Margin="0,2,0,0"
 											Foreground="{DynamicResource ReduxTextMutedBrush}"
 											Text="{Binding Category}"

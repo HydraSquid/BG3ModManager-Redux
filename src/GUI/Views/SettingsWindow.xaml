@@ -1023,6 +1023,7 @@
 						<controls:ReduxIcon x:Name="ShortcutGroupsToggleIcon"
 							Width="14"
 							Height="14"
+							Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 							StrokeData="{StaticResource Redux.Icon.ChevronUpStroke}" />
 					</Button>
 					<Grid Grid.Column="2"

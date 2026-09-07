@@ -1826,9 +1826,13 @@
 					</BeginStoryboard>
 				</MultiTrigger.ExitActions>
 			</MultiTrigger>
-			<Trigger Property="IsKeyboardFocused" Value="True">
+			<MultiDataTrigger>
+				<MultiDataTrigger.Conditions>
+					<Condition Binding="{Binding IsKeyboardFocused, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
+					<Condition Binding="{Binding Path=(dapp:DivinityApp.IsKeyboardNavigating)}" Value="True" />
+				</MultiDataTrigger.Conditions>
 				<Setter TargetName="FocusRing" Property="Opacity" Value="1" />
-			</Trigger>
+			</MultiDataTrigger>
 			<Trigger Property="IsDefaulted" Value="True">
 				<Setter TargetName="FocusRing" Property="Opacity" Value="0.65" />
 			</Trigger>
@@ -1927,9 +1931,13 @@
 			<Trigger Property="IsPressed" Value="True">
 				<Setter TargetName="ButtonChrome" Property="Opacity" Value="0.72" />
 			</Trigger>
-			<Trigger Property="IsKeyboardFocused" Value="True">
+			<MultiDataTrigger>
+				<MultiDataTrigger.Conditions>
+					<Condition Binding="{Binding IsKeyboardFocused, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
+					<Condition Binding="{Binding Path=(dapp:DivinityApp.IsKeyboardNavigating)}" Value="True" />
+				</MultiDataTrigger.Conditions>
 				<Setter TargetName="FocusRing" Property="Opacity" Value="1" />
-			</Trigger>
+			</MultiDataTrigger>
 			<Trigger Property="IsEnabled" Value="False">
 				<Setter TargetName="ButtonChrome" Property="Opacity" Value="0.45" />
 				<Setter Property="Cursor" Value="Arrow" />
@@ -3653,7 +3661,8 @@
 				</Grid>
 				<ItemsControl Margin="6,0,6,2"
 					ItemTemplate="{StaticResource ReduxPackageTagTemplate}"
-					ItemsSource="{Binding Tags}">
+					ItemsSource="{Binding Tags}"
+					Visibility="{Binding Path=(dapp:DivinityApp.DeveloperModeEnabled), Converter={StaticResource BoolToVisibilityConverter}}">
 					<ItemsControl.ItemsPanel>
 						<ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
 					</ItemsControl.ItemsPanel>

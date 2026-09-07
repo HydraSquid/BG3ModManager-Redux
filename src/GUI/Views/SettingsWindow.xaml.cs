@@ -20,6 +20,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media.Animation;
 
 using WpfScreenHelper;
 
@@ -65,6 +66,7 @@ public partial class SettingsWindow : SettingsWindowBase
 {
 	private ICollectionView _keybindingsView;
 	private readonly Dictionary<string, bool> _shortcutGroupExpansion = new(StringComparer.OrdinalIgnoreCase);
+	private readonly Dictionary<Expander, int> _shortcutGroupAnimationVersions = [];
 	private bool _updatingShortcutGroupExpansion;
 
 	private bool _updatingCustomThemeSelection;
@@ -958,6 +960,7 @@ public partial class SettingsWindow : SettingsWindowBase
 		_updatingShortcutGroupExpansion = true;
 		expander.IsExpanded = shouldExpand;
 		_updatingShortcutGroupExpansion = false;
+		SetShortcutGroupVisualState(expander, animate: false);
 	}
 
 	private void ShortcutGroupExpander_ExpansionChanged(object sender, RoutedEventArgs e)
@@ -972,6 +975,7 @@ public partial class SettingsWindow : SettingsWindowBase
 			_shortcutGroupExpansion[groupName] = expander.IsExpanded;
 		}
 
+		SetShortcutGroupVisualState(expander, animate: !_updatingShortcutGroupExpansion && expander.IsLoaded);
 	}
 
 	private void RefreshShortcutGroupExpansion()
@@ -989,9 +993,72 @@ public partial class SettingsWindow : SettingsWindowBase
 				expander.IsExpanded = HasShortcutFilter ||
 					!_shortcutGroupExpansion.TryGetValue(groupName, out var isExpanded) ||
 					isExpanded;
+				SetShortcutGroupVisualState(expander, animate: false);
 			}
 			_updatingShortcutGroupExpansion = false;
 		}), System.Windows.Threading.DispatcherPriority.Loaded);
+	}
+
+	private void SetShortcutGroupVisualState(Expander expander, bool animate)
+	{
+		expander.ApplyTemplate();
+		if (expander.Template.FindName("AnimatedContentHost", expander) is not Border host ||
+			expander.Template.FindName("ExpandSite", expander) is not ContentPresenter content)
+		{
+			return;
+		}
+
+		var version = _shortcutGroupAnimationVersions.TryGetValue(expander, out var currentVersion)
+			? currentVersion + 1
+			: 1;
+		_shortcutGroupAnimationVersions[expander] = version;
+		host.BeginAnimation(MaxHeightProperty, null);
+		host.BeginAnimation(OpacityProperty, null);
+
+		if (!animate || ReduxWindowBehavior.ReduceMotion || !SystemParameters.ClientAreaAnimation)
+		{
+			host.MaxHeight = expander.IsExpanded ? Double.PositiveInfinity : 0;
+			host.Opacity = expander.IsExpanded ? 1 : 0;
+			return;
+		}
+
+		var duration = TimeSpan.FromMilliseconds(150);
+		var easing = new CubicEase { EasingMode = EasingMode.EaseOut };
+		if (expander.IsExpanded)
+		{
+			var measureWidth = host.ActualWidth > 1 ? host.ActualWidth : Math.Max(320, expander.ActualWidth);
+			content.Measure(new Size(measureWidth, Double.PositiveInfinity));
+			var targetHeight = Math.Max(1, content.DesiredSize.Height);
+			host.MaxHeight = 0;
+			host.Opacity = 0;
+			var heightAnimation = new DoubleAnimation(0, targetHeight, duration) { EasingFunction = easing };
+			heightAnimation.Completed += (_, _) =>
+			{
+				if (_shortcutGroupAnimationVersions.TryGetValue(expander, out var activeVersion) && activeVersion == version)
+				{
+					host.BeginAnimation(MaxHeightProperty, null);
+					host.MaxHeight = Double.PositiveInfinity;
+				}
+			};
+			host.BeginAnimation(MaxHeightProperty, heightAnimation);
+			host.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, duration) { EasingFunction = easing });
+		}
+		else
+		{
+			var startHeight = Math.Max(1, host.ActualHeight);
+			host.MaxHeight = startHeight;
+			var heightAnimation = new DoubleAnimation(startHeight, 0, duration) { EasingFunction = easing };
+			heightAnimation.Completed += (_, _) =>
+			{
+				if (_shortcutGroupAnimationVersions.TryGetValue(expander, out var activeVersion) && activeVersion == version)
+				{
+					host.BeginAnimation(MaxHeightProperty, null);
+					host.MaxHeight = 0;
+				}
+			};
+			host.BeginAnimation(MaxHeightProperty, heightAnimation);
+			host.BeginAnimation(OpacityProperty, new DoubleAnimation(host.Opacity, 0, duration) { EasingFunction = easing });
+		}
 	}
 
 	private void ClearFocus()

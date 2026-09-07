@@ -209,15 +209,12 @@
 										</ControlTemplate>
 									</ToggleButton.Template>
 								</ToggleButton>
-								<ContentPresenter x:Name="ExpandSite" Grid.Row="1"
-									ContentSource="Content"
-									KeyboardNavigation.TabNavigation="Continue" />
+								<Border x:Name="AnimatedContentHost" Grid.Row="1" ClipToBounds="True">
+									<ContentPresenter x:Name="ExpandSite"
+										ContentSource="Content"
+										KeyboardNavigation.TabNavigation="Continue" />
+								</Border>
 							</Grid>
-							<ControlTemplate.Triggers>
-								<Trigger Property="IsExpanded" Value="False">
-									<Setter TargetName="ExpandSite" Property="Visibility" Value="Collapsed" />
-								</Trigger>
-							</ControlTemplate.Triggers>
 						</ControlTemplate>
 					</Setter.Value>
 				</Setter>
@@ -1068,9 +1065,8 @@
 								ScrollViewer.CanContentScroll="True"
 								ScrollViewer.VerticalScrollBarVisibility="Auto"
 								Style="{StaticResource SettingsListViewStyle}"
-								VirtualizingPanel.IsVirtualizing="True"
-								VirtualizingPanel.IsVirtualizingWhenGrouping="True"
-								VirtualizingPanel.VirtualizationMode="Recycling">
+								VirtualizingPanel.IsVirtualizing="False"
+								VirtualizingPanel.IsVirtualizingWhenGrouping="False">
 								<ListView.GroupStyle>
 									<GroupStyle>
 										<GroupStyle.ContainerStyle>
@@ -1102,14 +1098,17 @@
 									</GroupStyle>
 								</ListView.GroupStyle>
 								<ListView.ItemContainerStyle>
-									<Style BasedOn="{StaticResource {x:Type ListViewItem}}" TargetType="ListViewItem">
+									<Style TargetType="ListViewItem">
 										<Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
 										<Setter Property="Tag" Value="{Binding}" />
 										<Setter Property="Background" Value="Transparent" />
 										<Setter Property="BorderBrush" Value="Transparent" />
 										<Setter Property="BorderThickness" Value="0" />
 										<Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" />
+										<Setter Property="FocusVisualStyle" Value="{x:Null}" />
 										<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+										<Setter Property="OverridesDefaultStyle" Value="True" />
+										<Setter Property="Padding" Value="0" />
 										<Setter Property="VerticalContentAlignment" Value="Center" />
 										<Setter Property="ToolTip" Value="{Binding ToolTip}" />
 										<Setter Property="Template">
@@ -1125,9 +1124,11 @@
 														SnapsToDevicePixels="True">
 														<Grid>
 															<Border x:Name="SelectionRail"
-															Width="4"
+																Width="3"
+																Margin="3,5,0,5"
 																HorizontalAlignment="Left"
 																Background="{DynamicResource ReduxAccentBrush}"
+																CornerRadius="2"
 																Opacity="0" />
 															<ContentPresenter
 																HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
@@ -1138,13 +1139,17 @@
 														</Grid>
 													</Border>
 											<ControlTemplate.Triggers>
-												<Trigger Property="IsMouseOver" Value="True">
-													<Setter TargetName="RowChrome" Property="Background" Value="{DynamicResource ReduxSurfaceElevatedBrush}" />
-													<Setter TargetName="RowChrome" Property="BorderBrush" Value="{DynamicResource ReduxBorderBrush}" />
-													</Trigger>
+													<MultiTrigger>
+														<MultiTrigger.Conditions>
+															<Condition Property="IsMouseOver" Value="True" />
+															<Condition Property="IsSelected" Value="False" />
+														</MultiTrigger.Conditions>
+														<Setter TargetName="RowChrome" Property="Background" Value="{DynamicResource ReduxHoverBrush}" />
+														<Setter TargetName="RowChrome" Property="BorderBrush" Value="{DynamicResource ReduxBorderBrush}" />
+													</MultiTrigger>
 														<Trigger Property="IsSelected" Value="True">
 															<Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" />
-															<Setter TargetName="RowChrome" Property="Background" Value="{DynamicResource ReduxAccentPillBackground}" />
+															<Setter TargetName="RowChrome" Property="Background" Value="{DynamicResource ReduxSurfaceElevatedBrush}" />
 															<Setter TargetName="RowChrome" Property="BorderBrush" Value="{DynamicResource ReduxAccentBrush}" />
 															<Setter TargetName="SelectionRail" Property="Opacity" Value="1" />
 														</Trigger>

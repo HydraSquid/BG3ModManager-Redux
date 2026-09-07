@@ -233,6 +233,21 @@ public sealed class InteractionBehaviorTests
 		}
 	}
 
+	public void KeyboardShortcutGroupsAvoidVirtualizedContainerRecycling()
+	{
+		var window = new SettingsWindow();
+		try
+		{
+			var list = (ListView)window.FindName("KeybindingsListView");
+			RegressionAssert.False(VirtualizingPanel.GetIsVirtualizing(list));
+			RegressionAssert.False(VirtualizingPanel.GetIsVirtualizingWhenGrouping(list));
+		}
+		finally
+		{
+			window.Close();
+		}
+	}
+
 	public void ThemeCyclingIncludesValidCustomThemesInSavedOrder()
 	{
 		var settings = new DivinityModManagerSettings

@@ -6,7 +6,7 @@
 
 **A more visual, deliberate way to organize Baldur's Gate 3 mods.**
 
-[![Current build](https://img.shields.io/badge/build-0.1.0--alpha.13-9A7BFF?style=flat-square)](https://github.com/circleainn/BG3ModManager-Redux/releases)
+[![Current build](https://img.shields.io/badge/build-0.1.0--alpha.14-9A7BFF?style=flat-square)](https://github.com/circleainn/BG3ModManager-Redux/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-4F86F7?style=flat-square)](#requirements-and-alpha-status)
 [![License](https://img.shields.io/badge/license-MIT-42A66F?style=flat-square)](LICENSE)
 [![Support on Ko-fi](https://img.shields.io/badge/Support-Ko--fi-FF5E5B?style=flat-square&logo=ko-fi&logoColor=white)](https://ko-fi.com/circleain)

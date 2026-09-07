@@ -1885,7 +1885,6 @@
 	-->
 	<ControlTemplate x:Key="ReduxAccentPillButtonTemplate" TargetType="{x:Type Button}">
 		<Border x:Name="ButtonChrome"
-			Padding="{TemplateBinding Padding}"
 			Background="{TemplateBinding Background}"
 			BorderBrush="{TemplateBinding BorderBrush}"
 			BorderThickness="{TemplateBinding BorderThickness}"
@@ -1900,10 +1899,19 @@
 					<TranslateTransform Y="0" />
 				</TransformGroup>
 			</Border.RenderTransform>
-			<ContentPresenter HorizontalAlignment="Center"
-				VerticalAlignment="Center"
-				Content="{TemplateBinding Content}"
-				ContentTemplate="{TemplateBinding ContentTemplate}" />
+			<Grid>
+				<ContentPresenter Margin="{TemplateBinding Padding}"
+					HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+					VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+					Content="{TemplateBinding Content}"
+					ContentTemplate="{TemplateBinding ContentTemplate}" />
+				<Border x:Name="FocusRing"
+					BorderBrush="{TemplateBinding Foreground}"
+					BorderThickness="1"
+					CornerRadius="{DynamicResource Redux.CornerRadius.Pill}"
+					IsHitTestVisible="False"
+					Opacity="0" />
+			</Grid>
 		</Border>
 		<ControlTemplate.Triggers>
 			<!--
@@ -1919,6 +1927,9 @@
 			<Trigger Property="IsPressed" Value="True">
 				<Setter TargetName="ButtonChrome" Property="Opacity" Value="0.72" />
 			</Trigger>
+			<Trigger Property="IsKeyboardFocused" Value="True">
+				<Setter TargetName="FocusRing" Property="Opacity" Value="1" />
+			</Trigger>
 			<Trigger Property="IsEnabled" Value="False">
 				<Setter TargetName="ButtonChrome" Property="Opacity" Value="0.45" />
 				<Setter Property="Cursor" Value="Arrow" />
@@ -1931,7 +1942,39 @@
 		<Setter Property="BorderBrush" Value="{DynamicResource ReduxAccentBrush}" />
 		<Setter Property="BorderThickness" Value="1.5" />
 		<Setter Property="Foreground" Value="{DynamicResource ReduxAccentHoverBrush}" />
+		<Setter Property="FontWeight" Value="{DynamicResource Redux.FontWeight.Control}" />
+		<Setter Property="HorizontalContentAlignment" Value="Center" />
+		<Setter Property="VerticalContentAlignment" Value="Center" />
+		<Setter Property="Cursor" Value="Hand" />
+		<Setter Property="FocusVisualStyle" Value="{x:Null}" />
 		<Setter Property="Template" Value="{StaticResource ReduxAccentPillButtonTemplate}" />
+	</Style>
+	<Style x:Key="ReduxMinorActionButtonStyle" BasedOn="{StaticResource ReduxAccentPillButtonStyle}" TargetType="{x:Type Button}">
+		<Setter Property="MinHeight" Value="30" />
+		<Setter Property="Padding" Value="11,4" />
+		<Setter Property="Background" Value="{DynamicResource ReduxSurfaceElevatedBrush}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource ReduxBorderStrongBrush}" />
+		<Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" />
+	</Style>
+	<Style x:Key="ReduxMinorSuccessActionButtonStyle" BasedOn="{StaticResource ReduxMinorActionButtonStyle}" TargetType="{x:Type Button}">
+		<Setter Property="Background" Value="{DynamicResource ReduxSuccessPillBackground}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource ReduxSuccessBrush}" />
+		<Setter Property="Foreground" Value="{DynamicResource ReduxSuccessBrush}" />
+	</Style>
+	<Style x:Key="ReduxMinorWarningActionButtonStyle" BasedOn="{StaticResource ReduxMinorActionButtonStyle}" TargetType="{x:Type Button}">
+		<Setter Property="Background" Value="{DynamicResource ReduxWarningPillBackground}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource ReduxWarningBrush}" />
+		<Setter Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" />
+	</Style>
+	<Style x:Key="ReduxMinorDestructiveActionButtonStyle" BasedOn="{StaticResource ReduxMinorActionButtonStyle}" TargetType="{x:Type Button}">
+		<Setter Property="Background" Value="{DynamicResource ReduxErrorPillBackground}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource ReduxErrorBrush}" />
+		<Setter Property="Foreground" Value="{DynamicResource ReduxErrorBrush}" />
+	</Style>
+	<Style x:Key="ReduxMinorNexusActionButtonStyle" BasedOn="{StaticResource ReduxMinorActionButtonStyle}" TargetType="{x:Type Button}">
+		<Setter Property="Background" Value="{DynamicResource Redux.Pill.Nexus.Background}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource Redux.Pill.Nexus.Border}" />
+		<Setter Property="Foreground" Value="{DynamicResource Redux.Pill.Nexus.Border}" />
 	</Style>
 	<SolidColorBrush x:Key="{x:Static adonisUI:Brushes.Layer4InteractionBrush}" Color="{DynamicResource ReduxAccentSoftColor}" />
 	<SolidColorBrush x:Key="{x:Static adonisUI:Brushes.Layer4InteractionBorderBrush}" Color="{DynamicResource ReduxAccentColor}" />

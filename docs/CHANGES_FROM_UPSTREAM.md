@@ -56,8 +56,9 @@ Redux introduces a shared visual system across its main window and dialogs:
   notifications;
 - Redux Dark, Redux Light, Parchment, and persistent custom themes;
 - optional generated gradients, imported fonts, scalable text, and reusable custom PNG icons;
-- a reorganized toolbar, consolidated top-level menus, and searchable Quick Access surface for
-  commands, profiles, orders, categories, mods, themes, folders, and support links;
+- a reorganized, responsive toolbar with consistent action clusters and a parity-preserving overflow
+  menu, plus consolidated top-level menus and searchable Quick Access for commands, profiles,
+  orders, categories, mods, themes, folders, and support links;
 - richer hover information and a persistent selected-mod details drawer; and
 - a unified Lucide-based icon language while preserving official provider branding where relevant.
 
@@ -180,7 +181,7 @@ external edits. User configuration files are placed only when missing, remain us
 updates or removal. Mixed native-and-PAK archives route the PAK portion through the existing normal
 mod importer rather than bypassing package validation.
 
-The manager is available from Tools, Quick Access, the Setup toolbar, and the assignable shortcut
+The manager is available from Tools, Quick Access, the **Mods & Campaign** toolbar group, and the assignable shortcut
 system. Its compact entries use the same semantic pills, source identity, destructive actions, and
 hover or selection language as Redux's other mod surfaces. Available provider metadata can enrich
 recognized entries with a project thumbnail, summary, author, version, and update time; thumbnail
@@ -212,7 +213,7 @@ authorization keys and signed download URLs remain memory-only and are excluded 
 queue data, logs, and error details. On application exit, Redux pauses and persists only active
 queue work; finished downloads and installed-history records cannot hold shutdown open.
 
-**Nexus Downloads** is available from Tools, Quick Access, the Setup toolbar, and the assignable
+**Nexus Downloads** is available from Tools, Quick Access, the **Mods & Campaign** toolbar group, and the assignable
 shortcut system. Ordinary packages enter the established inactive-mod review and import path;
 reviewed native packages use the guarded game-directory transaction; and save packages use Save
 Game Manager. Mixed, ambiguous, corrupt, or unsupported content is blocked without filesystem

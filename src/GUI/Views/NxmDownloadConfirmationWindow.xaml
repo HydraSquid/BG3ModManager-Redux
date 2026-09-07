@@ -72,7 +72,7 @@
 						<TextBlock Grid.Row="4" Margin="0,8,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Download" />
 						<TextBlock Grid.Row="4" Grid.Column="1" Margin="0,8,0,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}" Text="{Binding Size}" />
 						<Button Grid.Row="5" Grid.Column="1" Margin="0,13,0,0" HorizontalAlignment="Left"
-							Style="{StaticResource ReduxSecondaryActionButtonStyle}" Click="NexusPage_Click"
+							Style="{StaticResource ReduxMinorNexusActionButtonStyle}" Click="NexusPage_Click"
 							Content="View exact file on Nexus Mods" />
 					</Grid>
 				</Border>

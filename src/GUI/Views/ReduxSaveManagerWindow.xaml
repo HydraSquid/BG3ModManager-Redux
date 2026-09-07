@@ -222,13 +222,12 @@
 															<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
 															<controls:ReduxIcon Width="15" Height="15" Margin="0,0,8,0" Foreground="{DynamicResource ReduxAccentHoverBrush}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{StaticResource Redux.Icon.BookOpen}" />
 															<TextBlock Grid.Column="1" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="{Binding Name}" />
-															<Border Grid.Column="2" Margin="10,0,6,0" Padding="7,2" BorderThickness="1"
-																CornerRadius="{DynamicResource Redux.CornerRadius.Pill}"
-																Visibility="{Binding Items[0].HasDifficulty, Converter={StaticResource BoolToVisibilityConverter}}">
-																<Border.Style>
-																	<Style TargetType="{x:Type Border}">
-																		<Setter Property="Background" Value="{DynamicResource ReduxSurfaceMutedBrush}" />
-																		<Setter Property="BorderBrush" Value="{DynamicResource ReduxBorderStrongBrush}" />
+																									<Border Grid.Column="2" Margin="10,0,6,0"
+																										Visibility="{Binding Items[0].HasDifficulty, Converter={StaticResource BoolToVisibilityConverter}}">
+																										<Border.Style>
+																											<Style BasedOn="{StaticResource ReduxStatusPillBaseStyle}" TargetType="{x:Type Border}">
+																												<Setter Property="Background" Value="{DynamicResource ReduxSurfaceMutedBrush}" />
+																												<Setter Property="BorderBrush" Value="{DynamicResource ReduxBorderStrongBrush}" />
 																		<Style.Triggers>
 																			<DataTrigger Binding="{Binding Items[0].IsTacticianMode}" Value="True">
 																				<Setter Property="Background" Value="{DynamicResource ReduxErrorPillBackground}" />
@@ -260,7 +259,7 @@
 																			</Style>
 																		</controls:ReduxIcon.Style>
 																	</controls:ReduxIcon>
-																	<TextBlock VerticalAlignment="Center" FontSize="{DynamicResource Redux.FontSize.10}" Text="{Binding Items[0].DifficultyLabel}">
+																																					<TextBlock VerticalAlignment="Center" FontSize="{DynamicResource Redux.FontSize.10}" FontWeight="SemiBold" Text="{Binding Items[0].DifficultyLabel}">
 																		<TextBlock.Style>
 																			<Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="{x:Type TextBlock}">
 																				<Setter Property="Foreground" Value="{DynamicResource ReduxTextSecondaryBrush}" />
@@ -273,9 +272,10 @@
 																	</TextBlock>
 																</StackPanel>
 															</Border>
-															<Border Grid.Column="3" MinWidth="25" Padding="7,2" Background="{DynamicResource ReduxAccentPillBackground}" CornerRadius="{DynamicResource Redux.CornerRadius.Pill}">
-																<TextBlock HorizontalAlignment="Center" Foreground="{DynamicResource ReduxAccentHoverBrush}" Text="{Binding ItemCount}" />
-															</Border>
+																									<Border Grid.Column="3" MinWidth="25" Background="{DynamicResource ReduxAccentPillBackground}"
+																										BorderBrush="{DynamicResource ReduxAccentBrush}" Style="{StaticResource ReduxStatusPillBaseStyle}">
+																										<TextBlock HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource ReduxAccentHoverBrush}" Text="{Binding ItemCount}" />
+																									</Border>
 															</Grid>
 														</Expander.Header>
 														<ItemsPresenter Margin="0,4,0,0" />
@@ -324,7 +324,7 @@
 					<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
 					<TextBlock x:Name="ProfilePathText" VerticalAlignment="Center" Foreground="{DynamicResource ReduxTextMutedBrush}" TextTrimming="CharacterEllipsis" />
 					<Button x:Name="DeleteButton" Grid.Column="1" MinWidth="88" Margin="8,0" IsEnabled="False"
-						Click="DeleteButton_Click" Style="{StaticResource ReduxDestructiveActionButtonStyle}">
+						Click="DeleteButton_Click" Style="{StaticResource ReduxMinorDestructiveActionButtonStyle}">
 						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{StaticResource Redux.Icon.Trash}" /><TextBlock Text="Delete" /></StackPanel>
 					</Button>
 					<Button Grid.Column="2" MinWidth="88" Content="Close" IsCancel="True" Style="{StaticResource ReduxSecondaryActionButtonStyle}" />

@@ -48,6 +48,7 @@ public partial class MainViewControl : MainViewControlViewBase
 	private IDisposable _saveIconStateSubscription;
 	private double _toolbarExpandedHeight;
 	private int _toolbarAnimationVersion;
+	private bool _toolbarOverflowActive;
 	private int _diagnosticStatusHoverVersion;
 	private readonly HashSet<ContextMenu> _closingToolbarStatusMenus = new();
 
@@ -92,7 +93,7 @@ public partial class MainViewControl : MainViewControlViewBase
 			[nameof(AppKeys.ToggleViewTheme)] = ("Redux.Icon.ColorPalette", true, null),
 			[nameof(AppKeys.ToggleToolbar)] = ("Redux.Icon.Desktop", true, null),
 			[nameof(AppKeys.ToggleUpdatesView)] = ("Redux.Icon.RefreshStroke", true, null),
-			[nameof(AppKeys.OpenSaveGameManager)] = ("Redux.Icon.BookOpen", true, null),
+			[nameof(AppKeys.OpenSaveGameManager)] = ("Redux.Icon.Save", true, null),
 			[nameof(AppKeys.OpenGameDirectoryModManager)] = ("Redux.Icon.Blocks", true, null),
 			[nameof(AppKeys.OpenNexusDownloads)] = ("Redux.Icon.Download", true, null),
 			[nameof(AppKeys.ExtractSelectedMods)] = ("Redux.Icon.Archive", true, null),
@@ -876,6 +877,40 @@ public partial class MainViewControl : MainViewControlViewBase
 		ToolbarBand.ClearValue(FrameworkElement.HeightProperty);
 		ToolbarBand.Opacity = 1;
 		ToolbarBand.Visibility = ViewModel.Settings.HideToolbar ? Visibility.Collapsed : Visibility.Visible;
+		UpdateResponsiveToolbar(ToolbarBand.ActualWidth);
+		UpdateToolbarFallbackMenuVisibility();
+	}
+
+	private void ToolbarBand_SizeChanged(object sender, SizeChangedEventArgs e)
+		=> UpdateResponsiveToolbar(e.NewSize.Width);
+
+	private void UpdateResponsiveToolbar(double availableWidth)
+	{
+		if (availableWidth <= 0) return;
+
+		SetToolbarElementVisibility(ToolbarOrderUtilityCluster, availableWidth >= 1600);
+		SetToolbarElementVisibility(ToolbarOrderUtilityLabel, availableWidth >= 1600);
+		SetToolbarElementVisibility(ToolbarOrderUtilityDivider, availableWidth >= 1600);
+		SetToolbarElementVisibility(ToolbarManagerShortcutCluster, availableWidth >= 1480);
+		SetToolbarElementVisibility(ToolbarSaveUtilityCluster, availableWidth >= 1380);
+		SetToolbarElementVisibility(ToolbarLoadOrderActionCluster, availableWidth >= 1220);
+		SetToolbarElementVisibility(ToolbarProfileCampaignSelectors, availableWidth >= 1100);
+
+		_toolbarOverflowActive = availableWidth < 1600;
+		UpdateToolbarFallbackMenuVisibility();
+	}
+
+	private static void SetToolbarElementVisibility(FrameworkElement element, bool visible)
+		=> element.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+
+	private void UpdateToolbarFallbackMenuVisibility()
+	{
+		if (ToolbarFallbackMenuItem == null) return;
+
+		var toolbarHidden = ViewModel?.Settings?.HideToolbar == true;
+		ToolbarFallbackMenuItem.Visibility = toolbarHidden || _toolbarOverflowActive
+			? Visibility.Visible
+			: Visibility.Collapsed;
 	}
 
 	private void AnimateToolbarVisibility(bool hide)
@@ -897,6 +932,7 @@ public partial class MainViewControl : MainViewControlViewBase
 			if (startHeight <= 0)
 			{
 				ToolbarBand.Visibility = Visibility.Collapsed;
+				UpdateToolbarFallbackMenuVisibility();
 				return;
 			}
 
@@ -914,7 +950,7 @@ public partial class MainViewControl : MainViewControlViewBase
             EasingFunction = easing,
             FillBehavior = FillBehavior.HoldEnd
         };
-        heightAnimation.Completed += (_, _) =>
+			heightAnimation.Completed += (_, _) =>
         {
             if (animationVersion != _toolbarAnimationVersion) return;
             ToolbarBand.Visibility = Visibility.Collapsed;
@@ -926,6 +962,7 @@ public partial class MainViewControl : MainViewControlViewBase
 
 			ToolbarBand.BeginAnimation(FrameworkElement.HeightProperty, heightAnimation);
 			ToolbarBand.BeginAnimation(UIElement.OpacityProperty, opacityAnimation);
+			UpdateToolbarFallbackMenuVisibility();
 			return;
 		}
 
@@ -964,6 +1001,7 @@ public partial class MainViewControl : MainViewControlViewBase
 
 		ToolbarBand.BeginAnimation(FrameworkElement.HeightProperty, expandAnimation);
 		ToolbarBand.BeginAnimation(UIElement.OpacityProperty, fadeAnimation);
+		UpdateToolbarFallbackMenuVisibility();
 	}
 
 	private void ToolbarModDiagnosticsStatusButton_Click(object sender, RoutedEventArgs e)

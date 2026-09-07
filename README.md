@@ -99,7 +99,7 @@ restored later.
 
 ### Save Game Manager
 
-Open **Tools > Save Game Manager...** or use the **Save Games** toolbar group. Redux groups story
+Open **Tools > Save Game Manager...** or use the **Saves** toolbar group. Redux groups story
 saves by campaign and shows available thumbnails, dates, sizes, and difficulty metadata. Honour
 campaigns receive a gold crown; Tactician campaigns receive a skull badge. Campaign collapse state
 is remembered, and its expand/collapse motion follows the Reduce Motion preference.
@@ -115,7 +115,7 @@ require confirmation, and deletion uses the Windows Recycle Bin.
 
 ### Game-Directory Mod Manager
 
-Open **Tools > Game-Directory Mod Manager...**, its Setup-toolbar shortcut, or **Quick Access** to
+Open **Tools > Game-Directory Mod Manager...**, its **Mods & Campaign** toolbar shortcut, or **Quick Access** to
 review supported native and root-level mods that install beside BG3 rather than into the ordinary
 Mods folder. The action is also available in the shortcut editor if you want to assign your own key
 combination. These packages stay outside the PAK load-order panes. Redux shows every managed

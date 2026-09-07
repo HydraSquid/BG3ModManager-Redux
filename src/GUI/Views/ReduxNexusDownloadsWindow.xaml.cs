@@ -91,10 +91,13 @@ public partial class ReduxNexusDownloadsWindow : AdonisUI.Controls.AdonisWindow
 		};
 		AssociationIcon.SetResourceReference(DivinityModManager.Controls.ReduxIcon.StrokeDataProperty,
 			status.Status == NxmAssociationStatus.Owned ? "Redux.Icon.UnlinkStroke" : "Redux.Icon.LinkStroke");
-		if (status.Status == NxmAssociationStatus.Owned)
-			AssociationIcon.SetResourceReference(ForegroundProperty, "ReduxErrorBrush");
-		else
-			AssociationIcon.ClearValue(ForegroundProperty);
+		var styleResource = status.Status switch
+		{
+			NxmAssociationStatus.Owned => "ReduxMinorDestructiveActionButtonStyle",
+			NxmAssociationStatus.NeedsRepair => "ReduxMinorWarningActionButtonStyle",
+			_ => "ReduxMinorActionButtonStyle"
+		};
+		AssociationButton.SetResourceReference(StyleProperty, styleResource);
 		AssociationButton.IsEnabled = status.Success && status.Status != NxmAssociationStatus.OwnedByAnotherHandler;
 		AssociationButton.ToolTip = status.Message;
 	}

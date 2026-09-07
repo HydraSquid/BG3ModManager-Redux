@@ -83,20 +83,17 @@
 					</Setter.Value>
 				</Setter>
 			</Style>
-			<Style x:Key="DownloadActionButton" BasedOn="{StaticResource ReduxSecondaryActionButtonStyle}" TargetType="{x:Type Button}">
+			<Style x:Key="DownloadActionButton" BasedOn="{StaticResource ReduxMinorActionButtonStyle}" TargetType="{x:Type Button}">
 				<Setter Property="Padding" Value="8,4" />
 				<Setter Property="Margin" Value="6,0,0,0" />
 				<Setter Property="MinWidth" Value="0" />
 			</Style>
-			<Style x:Key="NexusDownloadSourceButtonStyle" BasedOn="{StaticResource ReduxActionButtonBaseStyle}" TargetType="{x:Type Button}">
+			<Style x:Key="NexusDownloadSourceButtonStyle" BasedOn="{StaticResource ReduxMinorNexusActionButtonStyle}" TargetType="{x:Type Button}">
 				<Setter Property="Padding" Value="8,4" />
 				<Setter Property="Margin" Value="6,0,0,0" />
 				<Setter Property="MinWidth" Value="0" />
-				<Setter Property="Background" Value="{DynamicResource Redux.Pill.Nexus.Background}" />
-				<Setter Property="Foreground" Value="{DynamicResource Redux.Pill.Nexus.Border}" />
-				<Setter Property="BorderBrush" Value="{DynamicResource Redux.Pill.Nexus.Border}" />
 			</Style>
-			<Style x:Key="RemoveDownloadButton" BasedOn="{StaticResource ReduxDestructiveActionButtonStyle}" TargetType="{x:Type Button}">
+			<Style x:Key="RemoveDownloadButton" BasedOn="{StaticResource ReduxMinorDestructiveActionButtonStyle}" TargetType="{x:Type Button}">
 				<Setter Property="Padding" Value="8,4" />
 				<Setter Property="Margin" Value="6,0,0,0" />
 				<Setter Property="MinWidth" Value="0" />
@@ -107,6 +104,9 @@
 			</Style>
 			<Style x:Key="ClearDownloadHistoryButton" BasedOn="{StaticResource DownloadActionButton}" TargetType="{x:Type Button}">
 				<Setter Property="Visibility" Value="Collapsed" />
+				<Setter Property="Background" Value="{DynamicResource ReduxErrorPillBackground}" />
+				<Setter Property="BorderBrush" Value="{DynamicResource ReduxErrorBrush}" />
+				<Setter Property="Foreground" Value="{DynamicResource ReduxErrorBrush}" />
 				<Style.Triggers>
 					<DataTrigger Binding="{Binding State}" Value="Installed"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
 				</Style.Triggers>
@@ -129,6 +129,8 @@
 			</Style>
 			<Style x:Key="ReviewDownloadButton" BasedOn="{StaticResource DownloadActionButton}" TargetType="{x:Type Button}">
 				<Setter Property="Visibility" Value="Collapsed" />
+				<Setter Property="Background" Value="{DynamicResource ReduxSuccessPillBackground}" />
+				<Setter Property="BorderBrush" Value="{DynamicResource ReduxSuccessBrush}" />
 				<Setter Property="Foreground" Value="{DynamicResource ReduxSuccessBrush}" />
 				<Style.Triggers>
 					<DataTrigger Binding="{Binding State}" Value="Downloaded"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
@@ -252,8 +254,9 @@
 							StrokeData="{StaticResource Redux.Icon.FolderOpen}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Open Folder" /></StackPanel>
 					</Button>
 					<Button x:Name="ClearInstalledButton" Margin="7,0,0,0" Click="ClearInstalledButton_Click"
-						Style="{StaticResource ReduxSecondaryActionButtonStyle}" Visibility="Collapsed">
+						Style="{StaticResource ReduxMinorDestructiveActionButtonStyle}" Visibility="Collapsed">
 						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,6,0"
+							Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 							StrokeData="{StaticResource Redux.Icon.Trash}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Clear Installed History" /></StackPanel>
 					</Button>
 				</StackPanel>
@@ -289,10 +292,11 @@
 				<Grid Grid.Row="3" Margin="0,10,0,0">
 					<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
 					<Button x:Name="AssociationButton" HorizontalAlignment="Left" Click="AssociationButton_Click"
-						Style="{StaticResource ReduxSecondaryActionButtonStyle}">
+						Style="{StaticResource ReduxMinorActionButtonStyle}">
 						<StackPanel Orientation="Horizontal">
-							<controls:ReduxIcon x:Name="AssociationIcon" Width="13" Height="13" Margin="0,0,6,0"
-								StrokeData="{StaticResource Redux.Icon.LinkStroke}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
+						<controls:ReduxIcon x:Name="AssociationIcon" Width="13" Height="13" Margin="0,0,6,0"
+							Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+							StrokeData="{StaticResource Redux.Icon.LinkStroke}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
 							<TextBlock x:Name="AssociationText" Text="Enable NXM Links..." />
 						</StackPanel>
 					</Button>

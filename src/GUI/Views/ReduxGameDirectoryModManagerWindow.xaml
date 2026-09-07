@@ -22,7 +22,7 @@
 			<ResourceDictionary.MergedDictionaries>
 				<ResourceDictionary Source="../Themes/MainResourceDictionary.xaml" />
 			</ResourceDictionary.MergedDictionaries>
-			<Style x:Key="ReduxDeleteButtonStyle" BasedOn="{StaticResource ReduxDestructiveActionButtonStyle}" TargetType="{x:Type Button}">
+			<Style x:Key="ReduxDeleteButtonStyle" BasedOn="{StaticResource ReduxMinorDestructiveActionButtonStyle}" TargetType="{x:Type Button}">
 				<Style.Triggers>
 					<Trigger Property="IsEnabled" Value="False">
 						<Setter Property="Foreground" Value="{DynamicResource {x:Static adonis:Brushes.DisabledForegroundBrush}}" />
@@ -31,10 +31,7 @@
 					</Trigger>
 				</Style.Triggers>
 			</Style>
-			<Style x:Key="ReduxSourceButtonStyle" BasedOn="{StaticResource ReduxActionButtonBaseStyle}" TargetType="{x:Type Button}">
-				<Setter Property="Background" Value="{DynamicResource Redux.Pill.Nexus.Background}" />
-				<Setter Property="Foreground" Value="{DynamicResource Redux.Pill.Nexus.Border}" />
-				<Setter Property="BorderBrush" Value="{DynamicResource Redux.Pill.Nexus.Border}" />
+			<Style x:Key="ReduxSourceButtonStyle" BasedOn="{StaticResource ReduxMinorNexusActionButtonStyle}" TargetType="{x:Type Button}">
 				<Style.Triggers>
 					<Trigger Property="IsEnabled" Value="False">
 						<Setter Property="Foreground" Value="{DynamicResource {x:Static adonis:Brushes.DisabledForegroundBrush}}" />

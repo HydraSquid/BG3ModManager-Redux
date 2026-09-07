@@ -101,7 +101,7 @@ public class AppKeys : ReactiveObject
 	public Hotkey ExportReduxLoadOrder { get; private set; } = new Hotkey(Key.None);
 
 	[MenuSettings("File", "Back Up Active Mods to ZIP...")]
-	public Hotkey ExportOrderToZip { get; private set; } = new Hotkey(Key.R, ModifierKeys.Control);
+	public Hotkey ExportOrderToZip { get; private set; } = new Hotkey(Key.None);
 
 	[MenuSettings("File", "Refresh Mods", false, "Rescan the configured Mods folder and refresh the mod lists.")]
 	public Hotkey Refresh { get; private set; } = new Hotkey(Key.F5);
@@ -168,6 +168,13 @@ public class AppKeys : ReactiveObject
 
 	[MenuSettings("Tools", "Show or Hide Mod Updates")]
 	public Hotkey ToggleUpdatesView { get; private set; } = new Hotkey();
+
+	[MenuSettings(
+		"Tools",
+		"Save Game Manager...",
+		false,
+		"Browse, install, and safely remove story saves for the selected profile.")]
+	public Hotkey OpenSaveGameManager { get; private set; } = new Hotkey(Key.None);
 
 	[MenuSettings("Go", "Open Mods Folder", false, "Open the configured Baldur's Gate 3 Mods folder.")]
 	public Hotkey OpenModsFolder { get; private set; } = new Hotkey(Key.D1, ModifierKeys.Control);

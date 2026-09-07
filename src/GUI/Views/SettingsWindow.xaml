@@ -136,6 +136,82 @@
 				<Setter Property="BorderBrush" Value="Transparent" />
 				<Setter Property="Foreground" Value="{DynamicResource ReduxTextSecondaryBrush}" />
 			</Style>
+			<Style x:Key="ShortcutGroupExpanderStyle" TargetType="{x:Type Expander}">
+				<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+				<Setter Property="Template">
+					<Setter.Value>
+						<ControlTemplate TargetType="{x:Type Expander}">
+							<Grid>
+								<Grid.RowDefinitions>
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+								</Grid.RowDefinitions>
+								<ToggleButton x:Name="HeaderButton"
+									HorizontalContentAlignment="Stretch"
+									Background="Transparent"
+									BorderThickness="0"
+									Content="{TemplateBinding Header}"
+									ContentTemplate="{TemplateBinding HeaderTemplate}"
+									Cursor="Hand"
+									FocusVisualStyle="{x:Null}"
+									IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+									<ToggleButton.Template>
+										<ControlTemplate TargetType="{x:Type ToggleButton}">
+											<Border x:Name="HeaderSurface"
+												Margin="4,5,4,2"
+												Padding="8,5"
+												Background="{DynamicResource ReduxSurfaceMutedBrush}"
+												BorderBrush="{DynamicResource ReduxBorderBrush}"
+												BorderThickness="1"
+												CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}">
+												<Grid>
+													<Grid.ColumnDefinitions>
+														<ColumnDefinition Width="Auto" />
+														<ColumnDefinition Width="*" />
+													</Grid.ColumnDefinitions>
+													<controls:ReduxIcon Width="13" Height="13" Margin="0,0,8,0"
+														Foreground="{DynamicResource ReduxAccentHoverBrush}">
+														<controls:ReduxIcon.Style>
+															<Style BasedOn="{StaticResource {x:Type controls:ReduxIcon}}" TargetType="{x:Type controls:ReduxIcon}">
+																<Setter Property="StrokeData" Value="{StaticResource Redux.Icon.ChevronRightStroke}" />
+																<Style.Triggers>
+																	<DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="True">
+																		<Setter Property="StrokeData" Value="{StaticResource Redux.Icon.ChevronDownStroke}" />
+																	</DataTrigger>
+																</Style.Triggers>
+															</Style>
+														</controls:ReduxIcon.Style>
+													</controls:ReduxIcon>
+													<ContentPresenter Grid.Column="1"
+														VerticalAlignment="Center"
+														ContentSource="Content" />
+												</Grid>
+											</Border>
+											<ControlTemplate.Triggers>
+												<Trigger Property="IsMouseOver" Value="True">
+													<Setter TargetName="HeaderSurface" Property="Background" Value="{DynamicResource ReduxAccentSoftBrush}" />
+													<Setter TargetName="HeaderSurface" Property="BorderBrush" Value="{DynamicResource ReduxAccentBrush}" />
+												</Trigger>
+												<Trigger Property="IsKeyboardFocused" Value="True">
+													<Setter TargetName="HeaderSurface" Property="BorderBrush" Value="{DynamicResource ReduxAccentBrush}" />
+												</Trigger>
+											</ControlTemplate.Triggers>
+										</ControlTemplate>
+									</ToggleButton.Template>
+								</ToggleButton>
+								<ContentPresenter x:Name="ExpandSite" Grid.Row="1"
+									ContentSource="Content"
+									KeyboardNavigation.TabNavigation="Continue" />
+							</Grid>
+							<ControlTemplate.Triggers>
+								<Trigger Property="IsExpanded" Value="False">
+									<Setter TargetName="ExpandSite" Property="Visibility" Value="Collapsed" />
+								</Trigger>
+							</ControlTemplate.Triggers>
+						</ControlTemplate>
+					</Setter.Value>
+				</Setter>
+			</Style>
 			<Style x:Key="SettingsTabControlStyle" TargetType="{x:Type TabControl}">
 				<Setter Property="Background" Value="Transparent" />
 				<Setter Property="BorderThickness" Value="0" />
@@ -987,30 +1063,43 @@
 								VirtualizingPanel.VirtualizationMode="Recycling">
 								<ListView.GroupStyle>
 									<GroupStyle>
-										<GroupStyle.HeaderTemplate>
-											<DataTemplate>
-												<Grid Margin="4,5,4,2">
-													<Grid.ColumnDefinitions>
-														<ColumnDefinition Width="*" />
-														<ColumnDefinition Width="Auto" />
-													</Grid.ColumnDefinitions>
-													<TextBlock Margin="8,2"
-														Foreground="{DynamicResource ReduxTextSecondaryBrush}"
-														Style="{StaticResource Redux.Text.Overline}"
-														Text="{Binding Name}" />
-													<Border Grid.Column="1"
-														MinWidth="22"
-														Margin="0,0,6,0"
-														Padding="5,1"
-														Background="{DynamicResource ReduxSurfaceMutedBrush}"
-														CornerRadius="{DynamicResource Redux.CornerRadius.Pill}">
-														<TextBlock HorizontalAlignment="Center"
-															Foreground="{DynamicResource ReduxTextMutedBrush}"
-															Text="{Binding ItemCount}" />
-													</Border>
-												</Grid>
-											</DataTemplate>
-										</GroupStyle.HeaderTemplate>
+										<GroupStyle.ContainerStyle>
+											<Style TargetType="{x:Type GroupItem}">
+												<Setter Property="Template">
+													<Setter.Value>
+														<ControlTemplate TargetType="{x:Type GroupItem}">
+															<Expander IsExpanded="True"
+																Header="{Binding}"
+																Style="{StaticResource ShortcutGroupExpanderStyle}"
+																Tag="{Binding Name}"
+																Loaded="ShortcutGroupExpander_Loaded"
+																Expanded="ShortcutGroupExpander_ExpansionChanged"
+																Collapsed="ShortcutGroupExpander_ExpansionChanged">
+																<Expander.HeaderTemplate>
+																	<DataTemplate>
+																		<Grid>
+																			<Grid.ColumnDefinitions>
+																				<ColumnDefinition Width="*" />
+																				<ColumnDefinition Width="Auto" />
+																			</Grid.ColumnDefinitions>
+																			<TextBlock Foreground="{DynamicResource ReduxTextPrimaryBrush}"
+																				FontWeight="{DynamicResource Redux.FontWeight.Control}"
+																				Text="{Binding Name}" />
+																			<Border Grid.Column="1" MinWidth="24" Margin="10,0,0,0" Padding="6,1"
+																				Background="{DynamicResource ReduxSurfaceElevatedBrush}"
+																				CornerRadius="{DynamicResource Redux.CornerRadius.Pill}">
+																				<TextBlock HorizontalAlignment="Center" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="{Binding ItemCount}" />
+																			</Border>
+																		</Grid>
+																	</DataTemplate>
+																</Expander.HeaderTemplate>
+																<ItemsPresenter />
+															</Expander>
+														</ControlTemplate>
+													</Setter.Value>
+												</Setter>
+											</Style>
+										</GroupStyle.ContainerStyle>
 									</GroupStyle>
 								</ListView.GroupStyle>
 								<ListView.ItemContainerStyle>

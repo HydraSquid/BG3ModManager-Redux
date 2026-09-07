@@ -623,6 +623,9 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 			ViewModel.Keys.OpenThemeAppearance.AddAction(() => OpenPreferences(SettingsWindowTab.Appearance));
 			ViewModel.Keys.OpenKeybindings.AddAction(() => OpenPreferences(SettingsWindowTab.Keybindings));
 			ViewModel.Keys.OpenCommandPalette.AddAction(OpenCommandPalette);
+			ViewModel.Keys.OpenSaveGameManager.AddAction(
+				() => MainView.ShowSaveManager(),
+				ViewModel.WhenAnyValue(x => x.SelectedProfile).Select(profile => profile != null));
 			ViewModel.Keys.OpenAboutWindow.AddAction(ToggleAboutWindow);
 
 			ViewModel.Keys.ToggleVersionGeneratorWindow.AddAction(() =>
@@ -720,15 +723,6 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 			() => ViewModel.OpenLoadOrderFolderCommand.Execute(null),
 			() => ViewModel.OpenLoadOrderFolderCommand?.CanExecute(null) == true,
 			searchTerms: "browse directory saved orders"),
-		new(
-			"Save Game Manager...",
-			"Tools",
-			"Browse, install, and safely remove story saves for the selected profile.",
-			String.Empty,
-			"book-open",
-			() => MainView.ShowSaveManager(),
-			() => ViewModel.SelectedProfile != null && !ViewModel.IsLocked,
-			searchTerms: "manager install import delete thumbnail lsv zip saves"),
 		new(
 			"Open Save Games Folder",
 			"Folders",

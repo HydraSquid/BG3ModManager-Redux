@@ -701,7 +701,7 @@
 							</MenuItem>
 							<MenuItem Header="Save Games">
 								<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.BookOpen}" /></MenuItem.Icon>
-								<MenuItem Header="Save Game Manager..." Click="SaveGameManagerButton_Click">
+								<MenuItem Header="Save Game Manager..." Command="{Binding Keys.OpenSaveGameManager.Command}" InputGestureText="{Binding Keys.OpenSaveGameManager.MenuDisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.BookOpen}" /></MenuItem.Icon>
 								</MenuItem>
 								<MenuItem Header="Install Save..." Click="ImportSaveGameButton_Click">

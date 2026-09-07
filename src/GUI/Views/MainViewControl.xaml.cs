@@ -92,6 +92,7 @@ public partial class MainViewControl : MainViewControlViewBase
 			[nameof(AppKeys.ToggleViewTheme)] = ("Redux.Icon.ColorPalette", true, null),
 			[nameof(AppKeys.ToggleToolbar)] = ("Redux.Icon.Desktop", true, null),
 			[nameof(AppKeys.ToggleUpdatesView)] = ("Redux.Icon.RefreshStroke", true, null),
+			[nameof(AppKeys.OpenSaveGameManager)] = ("Redux.Icon.BookOpen", true, null),
 			[nameof(AppKeys.ExtractSelectedMods)] = ("Redux.Icon.Archive", true, null),
 			[nameof(AppKeys.ExtractSelectedAdventure)] = ("Redux.Icon.Archive", true, null),
 			[nameof(AppKeys.ToggleVersionGeneratorWindow)] = ("Redux.Icon.Build", true, null),
@@ -443,15 +444,6 @@ public partial class MainViewControl : MainViewControlViewBase
 		if (menuItems.TryGetValue("Tools", out var toolsMenuItem))
 		{
 			if (toolsMenuItem.Items.Count > 0) toolsMenuItem.Items.Add(new Separator());
-			var saveManagerItem = new MenuItem
-			{
-				Header = "Save Game Manager...",
-				ToolTip = "Browse, install, and safely remove story saves for the selected profile.",
-				Icon = ReduxIcon.FromResource("Redux.Icon.BookOpen", true)
-			};
-			saveManagerItem.Click += (_, _) => ShowSaveManager();
-			toolsMenuItem.Items.Add(saveManagerItem);
-
 			var packagePreflightItem = new MenuItem
 			{
 				Header = "Inspect Mod Package...",

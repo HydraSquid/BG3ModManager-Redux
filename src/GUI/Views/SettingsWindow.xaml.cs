@@ -64,6 +64,8 @@ internal sealed record SettingsGroup(string Title, string Description, params st
 public partial class SettingsWindow : SettingsWindowBase
 {
 	private ICollectionView _keybindingsView;
+	private readonly Dictionary<string, bool> _shortcutGroupExpansion = new(StringComparer.OrdinalIgnoreCase);
+	private bool _updatingShortcutGroupExpansion;
 
 	private bool _updatingCustomThemeSelection;
 	private bool _updatingTypographySelection;
@@ -929,14 +931,64 @@ public partial class SettingsWindow : SettingsWindowBase
 
 		return hotkey.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase) ||
 			hotkey.Category.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+			hotkey.Description.Contains(query, StringComparison.OrdinalIgnoreCase) ||
 			hotkey.DisplayBindingText.Contains(query, StringComparison.OrdinalIgnoreCase);
 	}
 
 	private void KeybindingsSearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
 	{
 		_keybindingsView?.Refresh();
+		RefreshShortcutGroupExpansion();
 		if (KeybindingsListView.Items.Count > 0 && KeybindingsListView.SelectedIndex < 0)
 			KeybindingsListView.SelectedIndex = 0;
+	}
+
+	private bool HasShortcutFilter => !String.IsNullOrWhiteSpace(KeybindingsSearchTextBox?.Text);
+
+	private void ShortcutGroupExpander_Loaded(object sender, RoutedEventArgs e)
+	{
+		if (sender is not Expander { Tag: string groupName } expander)
+		{
+			return;
+		}
+
+		var shouldExpand = HasShortcutFilter ||
+			!_shortcutGroupExpansion.TryGetValue(groupName, out var isExpanded) ||
+			isExpanded;
+		_updatingShortcutGroupExpansion = true;
+		expander.IsExpanded = shouldExpand;
+		_updatingShortcutGroupExpansion = false;
+	}
+
+	private void ShortcutGroupExpander_ExpansionChanged(object sender, RoutedEventArgs e)
+	{
+		if (_updatingShortcutGroupExpansion || HasShortcutFilter ||
+			sender is not Expander { Tag: string groupName } expander)
+		{
+			return;
+		}
+
+		_shortcutGroupExpansion[groupName] = expander.IsExpanded;
+	}
+
+	private void RefreshShortcutGroupExpansion()
+	{
+		Dispatcher.BeginInvoke(new Action(() =>
+		{
+			_updatingShortcutGroupExpansion = true;
+			foreach (var expander in KeybindingsListView.FindVisualChildren<Expander>())
+			{
+				if (expander.Tag is not string groupName)
+				{
+					continue;
+				}
+
+				expander.IsExpanded = HasShortcutFilter ||
+					!_shortcutGroupExpansion.TryGetValue(groupName, out var isExpanded) ||
+					isExpanded;
+			}
+			_updatingShortcutGroupExpansion = false;
+		}), System.Windows.Threading.DispatcherPriority.Loaded);
 	}
 
 	private void ClearFocus()

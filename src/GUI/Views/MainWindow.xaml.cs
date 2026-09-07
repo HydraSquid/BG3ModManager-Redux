@@ -671,6 +671,36 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 	private IReadOnlyList<ReduxCommandPaletteItem> BuildMainViewQuickAccessCommands() =>
 	[
 		new(
+			ViewModel.IsCategoriesExpanded ? "Hide Categories" : "Show Categories",
+			"Workspace layout",
+			ViewModel.IsCategoriesExpanded
+				? "Collapse the Categories pane to leave more room for the mod lists."
+				: "Expand the Categories pane.",
+			String.Empty,
+			"tag",
+			() => ViewModel.IsCategoriesExpanded = !ViewModel.IsCategoriesExpanded,
+			searchTerms: "toggle collapse expand sidebar category pane visibility"),
+		new(
+			ViewModel.IsInactiveModsExpanded ? "Hide Inactive Mods" : "Show Inactive Mods",
+			"Workspace layout",
+			ViewModel.IsInactiveModsExpanded
+				? "Collapse the Inactive Mods pane to leave more room for the active load order."
+				: "Expand the Inactive Mods pane.",
+			String.Empty,
+			"list",
+			() => ViewModel.IsInactiveModsExpanded = !ViewModel.IsInactiveModsExpanded,
+			searchTerms: "toggle collapse expand inactive mods pane visibility"),
+		new(
+			ViewModel.IsModDetailsExpanded ? "Hide Mod Details" : "Show Mod Details",
+			"Workspace layout",
+			ViewModel.IsModDetailsExpanded
+				? "Collapse the selected mod's details drawer."
+				: "Expand the selected mod's details drawer.",
+			String.Empty,
+			"info",
+			() => ViewModel.IsModDetailsExpanded = !ViewModel.IsModDetailsExpanded,
+			searchTerms: "toggle collapse expand selected mod details drawer pane visibility"),
+		new(
 			"Create Custom Category...",
 			"Categories",
 			"Create a category with its own name, color, icon, and description.",

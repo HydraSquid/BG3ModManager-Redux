@@ -3028,7 +3028,9 @@
 		</Style.Triggers>
 	</Style>
 	<!-- Legacy metadata tags now use the same semantic pill chrome as the rest of Redux. -->
-	<Style x:Key="ReduxLegacyTagChromeStyle" BasedOn="{StaticResource ReduxPillBaseStyle}" TargetType="{x:Type Border}" />
+	<Style x:Key="ReduxLegacyTagChromeStyle" BasedOn="{StaticResource ReduxPillBaseStyle}" TargetType="{x:Type Border}">
+		<Setter Property="Margin" Value="0,0,5,4" />
+	</Style>
 	<Style x:Key="ReduxLegacyTagTextStyle" BasedOn="{StaticResource Redux.Text.Body}" TargetType="{x:Type TextBlock}">
 		<Setter Property="FontSize" Value="{DynamicResource Redux.FontSize.11}" />
 	</Style>
@@ -3036,21 +3038,27 @@
 		<Border Style="{StaticResource ReduxLegacyTagChromeStyle}"
 			Background="{DynamicResource ReduxInfoPillBackground}"
 			BorderBrush="{DynamicResource ReduxInfoBrush}">
-			<TextBlock Style="{StaticResource ReduxLegacyTagTextStyle}" Text="{Binding}" />
+			<TextBlock Style="{StaticResource ReduxLegacyTagTextStyle}"
+				Foreground="{DynamicResource ReduxInfoBrush}"
+				Text="{Binding}" />
 		</Border>
 	</DataTemplate>
 	<DataTemplate x:Key="ModeTagTemplate">
 		<Border Style="{StaticResource ReduxLegacyTagChromeStyle}"
 			Background="{DynamicResource ReduxAccentPillBackground}"
 			BorderBrush="{DynamicResource ReduxAccentBrush}">
-			<TextBlock Style="{StaticResource ReduxLegacyTagTextStyle}" Text="{Binding}" />
+			<TextBlock Style="{StaticResource ReduxLegacyTagTextStyle}"
+				Foreground="{DynamicResource ReduxAccentBrush}"
+				Text="{Binding}" />
 		</Border>
 	</DataTemplate>
 	<DataTemplate x:Key="CustomTagTemplate">
 		<Border Style="{StaticResource ReduxLegacyTagChromeStyle}"
-			Background="{DynamicResource ReduxSuccessPillBackground}"
-			BorderBrush="{DynamicResource ReduxSuccessBrush}">
-			<TextBlock Style="{StaticResource ReduxLegacyTagTextStyle}" Text="{Binding}" />
+			Background="{DynamicResource ReduxSurfaceMutedBrush}"
+			BorderBrush="{DynamicResource ReduxBorderStrongBrush}">
+			<TextBlock Style="{StaticResource ReduxLegacyTagTextStyle}"
+				Foreground="{DynamicResource ReduxTextSecondaryBrush}"
+				Text="{Binding}" />
 		</Border>
 	</DataTemplate>
 	<Style x:Key="ReduxStatusPillBaseStyle"
@@ -3195,7 +3203,7 @@
 		<!-- Hover cards have a fixed, known content width and a wrapping host. Let each
 		     pill measure naturally; clamping it to the ItemsControl's transient arranged
 		     width caused labels such as "User Interface" to ellipsize on first measure. -->
-		<Border Margin="0,0,6,0" Style="{StaticResource ReduxCategoryPillBaseStyle}">
+		<Border Margin="0,0,6,5" Style="{StaticResource ReduxCategoryPillBaseStyle}">
 			<Border.ToolTip>
 				<ToolTip Content="{Binding}"
 					ContentTemplate="{StaticResource ReduxCategoryPillToolTipTemplate}"
@@ -3316,7 +3324,7 @@
 			</Grid>
 
 			<WrapPanel Margin="4,0,4,9">
-				<ItemsControl ItemsSource="{Binding DisplayCategories}"
+				<ItemsControl Margin="0,0,0,-5" ItemsSource="{Binding DisplayCategories}"
 					ItemTemplate="{StaticResource ModTooltipCategoryPillItemTemplate}">
 					<ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
 				</ItemsControl>
@@ -3634,10 +3642,10 @@
 				</Border>
 			</StackPanel>
 			<StackPanel Margin="2" DataContext="{Binding}" Orientation="Vertical">
-				<ItemsControl ItemTemplateSelector="{StaticResource TagTemplateSelector}" ItemsSource="{Binding Tags}">
+				<ItemsControl Margin="0,0,0,-4" ItemTemplateSelector="{StaticResource TagTemplateSelector}" ItemsSource="{Binding Tags}">
 					<ItemsControl.ItemsPanel>
 						<ItemsPanelTemplate>
-							<StackPanel Orientation="Horizontal" />
+							<WrapPanel />
 						</ItemsPanelTemplate>
 					</ItemsControl.ItemsPanel>
 					<ItemsControl.Style>
@@ -4416,7 +4424,7 @@
 		</Grid>
 	</DataTemplate>
 	<Style x:Key="ReduxCategoryPillStyle" BasedOn="{StaticResource ReduxCategoryPillBaseStyle}" TargetType="{x:Type Border}">
-		<Setter Property="Margin" Value="0,0,5,0" />
+		<Setter Property="Margin" Value="0,0,5,4" />
 	</Style>
 	<Style x:Key="ReduxCategoryFilterPillButtonStyle" TargetType="{x:Type Button}">
 		<Setter Property="Padding" Value="0" />
@@ -4502,7 +4510,7 @@
 	</DataTemplate>
 	<DataTemplate x:Key="ModCategoryTemplate" DataType="{x:Type data:DivinityModData}">
 		<!--  ClipToBounds off: see ModSourceTemplate - the per-item MaxWidth clamp handles overflow.  -->
-		<ItemsControl x:Name="DeferredCategoryDetails" ClipToBounds="False"
+		<ItemsControl x:Name="DeferredCategoryDetails" Margin="0,0,0,-4" ClipToBounds="False"
 			ItemTemplate="{StaticResource ModCategoryPillItemTemplate}"
 			ItemsSource="{Binding DisplayCategories}">
 			<ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>

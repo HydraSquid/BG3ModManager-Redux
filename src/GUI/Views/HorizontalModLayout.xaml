@@ -700,7 +700,7 @@
 				<Border>
 					<Border.Style>
 						<Style BasedOn="{StaticResource ReduxCategoryPillBaseStyle}" TargetType="{x:Type Border}">
-							<Setter Property="Margin" Value="0,0,6,0" />
+							<Setter Property="Margin" Value="0,0,6,5" />
 							<Setter Property="BorderThickness" Value="2" />
 						</Style>
 					</Border.Style>
@@ -759,7 +759,7 @@
 				</Border>
 			</DataTemplate>
 			<DataTemplate x:Key="ModDetailsCategoryTemplate" DataType="{x:Type data:DivinityModData}">
-				<ItemsControl ClipToBounds="False"
+				<ItemsControl Margin="0,0,0,-5" ClipToBounds="False"
 					ItemTemplate="{StaticResource ModDetailsTitleCategoryPillItemTemplate}"
 					ItemsSource="{Binding DisplayCategories}">
 					<ItemsControl.ItemsPanel>

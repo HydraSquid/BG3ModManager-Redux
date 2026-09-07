@@ -395,6 +395,30 @@ public sealed class ReduxGameDirectoryInstallServiceTests
 		RegressionAssert.Contains(external.StatusText, "no protected original backup");
 	}
 
+	public void ReviewedAddOnlyModCanRepairItsChangedOrMissingOwnedDll()
+	{
+		using var fixture = new NativeFixture();
+		fixture.InstallLoader();
+		var reviewedDll = fixture.Pe("reviewed wasd");
+		fixture.CreateWasdArchive(reviewedDll, "[input]\nforward = \"W\"\n");
+		fixture.Install(781, fixture.WasdArchivePath, NativeFixture.SupportedVersion);
+		var dllPath = Path.Combine(fixture.NativeModsDirectory, "BG3WASD.dll");
+
+		File.WriteAllBytes(dllPath, fixture.Pe("changed outside Redux"));
+		RegressionAssert.Equal(ReduxGameDirectoryModStatus.Changed,
+			fixture.Installer().GetInstalledMods().Single(entry => entry.NexusModId == 781).Status);
+		fixture.Install(781, fixture.WasdArchivePath, NativeFixture.SupportedVersion);
+		RegressionAssert.SequenceEqual(reviewedDll, File.ReadAllBytes(dllPath));
+
+		File.Delete(dllPath);
+		RegressionAssert.Equal(ReduxGameDirectoryModStatus.Missing,
+			fixture.Installer().GetInstalledMods().Single(entry => entry.NexusModId == 781).Status);
+		fixture.Install(781, fixture.WasdArchivePath, NativeFixture.SupportedVersion);
+		RegressionAssert.SequenceEqual(reviewedDll, File.ReadAllBytes(dllPath));
+		RegressionAssert.Equal(ReduxGameDirectoryModStatus.Managed,
+			fixture.Installer().GetInstalledMods().Single(entry => entry.NexusModId == 781).Status);
+	}
+
 	public void ManagerSurfacesUnknownNativeDllsWithoutClaimingOwnership()
 	{
 		using var fixture = new NativeFixture();

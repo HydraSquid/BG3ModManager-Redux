@@ -40,6 +40,15 @@
 					</Trigger>
 				</Style.Triggers>
 			</Style>
+			<Style x:Key="ReduxScriptExtenderActionButtonStyle" BasedOn="{StaticResource ReduxMinorSuccessActionButtonStyle}" TargetType="{x:Type Button}">
+				<Style.Triggers>
+					<Trigger Property="IsEnabled" Value="False">
+						<Setter Property="Foreground" Value="{DynamicResource {x:Static adonis:Brushes.DisabledForegroundBrush}}" />
+						<Setter Property="Background" Value="{DynamicResource ReduxSurfaceElevatedBrush}" />
+						<Setter Property="BorderBrush" Value="{DynamicResource ReduxBorderBrush}" />
+					</Trigger>
+				</Style.Triggers>
+			</Style>
 			<Style x:Key="ReduxGameDirectoryListItemStyle" TargetType="{x:Type ListBoxItem}">
 				<Setter Property="Margin" Value="0,0,0,5" />
 				<Setter Property="Padding" Value="0" />
@@ -158,7 +167,7 @@
 									<controls:ReduxIcon Width="13" Height="13" Margin="0,0,6,0"
 										Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 										StrokeData="{StaticResource Redux.Icon.ShieldCheck}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
-									<TextBlock Text="Manage" />
+							<TextBlock Text="Manage with Redux" />
 								</StackPanel>
 							</Button>
 							<Button Padding="9,5" Style="{StaticResource ReduxDeleteButtonStyle}"
@@ -241,6 +250,16 @@
 								Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 								StrokeData="{StaticResource Redux.Icon.Download}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
 							<TextBlock Text="Install Archive..." />
+						</StackPanel>
+					</Button>
+					<Button x:Name="ScriptExtenderButton" Margin="0,0,7,0" Click="ScriptExtenderButton_Click"
+						Style="{StaticResource ReduxScriptExtenderActionButtonStyle}"
+						ToolTip="Download and install Script Extender through this manager's reviewed workflow.">
+						<StackPanel Orientation="Horizontal">
+							<controls:ReduxIcon Width="15" Height="15" Margin="0,0,7,0"
+								Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+								StrokeData="{StaticResource Redux.Icon.Download}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
+							<TextBlock x:Name="ScriptExtenderButtonText" Text="Install Script Extender" />
 						</StackPanel>
 					</Button>
 					<Button Margin="0,0,7,0" Click="OpenGameFolderButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">

@@ -27,20 +27,27 @@ public sealed record ReduxGameDirectoryModListItem(
 	public bool IsAdopted => Entry.ArchiveName == "Adopted external installation";
 	public bool IsExternalReplacement => Entry.Status == ReduxGameDirectoryModStatus.External
 		&& ReduxGameDirectoryModCatalog.Find(Entry.NexusModId)?.ReplacesExistingGameFiles == true;
-	public string ManagementNote => IsExternalReplacement
-		? "This mod already replaced BG3 files, so Redux has no trusted originals to restore.\nRemove it, verify BG3's files in Steam or GOG, then install it through Redux."
-		: String.Empty;
+	public string ManagementNote => CanAdopt
+		? "Redux recognizes this exact reviewed DLL. Manage it without changing the installed file."
+		: IsExternalReplacement
+			? "This mod already replaced BG3 files, so Redux has no trusted originals to restore.\nRemove it, verify BG3's files in Steam or GOG, then install it through Redux."
+			: Status == ReduxGameDirectoryModStatus.External
+				? "Redux cannot manage this installation because its DLL does not match a reviewed version. Remove it manually before installing a reviewed archive."
+				: Status is ReduxGameDirectoryModStatus.Changed or ReduxGameDirectoryModStatus.Missing
+					? "Redux owns this installation, but its managed DLL changed or is missing. Reinstall the reviewed release to repair it."
+					: StatusText;
 	public bool HasSource => !String.IsNullOrWhiteSpace(SourceUrl);
 }
 
 public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.AdonisWindow
 {
+	private const long ScriptExtenderNexusModId = 2172;
 	private readonly MainWindowViewModel _viewModel;
 	private readonly ReduxGameDirectoryInstallService _installer;
 	private readonly Dictionary<long, NexusModsModData> _sourceDetails = new();
 	private readonly CancellationTokenSource _sourceDetailsCancellation = new();
 
-	public ReduxGameDirectoryModManagerWindow(MainWindow owner, MainWindowViewModel viewModel)
+	public ReduxGameDirectoryModManagerWindow(MainWindow owner, MainWindowViewModel viewModel, bool focusScriptExtender = false)
 	{
 		InitializeComponent();
 		Owner = owner;
@@ -52,7 +59,15 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 		_installer = CreateInstaller(viewModel);
 		GamePathText.Text = _installer.GameBin;
 		RefreshList();
-		Loaded += async (_, _) => await LoadSourceDetailsAsync();
+		Loaded += async (_, _) =>
+		{
+			await LoadSourceDetailsAsync();
+			if (focusScriptExtender)
+			{
+				ScriptExtenderButton.BringIntoView();
+				ScriptExtenderButton.Focus();
+			}
+		};
 		Closed += (_, _) => _sourceDetailsCancellation.Cancel();
 	}
 
@@ -101,9 +116,11 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 
 		await using (transaction)
 		{
-			var isUpdate = installer.GetInstalledMods().Any(entry =>
-				entry.Status == ReduxGameDirectoryModStatus.Managed
-				&& String.Equals(entry.PackageId, inspection.Definition.PackageId, StringComparison.OrdinalIgnoreCase));
+			var existingEntry = installer.GetInstalledMods().FirstOrDefault(entry =>
+				entry.Status != ReduxGameDirectoryModStatus.External
+					&& String.Equals(entry.PackageId, inspection.Definition.PackageId, StringComparison.OrdinalIgnoreCase));
+			var isUpdate = existingEntry != null;
+			var isRepair = existingEntry?.Status is ReduxGameDirectoryModStatus.Changed or ReduxGameDirectoryModStatus.Missing;
 			var reviewItems = inspection.ManagedFiles.Select(file =>
 			{
 				var relative = file.DestinationPath.StartsWith("bin/", StringComparison.OrdinalIgnoreCase)
@@ -114,8 +131,8 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 				return new ReduxInstallReviewItem(
 					Path.GetFileName(file.DestinationPath),
 					$"Destination: BG3\\bin\\{relative.Replace('/', '\\')}",
-					preserve ? "Keep existing settings" : replacesExisting ? "Replace file · protect original" : isUpdate ? "Update managed file" : "Install managed file",
-					preserve || replacesExisting ? ReduxInstallReviewTone.Info
+					preserve ? "Keep existing settings" : replacesExisting ? "Replace file · protect original" : isRepair ? "Repair managed file" : isUpdate ? "Update managed file" : "Install managed file",
+					isRepair ? ReduxInstallReviewTone.Warning : preserve || replacesExisting ? ReduxInstallReviewTone.Info
 						: isUpdate ? ReduxInstallReviewTone.Success : ReduxInstallReviewTone.Info);
 			}).ToList();
 			reviewItems.AddRange(inspection.PackageEntries.Select(package => new ReduxInstallReviewItem(
@@ -124,7 +141,7 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 				"Install as inactive mod",
 				ReduxInstallReviewTone.Info)));
 
-			var summary = $"{(isUpdate ? "Managed update" : "New managed install")} · {inspection.Definition.Name} · {inspection.LayoutName} · {inspection.FileCount} files · "
+			var summary = $"{(isRepair ? "Managed repair" : isUpdate ? "Managed update" : "New managed install")} · {inspection.Definition.Name} · {inspection.LayoutName} · {inspection.FileCount} files · "
 				+ $"{FormatBytes(inspection.ExpandedBytes)} expanded";
 			var dialog = new ReduxInstallReviewWindow(owner, reviewItems,
 				ReduxInstallReviewKind.GameDirectory, installer.GameBin, summary);
@@ -168,6 +185,9 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 		try
 		{
 			var entries = _installer.GetInstalledMods().Select(CreateListItem).ToArray();
+			var scriptExtender = entries.FirstOrDefault(item => item.Entry.NexusModId == ScriptExtenderNexusModId);
+			UpdateScriptExtenderAction(scriptExtender,
+				entries.Any(item => item.Status == ReduxGameDirectoryModStatus.RecoveryRequired));
 			InstalledList.ItemsSource = entries;
 			InstalledList.Visibility = entries.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
 			EmptyText.Visibility = entries.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -267,6 +287,131 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 		if (await ReviewAndInstallAsync(this, _viewModel, dialog.FileName)) RefreshList();
 	}
 
+	private async void ScriptExtenderButton_Click(object sender, RoutedEventArgs e)
+	{
+		if (String.IsNullOrWhiteSpace(_viewModel.PathwayData.ScriptExtenderLatestReleaseUrl))
+		{
+			ProcessHelper.TryOpenUrl(DivinityApp.EXTENDER_LATEST_URL);
+			return;
+		}
+
+		string archivePath = null;
+		ScriptExtenderButton.IsEnabled = false;
+		try
+		{
+			archivePath = await _viewModel.DownloadScriptExtenderArchiveAsync();
+			if (!String.IsNullOrWhiteSpace(archivePath)
+				&& await ReviewAndInstallAsync(this, _viewModel, archivePath))
+			{
+				RefreshList();
+			}
+		}
+		catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or InvalidOperationException)
+		{
+			ReduxMessageBox.Show(this,
+				$"Redux could not download Script Extender.\n\n{ex.Message}",
+				"Script Extender Download Stopped", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+		}
+		finally
+		{
+			if (!String.IsNullOrWhiteSpace(archivePath) && File.Exists(archivePath))
+			{
+				try { File.Delete(archivePath); }
+				catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+				{
+					DivinityApp.Log($"Could not remove Script Extender intake file: {ex.Message}");
+				}
+			}
+			RefreshList();
+		}
+	}
+
+	private void UpdateScriptExtenderAction(ReduxGameDirectoryModListItem scriptExtender, bool recoveryRequired)
+	{
+		var hasRelease = !String.IsNullOrWhiteSpace(_viewModel.PathwayData.ScriptExtenderLatestReleaseUrl);
+		var latestVersion = ParseLeadingVersion(_viewModel.PathwayData.ScriptExtenderLatestReleaseVersion);
+		var installedVersion = ParseLeadingVersion(scriptExtender?.Entry.DetectedVersion);
+		if (installedVersion < 0 && _viewModel.Settings.ExtenderUpdaterSettings.UpdaterVersion > 0)
+			installedVersion = _viewModel.Settings.ExtenderUpdaterSettings.UpdaterVersion;
+
+		if (recoveryRequired)
+		{
+			SetScriptExtenderAction("Resolve recovery first", false,
+				"Finish the pending game-directory recovery before changing Script Extender.");
+			return;
+		}
+		if (scriptExtender == null)
+		{
+			SetScriptExtenderAction("Install Script Extender", true,
+				hasRelease ? "Download, review, and install the latest Script Extender release."
+					: "Open the Script Extender releases page because Redux could not resolve the latest archive.");
+			return;
+		}
+		if (scriptExtender.Status is ReduxGameDirectoryModStatus.Changed or ReduxGameDirectoryModStatus.Missing)
+		{
+			SetScriptExtenderAction("Reinstall Script Extender", hasRelease,
+				hasRelease ? "Repair the changed or missing Redux-managed DLL with the latest reviewed release."
+					: "Redux could not resolve the latest reviewed release. Try refreshing release information first.");
+			return;
+		}
+		if (scriptExtender.Status == ReduxGameDirectoryModStatus.External)
+		{
+			if (!scriptExtender.CanAdopt)
+			{
+				SetScriptExtenderAction("Unverified Script Extender", false, scriptExtender.ManagementNote);
+				return;
+			}
+			if (latestVersion < 0)
+			{
+				SetScriptExtenderAction("Manage Script Extender first", false,
+					"Redux recognizes this installed version. Choose Manage with Redux while release information refreshes.");
+				return;
+			}
+			if (latestVersion > installedVersion && installedVersion >= 0)
+			{
+				SetScriptExtenderAction("Manage before updating", false,
+					"Choose Manage with Redux first. Redux can then update this older reviewed installation safely.");
+				return;
+			}
+			SetScriptExtenderAction("Script Extender is up to date", false,
+				$"Installed outside Redux{FormatVersion(scriptExtender.Entry.DetectedVersion)}. Choose Manage with Redux if you want Redux to own its removal and future updates.");
+			return;
+		}
+		if (latestVersion >= 0 && installedVersion >= latestVersion)
+		{
+			SetScriptExtenderAction("Script Extender is up to date", false,
+				$"Redux manages the current release{FormatVersion(scriptExtender.Entry.DetectedVersion)}.");
+			return;
+		}
+		if (latestVersion > installedVersion && installedVersion >= 0)
+		{
+			SetScriptExtenderAction("Update Script Extender", hasRelease,
+				$"Update the Redux-managed installation from v{installedVersion} to v{latestVersion}.");
+			return;
+		}
+
+		SetScriptExtenderAction("Reinstall Script Extender", hasRelease,
+			hasRelease ? "Redux could not confirm the installed version. Reinstall the latest reviewed release."
+				: "Redux could not confirm the installed version or resolve the latest reviewed release.");
+	}
+
+	private void SetScriptExtenderAction(string text, bool enabled, string toolTip)
+	{
+		ScriptExtenderButtonText.Text = text;
+		ScriptExtenderButton.IsEnabled = enabled;
+		ScriptExtenderButton.ToolTip = toolTip;
+	}
+
+	private static int ParseLeadingVersion(string value)
+	{
+		if (String.IsNullOrWhiteSpace(value)) return -1;
+		var digits = new string(value.TrimStart().TrimStart('v', 'V').TakeWhile(Char.IsDigit).ToArray());
+		return Int32.TryParse(digits, out var version) ? version : -1;
+	}
+
+	private static string FormatVersion(string version) => String.IsNullOrWhiteSpace(version)
+		? String.Empty : $" · v{version}";
+
 	private async void Window_Drop(object sender, DragEventArgs e)
 	{
 		if (!e.Data.GetDataPresent(DataFormats.FileDrop)
@@ -301,10 +446,6 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 	private async void AdoptButton_Click(object sender, RoutedEventArgs e)
 	{
 		if (sender is not FrameworkElement { DataContext: ReduxGameDirectoryModListItem item } || !item.CanAdopt) return;
-		var answer = ReduxMessageBox.Show(this,
-			$"Manage the installed {item.Name} DLL with Redux?\n\nRedux verified this exact binary against its reviewed catalog. No game files will change now. If you delete it later, Redux will remove only unchanged adopted DLLs; settings files and companion PAKs remain yours.",
-			"Manage Existing Installation", MessageBoxButton.YesNo, MessageBoxImage.Information, MessageBoxResult.No);
-		if (answer != MessageBoxResult.Yes) return;
 		try
 		{
 			await _installer.AdoptExternalAsync(item.Entry.NexusModId);

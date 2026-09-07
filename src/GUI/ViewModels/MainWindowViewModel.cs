@@ -1001,7 +1001,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 	public bool DebugMode { get; set; }
 
-	private async void DownloadScriptExtender()
+	public async Task<string> DownloadScriptExtenderArchiveAsync()
 	{
 		MainProgressTitle = "Downloading Script Extender";
 		MainProgressValue = 0d;
@@ -1010,6 +1010,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		MainProgressIsActive = true;
 		Directory.CreateDirectory(NxmDownloadsDirectory);
 		var intakePath = Path.Combine(NxmDownloadsDirectory, $".script-extender-intake-{Guid.NewGuid():N}.zip");
+		var completed = false;
 		try
 		{
 			await SetMainProgressTextAsync("Downloading the reviewed Script Extender package...");
@@ -1030,29 +1031,24 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			var classification = await ClassifyAcquiredPackageAsync(intakePath);
 			if (!classification.Installable || classification.Destination != "Game-directory Mods")
 				throw new InvalidDataException("The downloaded Script Extender archive does not match Redux's reviewed layout.");
-			var sha256 = await ComputeAcquiredPackageSha256Async(intakePath);
-			await EnsureNxmDownloadsInitializedAsync();
-			await _nxmDownloadManager.AddLocalPackageAsync(intakePath, sha256, classification.ProjectName,
-				classification.ContentKind, classification.Destination, classification.Summary,
-				AcquiredPackageSourceKind.ReduxDownload, classification.ThumbnailUrl, MainProgressToken.Token);
 			MainProgressValue = 1;
 			HighlightExtenderDownload = false;
-			ShowAlert("Script Extender is ready in Download Manager. Install it with the guarded game-directory workflow.",
-				AlertType.Success, 25);
-			await Window.OpenNexusDownloadsAsync();
+			completed = true;
+			return intakePath;
 		}
 		catch (OperationCanceledException)
 		{
 			DivinityApp.Log("Script Extender download was cancelled.");
+			return null;
 		}
 		catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or InvalidOperationException)
 		{
 			DivinityApp.Log($"Script Extender intake failed: {ex}");
-			ShowAlert("Redux could not add Script Extender to Download Manager. Check the log for details.", AlertType.Danger, 30);
+			throw;
 		}
 		finally
 		{
-			if (File.Exists(intakePath))
+			if (!completed && File.Exists(intakePath))
 			{
 				try { File.Delete(intakePath); }
 				catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -1122,28 +1118,6 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 					});
 				}
 			}
-		}
-	}
-
-	private bool OpenRepoLinkToDownload { get; set; }
-
-	private void AskToDownloadScriptExtender()
-	{
-		if (!OpenRepoLinkToDownload)
-		{
-			if (!String.IsNullOrWhiteSpace(Settings.GameExecutablePath) && File.Exists(Settings.GameExecutablePath))
-			{
-				DownloadScriptExtender();
-			}
-			else
-			{
-				ShowAlert("Set a valid game executable path in Preferences.", AlertType.Danger);
-			}
-		}
-		else
-		{
-			DivinityApp.Log($"Getting a release download link failed for some reason. Opening repo url: {DivinityApp.EXTENDER_LATEST_URL}");
-			ProcessHelper.TryOpenUrl(DivinityApp.EXTENDER_LATEST_URL);
 		}
 	}
 
@@ -1301,7 +1275,6 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				}
 				if (!String.IsNullOrEmpty(latestReleaseZipUrl))
 				{
-					OpenRepoLinkToDownload = false;
 					PathwayData.ScriptExtenderLatestReleaseUrl = latestReleaseZipUrl;
 					DivinityApp.Log($"Script Extender latest release url found: {latestReleaseZipUrl}");
 					return true;
@@ -1311,16 +1284,10 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 					DivinityApp.Log($"Script Extender latest release not found.");
 				}
 			}
-			else
-			{
-				OpenRepoLinkToDownload = true;
-			}
 		}
 		catch (Exception ex)
 		{
 			DivinityApp.Log($"Error checking for latest Script Extender release: {ex}");
-
-			OpenRepoLinkToDownload = true;
 		}
 
 		return false;
@@ -1489,9 +1456,6 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		DivinityApp.DependencyFilter = Settings.WhenAnyValue(x => x.DebugModeEnabled).Select(MakeDependencyFilter);
 
 		var canOpenGameExe = Settings.WhenAnyValue(x => x.GameExecutablePath, x => x.FileExists());
-
-		var canDownloadScriptExtender = this.WhenAnyValue(x => x.PathwayData.ScriptExtenderLatestReleaseUrl, (p) => !String.IsNullOrEmpty(p));
-		Keys.DownloadScriptExtender.AddAction(() => AskToDownloadScriptExtender(), canDownloadScriptExtender);
 
 		var canOpenModsFolder = this.WhenAnyValue(x => x.PathwayData.AppDataModsPath, x => x.DirectoryExists());
 		Keys.OpenModsFolder.AddAction(() =>
@@ -4920,7 +4884,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 				ShowWhenMainWindowReady(StartupLoadOrderWarningKey, () =>
 					ReduxMessageBox.ShowWithActions(Window, finalMessage,
-						"Mods Require the Script Extender - Install it with the Tools menu!", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK,
+						"Mods Require the Script Extender - Install it with the Game-directory Mod Manager!", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK,
 						("Copy to Clipboard", "Redux.Icon.Copy", () => ((System.Windows.Input.ICommand)DivinityApp.Commands.CopyToClipboardCommand).Execute(finalMessage))));
 				warningScheduled = true;
 			}

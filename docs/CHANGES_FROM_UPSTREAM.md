@@ -208,7 +208,9 @@ the existing PAK preflight behavior for ordinary mod releases.
 The initial catalog is intentionally narrow and based on reviewed archive layouts. Matching a
 layout and executable architecture does not establish publisher provenance or guarantee that a mod
 is safe for a particular system. Script Extender uses the same guarded staged transaction and
-ownership record as other reviewed game-directory packages.
+ownership record as other reviewed game-directory packages. Its install/update action now lives in
+Game-Directory Mod Manager, and the Tools shortcut opens that manager action rather than maintaining
+a second download-and-install path.
 
 ## Download Manager and Nexus Mod Manager links
 

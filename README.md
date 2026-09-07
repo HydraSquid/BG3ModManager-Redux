@@ -125,8 +125,14 @@ destination before applying a change and clearly warns that native DLLs execute 
 The first alpha.14 catalog recognizes reviewed layouts for Native Mod Loader, WASD and camera
 plugins, Achievement Enabler, Baldur's Priority, Improved Camera, Best of Hands, BG3WASD Camera
 Follow, True Third-Person Camera, bg3fgvk, and Script Extender. Script Extender now uses the same
-staged game-directory transaction and ownership record as the rest of the reviewed catalog. Mixed
+staged game-directory transaction and ownership record as the rest of the reviewed catalog. Its
+dedicated manager action downloads, reviews, installs, updates, or reinstalls the current release;
+**Tools > Manage Script Extender...** navigates to that action instead of running a separate installer. Mixed
 native-and-PAK packages send their companion PAK through the normal inactive-mod import path.
+The action is contextual: a current installation is disabled, an older installation offers an
+update, and changed or missing Redux-owned files offer a reviewed repair. An exact reviewed
+Script Extender DLL installed outside Redux can be adopted without rewriting it; unknown DLLs stay
+unmanaged and explain why adoption is unavailable.
 
 Archives may be selected in the manager or dropped onto Redux. Installation is staged and bounded;
 paths, layouts, reviewed DLL fingerprints, AMD64 DLL headers, prerequisites, the source archive, and

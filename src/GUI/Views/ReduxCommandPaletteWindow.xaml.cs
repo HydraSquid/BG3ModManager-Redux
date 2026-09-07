@@ -385,7 +385,7 @@ public partial class ReduxCommandPaletteWindow : AdonisUI.Controls.AdonisWindow
 		nameof(AppKeys.ExtractSelectedAdventure) => "unpack campaign archive",
 		nameof(AppKeys.ToggleVersionGeneratorWindow) => "open mod author tool",
 		nameof(AppKeys.InspectFileOverlaps) => "scan conflicts shared paths",
-		nameof(AppKeys.DownloadScriptExtender) => "download extract update se",
+		nameof(AppKeys.DownloadScriptExtender) => "manage script extender game directory download extract update se",
 		nameof(AppKeys.SpeakActiveModOrder) => "voice accessibility aloud",
 		nameof(AppKeys.StopSpeaking) => "voice accessibility silence",
 		nameof(AppKeys.CheckForUpdates) => "redux app new version",

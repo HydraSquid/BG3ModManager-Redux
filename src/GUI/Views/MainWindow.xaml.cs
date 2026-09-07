@@ -846,6 +846,10 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 				OpenGameDirectoryModManager,
 				ViewModel.WhenAnyValue(x => x.Settings.GameExecutablePath)
 					.Select(_ => ReduxGameDirectoryModManagerWindow.CanOpen(ViewModel)));
+			ViewModel.Keys.DownloadScriptExtender.AddAction(
+				() => OpenGameDirectoryModManager(true),
+				ViewModel.WhenAnyValue(x => x.Settings.GameExecutablePath)
+					.Select(_ => ReduxGameDirectoryModManagerWindow.CanOpen(ViewModel)));
 			ViewModel.Keys.OpenNexusDownloads.AddAction(() => _ = OpenNexusDownloadsAsync());
 			ViewModel.Keys.OpenAboutWindow.AddAction(ToggleAboutWindow);
 
@@ -875,10 +879,13 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 	}
 
 	private void OpenGameDirectoryModManager()
+		=> OpenGameDirectoryModManager(false);
+
+	private void OpenGameDirectoryModManager(bool focusScriptExtender)
 	{
 		try
 		{
-			var manager = new ReduxGameDirectoryModManagerWindow(this, ViewModel);
+			var manager = new ReduxGameDirectoryModManagerWindow(this, ViewModel, focusScriptExtender);
 			ReduxWindowBehavior.ShowDialogWithOwnerBackdrop(manager, this);
 		}
 		catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException or NotSupportedException)

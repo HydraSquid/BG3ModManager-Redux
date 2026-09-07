@@ -402,20 +402,23 @@ public sealed class ReduxGameDirectoryInstallService
 				.Select(group => group.First()).ToArray();
 			var exactMatch = exactMatches.Length == 1 ? exactMatches[0] : null;
 			var representative = exactMatch?.Definition ?? (definitions.Length == 1 ? definitions[0] : null);
-			var isUnverifiedVariant = representative == null;
+			var isUnverifiedVariant = exactMatch == null;
 			var externalName = representative?.Name ?? package.Key switch
 			{
 				"native-camera-tweaks" => "Native Camera Tweaks (unverified variant)",
 				"bg3-wasd" => "BG3WASD (unverified variant)",
 				_ => "Unverified game-directory mod variant"
 			};
+			if (isUnverifiedVariant && representative?.Kind == ReduxGameDirectoryModKind.ScriptExtender)
+				externalName = "Baldur's Gate 3 Script Extender (unverified variant)";
 			var detectedVersion = exactMatch?.Fingerprint.Version ?? String.Empty;
 			var statusText = isUnverifiedVariant ? "Installed outside Redux · unverified variant"
 				: String.IsNullOrWhiteSpace(detectedVersion) ? "Installed outside Redux"
 				: $"Installed outside Redux · identified v{detectedVersion}";
 			if (representative?.ReplacesExistingGameFiles == true)
 				statusText = "Can't manage · no protected original backup";
-			var canAdopt = exactMatch?.Definition.Kind == ReduxGameDirectoryModKind.NativePlugin
+			var canAdopt = (exactMatch?.Definition.Kind is ReduxGameDirectoryModKind.NativePlugin
+				or ReduxGameDirectoryModKind.ScriptExtender)
 				&& !exactMatch.Definition.ReplacesExistingGameFiles
 				&& FindExactReviewedDllSetIdentity(exactMatch.Definition, existingSnapshots) != null;
 			results.Add(new ReduxGameDirectoryModEntry(
@@ -460,15 +463,15 @@ public sealed class ReduxGameDirectoryInstallService
 	}
 
 	/// <summary>
-	/// Records ownership of an already-installed reviewed native plugin without changing game files.
+	/// Records ownership of an already-installed reviewed add-only native component without changing game files.
 	/// Only exact catalog fingerprints can be adopted; settings and companion content remain user-owned.
 	/// </summary>
 	public async Task AdoptExternalAsync(long projectId, CancellationToken cancellationToken = default)
 	{
 		var definition = ReduxGameDirectoryModCatalog.Find(projectId)
 			?? throw new InvalidDataException("This game-directory mod is not in Redux's reviewed catalog.");
-		if (definition.Kind != ReduxGameDirectoryModKind.NativePlugin)
-			throw new InvalidOperationException("Only reviewed native plugins can be adopted by the game-directory manager.");
+		if (definition.Kind is not (ReduxGameDirectoryModKind.NativePlugin or ReduxGameDirectoryModKind.ScriptExtender))
+			throw new InvalidOperationException("Only reviewed add-only native components can be adopted by the game-directory manager.");
 		if (definition.ReplacesExistingGameFiles)
 			throw new InvalidOperationException($"Redux cannot adopt {definition.Name} because it did not preserve the original files before they were replaced.");
 
@@ -983,9 +986,9 @@ public sealed class ReduxGameDirectoryInstallService
 			{
 				if (prior == null && !definition.ReplacementOriginals.ContainsKey(canonicalPath))
 					throw new InvalidOperationException($"Redux will not replace the unmanaged native file '{relativePath}'.");
-				if (prior != null) EnsureOwnedFileUnchanged(prior, snapshot);
+				if (prior != null && definition.ReplacesExistingGameFiles) EnsureOwnedFileUnchanged(prior, snapshot);
 			}
-			else if (prior != null)
+			else if (prior != null && definition.ReplacesExistingGameFiles)
 			{
 				throw new InvalidOperationException($"Redux will not recreate the Redux-owned file '{relativePath}' after it was removed outside Redux.");
 			}

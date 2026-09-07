@@ -2749,18 +2749,7 @@
 									Background="{Binding DisplayCategories[0].Color, Converter={StaticResource StringToSolidBrushConverter}, ConverterParameter=4D, FallbackValue=#4D9676FF}"
 									CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}"
 									IsHitTestVisible="False"
-									Opacity="0">
-									<Border.Style>
-										<Style TargetType="{x:Type Border}">
-											<Setter Property="Visibility" Value="Visible" />
-											<Style.Triggers>
-								<DataTrigger Binding="{Binding Path=(dapp:DivinityApp.ReduceMotionEnabled)}" Value="True">
-													<Setter Property="Visibility" Value="Collapsed" />
-												</DataTrigger>
-											</Style.Triggers>
-										</Style>
-									</Border.Style>
-								</Border>
+									Opacity="0" />
 								<GridViewRowPresenter x:Name="ModRowPresenter"
 									Margin="{TemplateBinding Padding}"
 									Columns="{Binding Path=View.Columns, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}"
@@ -2776,13 +2765,7 @@
 								background/border through creates a muddy fill and duplicate line. -->
 							<Setter TargetName="RowBorder" Property="Background" Value="Transparent" />
 							<Setter TargetName="RowBorder" Property="BorderBrush" Value="Transparent" />
-						</Trigger>
-						<MultiDataTrigger>
-							<MultiDataTrigger.Conditions>
-								<Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
-								<Condition Binding="{Binding Path=(dapp:DivinityApp.ReduceMotionEnabled)}" Value="False" />
-							</MultiDataTrigger.Conditions>
-							<MultiDataTrigger.EnterActions>
+							<Trigger.EnterActions>
 								<BeginStoryboard>
 									<Storyboard>
 										<DoubleAnimation Storyboard.TargetName="RowHoverSurface"
@@ -2797,8 +2780,8 @@
 											EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
 									</Storyboard>
 								</BeginStoryboard>
-							</MultiDataTrigger.EnterActions>
-							<MultiDataTrigger.ExitActions>
+							</Trigger.EnterActions>
+							<Trigger.ExitActions>
 								<BeginStoryboard>
 									<Storyboard>
 										<DoubleAnimation Storyboard.TargetName="RowHoverSurface"
@@ -2811,16 +2794,8 @@
 											Duration="{StaticResource Redux.Motion.Standard}" />
 									</Storyboard>
 								</BeginStoryboard>
-							</MultiDataTrigger.ExitActions>
-						</MultiDataTrigger>
-						<MultiDataTrigger>
-							<MultiDataTrigger.Conditions>
-								<Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
-								<Condition Binding="{Binding Path=(dapp:DivinityApp.ReduceMotionEnabled)}" Value="True" />
-							</MultiDataTrigger.Conditions>
-							<Setter TargetName="RowHoverSurface" Property="Opacity" Value="0.62" />
-							<Setter TargetName="RowHoverRail" Property="Opacity" Value="1" />
-						</MultiDataTrigger>
+							</Trigger.ExitActions>
+						</Trigger>
 						<Trigger Property="IsSelected" Value="True">
 							<Setter TargetName="RowBorder" Property="Background" Value="Transparent" />
 							<Setter TargetName="RowBorder" Property="BorderBrush" Value="Transparent" />

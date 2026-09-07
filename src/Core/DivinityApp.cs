@@ -186,23 +186,6 @@ public static class DivinityApp
 		}
 	}
 
-	private static bool _reduceMotionEnabled;
-
-	/// <summary>
-	/// Mirrors the accessibility motion preference for control templates whose
-	/// storyboards cannot reliably bind through an ancestor data context.
-	/// </summary>
-	public static bool ReduceMotionEnabled
-	{
-		get => _reduceMotionEnabled;
-		set
-		{
-			if (_reduceMotionEnabled == value) return;
-			_reduceMotionEnabled = value;
-			NotifyStaticPropertyChanged();
-		}
-	}
-
 	private static bool _useIconsOnly;
 
 	/// <summary>

@@ -202,9 +202,6 @@
 									</ToggleButton.Template>
 								</ToggleButton>
 								<Border x:Name="AnimatedContentHost" Grid.Row="1" ClipToBounds="True">
-									<Border.RenderTransform>
-										<TranslateTransform Y="0" />
-									</Border.RenderTransform>
 									<ContentPresenter x:Name="ExpandSite"
 										ContentSource="Content"
 										KeyboardNavigation.TabNavigation="Continue" />

@@ -20,7 +20,6 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Animation;
 
 using WpfScreenHelper;
@@ -1015,14 +1014,11 @@ public partial class SettingsWindow : SettingsWindowBase
 		_shortcutGroupAnimationVersions[expander] = version;
 		host.BeginAnimation(MaxHeightProperty, null);
 		host.BeginAnimation(OpacityProperty, null);
-		var translate = host.RenderTransform as TranslateTransform;
-		translate?.BeginAnimation(TranslateTransform.YProperty, null);
 
 		if (!animate || ReduxWindowBehavior.ReduceMotion || !SystemParameters.ClientAreaAnimation)
 		{
 			host.MaxHeight = expander.IsExpanded ? Double.PositiveInfinity : 0;
 			host.Opacity = expander.IsExpanded ? 1 : 0;
-			if (translate != null) translate.Y = expander.IsExpanded ? 0 : -4;
 			return;
 		}
 
@@ -1034,7 +1030,6 @@ public partial class SettingsWindow : SettingsWindowBase
 			var targetHeight = Math.Max(1, content.DesiredSize.Height);
 			host.MaxHeight = 0;
 			host.Opacity = 0;
-			if (translate != null) translate.Y = -4;
 			var heightAnimation = new DoubleAnimation(0, targetHeight, duration) { EasingFunction = easing };
 			heightAnimation.Completed += (_, _) =>
 			{
@@ -1046,7 +1041,6 @@ public partial class SettingsWindow : SettingsWindowBase
 			};
 			host.BeginAnimation(MaxHeightProperty, heightAnimation);
 			host.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, duration) { EasingFunction = easing });
-			translate?.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(-4, 0, duration) { EasingFunction = easing });
 		}
 		else
 		{
@@ -1063,7 +1057,6 @@ public partial class SettingsWindow : SettingsWindowBase
 			};
 			host.BeginAnimation(MaxHeightProperty, heightAnimation);
 			host.BeginAnimation(OpacityProperty, new DoubleAnimation(host.Opacity, 0, duration) { EasingFunction = easing });
-			translate?.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(translate.Y, -4, duration) { EasingFunction = easing });
 		}
 	}
 

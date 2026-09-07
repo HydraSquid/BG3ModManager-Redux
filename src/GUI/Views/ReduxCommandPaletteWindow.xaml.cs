@@ -31,6 +31,9 @@ public sealed class ReduxCommandPaletteItem
 	public int MinimumQueryLength { get; }
 	public bool HasGesture => !String.IsNullOrWhiteSpace(Gesture);
 	public bool HasAccentColor => !String.IsNullOrWhiteSpace(AccentColor);
+	public bool UsesContextualInteractionColors { get; }
+	public bool HasContextualInteractionStyle => UsesContextualInteractionColors
+		&& (HasAccentColor || Tone != ReduxCommandPaletteTone.Neutral);
 	public bool CanExecute => _canExecute();
 
 	private readonly Action _execute;
@@ -56,6 +59,7 @@ public sealed class ReduxCommandPaletteItem
 		IconKey = iconKey?.Trim() ?? "terminal";
 		AccentColor = accentColor?.Trim() ?? String.Empty;
 		Tone = tone;
+		UsesContextualInteractionColors = DivinityApp.UseCategoryColorsForInteractions;
 		SearchTerms = searchTerms?.Trim() ?? String.Empty;
 		MinimumQueryLength = Math.Max(0, minimumQueryLength);
 		_execute = execute ?? (() => { });

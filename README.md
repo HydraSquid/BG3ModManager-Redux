@@ -36,7 +36,7 @@ stronger organization, safer review workflows, and optional offline-assisted gui
 | Multiple categories per mod | Built-in package diagnostics | Dark, Light, and Parchment themes |
 | Named, collapsible separators | Optional Load Order Advisor | Custom themes and generated gradients |
 | Saved orders and comparisons | Export previews and restore points | Adjustable text, fonts, icons, and motion |
-| Searchable <kbd>Ctrl</kbd> + <kbd>Q</kbd> actions | Undo/Redo for reversible changes | Unified hover cards and details drawer |
+| Context-aware <kbd>Ctrl</kbd> + <kbd>Q</kbd> Quick Access | Undo/Redo for reversible changes | Grouped shortcut editor and motion controls |
 
 ### The main workflow
 
@@ -57,6 +57,8 @@ stronger organization, safer review workflows, and optional offline-assisted gui
 - Up to three visible category assignments per mod.
 - Separators with persistent membership and collapse state. Closed separators move with their
   contained mods and do not absorb nearby rows unexpectedly.
+- Compact Active Mods controls can collapse or expand every separator at once. The same action can
+  be assigned a shortcut, while individual and context-menu controls remain available.
 - A resizable details drawer and hover cards for descriptions, requirements, files, changelogs,
   source pages, diagnostics, and private notes.
 - Configurable list columns and unified selection between Active and Inactive Mods.
@@ -151,11 +153,19 @@ model is documented in the [Redux mod database guide](docs/REDUX_MOD_DATABASE.md
 - Solid semantic action colors or theme-generated gradients.
 - Compact, Default, and Large text with bundled or imported `.ttf` / `.otf` fonts.
 - Optional category-colored interactions, colored text, icons, and icon-only labels.
+- Contextual category and semantic colors extend through Quick Access hover and selection states;
+  disabling colored interactions restores the active theme's standard treatment.
 - Reduce Motion for scrolling, sliding, scaling, and animated transitions while preserving clear
   hover and selection states.
 - Independently removable background blur and dimming.
 - Configurable shortcuts, keyboard-operable dialogs, selectable dialog text, screen-reader helpers,
   and inherited speech commands.
+
+Quick Access searches commands, profiles, saved orders, categories, installed mods, theme actions,
+folders, and Redux support links from one keyboard-first surface. Its category results reuse saved
+category icons and colors, while destructive, warning, and save/export actions retain their
+semantic meaning. The shortcut editor groups related actions and provides compact group-wide
+expand/collapse controls.
 
 The first launch provides one setup window for theme, optional source linking, optional Load Order
 Advisor guidance, API keys, and accessibility choices. Optional online and advisor features begin

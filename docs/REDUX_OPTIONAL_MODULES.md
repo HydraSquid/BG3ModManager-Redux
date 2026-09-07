@@ -117,6 +117,10 @@ recommendations can be ignored locally and restored later.
 
 When guidance is disabled, its organizer action and status indicator are absent.
 
+Normal separator editing is not part of the advisor. Direct and context-menu controls for
+collapsing or expanding active separators—and their assignable shortcut—remain available whether
+or not Load Order Advisor is enabled.
+
 ## First-run and preference behavior
 
 The first-run setup is also reachable from Help. Theme, motion, and background effects preview live

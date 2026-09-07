@@ -5,6 +5,7 @@
 	xmlns:controls="clr-namespace:DivinityModManager.Controls"
 	xmlns:dapp="clr-namespace:DivinityModManager;assembly=DivinityModManagerCore"
 	xmlns:local="clr-namespace:DivinityModManager.Views"
+	xmlns:util="clr-namespace:DivinityModManager.Util"
 	xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
 	Title="Quick Access"
 	Width="620" Height="530" MinWidth="520" MinHeight="420" MaxWidth="760" MaxHeight="760"
@@ -43,16 +44,136 @@
 					<Setter.Value>
 						<ControlTemplate TargetType="{x:Type ListBoxItem}">
 							<Border x:Name="ItemChrome"
-								Padding="11,8"
 								Background="Transparent"
-								CornerRadius="{DynamicResource Redux.CornerRadius.Control}">
+								CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
+								RenderTransformOrigin="0.5,0.5"
+								util:ReduxWindowBehavior.HoverLift="1">
+								<Border.RenderTransform>
+									<TranslateTransform Y="0" />
+								</Border.RenderTransform>
 								<Grid>
 									<Grid.ColumnDefinitions>
 										<ColumnDefinition Width="Auto" />
 										<ColumnDefinition Width="*" />
 										<ColumnDefinition Width="Auto" />
 									</Grid.ColumnDefinitions>
-									<Border Width="30" Height="30" Margin="0,0,10,0"
+									<Border x:Name="DefaultHoverSurface" Grid.ColumnSpan="3"
+										CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
+										IsHitTestVisible="False"
+										Opacity="0">
+										<Border.Style>
+											<Style TargetType="{x:Type Border}">
+												<Setter Property="Background" Value="{DynamicResource ReduxAccentSoftBrush}" />
+												<Style.Triggers>
+													<DataTrigger Binding="{Binding HasContextualInteractionStyle}" Value="True">
+														<Setter Property="Background" Value="Transparent" />
+													</DataTrigger>
+													<DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}" Value="True">
+														<Setter Property="Background" Value="Transparent" />
+													</DataTrigger>
+												</Style.Triggers>
+											</Style>
+										</Border.Style>
+									</Border>
+									<Border x:Name="DefaultSelectionSurface" Grid.ColumnSpan="3"
+										CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
+										IsHitTestVisible="False"
+										Opacity="0">
+										<Border.Style>
+											<Style TargetType="{x:Type Border}">
+												<Setter Property="Background" Value="{DynamicResource ReduxSelectionBrush}" />
+												<Style.Triggers>
+													<DataTrigger Binding="{Binding HasContextualInteractionStyle}" Value="True">
+														<Setter Property="Background" Value="Transparent" />
+													</DataTrigger>
+												</Style.Triggers>
+											</Style>
+										</Border.Style>
+									</Border>
+									<Border x:Name="ContextualHoverSurface" Grid.ColumnSpan="3"
+										CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
+										IsHitTestVisible="False"
+										Opacity="0">
+										<Border.Style>
+											<Style TargetType="{x:Type Border}">
+												<Setter Property="Background" Value="Transparent" />
+												<Style.Triggers>
+													<MultiDataTrigger>
+														<MultiDataTrigger.Conditions>
+															<Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Success}" />
+															<Condition Binding="{Binding UsesContextualInteractionColors}" Value="True" />
+														</MultiDataTrigger.Conditions>
+														<Setter Property="Background" Value="{DynamicResource ReduxSuccessPillBackground}" />
+													</MultiDataTrigger>
+													<MultiDataTrigger>
+														<MultiDataTrigger.Conditions>
+															<Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Warning}" />
+															<Condition Binding="{Binding UsesContextualInteractionColors}" Value="True" />
+														</MultiDataTrigger.Conditions>
+														<Setter Property="Background" Value="{DynamicResource ReduxWarningPillBackground}" />
+													</MultiDataTrigger>
+													<MultiDataTrigger>
+														<MultiDataTrigger.Conditions>
+															<Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Error}" />
+															<Condition Binding="{Binding UsesContextualInteractionColors}" Value="True" />
+														</MultiDataTrigger.Conditions>
+														<Setter Property="Background" Value="{DynamicResource ReduxErrorPillBackground}" />
+													</MultiDataTrigger>
+													<MultiDataTrigger>
+														<MultiDataTrigger.Conditions>
+															<Condition Binding="{Binding HasAccentColor}" Value="True" />
+															<Condition Binding="{Binding UsesContextualInteractionColors}" Value="True" />
+														</MultiDataTrigger.Conditions>
+														<Setter Property="Background" Value="{Binding AccentColor, Converter={StaticResource StringToGradientBrushConverter}, ConverterParameter=28\,10}" />
+													</MultiDataTrigger>
+													<DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}" Value="True">
+														<Setter Property="Background" Value="Transparent" />
+													</DataTrigger>
+												</Style.Triggers>
+											</Style>
+										</Border.Style>
+									</Border>
+									<Border x:Name="ContextualSelectionSurface" Grid.ColumnSpan="3"
+										CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
+										IsHitTestVisible="False"
+										Opacity="0">
+										<Border.Style>
+											<Style TargetType="{x:Type Border}">
+												<Setter Property="Background" Value="Transparent" />
+												<Style.Triggers>
+													<MultiDataTrigger>
+														<MultiDataTrigger.Conditions>
+															<Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Success}" />
+															<Condition Binding="{Binding UsesContextualInteractionColors}" Value="True" />
+														</MultiDataTrigger.Conditions>
+														<Setter Property="Background" Value="{DynamicResource ReduxSuccessPillBackground}" />
+													</MultiDataTrigger>
+													<MultiDataTrigger>
+														<MultiDataTrigger.Conditions>
+															<Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Warning}" />
+															<Condition Binding="{Binding UsesContextualInteractionColors}" Value="True" />
+														</MultiDataTrigger.Conditions>
+														<Setter Property="Background" Value="{DynamicResource ReduxWarningPillBackground}" />
+													</MultiDataTrigger>
+													<MultiDataTrigger>
+														<MultiDataTrigger.Conditions>
+															<Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Error}" />
+															<Condition Binding="{Binding UsesContextualInteractionColors}" Value="True" />
+														</MultiDataTrigger.Conditions>
+														<Setter Property="Background" Value="{DynamicResource ReduxErrorPillBackground}" />
+													</MultiDataTrigger>
+													<MultiDataTrigger>
+														<MultiDataTrigger.Conditions>
+															<Condition Binding="{Binding HasAccentColor}" Value="True" />
+															<Condition Binding="{Binding UsesContextualInteractionColors}" Value="True" />
+														</MultiDataTrigger.Conditions>
+														<Setter Property="Background" Value="{Binding AccentColor, Converter={StaticResource StringToGradientBrushConverter}, ConverterParameter=42\,22}" />
+													</MultiDataTrigger>
+												</Style.Triggers>
+											</Style>
+										</Border.Style>
+									</Border>
+									<Border Width="30" Height="30" Margin="11,8,10,8"
 										CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
 										Visibility="{Binding Path=(dapp:DivinityApp.ShowInterfaceIcons), Converter={StaticResource BoolToVisibilityConverter}}">
 										<Border.Style>
@@ -131,7 +252,7 @@
 											</controls:ReduxIcon.Style>
 										</controls:ReduxIcon>
 									</Border>
-									<StackPanel Grid.Column="1" Margin="0,0,12,0" VerticalAlignment="Center">
+									<StackPanel Grid.Column="1" Margin="0,8,12,8" VerticalAlignment="Center">
 									<TextBlock FontWeight="{DynamicResource Redux.FontWeight.Control}"
 										Text="{Binding Name}"
 										TextTrimming="CharacterEllipsis">
@@ -156,6 +277,7 @@
 											TextTrimming="CharacterEllipsis" />
 									</StackPanel>
 									<Border Grid.Column="2"
+										Margin="0,8,11,8"
 										Padding="7,3"
 										VerticalAlignment="Center"
 										Background="{DynamicResource ReduxSurfaceElevatedBrush}"
@@ -171,29 +293,41 @@
 							</Border>
 							<ControlTemplate.Triggers>
 								<Trigger Property="IsMouseOver" Value="True">
-									<Setter TargetName="ItemChrome" Property="Background" Value="{DynamicResource ReduxAccentSoftBrush}" />
+									<Trigger.EnterActions>
+										<BeginStoryboard>
+											<Storyboard>
+												<DoubleAnimation Storyboard.TargetName="DefaultHoverSurface"
+													Storyboard.TargetProperty="Opacity"
+													To="1"
+													Duration="{StaticResource Redux.Motion.Fast}"
+													EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
+												<DoubleAnimation Storyboard.TargetName="ContextualHoverSurface"
+													Storyboard.TargetProperty="Opacity"
+													To="1"
+													Duration="{StaticResource Redux.Motion.Fast}"
+													EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
+											</Storyboard>
+										</BeginStoryboard>
+									</Trigger.EnterActions>
+									<Trigger.ExitActions>
+										<BeginStoryboard>
+											<Storyboard>
+												<DoubleAnimation Storyboard.TargetName="DefaultHoverSurface"
+													Storyboard.TargetProperty="Opacity"
+													To="0"
+													Duration="{StaticResource Redux.Motion.Standard}" />
+												<DoubleAnimation Storyboard.TargetName="ContextualHoverSurface"
+													Storyboard.TargetProperty="Opacity"
+													To="0"
+													Duration="{StaticResource Redux.Motion.Standard}" />
+											</Storyboard>
+										</BeginStoryboard>
+									</Trigger.ExitActions>
 								</Trigger>
 								<Trigger Property="IsSelected" Value="True">
-									<Setter TargetName="ItemChrome" Property="Background" Value="{DynamicResource ReduxSelectionBrush}" />
+									<Setter TargetName="DefaultSelectionSurface" Property="Opacity" Value="1" />
+									<Setter TargetName="ContextualSelectionSurface" Property="Opacity" Value="1" />
 								</Trigger>
-								<MultiDataTrigger>
-									<MultiDataTrigger.Conditions>
-										<Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
-										<Condition Binding="{Binding HasAccentColor}" Value="True" />
-										<Condition Binding="{Binding Path=(dapp:DivinityApp.UseCategoryColorsForInteractions)}" Value="True" />
-									</MultiDataTrigger.Conditions>
-									<Setter TargetName="ItemChrome" Property="Background"
-										Value="{Binding AccentColor, Converter={StaticResource StringToGradientBrushConverter}, ConverterParameter=28\,10}" />
-								</MultiDataTrigger>
-								<MultiDataTrigger>
-									<MultiDataTrigger.Conditions>
-										<Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
-										<Condition Binding="{Binding HasAccentColor}" Value="True" />
-										<Condition Binding="{Binding Path=(dapp:DivinityApp.UseCategoryColorsForInteractions)}" Value="True" />
-									</MultiDataTrigger.Conditions>
-									<Setter TargetName="ItemChrome" Property="Background"
-										Value="{Binding AccentColor, Converter={StaticResource StringToGradientBrushConverter}, ConverterParameter=42\,22}" />
-								</MultiDataTrigger>
 								<Trigger Property="IsEnabled" Value="False">
 									<Setter TargetName="ItemChrome" Property="Opacity" Value="0.45" />
 								</Trigger>

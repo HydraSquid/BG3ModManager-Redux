@@ -1,3 +1,4 @@
+using DivinityModManager;
 using DivinityModManager.AppServices;
 using DivinityModManager.Controls;
 using DivinityModManager.Models;
@@ -10,6 +11,7 @@ using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace Redux.Core.Tests;
 
@@ -173,29 +175,75 @@ public sealed class InteractionBehaviorTests
 
 	public void CommandPaletteItemTemplateResolvesCoreBindingsAtRuntime()
 	{
+		var originalInteractionColors = DivinityApp.UseCategoryColorsForInteractions;
+		DivinityApp.UseCategoryColorsForInteractions = true;
 		var window = new ReduxCommandPaletteWindow(null!, null!, null!);
 		try
 		{
+			var errorInteractionBrush = new SolidColorBrush(Colors.Red);
+			window.Resources["ReduxErrorPillBackground"] = errorInteractionBrush;
 			var list = (ListBox)window.FindName("CommandList");
 			list.ItemsSource = new[]
 			{
 				new ReduxCommandPaletteItem(
-					"Save Current Order",
-					"File",
-					"Save changes.",
-					"Ctrl + S",
-					"save",
+					"Delete Selected Mods...",
+					"Mod lists",
+					"Delete selected mods.",
+					"Delete",
+					"trash",
 					() => { },
-					tone: ReduxCommandPaletteTone.Success)
+					tone: ReduxCommandPaletteTone.Error),
+				new ReduxCommandPaletteItem(
+					"Filter category: Gameplay",
+					"Category filters",
+					"Show mods assigned to this category.",
+					String.Empty,
+					"gameplay",
+					() => { },
+					accentColor: "#D7A24B")
 			};
 			window.Measure(new Size(620, 530));
 			window.Arrange(new Rect(0, 0, 620, 530));
 			window.UpdateLayout();
-			RegressionAssert.Equal(1, list.Items.Count);
+			RegressionAssert.Equal(2, list.Items.Count);
+
+			Border CreateSelectedSurface(ReduxCommandPaletteItem data)
+			{
+				var item = new ListBoxItem
+				{
+					DataContext = data,
+					IsSelected = true,
+					Style = (Style)window.FindResource("CommandPaletteItemStyle")
+				};
+				item.Resources["ReduxErrorPillBackground"] = errorInteractionBrush;
+				item.ApplyTemplate();
+				item.Measure(new Size(560, 60));
+				item.Arrange(new Rect(0, 0, 560, 60));
+				item.UpdateLayout();
+				return (Border)item.Template.FindName("ContextualSelectionSurface", item);
+			}
+
+			var errorSurface = CreateSelectedSurface((ReduxCommandPaletteItem)list.Items[0]);
+			if (errorSurface.Background is not SolidColorBrush errorBrush
+				|| errorBrush.Color != Colors.Red
+				|| errorSurface.Opacity != 1)
+				throw new InvalidOperationException($"Semantic selection brush did not resolve; received {errorSurface.Background?.GetType().Name ?? "null"} " +
+					$"{(errorSurface.Background as SolidColorBrush)?.Color} at opacity {errorSurface.Opacity}; " +
+					$"tone {(errorSurface.DataContext as ReduxCommandPaletteItem)?.Tone}, interactions {DivinityApp.UseCategoryColorsForInteractions}.");
+
+			var categorySurface = CreateSelectedSurface((ReduxCommandPaletteItem)list.Items[1]);
+			if (categorySurface.Background is not LinearGradientBrush categoryBrush
+				|| categoryBrush.GradientStops.Count != 2
+				|| !categoryBrush.GradientStops.All(stop => stop.Color.R == 0xD7
+					&& stop.Color.G == 0xA2
+					&& stop.Color.B == 0x4B)
+				|| categorySurface.Opacity != 1)
+				throw new InvalidOperationException($"Category selection brush did not resolve; received {categorySurface.Background?.GetType().Name ?? "null"}.");
 		}
 		finally
 		{
 			window.Close();
+			DivinityApp.UseCategoryColorsForInteractions = originalInteractionColors;
 		}
 	}
 

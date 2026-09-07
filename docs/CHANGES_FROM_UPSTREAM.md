@@ -48,14 +48,22 @@ intact.
 
 Redux introduces a shared visual system across its main window and dialogs:
 
-- semantic success, warning, error, information, and accent colors;
+- semantic success, warning, error, information, and accent colors, including contextual hover and
+  selection treatments in Quick Access;
 - consistent typography, spacing, corner radii, controls, menus, tooltips, window chrome, and
   notifications;
 - Redux Dark, Redux Light, Parchment, and persistent custom themes;
 - optional generated gradients, imported fonts, scalable text, and reusable custom PNG icons;
-- a reorganized toolbar and searchable Quick Access menu;
+- a reorganized toolbar, consolidated top-level menus, and searchable Quick Access surface for
+  commands, profiles, orders, categories, mods, themes, folders, and support links;
 - richer hover information and a persistent selected-mod details drawer; and
 - a unified Lucide-based icon language while preserving official provider branding where relevant.
+
+Appearance choices propagate through Redux-owned utility and review windows. Hiding interface
+icons removes their reserved layout space where appropriate; colored-text and colored-interaction
+preferences also govern category and semantic presentation in Quick Access. Redux Debug Mode and
+its diagnostic-information window provide a clearer troubleshooting boundary than the inherited
+developer-mode presentation.
 
 Redux list surfaces retain virtualization and logical scrolling while applying bounded render-only
 wheel motion. Reduce Motion removes scrolling, sliding, scaling, and transition animation without
@@ -76,6 +84,8 @@ and persistent collapse state. They never enter `modsettings.lsx` and are never 
 - A collapsed separator moves with its sealed contents.
 - Moving a closed group does not absorb unrelated destination rows.
 - Rows placed next to a closed separator remain visible until the group is expanded.
+- A compact Active Mods control and an assignable shortcut can collapse or expand all active
+  separators; the bulk control stays out of the header when fewer than two separators exist.
 
 ## Deliberate load-order workflow
 
@@ -165,7 +175,8 @@ Redux retains upstream speech and screen-reader support while adding:
 
 - a top-level Accessibility menu and first-run setup;
 - Atkinson Hyperlegible, other bundled fonts, imported fonts, and adjustable text size;
-- keyboard-operable Redux dialogs and a rebuilt shortcut editor;
+- keyboard-operable Redux dialogs and a searchable, grouped shortcut editor with remembered group
+  state and group-wide expand/collapse controls;
 - selectable dialog text and consistent focus behavior;
 - lightweight automation for realized rows in large virtualized lists; and
 - independent reduced-motion and reduced-background-effects preferences.

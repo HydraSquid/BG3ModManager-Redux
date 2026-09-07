@@ -22,6 +22,10 @@ public interface INxmDownloadManager
 		string contentKind, string destination, string inspectionSummary,
 		AcquiredPackageSourceKind sourceKind = AcquiredPackageSourceKind.LocalFile,
 		string thumbnailUrl = "",
+		long sourceModId = 0,
+		long sourceFileId = 0,
+		string sourceFileName = "",
+		string sourceVersion = "",
 		CancellationToken cancellationToken = default);
 	Task PauseAsync(string itemId);
 	Task ResumeAsync(string itemId);
@@ -166,14 +170,18 @@ public sealed class NxmDownloadManager : INxmDownloadManager
 		string contentKind, string destination, string inspectionSummary,
 		AcquiredPackageSourceKind sourceKind = AcquiredPackageSourceKind.LocalFile,
 		string thumbnailUrl = "",
+		long sourceModId = 0,
+		long sourceFileId = 0,
+		string sourceFileName = "",
+		string sourceVersion = "",
 		CancellationToken cancellationToken = default)
 	{
 		if (String.IsNullOrWhiteSpace(sourcePath)) throw new ArgumentException("A local package path is required.", nameof(sourcePath));
 		var normalizedPath = Path.GetFullPath(sourcePath);
 		if (!File.Exists(normalizedPath)) throw new FileNotFoundException("The local package could not be found.", normalizedPath);
 		if (String.IsNullOrWhiteSpace(archiveSha256)) throw new ArgumentException("A verified archive identity is required.", nameof(archiveSha256));
-		if (sourceKind is not (AcquiredPackageSourceKind.LocalFile or AcquiredPackageSourceKind.ReduxDownload))
-			throw new ArgumentOutOfRangeException(nameof(sourceKind), "Local intake requires a local or Redux download source kind.");
+		if (sourceKind == AcquiredPackageSourceKind.NexusMods && sourceModId <= 0)
+			throw new ArgumentOutOfRangeException(nameof(sourceModId), "A retained Nexus package requires its public mod identity.");
 		var sourceInfo = new FileInfo(normalizedPath);
 		if (sourceInfo.Length > MaximumDownloadBytes) throw new InvalidDataException("The local package exceeds Redux's 32 GB safety limit.");
 
@@ -187,14 +195,18 @@ public sealed class NxmDownloadManager : INxmDownloadManager
 			try
 			{
 				if (_shuttingDown) throw new InvalidOperationException("The download manager is shutting down.");
-				existing = _items.FirstOrDefault(item => item.SourceKind != AcquiredPackageSourceKind.NexusMods
-					&& String.Equals(item.ArchiveSha256, archiveSha256, StringComparison.OrdinalIgnoreCase));
+				existing = _items.FirstOrDefault(item => sourceKind == AcquiredPackageSourceKind.NexusMods
+					? item.SourceKind == AcquiredPackageSourceKind.NexusMods
+						&& item.ModId == sourceModId && item.FileId == sourceFileId
+					: item.SourceKind != AcquiredPackageSourceKind.NexusMods
+						&& String.Equals(item.ArchiveSha256, archiveSha256, StringComparison.OrdinalIgnoreCase));
 				var retainedArchive = existing == null ? null : SafePath(existing.CompletedFileName);
 				if (existing != null && retainedArchive != null && File.Exists(retainedArchive))
 				{
 					var candidate = PersistentCopy(existing);
-					candidate.SourceFileName = Path.GetFileName(normalizedPath);
-					candidate.FileDisplayName = Path.GetFileName(normalizedPath);
+					candidate.SourceFileName = SafeSourceFileName(sourceFileName, normalizedPath);
+					candidate.FileDisplayName = candidate.SourceFileName;
+					if (!String.IsNullOrWhiteSpace(sourceVersion)) candidate.Version = sourceVersion;
 					if (!String.IsNullOrWhiteSpace(projectName)) candidate.ProjectName = projectName;
 					candidate.DetectedContentKind = contentKind ?? String.Empty;
 					candidate.DetectedDestination = destination ?? String.Empty;
@@ -253,10 +265,13 @@ public sealed class NxmDownloadManager : INxmDownloadManager
 			var item = new NxmDownloadItem
 			{
 				SourceKind = sourceKind,
-				SourceFileName = Path.GetFileName(normalizedPath),
+				ModId = sourceKind == AcquiredPackageSourceKind.NexusMods ? sourceModId : 0,
+				FileId = sourceKind == AcquiredPackageSourceKind.NexusMods ? sourceFileId : 0,
+				SourceFileName = SafeSourceFileName(sourceFileName, normalizedPath),
 				ProjectName = String.IsNullOrWhiteSpace(projectName) ? Path.GetFileNameWithoutExtension(normalizedPath) : projectName,
-				FileDisplayName = Path.GetFileName(normalizedPath),
-				FileName = Path.GetFileName(normalizedPath),
+				FileDisplayName = SafeSourceFileName(sourceFileName, normalizedPath),
+				FileName = SafeSourceFileName(sourceFileName, normalizedPath),
+				Version = sourceVersion ?? String.Empty,
 				CompletedFileName = completedFileName,
 				SizeBytes = sourceInfo.Length,
 				BytesReceived = sourceInfo.Length,
@@ -1010,6 +1025,15 @@ public sealed class NxmDownloadManager : INxmDownloadManager
 				candidate.ErrorDetails = inspectionSummary ?? String.Empty;
 			}
 		});
+	}
+
+	private static string SafeSourceFileName(string requestedName, string sourcePath)
+	{
+		var fileName = Path.GetFileName(String.IsNullOrWhiteSpace(requestedName) ? sourcePath : requestedName);
+		var invalid = Path.GetInvalidFileNameChars();
+		fileName = new String((fileName ?? String.Empty).Select(character => invalid.Contains(character) ? '_' : character).ToArray())
+			.TrimEnd(' ', '.');
+		return String.IsNullOrWhiteSpace(fileName) ? Path.GetFileName(sourcePath) : fileName;
 	}
 
 	private string AllocateLocalFileName(string value)

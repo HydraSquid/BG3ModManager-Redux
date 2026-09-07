@@ -21,6 +21,8 @@ internal sealed class ReduxModuleStateTests
 		RegressionAssert.True(modules.SourceIntegrationsEnabled);
 		RegressionAssert.True(modules.ModDiagnosticsEnabled);
 		RegressionAssert.False(modules.LoadOrderGuidanceEnabled);
+		RegressionAssert.False(settings.RetainInstalledPackageArchives);
+		RegressionAssert.Equal(10, settings.RetainedPackageArchiveQuotaGb);
 	}
 
 	public void FirstRunOnboardingStartsWithIntegrationsAndGuidanceOff()

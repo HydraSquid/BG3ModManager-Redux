@@ -52,6 +52,8 @@ internal static class Program
 		var nxmScheduler = new NxmDownloadSchedulerTests();
 		var nxmStore = new NxmDownloadStoreTests();
 		var nxmTransfer = new NxmTransferTests();
+		var packageArchives = new RetainedPackageArchiveServiceTests();
+		var downloadBatch = new DownloadBatchSafetyPlannerTests();
 		var tests = new (string Name, Action Run)[]
 		{
 			(nameof(nxmManager.LocalPackageIsCopiedHashedAndDeduplicatedInTheSharedInbox), nxmManager.LocalPackageIsCopiedHashedAndDeduplicatedInTheSharedInbox),
@@ -346,6 +348,7 @@ internal static class Program
 			(nameof(nxmAssociation.MissingExecutableMarkerIsAnOwnershipConflict), nxmAssociation.MissingExecutableMarkerIsAnOwnershipConflict),
 			(nameof(nxmAssociation.PreviousHandlerCommandIsParsedWithoutShell), nxmAssociation.PreviousHandlerCommandIsParsedWithoutShell),
 			(nameof(nxmAssociation.PreviousHandlerRejectsEmbeddedPlaceholderAndReduxRecursion), nxmAssociation.PreviousHandlerRejectsEmbeddedPlaceholderAndReduxRecursion),
+			(nameof(nxmManager.RetainedNexusPackageReentersInboxWithPublicSourceIdentity), nxmManager.RetainedNexusPackageReentersInboxWithPublicSourceIdentity),
 			(nameof(nxmManager.DuplicateLinkFocusesExistingItem), nxmManager.DuplicateLinkFocusesExistingItem),
 			(nameof(nxmManager.ResolvedItemsDownloadWithoutBlockingIngress), nxmManager.ResolvedItemsDownloadWithoutBlockingIngress),
 			(nameof(nxmManager.RemovingResolvingItemCancelsItBeforeTransfer), nxmManager.RemovingResolvingItemCancelsItBeforeTransfer),
@@ -368,6 +371,7 @@ internal static class Program
 			(nameof(nxmManager.ClearingInstalledHistoryKeepsOtherQueueItems), nxmManager.ClearingInstalledHistoryKeepsOtherQueueItems),
 			(nameof(nxmManager.QueueStatesHaveHumanReadableLabels), nxmManager.QueueStatesHaveHumanReadableLabels),
 			(nameof(nxmManager.InstallFailuresHaveDedicatedHumanReadableState), nxmManager.InstallFailuresHaveDedicatedHumanReadableState),
+			(nameof(nxmManager.RetainedPakReinstallAdvertisesPlacementPreservation), nxmManager.RetainedPakReinstallAdvertisesPlacementPreservation),
 			(nameof(nxmManager.DownloadAgainPreservesTheArchiveAndUsesFreshAuthorizationWhenRequired), nxmManager.DownloadAgainPreservesTheArchiveAndUsesFreshAuthorizationWhenRequired),
 			(nameof(nxmManager.FailedRedownloadSavePreservesTheOriginalQueueRecord), nxmManager.FailedRedownloadSavePreservesTheOriginalQueueRecord),
 			(nameof(nxmManager.DownloadAgainNeverReusesExistingPartialData), nxmManager.DownloadAgainNeverReusesExistingPartialData),
@@ -389,6 +393,15 @@ internal static class Program
 			(nameof(nxmStore.ReconcilePersistsLegacyRecoveryWhenPartialCleanupFails), nxmStore.ReconcilePersistsLegacyRecoveryWhenPartialCleanupFails),
 			(nameof(nxmStore.CorruptManifestIsQuarantinedWithoutBlockingStartup), nxmStore.CorruptManifestIsQuarantinedWithoutBlockingStartup),
 			(nameof(nxmStore.CorruptManifestRecoversLastKnownGoodBackup), nxmStore.CorruptManifestRecoversLastKnownGoodBackup),
+			(nameof(packageArchives.InitializeDoesNotCreateAnEmptyOptOutLibrary), packageArchives.InitializeDoesNotCreateAnEmptyOptOutLibrary),
+			(nameof(packageArchives.PakArchiveCardDoesNotPromiseAForcedInactiveReinstall), packageArchives.PakArchiveCardDoesNotPromiseAForcedInactiveReinstall),
+			(nameof(packageArchives.RetentionIsContentAddressedDeduplicatedAndRemovesManagedInboxCopy), packageArchives.RetentionIsContentAddressedDeduplicatedAndRemovesManagedInboxCopy),
+			(nameof(packageArchives.ArchiveIndexContainsSafeIdentityButNoCapabilitiesOrSignedUrls), packageArchives.ArchiveIndexContainsSafeIdentityButNoCapabilitiesOrSignedUrls),
+			(nameof(packageArchives.QuotaPrunesLeastRecentlyUsedPackages), packageArchives.QuotaPrunesLeastRecentlyUsedPackages),
+			(nameof(downloadBatch.DuplicateArchivesAndTargetsKeepTheFirstInboxEntry), downloadBatch.DuplicateArchivesAndTargetsKeepTheFirstInboxEntry),
+			(nameof(downloadBatch.DependencyMayBeInstalledOrProvidedByTheSameBatch), downloadBatch.DependencyMayBeInstalledOrProvidedByTheSameBatch),
+			(nameof(downloadBatch.MissingDependencySkipsOnlyItsDependentPackage), downloadBatch.MissingDependencySkipsOnlyItsDependentPackage),
+			(nameof(downloadBatch.DependencyLossAfterAConflictCascadesSafely), downloadBatch.DependencyLossAfterAConflictCascadesSafely),
 			(nameof(nxmTransfer.MatchingRangeResponseResumesPartialFile), nxmTransfer.MatchingRangeResponseResumesPartialFile),
 			(nameof(nxmTransfer.FullResponseRestartsInsteadOfAppendingPartialFile), nxmTransfer.FullResponseRestartsInsteadOfAppendingPartialFile),
 			(nameof(nxmTransfer.SidecarValidatorEnablesResumeAfterRestart), nxmTransfer.SidecarValidatorEnablesResumeAfterRestart),

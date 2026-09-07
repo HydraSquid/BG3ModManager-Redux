@@ -87,6 +87,10 @@ public partial class SettingsWindow : SettingsWindowBase
 			nameof(DivinityModManagerSettings.GameDataPath),
 			nameof(DivinityModManagerSettings.DocumentsFolderPathOverride),
 			nameof(DivinityModManagerSettings.LoadOrderPath)),
+		new("Package archive library",
+			"Optionally keep verified install packages for later reinstall. This storage is separate from Download Manager history.",
+			nameof(DivinityModManagerSettings.RetainInstalledPackageArchives),
+			nameof(DivinityModManagerSettings.RetainedPackageArchiveQuotaGb)),
 		new("Game launch",
 			"Control how Redux starts Baldur's Gate 3 and what happens after launch.",
 			nameof(DivinityModManagerSettings.LaunchType),
@@ -787,9 +791,19 @@ public partial class SettingsWindow : SettingsWindowBase
 						Padding = new Thickness(4, 2, 4, 2),
 						AllowTextInput = true
 					};
+					if (prop.Property.Name == nameof(DivinityModManagerSettings.NxmActiveDownloadLimit))
+					{
+						ud.Minimum = 1;
+						ud.Maximum = 6;
+					}
+					else if (prop.Property.Name == nameof(DivinityModManagerSettings.RetainedPackageArchiveQuotaGb))
+					{
+						ud.Minimum = 1;
+						ud.Maximum = 100;
+					}
 					ud.SetBinding(IntegerUpDown.ValueProperty, new Binding(prop.Property.Name)
 					{
-						Source = ViewModel.ExtenderSettings,
+						Source = source,
 						Mode = BindingMode.TwoWay,
 						UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
 					});

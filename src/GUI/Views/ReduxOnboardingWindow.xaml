@@ -291,6 +291,21 @@
 										</Grid>
 									</CheckBox>
 								</Grid>
+								<CheckBox x:Name="RetainArchivesCheckBox" Margin="0,12,0,0"
+									Style="{StaticResource ReduxCheckBoxStyle}">
+									<Grid>
+										<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+										<controls:ReduxIcon Width="17" Height="17" Margin="0,1,9,0"
+											Foreground="{DynamicResource ReduxAccentHoverBrush}"
+											Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
+											StrokeData="{DynamicResource Redux.Icon.Archive}" />
+										<StackPanel Grid.Column="1">
+											<TextBlock Style="{StaticResource WelcomeChoiceTitleStyle}" Text="Keep installed package archives" />
+											<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}"
+												Text="Optional and off by default. Keep verified packages in a deduplicated archive library for reinstalling later. This uses additional disk space and can be changed in Preferences." />
+										</StackPanel>
+									</Grid>
+								</CheckBox>
 								<Border x:Name="SourceCredentialsPanel"
 									Margin="0,11,0,0"
 									Padding="10"

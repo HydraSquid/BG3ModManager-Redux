@@ -34,12 +34,18 @@ public partial class ReduxNexusDownloadsWindow : AdonisUI.Controls.AdonisWindow
 			ReduxThemeService.GetActiveTheme(viewModel.Settings), viewModel.Settings.UsesGeneratedGradients);
 		if (viewModel.NxmDownloads is INotifyCollectionChanged changed)
 			changed.CollectionChanged += Downloads_CollectionChanged;
+		if (viewModel.RetainedPackageArchives is INotifyCollectionChanged archivesChanged)
+			archivesChanged.CollectionChanged += Archives_CollectionChanged;
 		foreach (var item in viewModel.NxmDownloads) item.PropertyChanged += Download_PropertyChanged;
+		viewModel.PropertyChanged += ViewModel_PropertyChanged;
 		Closed += (_, _) =>
 		{
 			if (viewModel.NxmDownloads is INotifyCollectionChanged source)
 				source.CollectionChanged -= Downloads_CollectionChanged;
+			if (viewModel.RetainedPackageArchives is INotifyCollectionChanged archives)
+				archives.CollectionChanged -= Archives_CollectionChanged;
 			foreach (var item in viewModel.NxmDownloads) item.PropertyChanged -= Download_PropertyChanged;
+			viewModel.PropertyChanged -= ViewModel_PropertyChanged;
 		};
 		UpdateEmptyState();
 		UpdateAssociationButton();
@@ -58,10 +64,17 @@ public partial class ReduxNexusDownloadsWindow : AdonisUI.Controls.AdonisWindow
 			foreach (NxmDownloadItem item in e.NewItems) item.PropertyChanged += Download_PropertyChanged;
 		Dispatcher.BeginInvoke(RefreshViews);
 	}
+	private void Archives_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
+		Dispatcher.BeginInvoke(UpdateEmptyState);
 	private void Download_PropertyChanged(object sender, PropertyChangedEventArgs e)
 	{
 		if (e.PropertyName is nameof(NxmDownloadItem.State) or nameof(NxmDownloadItem.IsInstalledHistory))
 			Dispatcher.BeginInvoke(RefreshViews);
+	}
+	private void ViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
+	{
+		if (e.PropertyName == nameof(MainWindowViewModel.DownloadManagerInstallIsActive))
+			Dispatcher.BeginInvoke(UpdateEmptyState);
 	}
 	private void RefreshViews()
 	{
@@ -76,8 +89,15 @@ public partial class ReduxNexusDownloadsWindow : AdonisUI.Controls.AdonisWindow
 		var hasInstalled = downloads.Any(item => item.IsInstalledHistory);
 		EmptyText.Visibility = hasPending ? Visibility.Collapsed : Visibility.Visible;
 		InstalledEmptyText.Visibility = hasInstalled ? Visibility.Collapsed : Visibility.Visible;
+		ArchivesEmptyText.Visibility = _viewModel.RetainedPackageArchives.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
 		ClearInstalledButton.IsEnabled = hasInstalled;
 		ClearInstalledButton.Visibility = DownloadsTabs.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
+		ClearArchivesButton.IsEnabled = _viewModel.RetainedPackageArchives.Count > 0;
+		ClearArchivesButton.Visibility = DownloadsTabs.SelectedIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
+		OpenFolderText.Text = DownloadsTabs.SelectedIndex == 2 ? "Open Archives" : "Open Folder";
+		InstallAllButton.Visibility = DownloadsTabs.SelectedIndex == 0 ? Visibility.Visible : Visibility.Collapsed;
+		InstallAllButton.IsEnabled = !_viewModel.DownloadManagerInstallIsActive && downloads.Any(item =>
+			item.State is NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview or NxmDownloadState.InstallFailed);
 	}
 	private void UpdateAssociationButton()
 	{
@@ -138,6 +158,9 @@ public partial class ReduxNexusDownloadsWindow : AdonisUI.Controls.AdonisWindow
 			await _viewModel.AddLocalPackagesToDownloadManagerAsync(dialog.FileNames);
 	}
 
+	private async void InstallAllButton_Click(object sender, RoutedEventArgs e) =>
+		await _viewModel.InstallAllNxmDownloadsAsync(this);
+
 	private async void Window_PreviewDrop(object sender, DragEventArgs e)
 	{
 		if (!e.Data.GetDataPresent(DataFormats.FileDrop)
@@ -159,12 +182,27 @@ public partial class ReduxNexusDownloadsWindow : AdonisUI.Controls.AdonisWindow
 	private async void ReviewButton_Click(object sender, RoutedEventArgs e) => await _viewModel.ReviewNxmDownloadAsync(Item(sender), this);
 	private async void RemoveButton_Click(object sender, RoutedEventArgs e) => await _viewModel.RemoveNxmDownloadAsync(Item(sender));
 	private async void ClearInstalledButton_Click(object sender, RoutedEventArgs e) => await _viewModel.ClearInstalledNxmHistoryAsync();
+	private void ArchiveRetentionCheckBox_Click(object sender, RoutedEventArgs e) => _viewModel.SaveSettings();
+	private async void ClearArchivesButton_Click(object sender, RoutedEventArgs e) => await _viewModel.ClearRetainedPackageArchivesAsync(this);
+	private async void ReinstallArchiveButton_Click(object sender, RoutedEventArgs e) =>
+		await _viewModel.ReinstallRetainedPackageAsync((sender as FrameworkElement)?.Tag as RetainedPackageArchiveEntry, this);
+	private void ArchiveNexusButton_Click(object sender, RoutedEventArgs e)
+	{
+		if ((sender as FrameworkElement)?.Tag is RetainedPackageArchiveEntry { NexusPage: { } page })
+			ProcessHelper.TryOpenUrl(page.ToString());
+	}
 	private void NexusButton_Click(object sender, RoutedEventArgs e)
 	{
 		if (Item(sender)?.NexusPage is { } page) ProcessHelper.TryOpenUrl(page.ToString());
 	}
-	private void OpenFolderButton_Click(object sender, RoutedEventArgs e) =>
-		ProcessHelper.TryOpenPath(_viewModel.NxmDownloadsDirectory, Directory.Exists);
+	private void OpenFolderButton_Click(object sender, RoutedEventArgs e)
+	{
+		var directory = DownloadsTabs.SelectedIndex == 2
+			? _viewModel.RetainedPackageArchiveDirectory
+			: _viewModel.NxmDownloadsDirectory;
+		if (Directory.Exists(directory)) ProcessHelper.TryOpenPath(directory, Directory.Exists);
+		else _viewModel.ShowAlert("The archive library has not been created yet.", AlertType.Info, 12);
+	}
 	private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
 	private void AssociationButton_Click(object sender, RoutedEventArgs e)
 	{

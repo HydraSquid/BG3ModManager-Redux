@@ -181,6 +181,14 @@ Mod Manager, and saves through Save Game Manager. Mixed, ambiguous, malformed, a
 layouts stay blocked in the inbox without changing files. Intake never activates, reorders, or syncs
 a mod automatically.
 
+**Install All** performs one full preflight before changing any destination. Its single grouped
+review identifies the packages headed to Inactive Mods, Save Games, and Game-Directory Mods, plus
+anything Redux will skip. Duplicate archives, overlapping mod/destination identities, missing
+dependencies, unsafe layouts, and unavailable destinations are skipped with a reason. Accepted
+packages install one at a time through the same guarded destination services; an independent
+failure does not stop the remaining queue. A final per-package result summary replaces repeated
+confirmation dialogs. Existing saves listed as replacements are covered by the one batch review.
+
 The PAK install review distinguishes clean new mods from updates, replacements, downgrades, and
 unreadable packages. **Review clean mod installs** can be turned off from a clean review or restored
 in Preferences; only entirely clean, brand-new PAK batches bypass that dialog. Anything requiring a
@@ -189,13 +197,30 @@ decision continues to stop for review.
 Active transfers are paused and their queue state is saved before Redux exits. Finished downloads
 and completed installation history do not keep the application open. Completed installations move
 to the **Installed** tab with their destination. **Clear Installed History** removes those records
-without deleting the installed content or downloaded archives; removing an uninstalled completed
-download explicitly offers to move its archive to the Recycle Bin.
+without changing installed content or the separate Package Archive Library. Unless archive
+retention is enabled, a successfully installed package's managed inbox copy is removed; user-owned
+local source files are never changed. Removing an uninstalled completed download explicitly offers
+to move its inbox archive to the Recycle Bin.
 
-Installed-history entries can be reinstalled from their retained Download Manager archive. Adding
-the same local archive again returns that record to the inbox instead of creating a duplicate or
-leaving it stranded as completed history. Deleting a mod never implicitly deletes a retained
-download; a future optional archive library remains separate from both uninstall and history state.
+Installed-history entries can be reinstalled while their Download Manager archive remains present.
+Adding the same local archive again returns that record to the inbox instead of creating a duplicate
+or leaving it stranded as completed history.
+
+**Retain installed package archives** is a separate, explicit opt-in available during onboarding and
+in Preferences, and directly from Download Manager's Archives tab. After a successful install,
+Redux verifies the package again and stores one
+content-addressed copy in **Download Manager > Archives**. Identical files are deduplicated by
+SHA-256. The default 10 GB quota is configurable from 1–100 GB; least-recently-used packages are
+pruned when the limit is reached. The Archives tab shows current usage and provides **Reinstall**,
+**Open Archives**, and **Clear Archives** actions. Clearing download history never clears this
+library, clearing the library never uninstalls content, and deleting a mod never implicitly deletes
+either copy. If retention is left off, Redux does not create the archive-library directory. The
+archive index stores only safe public source/package identity and installation metadata—not local
+source paths, credentials, authorization keys, signed URLs, or thumbnail URLs.
+
+Reinstalling a retained PAK is placement-preserving: an installed mod keeps its current active or
+inactive state and its load-order position. A mod that is no longer installed returns to Inactive
+Mods. Reinstall never applies or syncs the load order.
 
 ### Redux Modlists
 

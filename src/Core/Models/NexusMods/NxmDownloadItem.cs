@@ -81,6 +81,7 @@ public sealed class NxmDownloadItem : ReactiveObject
 			this.RaisePropertyChanged(nameof(NexusActionText));
 			this.RaisePropertyChanged(nameof(NexusActionToolTip));
 			this.RaisePropertyChanged(nameof(InstallActionText));
+			this.RaisePropertyChanged(nameof(InstallActionToolTip));
 			this.RaisePropertyChanged(nameof(RemoveActionText));
 			this.RaisePropertyChanged(nameof(IsInstalledHistory));
 		}
@@ -141,6 +142,18 @@ public sealed class NxmDownloadItem : ReactiveObject
 	[IgnoreDataMember, Reactive] public string NativeRequirementStatus { get; set; } = String.Empty;
 	[IgnoreDataMember, Reactive] public string NativeRequirementLabel { get; set; } = String.Empty;
 	[IgnoreDataMember, Reactive] public bool NativeRequirementWarning { get; set; }
+	[IgnoreDataMember, Reactive] public bool HasAvailableArchive { get; set; }
+	private bool _preserveExistingModPlacement;
+	[IgnoreDataMember] public bool PreserveExistingModPlacement
+	{
+		get => _preserveExistingModPlacement;
+		set
+		{
+			this.RaiseAndSetIfChanged(ref _preserveExistingModPlacement, value);
+			this.RaisePropertyChanged(nameof(InstallActionText));
+			this.RaisePropertyChanged(nameof(InstallActionToolTip));
+		}
+	}
 
 	public string Identity => SourceKind != AcquiredPackageSourceKind.NexusMods
 		? $"local:{ArchiveSha256}"
@@ -221,6 +234,9 @@ public sealed class NxmDownloadItem : ReactiveObject
 	{
 		get
 		{
+			if (PreserveExistingModPlacement
+				|| (State == NxmDownloadState.Installed && DetectedDestination == "Inactive Mods"))
+				return "Reinstall · Keep Placement";
 			var prefix = State switch
 			{
 				NxmDownloadState.InstallFailed => "Try Again",
@@ -236,6 +252,10 @@ public sealed class NxmDownloadItem : ReactiveObject
 			};
 		}
 	}
+	public string InstallActionToolTip => PreserveExistingModPlacement
+		|| (State == NxmDownloadState.Installed && DetectedDestination == "Inactive Mods")
+		? "Replace installed files while preserving each mod's active or inactive state and load-order position. Mods no longer installed return to Inactive Mods."
+		: String.Empty;
 	public string RemoveActionText => State == NxmDownloadState.Installed ? "Clear" : "Remove";
 	public bool IsInstalledHistory => State == NxmDownloadState.Installed;
 	public string NexusActionToolTip => State == NxmDownloadState.NeedsFreshLink

@@ -11,6 +11,37 @@ namespace Redux.Core.Tests;
 
 internal sealed class NxmDownloadManagerTests
 {
+	public void RetainedNexusPackageReentersInboxWithPublicSourceIdentity()
+	{
+		var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ReduxLocalIntakeTests", Guid.NewGuid().ToString("N"));
+		var downloads = System.IO.Path.Combine(root, "Downloads");
+		System.IO.Directory.CreateDirectory(downloads);
+		var source = System.IO.Path.Combine(root, "content-addressed.zip");
+		System.IO.File.WriteAllBytes(source, [9, 8, 7, 6]);
+		var sha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.IO.File.ReadAllBytes(source))).ToLowerInvariant();
+		var manager = new NxmDownloadManager(downloads, new MemoryStore(), new ResolverFactory(),
+			new FakeTransfer(), 4, () => false, (_, _) => Task.FromResult(true));
+		try
+		{
+			manager.AddLocalPackageAsync(source, sha256, "WASD Character Movement", "Game-directory mod",
+				"Game-directory Mods", "Ready", AcquiredPackageSourceKind.NexusMods,
+				sourceModId: 781, sourceFileId: 4567, sourceFileName: "WASD-v1.2.zip", sourceVersion: "1.2")
+				.GetAwaiter().GetResult();
+
+			var item = manager.Items.Single();
+			RegressionAssert.Equal(AcquiredPackageSourceKind.NexusMods, item.SourceKind);
+			RegressionAssert.Equal(781L, item.ModId);
+			RegressionAssert.Equal(4567L, item.FileId);
+			RegressionAssert.Equal("WASD-v1.2.zip", item.SourceFileName);
+			RegressionAssert.Equal("1.2", item.Version);
+			RegressionAssert.True(item.Authorization == null);
+		}
+		finally
+		{
+			if (System.IO.Directory.Exists(root)) System.IO.Directory.Delete(root, true);
+		}
+	}
+
 	public void LocalPackageIsCopiedHashedAndDeduplicatedInTheSharedInbox()
 	{
 		var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ReduxLocalIntakeTests", Guid.NewGuid().ToString("N"));
@@ -425,6 +456,19 @@ internal sealed class NxmDownloadManagerTests
 
 		RegressionAssert.Equal("InstallFailed", Enum.GetName(state));
 		RegressionAssert.Equal("Installation failed", item.StatusText);
+	}
+
+	public void RetainedPakReinstallAdvertisesPlacementPreservation()
+	{
+		var item = new NxmDownloadItem
+		{
+			State = NxmDownloadState.Installed,
+			DetectedDestination = "Inactive Mods",
+			HasAvailableArchive = true
+		};
+
+		RegressionAssert.Contains(item.InstallActionText, "Keep Placement");
+		RegressionAssert.Contains(item.InstallActionToolTip, "active or inactive state");
 	}
 
 	public void DownloadAgainPreservesTheArchiveAndUsesFreshAuthorizationWhenRequired()

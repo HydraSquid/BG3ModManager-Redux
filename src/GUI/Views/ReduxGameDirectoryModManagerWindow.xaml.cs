@@ -287,6 +287,31 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 		if (await ReviewAndInstallAsync(this, _viewModel, dialog.FileName)) RefreshList();
 	}
 
+	public static async Task InstallReviewedArchiveWithoutReviewAsync(
+		MainWindowViewModel viewModel,
+		string archivePath,
+		NexusModManagerLink nexusSource = null)
+	{
+		var inspection = await Task.Run(() => ReduxGameDirectoryInstallService.TryInspectKnownArchive(archivePath))
+			?? throw new InvalidDataException("This archive no longer matches a reviewed game-directory package.");
+		var installer = CreateInstaller(viewModel);
+		await using var transaction = await installer.StageAsync(inspection.Definition.NexusModId, archivePath);
+		await transaction.CommitAsync();
+		if (inspection.PackageEntries.Count > 0
+			&& !await viewModel.ImportModsWithoutReviewAsync([archivePath], false, nexusSource))
+			throw new InvalidDataException("The game-directory files installed, but the companion PAK could not be installed.");
+	}
+
+	public static async Task<ReduxNativeLoaderStatus> PreflightReviewedArchiveWithoutReviewAsync(
+		MainWindowViewModel viewModel,
+		long nexusModId,
+		string archivePath)
+	{
+		var installer = CreateInstaller(viewModel);
+		await installer.InspectArchiveAsync(nexusModId, archivePath);
+		return installer.DetectLoader();
+	}
+
 	private async void ScriptExtenderButton_Click(object sender, RoutedEventArgs e)
 	{
 		if (String.IsNullOrWhiteSpace(_viewModel.PathwayData.ScriptExtenderLatestReleaseUrl))

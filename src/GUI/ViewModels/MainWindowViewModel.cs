@@ -112,11 +112,15 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	private readonly SemaphoreSlim _nxmActivationGate = new(1, 1);
 	private readonly HashSet<string> _acquiredPackageInspections = new(StringComparer.Ordinal);
 	private NxmDownloadManager _nxmDownloadManager;
+	private RetainedPackageArchiveService _retainedPackageArchiveService;
 	private Task _initializeNxmDownloadsTask = Task.CompletedTask;
 	private bool _nxmShuttingDown;
 	[Reactive] public ReadOnlyObservableCollection<NxmDownloadItem> NxmDownloads { get; private set; }
 	[Reactive] public NxmDownloadItem SelectedNxmDownload { get; set; }
+	[Reactive] public ObservableCollection<RetainedPackageArchiveEntry> RetainedPackageArchives { get; private set; } = [];
+	[Reactive] public string RetainedPackageArchiveUsageText { get; private set; } = "Archive library is empty";
 	public string NxmDownloadsDirectory => DivinityApp.GetAppDirectory("Data", "Downloads");
+	public string RetainedPackageArchiveDirectory => DivinityApp.GetAppDirectory("Data", "Archives");
 
 	protected readonly SourceCache<DivinityModData, string> mods = new(mod => mod.UUID);
 
@@ -580,6 +584,11 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	private async Task InitializeNxmDownloadsAsync()
 	{
 		Settings.NxmActiveDownloadLimit = Math.Clamp(Settings.NxmActiveDownloadLimit, 1, 6);
+		Settings.RetainedPackageArchiveQuotaGb = Math.Clamp(Settings.RetainedPackageArchiveQuotaGb, 1, 100);
+		_retainedPackageArchiveService = new RetainedPackageArchiveService(RetainedPackageArchiveDirectory);
+		await _retainedPackageArchiveService.InitializeAsync();
+		RetainedPackageArchives = _retainedPackageArchiveService.Entries;
+		RefreshRetainedPackageArchiveUsage();
 		Directory.CreateDirectory(NxmDownloadsDirectory);
 		var factory = new NxmResolverFactory(() => Settings.NexusModsAPIKey, () => AppTitle, () => Version.ToString());
 		_nxmDownloadManager = new NxmDownloadManager(
@@ -610,6 +619,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				_ = InspectAcquiredPackageAsync(item);
 		};
 		await _nxmDownloadManager.InitializeAsync();
+		foreach (var item in NxmDownloads.Where(item => item.State == NxmDownloadState.Installed))
+			item.HasAvailableArchive = File.Exists(GetNxmArchivePath(item));
 		foreach (var item in NxmDownloads.Where(NeedsAcquiredPackageInspection))
 			_ = InspectAcquiredPackageAsync(item);
 	}
@@ -770,6 +781,24 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	private sealed record AcquiredPackageClassification(string ProjectName, string ContentKind,
 		string Destination, string Summary, bool Installable, string ThumbnailUrl);
 
+	private enum AcquiredPackageBatchKind
+	{
+		Pak,
+		Save,
+		GameDirectory
+	}
+
+	private sealed record AcquiredPackageBatchCandidate(
+		NxmDownloadItem Item,
+		string ArchivePath,
+		AcquiredPackageBatchKind Kind,
+		string Destination,
+		int InstallPriority,
+		IReadOnlyList<string> ConflictKeys,
+		IReadOnlyList<string> ProvidedModUuids,
+		IReadOnlyList<string> RequiredModUuids,
+		ReduxInstallReviewItem ReviewItem);
+
 	public NxmAssociationResult GetNxmAssociationStatus()
 	{
 		var ownerId = Guid.TryParseExact(Settings.NxmAssociationOwnerId, "D", out _)
@@ -862,7 +891,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		if (item.State == NxmDownloadState.Installed)
 		{
 			if (ReduxMessageBox.Show(Window,
-				"Clear this item from installed download history? The installed content and downloaded archive will be kept.",
+				"Clear this item from installed download history? Installed content and the separate package archive library will not change.",
 				"Clear Installed Download", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
 			await _nxmDownloadManager.RemoveAsync(item.Id, false);
 			return;
@@ -879,15 +908,75 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	{
 		if (_nxmDownloadManager == null || !NxmDownloads.Any(item => item.State == NxmDownloadState.Installed)) return;
 		if (ReduxMessageBox.Show(Window,
-			"Clear every item from installed download history? Installed content and downloaded archives will be kept.",
+			"Clear every item from installed download history? Installed content and the separate package archive library will not change.",
 			"Clear Installed History", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
 		await _nxmDownloadManager.ClearInstalledHistoryAsync();
+	}
+
+	public async Task ClearRetainedPackageArchivesAsync(Window owner = null)
+	{
+		if (_retainedPackageArchiveService == null || RetainedPackageArchives.Count == 0) return;
+		if (ReduxMessageBox.Show(owner?.IsLoaded == true ? owner : Window,
+			"Clear every retained install package? Installed mods and Download Manager history will not change.",
+			"Clear Package Archives", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+		try
+		{
+			await _retainedPackageArchiveService.ClearAsync();
+			foreach (var item in NxmDownloads.Where(item => item.State == NxmDownloadState.Installed))
+				item.HasAvailableArchive = File.Exists(Path.Combine(NxmDownloadsDirectory, item.CompletedFileName));
+			RefreshRetainedPackageArchiveUsage();
+			ShowAlert("Cleared the retained package archive library.", AlertType.Success, 15);
+		}
+		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+		{
+			DivinityApp.Log($"Could not clear the retained package archive library: {ex}");
+			ReduxMessageBox.Show(owner?.IsLoaded == true ? owner : Window, ex.Message,
+				"Could Not Clear Archives", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+		}
+	}
+
+	public async Task ReinstallRetainedPackageAsync(RetainedPackageArchiveEntry entry, Window owner = null)
+	{
+		if (entry == null || _retainedPackageArchiveService == null) return;
+		var archivePath = _retainedPackageArchiveService.GetPackagePath(entry.Sha256);
+		if (archivePath == null)
+		{
+			ReduxMessageBox.Show(owner?.IsLoaded == true ? owner : Window,
+				"That retained package is missing. Clear it from the archive library and add the original package again.",
+				"Package Missing", MessageBoxButton.OK, MessageBoxImage.Warning, MessageBoxResult.OK);
+			return;
+		}
+
+		try
+		{
+			var classification = await ClassifyAcquiredPackageAsync(archivePath);
+			var id = await _nxmDownloadManager.AddLocalPackageAsync(archivePath, entry.Sha256,
+				String.IsNullOrWhiteSpace(entry.ProjectName) ? classification.ProjectName : entry.ProjectName,
+				classification.ContentKind, classification.Destination, classification.Summary,
+				entry.SourceKind, String.IsNullOrWhiteSpace(entry.ThumbnailUrl) ? classification.ThumbnailUrl : entry.ThumbnailUrl,
+				sourceModId: entry.NexusModId, sourceFileId: entry.NexusFileId,
+				sourceFileName: entry.OriginalFileName, sourceVersion: entry.Version);
+			var queued = NxmDownloads.FirstOrDefault(item => item.Id == id);
+			if (queued != null)
+			{
+				queued.PreserveExistingModPlacement = queued.DetectedDestination == "Inactive Mods";
+				await ReviewNxmDownloadAsync(queued, owner);
+			}
+		}
+		catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException)
+		{
+			DivinityApp.Log($"Retained package reinstall failed for {entry.Sha256}: {ex}");
+			ReduxMessageBox.Show(owner?.IsLoaded == true ? owner : Window, ex.Message,
+				"Could Not Reinstall Package", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+		}
 	}
 
 	public async Task ReviewNxmDownloadAsync(NxmDownloadItem item, Window owner = null)
 	{
 		if (item?.State is not (NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview
 			or NxmDownloadState.InstallFailed or NxmDownloadState.Installed)) return;
+		if (item.State == NxmDownloadState.Installed && item.DetectedDestination == "Inactive Mods")
+			item.PreserveExistingModPlacement = true;
 		if (!item.InspectionCompleted) await InspectAcquiredPackageAsync(item);
 		if (item.State == NxmDownloadState.NeedsReview || String.IsNullOrWhiteSpace(item.DetectedDestination)) return;
 		var archivePath = GetNxmArchivePath(item);
@@ -900,14 +989,16 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			var nexusSource = item.HasNexusSource
 				? new NexusModManagerLink(item.ModId, item.FileId, null, null, null)
 				: null;
-			var installed = await ReviewAndImportModsAsync([archivePath], false, nexusSource, dialogOwner,
+			var targetActiveState = item.PreserveExistingModPlacement ? (bool?)null : false;
+			var installed = await ReviewAndImportModsAsync([archivePath], targetActiveState, nexusSource, dialogOwner,
 				async () =>
 				{
 					installStarted = true;
 					await _nxmDownloadManager.SetStateAsync(item.Id, NxmDownloadState.Installing);
 				});
 			if (installed)
-				await _nxmDownloadManager.SetInstalledAsync(item.Id, "Inactive Mods");
+				await CompleteAcquiredPackageInstallAsync(item,
+					item.PreserveExistingModPlacement ? "Mod Library · placement preserved" : "Inactive Mods", archivePath);
 			else if (installStarted)
 				await _nxmDownloadManager.SetStateAsync(item.Id, NxmDownloadState.InstallFailed,
 					"install-failed", "Redux could not finish installing this package. Review the import error and try again.");
@@ -931,18 +1022,18 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			{
 				case ArchivePackagePreflightKind.ReviewedGameDirectory:
 					if (await ReduxGameDirectoryModManagerWindow.ReviewAndInstallAsync(dialogOwner, this, archivePath))
-						await _nxmDownloadManager.SetInstalledAsync(item.Id, "Game-directory Mods");
+						await CompleteAcquiredPackageInstallAsync(item, "Game-directory Mods", archivePath);
 					break;
 				case ArchivePackagePreflightKind.SaveGame:
 					if (View?.ShowSaveManagerForImport(archivePath, dialogOwner) == true)
-						await _nxmDownloadManager.SetInstalledAsync(item.Id, "Save Games");
+						await CompleteAcquiredPackageInstallAsync(item, "Save Games", archivePath);
 					break;
 				case ArchivePackagePreflightKind.PakArchive:
 					await InstallPakAsync();
 					break;
 				case ArchivePackagePreflightKind.Mixed when inspection.GameDirectoryInspection != null:
 					if (await ReduxGameDirectoryModManagerWindow.ReviewAndInstallAsync(dialogOwner, this, archivePath))
-						await _nxmDownloadManager.SetInstalledAsync(item.Id, "Game-directory Mods");
+						await CompleteAcquiredPackageInstallAsync(item, "Game-directory Mods", archivePath);
 					break;
 				default:
 					await _nxmDownloadManager.SetStateAsync(item.Id, NxmDownloadState.NeedsReview, "unsupported-layout",
@@ -966,11 +1057,293 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		}
 	}
 
+	public async Task InstallAllNxmDownloadsAsync(Window owner = null)
+	{
+		if (_nxmDownloadManager == null || DownloadManagerInstallIsActive) return;
+		var dialogOwner = owner?.IsLoaded == true ? owner : Window;
+		var queued = NxmDownloads
+			.Where(item => item.State is NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview or NxmDownloadState.InstallFailed)
+			.OrderBy(item => item.QueuePosition)
+			.ToArray();
+		if (queued.Length == 0) return;
+
+		var installed = mods.Items.Where(mod => mod != null && !mod.IsVisualDivider).ToArray();
+		var installedUuids = installed.Concat(DivinityApp.IgnoredMods.Items)
+			.Where(mod => mod != null && !String.IsNullOrWhiteSpace(mod.UUID))
+			.Select(mod => mod.UUID).ToHashSet(StringComparer.OrdinalIgnoreCase);
+		var candidates = new List<AcquiredPackageBatchCandidate>();
+		var skipped = new List<ReduxInstallReviewItem>();
+
+		foreach (var item in queued)
+		{
+			var displayName = String.IsNullOrWhiteSpace(item.ProjectName)
+				? Path.GetFileNameWithoutExtension(item.CompletedFileName) : item.ProjectName;
+			try
+			{
+				var archivePath = GetNxmArchivePath(item);
+				await VerifyNxmArchiveAsync(item, archivePath);
+				var classification = await ClassifyAcquiredPackageAsync(archivePath);
+				await _nxmDownloadManager.SetInspectionAsync(item.Id, classification.ProjectName,
+					classification.ContentKind, classification.Destination, classification.Summary,
+					classification.Installable, classification.ThumbnailUrl);
+				displayName = String.IsNullOrWhiteSpace(classification.ProjectName) ? displayName : classification.ProjectName;
+				if (!classification.Installable)
+				{
+					skipped.Add(BatchSkipped(displayName, Path.GetFileName(archivePath), classification.Summary));
+					continue;
+				}
+
+				if (Path.GetExtension(archivePath).Equals(".pak", StringComparison.OrdinalIgnoreCase))
+				{
+					var report = await PackagePreflightService.AnalyzeAsync(archivePath, installed);
+					AddPakBatchCandidate(item, archivePath, classification, [report], candidates, skipped);
+					continue;
+				}
+
+				var inspection = await ArchivePackagePreflightService.AnalyzeAsync(archivePath, installed);
+				if (inspection.Findings.Any(finding => finding.Severity == ModHealthSeverity.Error
+					&& !finding.Title.Equals("Missing dependency", StringComparison.OrdinalIgnoreCase)))
+				{
+					skipped.Add(BatchSkipped(displayName, Path.GetFileName(archivePath),
+						"Archive validation found an unsafe or unreadable entry."));
+					continue;
+				}
+				switch (inspection.Kind)
+				{
+					case ArchivePackagePreflightKind.PakArchive when inspection.Packages.Count > 0:
+						AddPakBatchCandidate(item, archivePath, classification, inspection.Packages, candidates, skipped);
+						break;
+					case ArchivePackagePreflightKind.SaveGame when inspection.SaveGames.Count > 0:
+						if (SelectedProfile?.Folder == null)
+						{
+							skipped.Add(BatchSkipped(displayName, Path.GetFileName(archivePath), "Choose a campaign profile before installing saves."));
+							break;
+						}
+						var storyFolder = Path.Combine(SelectedProfile.Folder, "Savegames", "Story");
+						var saveNames = Bg3SaveGameService.GetImportFolderNames(archivePath);
+						if (saveNames.Count == 0)
+						{
+							skipped.Add(BatchSkipped(displayName, Path.GetFileName(archivePath), "No installable BG3 save was found."));
+							break;
+						}
+						var replacements = saveNames.Count(name => Directory.Exists(Path.Combine(storyFolder, name)));
+						candidates.Add(new AcquiredPackageBatchCandidate(item, archivePath, AcquiredPackageBatchKind.Save,
+							"Save Games", 10, saveNames.Select(name => $"save:{name}").ToArray(), [], [],
+							new ReduxInstallReviewItem(displayName, $"Save Games · {Path.GetFileName(archivePath)}",
+								replacements > 0 ? $"Ready · replace {replacements} existing save{(replacements == 1 ? String.Empty : "s")}" : "Ready to install",
+								replacements > 0 ? ReduxInstallReviewTone.Warning : ReduxInstallReviewTone.Success)));
+						break;
+					case ArchivePackagePreflightKind.ReviewedGameDirectory:
+					case ArchivePackagePreflightKind.Mixed when inspection.GameDirectoryInspection != null:
+						if (!ReduxGameDirectoryModManagerWindow.CanOpen(this))
+						{
+							skipped.Add(BatchSkipped(displayName, Path.GetFileName(archivePath), "Configure a valid Baldur's Gate 3 executable first."));
+							break;
+						}
+						var native = inspection.GameDirectoryInspection!;
+						var loaderStatus = await ReduxGameDirectoryModManagerWindow.PreflightReviewedArchiveWithoutReviewAsync(
+							this, native.Definition.NexusModId, archivePath);
+						var nativeReports = inspection.Packages.Where(report => report?.Mod != null).ToArray();
+						if (HasBlockingPackageFinding(nativeReports))
+						{
+							skipped.Add(BatchSkipped(displayName, Path.GetFileName(archivePath), "Package validation found a blocking metadata or content error."));
+							break;
+						}
+						var nativeProvided = nativeReports.Select(report => report.Mod.UUID)
+							.Where(uuid => !String.IsNullOrWhiteSpace(uuid)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+						var nativeRequired = nativeReports.SelectMany(report => report.Mod.Dependencies.Items)
+							.Select(dependency => dependency.UUID).Where(uuid => !String.IsNullOrWhiteSpace(uuid))
+							.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+						if (native.Definition.RequiresLoader) nativeRequired.Add("native-loader");
+						if (loaderStatus.IsVerified) installedUuids.Add("native-loader");
+						var nativeProvides = nativeProvided.ToList();
+						if (native.Definition.Kind == ReduxGameDirectoryModKind.NativeLoader) nativeProvides.Add("native-loader");
+						candidates.Add(new AcquiredPackageBatchCandidate(item, archivePath, AcquiredPackageBatchKind.GameDirectory,
+							"Game-directory Mods", native.Definition.Kind == ReduxGameDirectoryModKind.NativeLoader ? 0 : 20,
+							[$"native:{native.Definition.PackageId}", .. nativeProvided.Select(uuid => $"pak:{uuid}")],
+							nativeProvides, nativeRequired,
+							new ReduxInstallReviewItem(displayName, $"Game-directory Mods · {Path.GetFileName(archivePath)}",
+								"Reviewed native package · ready", ReduxInstallReviewTone.Info)));
+						break;
+					default:
+						skipped.Add(BatchSkipped(displayName, Path.GetFileName(archivePath), "Mixed, ambiguous, or unreviewed package layout."));
+						break;
+				}
+			}
+			catch (Exception ex) when (ex is IOException or InvalidDataException or InvalidOperationException
+				or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+			{
+				skipped.Add(BatchSkipped(displayName, Path.GetFileName(item.CompletedFileName), SafeBatchError(ex)));
+			}
+		}
+
+		var safetyPlan = DownloadBatchSafetyPlanner.Create(candidates.Select(candidate =>
+			new DownloadBatchSafetyCandidate(candidate.Item.Id, candidate.Item.ArchiveSha256,
+				candidate.ConflictKeys, candidate.ProvidedModUuids, candidate.RequiredModUuids)), installedUuids);
+		var acceptedIds = safetyPlan.AcceptedIds.ToHashSet(StringComparer.Ordinal);
+		var accepted = candidates.Where(candidate => acceptedIds.Contains(candidate.Item.Id))
+			.OrderBy(candidate => candidate.InstallPriority).ThenBy(candidate => candidate.Item.QueuePosition).ToList();
+		foreach (var candidate in candidates.Where(candidate => !acceptedIds.Contains(candidate.Item.Id)))
+			skipped.Add(BatchSkipped(candidate.ReviewItem.Name, Path.GetFileName(candidate.ArchivePath),
+				safetyPlan.SkippedReasons[candidate.Item.Id]));
+
+		var reviewItems = accepted.Select(candidate => candidate.ReviewItem).Concat(skipped).ToArray();
+		if (reviewItems.Length == 0) return;
+		var destinationSummary = String.Join(" · ", accepted.GroupBy(candidate => candidate.Destination)
+			.Select(group => $"{group.Key}: {group.Count()}"));
+		if (skipped.Count > 0)
+			destinationSummary = String.Join(" · ", new[] { destinationSummary, $"Skipped: {skipped.Count}" }
+				.Where(value => !String.IsNullOrWhiteSpace(value)));
+		if (accepted.Count == 0)
+		{
+			new ReduxInstallReviewWindow(dialogOwner, skipped, ReduxInstallReviewKind.Batch,
+				"Reviewed destinations", $"Installed: 0 · Failed: 0 · Skipped: {skipped.Count}", resultsOnly: true).ShowDialog();
+			return;
+		}
+		var preview = new ReduxInstallReviewWindow(dialogOwner, reviewItems, ReduxInstallReviewKind.Batch,
+			"Reviewed destinations", destinationSummary);
+		if (preview.ShowDialog() != true && !preview.Accepted) return;
+
+		DownloadManagerInstallIsActive = true;
+		var results = new List<ReduxInstallReviewItem>(skipped);
+		try
+		{
+			foreach (var candidate in accepted)
+			{
+				try
+				{
+					await _nxmDownloadManager.SetStateAsync(candidate.Item.Id, NxmDownloadState.Installing);
+					var nexusSource = candidate.Item.HasNexusSource
+						? new NexusModManagerLink(candidate.Item.ModId, candidate.Item.FileId, null, null, null) : null;
+					var installedOk = candidate.Kind switch
+					{
+						AcquiredPackageBatchKind.Pak => await ImportModsWithoutReviewAsync([candidate.ArchivePath], false, nexusSource),
+						AcquiredPackageBatchKind.Save => await ImportSaveBatchPackageAsync(candidate.ArchivePath),
+						AcquiredPackageBatchKind.GameDirectory => await InstallGameDirectoryBatchPackageAsync(candidate.ArchivePath, nexusSource),
+						_ => false
+					};
+					if (!installedOk) throw new InvalidOperationException("Redux could not finish this installation.");
+					await CompleteAcquiredPackageInstallAsync(candidate.Item, candidate.Destination, candidate.ArchivePath);
+					results.Add(new ReduxInstallReviewItem(candidate.ReviewItem.Name,
+						Path.GetFileName(candidate.ArchivePath), $"Installed to {candidate.Destination}", ReduxInstallReviewTone.Success));
+				}
+				catch (Exception ex) when (ex is IOException or InvalidDataException or InvalidOperationException
+					or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+				{
+					DivinityApp.Log($"Batch install failed for {candidate.Item.Identity}: {ex}");
+					var error = SafeBatchError(ex);
+					await _nxmDownloadManager.SetStateAsync(candidate.Item.Id, NxmDownloadState.InstallFailed, "batch-install-failed", error);
+					results.Add(new ReduxInstallReviewItem(candidate.ReviewItem.Name,
+						Path.GetFileName(candidate.ArchivePath), $"Failed · {error}", ReduxInstallReviewTone.Error));
+				}
+			}
+		}
+		finally { DownloadManagerInstallIsActive = false; }
+
+		var successful = results.Count(result => result.Tone == ReduxInstallReviewTone.Success);
+		var failed = results.Count(result => result.Tone == ReduxInstallReviewTone.Error);
+		var resultSummary = $"Installed: {successful} · Failed: {failed} · Skipped: {skipped.Count}";
+		new ReduxInstallReviewWindow(dialogOwner, results, ReduxInstallReviewKind.Batch,
+			"Reviewed destinations", resultSummary, resultsOnly: true).ShowDialog();
+	}
+
+	private static ReduxInstallReviewItem BatchSkipped(string name, string detail, string reason) =>
+		new(name, detail, $"Skipped · {reason}", ReduxInstallReviewTone.Warning);
+
+	private static bool HasBlockingPackageFinding(IEnumerable<PackagePreflightReport> reports) =>
+		reports.Any(report => !report.IsReadable || report.Findings.Any(finding =>
+			finding.Severity == ModHealthSeverity.Error
+			&& !finding.Title.Equals("Missing dependency", StringComparison.OrdinalIgnoreCase)));
+
+	private static void AddPakBatchCandidate(NxmDownloadItem item, string archivePath,
+		AcquiredPackageClassification classification, IReadOnlyList<PackagePreflightReport> reports,
+		ICollection<AcquiredPackageBatchCandidate> candidates, ICollection<ReduxInstallReviewItem> skipped)
+	{
+		var name = String.IsNullOrWhiteSpace(classification.ProjectName)
+			? Path.GetFileNameWithoutExtension(archivePath) : classification.ProjectName;
+		if (reports.Count == 0 || HasBlockingPackageFinding(reports))
+		{
+			skipped.Add(BatchSkipped(name, Path.GetFileName(archivePath), "Package validation found a blocking metadata or content error."));
+			return;
+		}
+		var provided = reports.Select(report => report.Mod.UUID).Where(uuid => !String.IsNullOrWhiteSpace(uuid))
+			.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+		var required = reports.SelectMany(report => report.Mod.Dependencies.Items).Select(dependency => dependency.UUID)
+			.Where(uuid => !String.IsNullOrWhiteSpace(uuid)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+		candidates.Add(new AcquiredPackageBatchCandidate(item, archivePath, AcquiredPackageBatchKind.Pak,
+			"Inactive Mods", 10, provided.Select(uuid => $"pak:{uuid}").ToArray(), provided, required,
+			new ReduxInstallReviewItem(name, $"Inactive Mods · {Path.GetFileName(archivePath)}",
+				$"Ready · {reports.Count} PAK mod{(reports.Count == 1 ? String.Empty : "s")}", ReduxInstallReviewTone.Success)));
+	}
+
+	private async Task<bool> ImportSaveBatchPackageAsync(string archivePath)
+	{
+		if (SelectedProfile?.Folder == null) return false;
+		var storyFolder = Path.Combine(SelectedProfile.Folder, "Savegames", "Story");
+		var imported = await Task.Run(() => Bg3SaveGameService.Import(archivePath, storyFolder, replaceExisting: true));
+		return imported.Count > 0;
+	}
+
+	private async Task<bool> InstallGameDirectoryBatchPackageAsync(string archivePath, NexusModManagerLink nexusSource)
+	{
+		await ReduxGameDirectoryModManagerWindow.InstallReviewedArchiveWithoutReviewAsync(this, archivePath, nexusSource);
+		return true;
+	}
+
+	private static string SafeBatchError(Exception exception)
+	{
+		var message = exception?.Message?.Replace('\r', ' ').Replace('\n', ' ').Trim();
+		return String.IsNullOrWhiteSpace(message) ? "Installation stopped safely." : message;
+	}
+
+	private async Task CompleteAcquiredPackageInstallAsync(NxmDownloadItem item, string destination, string archivePath)
+	{
+		await _nxmDownloadManager.SetInstalledAsync(item.Id, destination);
+		if (!Settings.RetainInstalledPackageArchives || _retainedPackageArchiveService == null)
+		{
+			try
+			{
+				if (IsManagedDownloadPath(archivePath) && File.Exists(archivePath)) File.Delete(archivePath);
+				item.HasAvailableArchive = false;
+			}
+			catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+			{
+				DivinityApp.Log($"Installed inbox package could not be removed for {item.Identity}: {ex}");
+				ShowAlert("The package installed, but Redux could not remove its inbox copy.", AlertType.Warning, 20);
+				item.HasAvailableArchive = File.Exists(archivePath);
+			}
+			return;
+		}
+		try
+		{
+			await _retainedPackageArchiveService.RetainAsync(archivePath, item, destination,
+				RetainedPackageArchiveQuotaBytes, removeSourceOnSuccess: true);
+			item.HasAvailableArchive = true;
+			RefreshRetainedPackageArchiveUsage();
+		}
+		catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException)
+		{
+			DivinityApp.Log($"Installed package could not be retained for {item.Identity}: {ex}");
+			item.HasAvailableArchive = File.Exists(archivePath)
+				|| _retainedPackageArchiveService.GetPackagePath(item.ArchiveSha256) != null;
+			ShowAlert("The package installed, but Redux could not retain its archive. " + ex.Message, AlertType.Warning, 25);
+		}
+	}
+
+	private bool IsManagedDownloadPath(string path)
+	{
+		if (String.IsNullOrWhiteSpace(path)) return false;
+		var root = Path.GetFullPath(NxmDownloadsDirectory).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+		return Path.GetFullPath(path).StartsWith(root, StringComparison.OrdinalIgnoreCase);
+	}
+
 	private string GetNxmArchivePath(NxmDownloadItem item)
 	{
 		if (String.IsNullOrWhiteSpace(item.CompletedFileName) || item.CompletedFileName != Path.GetFileName(item.CompletedFileName))
 			throw new InvalidDataException("The download record contains an invalid archive filename.");
-		return Path.Combine(NxmDownloadsDirectory, item.CompletedFileName);
+		var downloadPath = Path.Combine(NxmDownloadsDirectory, item.CompletedFileName);
+		if (File.Exists(downloadPath)) return downloadPath;
+		return _retainedPackageArchiveService?.GetPackagePath(item.ArchiveSha256) ?? downloadPath;
 	}
 
 	private static async Task VerifyNxmArchiveAsync(NxmDownloadItem item, string path)
@@ -1682,6 +2055,17 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 		Settings.WhenAnyValue(x => x.NxmActiveDownloadLimit).Subscribe(limit =>
 			_nxmDownloadManager?.SetActiveDownloadLimit(Math.Clamp(limit, 1, 6)));
+
+		Settings.WhenAnyValue(x => x.RetainInstalledPackageArchives).Subscribe(_ =>
+			RefreshRetainedPackageArchiveUsage());
+
+		Settings.WhenAnyValue(x => x.RetainedPackageArchiveQuotaGb).Subscribe(limit =>
+		{
+			var clamped = Math.Clamp(limit, 1, 100);
+			RefreshRetainedPackageArchiveUsage();
+			if (_retainedPackageArchiveService != null)
+				_ = EnforceRetainedPackageArchiveQuotaAsync((long)clamped * 1024 * 1024 * 1024);
+		});
 
 		Settings.WhenAnyValue(x => x.ModioAPIKey)
 			.Subscribe(key => UpdateHandler.Modio.APIKey = key);
@@ -2871,7 +3255,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	}
 
 	public bool ImportMods(IEnumerable<string> files, bool? toActiveList = null, NexusModManagerLink nexusSource = null,
-		Action<ImportOperationResults> completed = null)
+		Action<ImportOperationResults> completed = null, bool showCompletionFeedback = true)
 	{
 		var fileList = files?.ToList() ?? [];
 		if (MainProgressIsActive || fileList.Count == 0) return false;
@@ -2950,7 +3334,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 						}
 
 						var total = result.Mods.Count;
-						if (result.Success)
+						if (result.Success && showCompletionFeedback)
 						{
 							if (result.Mods.Count > 1)
 							{
@@ -2975,7 +3359,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 								Layout.SelectMods(selectMods);
 							});
 						}
-						else
+						else if (!result.Success && showCompletionFeedback)
 						{
 							if (total == 0)
 							{
@@ -2997,13 +3381,14 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 	public async Task<bool> ReviewAndImportModsAsync(
 		IReadOnlyList<string> files,
-		bool toActiveList,
+		bool? toActiveList,
 		NexusModManagerLink nexusSource = null,
 		Window owner = null,
 		Func<Task> installStarting = null)
 	{
 		if (files == null || files.Count == 0) return false;
-		var destination = toActiveList ? "Active Mods" : "Inactive Mods";
+		var destination = toActiveList == true ? "Active Mods" : toActiveList == false
+			? "Inactive Mods" : "existing placement (new mods go to Inactive Mods)";
 		var installed = mods.Items
 			.Where(mod => mod != null && !mod.IsVisualDivider)
 			.DistinctBy(mod => mod.UUID, StringComparer.OrdinalIgnoreCase)
@@ -3975,6 +4360,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			Settings.ModioAPIKey = welcomeWindow.SelectedModioApiKey;
 			Settings.ReduceMotion = welcomeWindow.SelectedReduceMotion;
 			Settings.DisableBackgroundEffects = welcomeWindow.SelectedDisableBackgroundEffects;
+			Settings.RetainInstalledPackageArchives = welcomeWindow.SelectedRetainInstalledPackageArchives;
 		}
 
 		if (SaveSettings() && welcomeWindow.ApplyChanges)
@@ -9086,6 +9472,52 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			dialog.ViewModel.FileDeletionComplete -= HandleFileDeletionComplete;
 			IsDeletingFiles = false;
 		}
+	}
+
+	public async Task<bool> ImportModsWithoutReviewAsync(
+		IReadOnlyList<string> files,
+		bool toActiveList,
+		NexusModManagerLink nexusSource = null)
+	{
+		if (files == null || files.Count == 0) return false;
+		var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+		if (!ImportMods(files, toActiveList, nexusSource,
+			result => completion.TrySetResult(result.Errors.Count == 0 && result.Mods.Count > 0),
+			showCompletionFeedback: false)) return false;
+		return await completion.Task;
+	}
+
+	private long RetainedPackageArchiveQuotaBytes => (long)Math.Clamp(
+		Settings.RetainedPackageArchiveQuotaGb, 1, 100) * 1024 * 1024 * 1024;
+
+	private void RefreshRetainedPackageArchiveUsage()
+	{
+		var usage = _retainedPackageArchiveService?.UsageBytes ?? 0;
+		RetainedPackageArchiveUsageText = RetainedPackageArchives.Count == 0
+			? Settings.RetainInstalledPackageArchives
+				? $"Archive library is empty · {Settings.RetainedPackageArchiveQuotaGb} GB limit"
+				: "Archive retention is off · enable it in Preferences"
+			: $"{FormatStorageSize(usage)} used · {Settings.RetainedPackageArchiveQuotaGb} GB limit";
+	}
+
+	private async Task EnforceRetainedPackageArchiveQuotaAsync(long quotaBytes)
+	{
+		try
+		{
+			await _retainedPackageArchiveService.EnforceQuotaAsync(quotaBytes);
+			RefreshRetainedPackageArchiveUsage();
+		}
+		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+		{
+			DivinityApp.Log($"Could not enforce the retained package archive quota: {ex}");
+			ShowAlert("Redux could not apply the package archive quota.", AlertType.Warning, 20);
+		}
+	}
+
+	private static string FormatStorageSize(long bytes)
+	{
+		var gib = bytes / (1024d * 1024 * 1024);
+		return gib >= 1 ? $"{gib:0.##} GB" : $"{bytes / (1024d * 1024):0.#} MB";
 	}
 
 	private void HandleFileDeletionComplete(object sender, FileDeletionCompleteEventArgs e)

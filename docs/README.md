@@ -35,6 +35,8 @@ quick picture of Redux.
 - **Game-directory mod** means a reviewed native or root-level package installed outside the normal
   PAK Mods folder and managed through Redux's separate guarded workflow.
 - **Download Manager** means Redux's shared local-package and optional NXM acquisition inbox.
+- **Package Archive Library** means the separate, opt-in, quota-limited store of verified install
+  packages available from Download Manager's Archives tab.
   Acquisition remains separate from package inspection, installation, activation, ordering, and
   game sync.
 

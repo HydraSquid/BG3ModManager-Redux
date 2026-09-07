@@ -92,6 +92,13 @@ signed URLs must remain memory-only and must never appear in settings, queue fil
 reports, or exported diagnostics. Receiving or completing a download never authorizes activation,
 load-order changes, or game sync.
 
+The retained Package Archive Library is a separate optional storage choice and remains off by
+default. Enabling NXM links does not enable archive retention. When retention is enabled, the
+archive index may store public Nexus project/file IDs, a verified SHA-256 package identity, safe
+filenames, version, detected destination, and installation time. It must not store local source
+paths, provider credentials, temporary keys, signed URLs, or remote thumbnail URLs. Download
+history, retained archives, and installed content have independent clear/remove behavior.
+
 ## Optional Load Order Advisor
 
 **Enable Load Order Advisor** adds an experimental guidance family to Mod Diagnostics. It uses exact

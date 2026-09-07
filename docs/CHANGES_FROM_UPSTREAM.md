@@ -241,14 +241,36 @@ longer selects an Active or Inactive destination. Finalized packages are inspect
 enter the established inactive-mod review and import path; reviewed native packages and Script
 Extender use the guarded game-directory transaction; and save packages use Save Game Manager.
 Mixed, ambiguous, corrupt, or unsupported content is blocked without filesystem changes. Installed
-entries move into a separate history tab that can be cleared without deleting the downloaded
-archive or uninstalling content. The clear-history action is available with the Installed view
+entries move into a separate history tab that can be cleared without changing the Package Archive
+Library or uninstalling content. When archive retention is off, the successfully installed managed
+inbox copy is removed while a user-owned local original remains untouched. The clear-history action is available with the Installed view
 rather than consuming space inside the history list. Downloading or installing never activates,
 reorders, or syncs a mod automatically.
 Retained Download Manager archives can be reinstalled directly from history. Explicitly adding an
 identical local archive returns its existing record to the inbox and refreshes its classification
-and artwork instead of duplicating it. Uninstall state, Download Manager history, and any future
-opt-in long-term archive library remain separate ownership concerns.
+and artwork instead of duplicating it.
+
+The guarded **Install All** action preflights every eligible inbox entry before destination files
+change, then presents one destination-grouped confirmation. It detects duplicate archive hashes,
+overlapping PAK/native/save identities, missing dependencies, unsafe layouts, missing profile/game
+configuration, and other blocked inputs. Safe entries are committed serially through the existing
+inactive-PAK, Save Manager, or Game-Directory Manager services. Failures are isolated, skipped and
+failed entries remain in the inbox, and one final per-item report replaces a dialog chain. Batch
+installation never activates, orders, or syncs PAK mods.
+
+The optional long-term **Package Archive Library** is a third, independent ownership concern. It is
+off by default and creates no directory until a successfully installed package is retained. Verified
+packages are stored by SHA-256, deduplicated, and indexed with safe source identity, version,
+package kind, destination, and install time. The configurable 1–100 GB quota prunes least-recently-
+used packages. Download Manager's Archives tab reports usage and supports reinstall, open-folder,
+an inline retention preference, and explicit clear actions. Successful retention moves the managed inbox copy into the library;
+local originals remain where the user put them. Clearing installed history, clearing archives, and
+uninstalling content remain independent. The archive index excludes source paths, credentials,
+temporary authorization, signed download URLs, and remote thumbnail URLs.
+
+Retained PAK reinstall is contextual rather than a forced inactive transfer. Existing packages keep
+their active/inactive state and active load-order position; packages no longer installed use the
+safe Inactive Mods default. Redux does not sync that preserved working state automatically.
 
 Clean, brand-new PAK batches have a distinct success review and an opt-out that can be reversed in
 Preferences. The bypass is deliberately narrow: updates, replacements, downgrades, unreadable

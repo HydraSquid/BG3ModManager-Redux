@@ -42,6 +42,7 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 	public string SelectedNexusApiKey => NexusApiKeyTextBox.Password?.Trim() ?? String.Empty;
 	public string SelectedModioApiKey => ModioApiKeyTextBox.Password?.Trim() ?? String.Empty;
 	public bool SelectedNxmAssociationEnabled => NxmLinksCheckBox.IsChecked == true;
+	public bool SelectedRetainInstalledPackageArchives => RetainArchivesCheckBox.IsChecked == true;
 
 	public ReduxOnboardingWindow(Window owner, DivinityModManagerSettings settings)
 	{
@@ -77,6 +78,7 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 			DisableBackgroundEffectsCheckBox.IsChecked = settings.DisableBackgroundEffects;
 			var nxmStatus = _ownerWindow?.ViewModel?.GetNxmAssociationStatus();
 			NxmLinksCheckBox.IsChecked = nxmStatus?.Status is NxmAssociationStatus.Owned or NxmAssociationStatus.NeedsRepair;
+			RetainArchivesCheckBox.IsChecked = settings.RetainInstalledPackageArchives;
 			_nxmAssociationChoiceAvailable = nxmStatus?.Success != false
 				&& nxmStatus?.Status != NxmAssociationStatus.OwnedByAnotherHandler;
 			NxmLinksCheckBox.ToolTip = _nxmAssociationChoiceAvailable
@@ -88,6 +90,7 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 			ReduxDarkThemeCard.IsChecked = true;
 			SourceIntegrationsCheckBox.IsChecked = false;
 			GuidanceCheckBox.IsChecked = false;
+			RetainArchivesCheckBox.IsChecked = false;
 		}
 
 		_isInitializing = false;

@@ -141,8 +141,16 @@
 				<Style.Triggers>
 					<DataTrigger Binding="{Binding State}" Value="Downloaded"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
 					<DataTrigger Binding="{Binding State}" Value="InstallFailed"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
-					<DataTrigger Binding="{Binding State}" Value="Installed"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+					<MultiDataTrigger>
+						<MultiDataTrigger.Conditions><Condition Binding="{Binding State}" Value="Installed" /><Condition Binding="{Binding HasAvailableArchive}" Value="True" /></MultiDataTrigger.Conditions>
+						<Setter Property="Visibility" Value="Visible" />
+					</MultiDataTrigger>
 				</Style.Triggers>
+			</Style>
+			<Style x:Key="ArchiveReinstallButton" BasedOn="{StaticResource DownloadActionButton}" TargetType="{x:Type Button}">
+				<Setter Property="Background" Value="{DynamicResource ReduxSuccessPillBackground}" />
+				<Setter Property="BorderBrush" Value="{DynamicResource ReduxSuccessBrush}" />
+				<Setter Property="Foreground" Value="{DynamicResource ReduxSuccessBrush}" />
 			</Style>
 			<DataTemplate x:Key="DownloadItemTemplate">
 				<Border Padding="11,9" Background="Transparent">
@@ -192,7 +200,8 @@
 							<Button Tag="{Binding}" Style="{StaticResource ResumeDownloadButton}" Click="ResumeButton_Click">
 								<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.RefreshStroke}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Resume" /></StackPanel>
 							</Button>
-							<Button Tag="{Binding}" Style="{StaticResource ReviewDownloadButton}" Click="ReviewButton_Click">
+							<Button Tag="{Binding}" Style="{StaticResource ReviewDownloadButton}" Click="ReviewButton_Click"
+								ToolTip="{Binding InstallActionToolTip}">
 								<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0"
 									Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 									StrokeData="{StaticResource Redux.Icon.Package}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="{Binding InstallActionText}" /></StackPanel>
@@ -237,6 +246,46 @@
 					</MultiDataTrigger>
 				</DataTemplate.Triggers>
 			</DataTemplate>
+			<DataTemplate x:Key="RetainedArchiveItemTemplate">
+				<Border Padding="11,9" Background="Transparent">
+					<Grid>
+						<Grid.ColumnDefinitions><ColumnDefinition Width="96" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+						<Border Width="96" Height="54" VerticalAlignment="Center" Background="{DynamicResource ReduxSurfaceMutedBrush}"
+							BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1"
+							CornerRadius="{DynamicResource Redux.CornerRadius.Control}" ClipToBounds="True">
+							<Grid>
+								<controls:ReduxIcon Width="20" Height="20" Foreground="{DynamicResource ReduxTextMutedBrush}"
+									StrokeData="{StaticResource Redux.Icon.Archive}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
+								<Image Source="{Binding ThumbnailUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+							</Grid>
+						</Border>
+						<StackPanel Grid.Column="1" Margin="11,0,0,0" VerticalAlignment="Center">
+							<TextBlock FontWeight="SemiBold" FontSize="{DynamicResource Redux.FontSize.13}"
+								Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+							<StackPanel Margin="0,4,0,0" Orientation="Horizontal">
+								<controls:ReduxIcon Width="11" Height="11" Margin="0,0,5,0" Foreground="{DynamicResource ReduxSuccessBrush}"
+									StrokeData="{StaticResource Redux.Icon.Archive}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
+								<TextBlock Foreground="{DynamicResource ReduxSuccessBrush}" FontWeight="SemiBold" Text="{Binding DestinationText}" />
+							</StackPanel>
+							<TextBlock Margin="0,3,0,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}"
+								Text="{Binding OriginalFileName}" TextTrimming="CharacterEllipsis" />
+							<TextBlock Margin="0,2,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}"
+								Text="{Binding MetadataText}" TextTrimming="CharacterEllipsis" />
+						</StackPanel>
+						<WrapPanel Grid.Column="2" Margin="14,0,0,0" VerticalAlignment="Center">
+							<Button Tag="{Binding}" Style="{StaticResource ArchiveReinstallButton}" Click="ReinstallArchiveButton_Click">
+								<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0"
+									Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+									StrokeData="{StaticResource Redux.Icon.RefreshStroke}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Reinstall" /></StackPanel>
+							</Button>
+							<Button Tag="{Binding}" Style="{StaticResource NexusDownloadSourceButtonStyle}" Click="ArchiveNexusButton_Click"
+								Visibility="{Binding HasNexusSource, Converter={StaticResource BoolToVisibilityConverter}}" ToolTip="Open this package on Nexus Mods.">
+								<StackPanel Orientation="Horizontal"><ContentControl Width="13" Height="13" Margin="0,0,5,0" ContentTemplate="{DynamicResource NexusPlatformIconTemplate}" /><TextBlock Text="Open Nexus" /></StackPanel>
+							</Button>
+						</WrapPanel>
+					</Grid>
+				</Border>
+			</DataTemplate>
 		</ResourceDictionary>
 	</Window.Resources>
 	<Grid>
@@ -252,7 +301,13 @@
 						Text="NXM downloads and local packages stay here until you install them. Intake never activates, reorders, or syncs mods." />
 				</StackPanel>
 				<StackPanel Grid.Row="1" Margin="0,12,0,10" Orientation="Horizontal">
-					<Button Margin="0,0,7,0" Click="AddPackageButton_Click" Style="{StaticResource ReduxPrimaryActionButtonStyle}">
+					<Button x:Name="InstallAllButton" Margin="0,0,7,0" Click="InstallAllButton_Click" Style="{StaticResource ReduxPrimaryActionButtonStyle}"
+						ToolTip="Review and install every ready package to its detected destination.">
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0"
+							Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+							StrokeData="{StaticResource Redux.Icon.Download}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Install All" /></StackPanel>
+					</Button>
+					<Button Margin="0,0,7,0" Click="AddPackageButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
 						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0"
 							Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 							StrokeData="{StaticResource Redux.Icon.Package}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Add Package..." /></StackPanel>
@@ -267,7 +322,13 @@
 					<Button Click="OpenFolderButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
 						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0"
 							Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
-							StrokeData="{StaticResource Redux.Icon.FolderOpen}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Open Folder" /></StackPanel>
+							StrokeData="{StaticResource Redux.Icon.FolderOpen}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock x:Name="OpenFolderText" Text="Open Folder" /></StackPanel>
+					</Button>
+					<Button x:Name="ClearArchivesButton" Margin="7,0,0,0" Click="ClearArchivesButton_Click"
+						Style="{StaticResource ReduxMinorWarningActionButtonStyle}" Visibility="Collapsed">
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,6,0"
+							Foreground="{DynamicResource ReduxWarningBrush}"
+							StrokeData="{StaticResource Redux.Icon.Trash}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Clear Archives" /></StackPanel>
 					</Button>
 					<Button x:Name="ClearInstalledButton" Margin="7,0,0,0" Click="ClearInstalledButton_Click"
 						Style="{StaticResource ReduxMinorWarningActionButtonStyle}" Visibility="Collapsed">
@@ -302,6 +363,35 @@
 							<TextBlock x:Name="InstalledEmptyText" HorizontalAlignment="Center" VerticalAlignment="Center"
 								Foreground="{DynamicResource ReduxTextMutedBrush}" TextAlignment="Center" TextWrapping="Wrap"
 								Text="Installed downloads will appear here.&#x0a;Clearing history never uninstalls content." />
+						</Grid>
+					</TabItem>
+					<TabItem Header="Archives">
+						<Grid Margin="0,7,0,0">
+							<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+							<Grid Margin="4,0,0,7">
+								<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+								<StackPanel Orientation="Horizontal">
+									<controls:ReduxIcon Width="13" Height="13" Margin="0,0,6,0" Foreground="{DynamicResource ReduxTextMutedBrush}"
+										StrokeData="{StaticResource Redux.Icon.Database}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
+									<TextBlock Foreground="{DynamicResource ReduxTextMutedBrush}" Text="{Binding RetainedPackageArchiveUsageText}" />
+								</StackPanel>
+								<CheckBox Grid.Column="1" Margin="14,0,2,0" VerticalAlignment="Center"
+									IsChecked="{Binding Settings.RetainInstalledPackageArchives, Mode=TwoWay}"
+									Click="ArchiveRetentionCheckBox_Click" Style="{StaticResource ReduxCheckBoxStyle}"
+									Content="Retain installed package archives"
+									ToolTip="Keep verified install packages in the deduplicated archive library. Configure its storage limit in Preferences." />
+							</Grid>
+							<Grid Grid.Row="1">
+								<Border Background="{DynamicResource ReduxListInteriorBrush}" BorderBrush="{DynamicResource ReduxBorderBrush}"
+									BorderThickness="1" CornerRadius="{DynamicResource Redux.CornerRadius.Card}" />
+								<ListBox x:Name="ArchivesList" Margin="7" Background="Transparent" BorderThickness="0"
+									HorizontalContentAlignment="Stretch" ItemsSource="{Binding RetainedPackageArchives}"
+									ItemContainerStyle="{StaticResource DownloadListItemStyle}" ItemTemplate="{StaticResource RetainedArchiveItemTemplate}"
+									ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+								<TextBlock x:Name="ArchivesEmptyText" HorizontalAlignment="Center" VerticalAlignment="Center"
+									Foreground="{DynamicResource ReduxTextMutedBrush}" TextAlignment="Center" TextWrapping="Wrap"
+									Text="No install packages are retained.&#x0a;Archive retention is optional and can be enabled in Preferences." />
+							</Grid>
 						</Grid>
 					</TabItem>
 				</TabControl>

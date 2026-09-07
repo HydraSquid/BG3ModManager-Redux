@@ -199,6 +199,14 @@ public class DivinityModManagerSettings : ReactiveObject
 	[SettingsEntry("Bring Nexus downloads forward", "Bring Redux and its Downloads window to the front when Windows sends a Nexus Mod Manager link.")]
 	[DataMember, Reactive] public bool BringNxmDownloadsToFront { get; set; } = true;
 
+	[DefaultValue(false)]
+	[SettingsEntry("Retain installed package archives", "Keep a deduplicated copy of successfully installed packages for later reinstall. Disabled by default and may use significant disk space.")]
+	[DataMember, Reactive] public bool RetainInstalledPackageArchives { get; set; }
+
+	[DefaultValue(10)]
+	[SettingsEntry("Package archive quota (GB)", "Maximum disk space for retained install packages. Redux prunes the least recently used packages when this limit is reached.")]
+	[DataMember, Reactive] public int RetainedPackageArchiveQuotaGb { get; set; } = 10;
+
 	[DefaultValue("")]
 	[DataMember, Reactive] public string ActiveCustomThemeId { get; set; } = String.Empty;
 

@@ -3,6 +3,7 @@
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:adonisUI="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
 	xmlns:controls="clr-namespace:DivinityModManager.Controls"
+	xmlns:dapp="clr-namespace:DivinityModManager;assembly=DivinityModManager.Core"
 	xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
 	Title="Active File Overlaps"
 	Width="820" Height="650" MinWidth="640" MinHeight="500" MaxWidth="1080" MaxHeight="880"
@@ -34,6 +35,8 @@
 
 			<DataTemplate x:Key="OverlapEntryTemplate">
 				<Border Background="{DynamicResource ReduxSurfaceElevatedBrush}"
+					BorderBrush="{DynamicResource ReduxBorderBrush}"
+					BorderThickness="1"
 					CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
 					ClipToBounds="True">
 					<Grid>
@@ -125,40 +128,49 @@
 
 				<UniformGrid Grid.Row="1" Margin="0,16,0,13" Columns="3">
 					<Border Style="{StaticResource ReduxDialogSummaryCardStyle}">
-						<StackPanel>
-							<TextBlock x:Name="ScannedPackageCountText"
-								FontSize="{DynamicResource Redux.FontSize.20}"
-								FontWeight="{DynamicResource Redux.FontWeight.Title}"
-								Foreground="{DynamicResource ReduxTextPrimaryBrush}"
-								Text="0" />
-							<TextBlock Margin="0,2,0,0"
-								Foreground="{DynamicResource ReduxTextSecondaryBrush}"
-								Text="Packages scanned" />
-						</StackPanel>
+						<Grid>
+							<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+							<Border Width="36" Height="36" Margin="0,0,10,0" Background="{DynamicResource ReduxAccentSoftBrush}"
+								CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
+								Visibility="{Binding Path=(dapp:DivinityApp.ShowInterfaceIcons), Converter={StaticResource BoolToVisibilityConverter}}">
+								<controls:ReduxIcon Width="17" Height="17" Foreground="{DynamicResource ReduxAccentHoverBrush}" StrokeData="{StaticResource Redux.Icon.Package}" />
+							</Border>
+							<StackPanel Grid.Column="1" VerticalAlignment="Center">
+								<TextBlock x:Name="ScannedPackageCountText" FontSize="{DynamicResource Redux.FontSize.20}"
+									FontWeight="{DynamicResource Redux.FontWeight.Title}" Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="0" />
+								<TextBlock Margin="0,2,0,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}" Text="Packages scanned" />
+							</StackPanel>
+						</Grid>
 					</Border>
 					<Border Style="{StaticResource ReduxDialogSummaryCardStyle}">
-						<StackPanel>
-							<TextBlock x:Name="OverlapPathCountText"
-								FontSize="{DynamicResource Redux.FontSize.20}"
-								FontWeight="{DynamicResource Redux.FontWeight.Title}"
-								Foreground="{DynamicResource ReduxInfoBrush}"
-								Text="0" />
-							<TextBlock Margin="0,2,0,0"
-								Foreground="{DynamicResource ReduxTextSecondaryBrush}"
-								Text="Overlapping paths" />
-						</StackPanel>
+						<Grid>
+							<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+							<Border Width="36" Height="36" Margin="0,0,10,0" Background="{DynamicResource ReduxInfoPillBackground}"
+								CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
+								Visibility="{Binding Path=(dapp:DivinityApp.ShowInterfaceIcons), Converter={StaticResource BoolToVisibilityConverter}}">
+								<controls:ReduxIcon Width="17" Height="17" Foreground="{DynamicResource ReduxInfoBrush}" StrokeData="{StaticResource Redux.Icon.Blocks}" />
+							</Border>
+							<StackPanel Grid.Column="1" VerticalAlignment="Center">
+								<TextBlock x:Name="OverlapPathCountText" FontSize="{DynamicResource Redux.FontSize.20}"
+									FontWeight="{DynamicResource Redux.FontWeight.Title}" Foreground="{DynamicResource ReduxInfoBrush}" Text="0" />
+								<TextBlock Margin="0,2,0,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}" Text="Overlapping paths" />
+							</StackPanel>
+						</Grid>
 					</Border>
 					<Border Margin="0" Style="{StaticResource ReduxDialogSummaryCardStyle}">
-						<StackPanel>
-							<TextBlock x:Name="AffectedPackageCountText"
-								FontSize="{DynamicResource Redux.FontSize.20}"
-								FontWeight="{DynamicResource Redux.FontWeight.Title}"
-								Foreground="{DynamicResource ReduxInfoBrush}"
-								Text="0" />
-							<TextBlock Margin="0,2,0,0"
-								Foreground="{DynamicResource ReduxTextSecondaryBrush}"
-								Text="Packages affected" />
-						</StackPanel>
+						<Grid>
+							<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+							<Border Width="36" Height="36" Margin="0,0,10,0" Background="{DynamicResource ReduxInfoPillBackground}"
+								CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
+								Visibility="{Binding Path=(dapp:DivinityApp.ShowInterfaceIcons), Converter={StaticResource BoolToVisibilityConverter}}">
+								<controls:ReduxIcon Width="17" Height="17" Foreground="{DynamicResource ReduxInfoBrush}" StrokeData="{StaticResource Redux.Icon.Package}" />
+							</Border>
+							<StackPanel Grid.Column="1" VerticalAlignment="Center">
+								<TextBlock x:Name="AffectedPackageCountText" FontSize="{DynamicResource Redux.FontSize.20}"
+									FontWeight="{DynamicResource Redux.FontWeight.Title}" Foreground="{DynamicResource ReduxInfoBrush}" Text="0" />
+								<TextBlock Margin="0,2,0,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}" Text="Packages affected" />
+							</StackPanel>
+						</Grid>
 					</Border>
 				</UniformGrid>
 

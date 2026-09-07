@@ -77,6 +77,7 @@
 					HorizontalAlignment="Center"
 					VerticalAlignment="Center"
 					Foreground="{DynamicResource ReduxAccentHoverBrush}"
+					Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 					StrokeData="{StaticResource Redux.Icon.Build}" />
 				<StackPanel Grid.Column="1" Margin="13,0,0,0">
 					<TextBlock Style="{StaticResource Redux.Text.PageTitle}" Text="Version Generator" />
@@ -182,6 +183,7 @@
 									Height="14"
 									Margin="0,0,6,0"
 									Foreground="{DynamicResource ReduxAccentForegroundBrush}"
+									Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 									StrokeData="{StaticResource Redux.Icon.Copy}" />
 								<TextBlock Text="Copy" />
 							</StackPanel>
@@ -196,6 +198,7 @@
 									Height="14"
 									Margin="0,0,6,0"
 									Foreground="{DynamicResource ReduxWarningBrush}"
+									Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 									StrokeData="{StaticResource Redux.Icon.RefreshStroke}" />
 								<TextBlock Text="Reset" />
 							</StackPanel>

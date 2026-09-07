@@ -9,6 +9,7 @@ namespace Redux.Core.Tests;
 
 internal static class Program
 {
+	[STAThread]
 	private static int Main()
 	{
 		// Register WPF's pack URI support before exercising GUI-owned, nonvisual
@@ -184,6 +185,7 @@ internal static class Program
 			(nameof(interactionBehavior.AsyncProviderMetadataSignalsAutomaticCategoryRefresh), interactionBehavior.AsyncProviderMetadataSignalsAutomaticCategoryRefresh),
 			(nameof(interactionBehavior.MenuSemanticColorDistinguishesSavingFromSaveNavigation), interactionBehavior.MenuSemanticColorDistinguishesSavingFromSaveNavigation),
 			(nameof(interactionBehavior.CommandTooltipUsesLiveShortcutAndSharedDescription), interactionBehavior.CommandTooltipUsesLiveShortcutAndSharedDescription),
+			(nameof(interactionBehavior.CommandPaletteItemTemplateResolvesCoreBindingsAtRuntime), interactionBehavior.CommandPaletteItemTemplateResolvesCoreBindingsAtRuntime),
 			(nameof(interactionBehavior.ThemeCyclingIncludesValidCustomThemesInSavedOrder), interactionBehavior.ThemeCyclingIncludesValidCustomThemesInSavedOrder),
 			(nameof(automaticCategories.NexusCategoryIdsMatchTheBg3ProviderTaxonomy), automaticCategories.NexusCategoryIdsMatchTheBg3ProviderTaxonomy),
 			(nameof(automaticCategories.ExplicitNexusCategoryWinsOverContradictoryKeywords), automaticCategories.ExplicitNexusCategoryWinsOverContradictoryKeywords),

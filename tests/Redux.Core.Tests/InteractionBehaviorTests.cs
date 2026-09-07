@@ -4,9 +4,12 @@ using DivinityModManager.Models;
 using DivinityModManager.Models.App;
 using DivinityModManager.Models.Modio;
 using DivinityModManager.Util;
+using DivinityModManager.Views;
 
 using System;
 using System.Linq;
+using System.Windows;
+using System.Windows.Controls;
 
 namespace Redux.Core.Tests;
 
@@ -166,6 +169,34 @@ public sealed class InteractionBehaviorTests
 		RegressionAssert.Equal(
 			"Save Current Order\nSave changes to the selected load order.",
 			hotkey.CommandToolTip);
+	}
+
+	public void CommandPaletteItemTemplateResolvesCoreBindingsAtRuntime()
+	{
+		var window = new ReduxCommandPaletteWindow(null!, null!, null!);
+		try
+		{
+			var list = (ListBox)window.FindName("CommandList");
+			list.ItemsSource = new[]
+			{
+				new ReduxCommandPaletteItem(
+					"Save Current Order",
+					"File",
+					"Save changes.",
+					"Ctrl + S",
+					"save",
+					() => { },
+					tone: ReduxCommandPaletteTone.Success)
+			};
+			window.Measure(new Size(620, 530));
+			window.Arrange(new Rect(0, 0, 620, 530));
+			window.UpdateLayout();
+			RegressionAssert.Equal(1, list.Items.Count);
+		}
+		finally
+		{
+			window.Close();
+		}
 	}
 
 	public void ThemeCyclingIncludesValidCustomThemesInSavedOrder()

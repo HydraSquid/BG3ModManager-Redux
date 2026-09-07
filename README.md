@@ -155,8 +155,10 @@ chosen. Redux then verifies the archive again and routes ordinary PAKs to Inacti
 native packages through Game-Directory Mod Manager, and saves through Save Game Manager. It never
 activates, reorders, or syncs a downloaded mod automatically.
 
-Completed installations move to the **Installed** tab with their destination. Clearing installed
-history keeps both the installed content and downloaded archive; removing an uninstalled completed
+Active transfers are paused and their queue state is saved before Redux exits. Finished downloads
+and completed installation history do not keep the application open. Completed installations move
+to the **Installed** tab with their destination. **Clear Installed History** removes those records
+without deleting the installed content or downloaded archives; removing an uninstalled completed
 download explicitly offers to move its archive to the Recycle Bin.
 
 ### Redux Modlists

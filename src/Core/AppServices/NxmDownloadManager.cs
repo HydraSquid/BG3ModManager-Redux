@@ -345,11 +345,23 @@ public sealed class NxmDownloadManager : INxmDownloadManager
 			tasks = _operations.Values.Select(operation => operation.Task)
 				.Where(task => task != null && !task.IsCompleted).ToArray();
 		}
+		await DrainOperationsAsync(tasks, cancellationToken);
+	}
+
+	private static async Task DrainOperationsAsync(IEnumerable<Task> operations, CancellationToken cancellationToken)
+	{
+		var tasks = operations.Where(task => task != null && !task.IsCompleted).ToArray();
 		if (tasks.Length == 0) return;
 		try { await Task.WhenAll(tasks).WaitAsync(cancellationToken); }
 		catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
 		{
 			// Shutdown deliberately cancels owned work before persisting paused states.
+		}
+		catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
+		{
+			// Individual operations own their failure transition. A stale operation fault
+			// must not prevent the queue's current durable state from being saved.
+			DivinityApp.Log($"NXM operation ended while draining: {ex.GetType().Name}");
 		}
 	}
 
@@ -366,12 +378,15 @@ public sealed class NxmDownloadManager : INxmDownloadManager
 				_networkEnabled = false;
 			}
 			finally { _stateGate.Release(); }
-			string[] itemIds;
-			lock (_operations) itemIds = _operations.Keys.ToArray();
-			foreach (var itemId in itemIds) CancelOperation(itemId);
-			await DrainAsync(cancellationToken);
 			var paused = _items.Where(item => item.State is NxmDownloadState.Resolving or NxmDownloadState.Downloading
 				or NxmDownloadState.Queued or NxmDownloadState.RetryWaiting).ToArray();
+			OwnedOperation[] activeOperations;
+			var activeIds = paused.Select(item => item.Id).ToHashSet(StringComparer.Ordinal);
+			lock (_operations)
+				activeOperations = _operations.Where(pair => activeIds.Contains(pair.Key))
+					.Select(pair => pair.Value).ToArray();
+			foreach (var operation in activeOperations) operation.Cancellation.Cancel();
+			await DrainOperationsAsync(activeOperations.Select(operation => operation.Task), cancellationToken);
 			await PersistStateChangesAsync(paused, NxmDownloadState.Paused, "paused", cancellationToken);
 			_shutdownComplete = true;
 		}

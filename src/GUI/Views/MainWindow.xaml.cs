@@ -555,7 +555,7 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 		return true;
 	}
 
-	private async void MainWindow_Closing(object sender, CancelEventArgs e)
+	private void MainWindow_Closing(object sender, CancelEventArgs e)
 	{
 		if (!ConfirmDiscardUnsavedLoadOrder())
 		{
@@ -566,11 +566,19 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 		e.Cancel = true;
 		if (_nxmShutdownInProgress) return;
 		_nxmShutdownInProgress = true;
+		// Always leave the original WPF closing event before pausing the queue or
+		// opening any failure UI. A synchronously completed shutdown must not call
+		// Close again while Window is still inside its first Closing event.
+		Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal,
+			new Action(() => _ = ShutdownNxmDownloadsAndCloseAsync()));
+	}
+
+	private async Task ShutdownNxmDownloadsAndCloseAsync()
+	{
 		try
 		{
 			await ViewModel.ShutdownNxmDownloadsAsync();
 			_nxmShutdownReady = true;
-			Close();
 		}
 		catch (Exception ex)
 		{
@@ -583,6 +591,7 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 		{
 			_nxmShutdownInProgress = false;
 		}
+		if (_nxmShutdownReady) Close();
 	}
 
 	private void OnClosed()

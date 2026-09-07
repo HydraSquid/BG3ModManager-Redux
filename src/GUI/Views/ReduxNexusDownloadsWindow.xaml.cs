@@ -77,17 +77,24 @@ public partial class ReduxNexusDownloadsWindow : AdonisUI.Controls.AdonisWindow
 		EmptyText.Visibility = hasPending ? Visibility.Collapsed : Visibility.Visible;
 		InstalledEmptyText.Visibility = hasInstalled ? Visibility.Collapsed : Visibility.Visible;
 		ClearInstalledButton.IsEnabled = hasInstalled;
+		ClearInstalledButton.Visibility = DownloadsTabs.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
 	}
 	private void UpdateAssociationButton()
 	{
 		var status = _viewModel.GetNxmAssociationStatus();
-		AssociationButton.Content = status.Status switch
+		AssociationText.Text = status.Status switch
 		{
 			NxmAssociationStatus.Owned => "Disable NXM Links...",
 			NxmAssociationStatus.NeedsRepair => "Repair NXM Links...",
 			NxmAssociationStatus.OwnedByAnotherHandler => "NXM Links Managed Elsewhere",
 			_ => "Enable NXM Links..."
 		};
+		AssociationIcon.SetResourceReference(DivinityModManager.Controls.ReduxIcon.StrokeDataProperty,
+			status.Status == NxmAssociationStatus.Owned ? "Redux.Icon.UnlinkStroke" : "Redux.Icon.LinkStroke");
+		if (status.Status == NxmAssociationStatus.Owned)
+			AssociationIcon.SetResourceReference(ForegroundProperty, "ReduxErrorBrush");
+		else
+			AssociationIcon.ClearValue(ForegroundProperty);
 		AssociationButton.IsEnabled = status.Success && status.Status != NxmAssociationStatus.OwnedByAnotherHandler;
 		AssociationButton.ToolTip = status.Message;
 	}

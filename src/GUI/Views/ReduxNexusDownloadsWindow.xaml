@@ -251,6 +251,11 @@
 							Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 							StrokeData="{StaticResource Redux.Icon.FolderOpen}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Open Folder" /></StackPanel>
 					</Button>
+					<Button x:Name="ClearInstalledButton" Margin="7,0,0,0" Click="ClearInstalledButton_Click"
+						Style="{StaticResource ReduxSecondaryActionButtonStyle}" Visibility="Collapsed">
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,6,0"
+							StrokeData="{StaticResource Redux.Icon.Trash}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Clear Installed History" /></StackPanel>
+					</Button>
 				</StackPanel>
 				<TabControl x:Name="DownloadsTabs" Grid.Row="2" Margin="0" SelectionChanged="DownloadsTabs_SelectionChanged"
 					ItemContainerStyle="{StaticResource ReduxContentTabItemStyle}" Style="{StaticResource ReduxContentTabControlStyle}">
@@ -269,7 +274,6 @@
 					</TabItem>
 					<TabItem Header="Installed">
 						<Grid Margin="0,7,0,0">
-							<Grid.RowDefinitions><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
 							<Border Background="{DynamicResource ReduxListInteriorBrush}" BorderBrush="{DynamicResource ReduxBorderBrush}"
 								BorderThickness="1" CornerRadius="{DynamicResource Redux.CornerRadius.Card}" />
 							<ListBox x:Name="InstalledDownloadsList" Margin="7" Background="Transparent" BorderThickness="0"
@@ -279,18 +283,19 @@
 							<TextBlock x:Name="InstalledEmptyText" HorizontalAlignment="Center" VerticalAlignment="Center"
 								Foreground="{DynamicResource ReduxTextMutedBrush}" TextAlignment="Center" TextWrapping="Wrap"
 								Text="Installed downloads will appear here.&#x0a;Clearing history never uninstalls content." />
-							<Button x:Name="ClearInstalledButton" Grid.Row="1" Margin="0,8,0,0" HorizontalAlignment="Right"
-								Click="ClearInstalledButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
-								<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,6,0"
-									StrokeData="{StaticResource Redux.Icon.Trash}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Clear Installed History" /></StackPanel>
-							</Button>
 						</Grid>
 					</TabItem>
 				</TabControl>
 				<Grid Grid.Row="3" Margin="0,10,0,0">
 					<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
 					<Button x:Name="AssociationButton" HorizontalAlignment="Left" Click="AssociationButton_Click"
-						Style="{StaticResource ReduxSecondaryActionButtonStyle}" Content="Enable NXM Links..." />
+						Style="{StaticResource ReduxSecondaryActionButtonStyle}">
+						<StackPanel Orientation="Horizontal">
+							<controls:ReduxIcon x:Name="AssociationIcon" Width="13" Height="13" Margin="0,0,6,0"
+								StrokeData="{StaticResource Redux.Icon.LinkStroke}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
+							<TextBlock x:Name="AssociationText" Text="Enable NXM Links..." />
+						</StackPanel>
+					</Button>
 					<Button Grid.Column="1" MinWidth="84" IsCancel="True"
 						Click="CloseButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
 						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Close}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Close" /></StackPanel>

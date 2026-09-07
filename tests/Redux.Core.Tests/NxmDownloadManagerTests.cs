@@ -313,15 +313,19 @@ internal sealed class NxmDownloadManagerTests
 
 	public void ShutdownAfterCompletedInstallDoesNotWaitForOperationCleanup()
 	{
-		var fixture = new ManagerFixture();
-		var id = fixture.Manager.EnqueueAsync(new NexusModManagerLink(92, 102, null!, null, null)).GetAwaiter().GetResult();
-		RegressionAssert.True(SpinWait.SpinUntil(() => fixture.Manager.Items.Single().State == NxmDownloadState.Downloaded, 5000));
-		fixture.Manager.SetInstalledAsync(id, "Inactive Mods").GetAwaiter().GetResult();
+		var resolver = new LingeringResolverFactory();
+		var manager = new NxmDownloadManager(System.IO.Path.GetTempPath(), new MemoryStore(), resolver, new FakeTransfer(), 4,
+			() => false, (_, _) => Task.FromResult(true));
+		var id = manager.EnqueueAsync(new NexusModManagerLink(92, 102, null!, null, null)).GetAwaiter().GetResult();
+		RegressionAssert.True(resolver.Started.Wait(5000));
+		manager.SetInstalledAsync(id, "Inactive Mods").GetAwaiter().GetResult();
 
-		fixture.Manager.ShutdownAsync().Wait(TimeSpan.FromSeconds(2));
+		RegressionAssert.True(manager.ShutdownAsync().Wait(TimeSpan.FromSeconds(2)));
 
-		RegressionAssert.Equal(NxmDownloadState.Installed, fixture.Manager.Items.Single().State);
-		RegressionAssert.Equal("Installed to Inactive Mods", fixture.Manager.Items.Single().StatusText);
+		RegressionAssert.Equal(NxmDownloadState.Installed, manager.Items.Single().State);
+		RegressionAssert.Equal("Installed to Inactive Mods", manager.Items.Single().StatusText);
+		resolver.Release.Set();
+		manager.DrainAsync().GetAwaiter().GetResult();
 	}
 
 	public void ClearingInstalledHistoryKeepsOtherQueueItems()
@@ -520,6 +524,22 @@ internal sealed class NxmDownloadManagerTests
 			await Task.Delay(Timeout.Infinite, cancellationToken);
 			throw new InvalidOperationException();
 		}
+		public Task<Uri> ResolveDownloadUriAsync(NexusModManagerLink link, CancellationToken cancellationToken) =>
+			Task.FromResult(new Uri("https://example.test/file"));
+	}
+
+	private sealed class LingeringResolverFactory : INxmResolverFactory
+	{
+		public ManualResetEventSlim Started { get; } = new(false);
+		public ManualResetEventSlim Release { get; } = new(false);
+
+		public async Task<NxmDownloadDescriptor> ResolveMetadataAsync(NexusModManagerLink link, CancellationToken cancellationToken)
+		{
+			Started.Set();
+			await Task.Run(() => Release.Wait());
+			return new NxmDownloadDescriptor(link.ModId, link.FileId, "Mod", "Author", "File", "mod.zip", "1", 4, false);
+		}
+
 		public Task<Uri> ResolveDownloadUriAsync(NexusModManagerLink link, CancellationToken cancellationToken) =>
 			Task.FromResult(new Uri("https://example.test/file"));
 	}

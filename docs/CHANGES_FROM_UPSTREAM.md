@@ -209,15 +209,17 @@ atomic persistence with recovery for corrupt or interrupted state, bounded FIFO 
 pause/resume/retry controls, validated range requests, transfer limits, and publish-by-rename.
 Completed files receive a SHA-256 identity and are revalidated before installation. Temporary NXM
 authorization keys and signed download URLs remain memory-only and are excluded from settings,
-queue data, logs, and error details.
+queue data, logs, and error details. On application exit, Redux pauses and persists only active
+queue work; finished downloads and installed-history records cannot hold shutdown open.
 
 **Nexus Downloads** is available from Tools, Quick Access, the Setup toolbar, and the assignable
 shortcut system. Ordinary packages enter the established inactive-mod review and import path;
 reviewed native packages use the guarded game-directory transaction; and save packages use Save
 Game Manager. Mixed, ambiguous, corrupt, or unsupported content is blocked without filesystem
 changes. Installed entries move into a separate history tab that can be cleared without deleting
-the downloaded archive or uninstalling content. Downloading or installing never activates,
-reorders, or syncs a mod automatically.
+the downloaded archive or uninstalling content. The clear-history action is available with the
+Installed view rather than consuming space inside the history list. Downloading or installing never
+activates, reorders, or syncs a mod automatically.
 
 ## Filesystem and privacy hardening
 

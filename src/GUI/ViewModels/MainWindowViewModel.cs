@@ -272,6 +272,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	public string SelectedModCategoryColor => GetCategoryColor(SelectedModCategory);
 	public string SelectedModCategoryIcon => GetCategoryIcon(SelectedModCategory);
 	public bool SelectedModCategoryHasIcon => !String.IsNullOrWhiteSpace(SelectedModCategoryIcon);
+	public string OverrideModsCategoryColor => GetCategoryColor("Overrides");
 	[Reactive] public bool IsCategoriesExpanded { get; set; } = true;
 	[Reactive] public bool IsAlwaysLoadedExpanded { get; set; } = true;
 	[Reactive] public bool IsInactiveModsExpanded { get; set; } = true;
@@ -8713,6 +8714,7 @@ Directory the zip will be extracted to:
 
 	private void RefreshModCategories()
 	{
+		this.RaisePropertyChanged(nameof(OverrideModsCategoryColor));
 		var allMods = ActiveMods.Concat(InactiveMods).Concat(ForceLoadedMods)
 			.Where(mod => !mod.IsVisualDivider)
 			.GroupBy(mod => mod.UUID, StringComparer.OrdinalIgnoreCase)

@@ -1958,22 +1958,37 @@
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
 					</Grid.RowDefinitions>
-					<Border x:Name="AlwaysLoadedHeaderGrid" Margin="5,3,5,2" Padding="8,3"
+					<Border x:Name="AlwaysLoadedHeaderGrid" Margin="6,3,6,7" Padding="6,1"
 						Background="{DynamicResource ReduxSurfaceMutedBrush}"
 						BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1"
 						CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
+						SnapsToDevicePixels="True"
 						ToolTip="Always loaded while installed - outside the normal load order">
 						<Grid>
 							<Grid.ColumnDefinitions>
 								<ColumnDefinition Width="Auto" />
+								<ColumnDefinition Width="Auto" />
 								<ColumnDefinition Width="*" />
 								<ColumnDefinition Width="Auto" />
 							</Grid.ColumnDefinitions>
-							<c:ReduxIcon Width="12" Height="12" Margin="0,0,6,0" VerticalAlignment="Center"
-								IconKey="shield-alert" Foreground="{DynamicResource ReduxErrorBrush}" />
+							<c:ReduxIcon Width="13" Height="13" Margin="0,0,7,0" VerticalAlignment="Center"
+								IconKey="shield-alert" Foreground="{Binding OverrideModsCategoryColor, Converter={StaticResource StringToSolidBrushConverter}}"
+								Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
 							<TextBlock Grid.Column="1" VerticalAlignment="Center"
-								FontSize="{DynamicResource Redux.FontSize.12}" FontWeight="SemiBold" Text="Override Mods" />
-							<ToggleButton x:Name="AlwaysLoadedToggleButton" Grid.Column="2"
+								FontSize="{DynamicResource Redux.FontSize.12}" FontWeight="SemiBold" Text="Override Mods">
+								<TextBlock.Style>
+									<Style TargetType="{x:Type TextBlock}">
+										<Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" />
+										<Style.Triggers>
+											<DataTrigger Binding="{Binding Settings.UseCategoryColorsForSidebarText}" Value="True">
+												<Setter Property="Foreground" Value="{Binding OverrideModsCategoryColor, Converter={StaticResource StringToSolidBrushConverter}}" />
+											</DataTrigger>
+										</Style.Triggers>
+									</Style>
+								</TextBlock.Style>
+							</TextBlock>
+							<ToggleButton x:Name="AlwaysLoadedToggleButton" Grid.Column="3" Width="24" Height="24"
+								AutomationProperties.Name="Collapse or expand Override Mods"
 								Style="{StaticResource ModDetailsToggleStyle}"
 								IsChecked="{Binding IsAlwaysLoadedExpanded, Mode=TwoWay}"
 								ToolTip="Collapse or expand Override Mods" />

@@ -77,8 +77,19 @@ public class ManualDropInfo : IDropInfo
 
 public class ModListDropHandler : DefaultDropHandler
 {
+	private static bool IsCategoryPayload(object data) =>
+		data is ModCategoryFilterItem ||
+		data is IDataObject dataObject && dataObject.GetDataPresent(typeof(ModCategoryFilterItem));
+
 	public override void DragOver(IDropInfo dropInfo)
 	{
+		if (IsCategoryPayload(dropInfo?.Data))
+		{
+			dropInfo.Effects = DragDropEffects.None;
+			dropInfo.DropTargetAdorner = null;
+			return;
+		}
+
 		if (!_viewModel.AllowDrop)
 		{
 			DivinityApp.Log($"[AllowDrop] IsRefreshing({_viewModel.IsRefreshing}) IsInitialized({_viewModel.IsInitialized}) IsLoadingOrder({_viewModel.IsLoadingOrder})");
@@ -115,6 +126,12 @@ public class ModListDropHandler : DefaultDropHandler
 		_viewModel.IsDragging = false;
 
 		if (dropInfo == null) return;
+		if (IsCategoryPayload(dropInfo.Data))
+		{
+			dropInfo.Effects = DragDropEffects.None;
+			dropInfo.DropTargetAdorner = null;
+			return;
+		}
 
 		if (!_viewModel.AllowDrop)
 		{

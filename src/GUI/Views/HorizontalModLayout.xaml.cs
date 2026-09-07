@@ -491,6 +491,14 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 
 	private void ModListView_PreviewDragOver(object sender, DragEventArgs e)
 	{
+		if (e.Data.GetDataPresent(typeof(ModCategoryFilterItem)))
+		{
+			ClearModListDropIndicator();
+			e.Effects = DragDropEffects.None;
+			e.Handled = true;
+			return;
+		}
+
 		if (e.Data.GetDataPresent(DataFormats.FileDrop))
 		{
 			ClearModListDropIndicator();
@@ -531,6 +539,14 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 
 	private void ModListView_PreviewDrop(object sender, DragEventArgs e)
 	{
+		if (e.Data.GetDataPresent(typeof(ModCategoryFilterItem)))
+		{
+			ClearModListDropIndicator();
+			e.Effects = DragDropEffects.None;
+			e.Handled = true;
+			return;
+		}
+
 		ViewModel.DragHandler?.CompleteDragTracking();
 		ScheduleClearModListDropIndicator(sender as ListView);
 	}

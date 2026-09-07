@@ -29,13 +29,13 @@ public class AppKeys : ReactiveObject
 			["Help"] = "Help and updates"
 		};
 
-	[MenuSettings("File", "Import Mod...", true)]
+	[MenuSettings("File", "Install Mod...", true, "Install a mod from a supported package or archive.")]
 	public Hotkey ImportMod { get; private set; } = new Hotkey(Key.O, ModifierKeys.Control);
 
-	[MenuSettings("File", "Save Current Order")]
+	[MenuSettings("File", "Save Current Order", false, "Save changes to the selected load order.")]
 	public Hotkey Save { get; private set; } = new Hotkey(Key.S, ModifierKeys.Control);
 
-	[MenuSettings("File", "Save Load Order to File...")]
+	[MenuSettings("File", "Save Load Order to File...", false, "Save the current order as a separate load-order file.")]
 	public Hotkey SaveAs { get; private set; } = new Hotkey(Key.S, ModifierKeys.Control | ModifierKeys.Alt);
 
 	[MenuSettings("File", "Save as New Load Order...")]
@@ -103,7 +103,7 @@ public class AppKeys : ReactiveObject
 	[MenuSettings("File", "Back Up Active Mods to ZIP...")]
 	public Hotkey ExportOrderToZip { get; private set; } = new Hotkey(Key.R, ModifierKeys.Control);
 
-	[MenuSettings("File", "Refresh Mods")]
+	[MenuSettings("File", "Refresh Mods", false, "Rescan the configured Mods folder and refresh the mod lists.")]
 	public Hotkey Refresh { get; private set; } = new Hotkey(Key.F5);
 
 	[MenuSettings("File", "Refresh Mod Updates")]
@@ -164,16 +164,16 @@ public class AppKeys : ReactiveObject
 	[MenuSettings("Tools", "Show or Hide Mod Updates")]
 	public Hotkey ToggleUpdatesView { get; private set; } = new Hotkey();
 
-	[MenuSettings("Go", "Open Mods Folder")]
+	[MenuSettings("Go", "Open Mods Folder", false, "Open the configured Baldur's Gate 3 Mods folder.")]
 	public Hotkey OpenModsFolder { get; private set; } = new Hotkey(Key.D1, ModifierKeys.Control);
 
 	[MenuSettings("Go", "Open Game Folder")]
 	public Hotkey OpenGameFolder { get; private set; } = new Hotkey(Key.D2, ModifierKeys.Control);
 
-	[MenuSettings("Go", "Open Script Extender Logs Folder")]
+	[MenuSettings("Go", "Open Script Extender Logs Folder", false, "Open the folder containing Script Extender logs.")]
 	public Hotkey OpenLogsFolder { get; private set; } = new Hotkey(Key.D4, ModifierKeys.Control);
 
-	[MenuSettings("Go", "Launch Game")]
+	[MenuSettings("Go", "Launch Game", false, "Launch Baldur's Gate 3 using the configured launch method.")]
 	public Hotkey LaunchGame { get; private set; } = new Hotkey(Key.G, ModifierKeys.Control | ModifierKeys.Shift);
 
 	[MenuSettings("Tools", "Extract Selected Mods to...")]
@@ -328,6 +328,7 @@ public class AppKeys : ReactiveObject
 			hotkey.AddCanExecuteCondition(baseCanExecute);
 			hotkey.ID = prop.Name;
 			hotkey.DisplayName = menuSettings.DisplayName;
+			hotkey.Description = menuSettings.Tooltip;
 			hotkey.Category = ShortcutCategoryNames.TryGetValue(menuSettings.Parent, out var categoryName)
 				? categoryName
 				: menuSettings.Parent;

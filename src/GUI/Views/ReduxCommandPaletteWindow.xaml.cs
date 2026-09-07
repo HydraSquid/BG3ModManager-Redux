@@ -148,7 +148,7 @@ public partial class ReduxCommandPaletteWindow : AdonisUI.Controls.AdonisWindow
 				return new ReduxCommandPaletteItem(
 					item.Settings.DisplayName,
 					item.Hotkey.Category,
-					item.Settings.Tooltip,
+					item.Hotkey.Description,
 					item.Hotkey.Key == Key.None ? String.Empty : item.Hotkey.DisplayBindingText,
 					"terminal",
 					() => command.Execute(null),

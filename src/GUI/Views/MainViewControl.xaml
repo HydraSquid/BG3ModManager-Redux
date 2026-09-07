@@ -1273,13 +1273,13 @@
 									<Button x:Name="ImportModButton"
 										Margin="1,0,7,0"
 										Style="{StaticResource ToolbarWorkflowButtonStyle}"
-										ToolTip="Install a Mod from an Archive">
+										ToolTip="{Binding Keys.ImportMod.CommandToolTip}">
 										<StackPanel Orientation="Horizontal">
 											<controls:ReduxIcon Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.AddCircle}" Style="{StaticResource ToolbarWorkflowIconStyle}" />
 											<TextBlock Text="Install Mod" />
 										</StackPanel>
 									</Button>
-									<Button x:Name="OpenModsFolderButton" Style="{StaticResource ToolbarUtilityButtonStyle}" ToolTip="Open Mods Folder">
+									<Button x:Name="OpenModsFolderButton" Style="{StaticResource ToolbarUtilityButtonStyle}" ToolTip="{Binding Keys.OpenModsFolder.CommandToolTip}">
 										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" />
 										<Button.ContextMenu>
 											<ContextMenu>
@@ -1387,14 +1387,14 @@
 									<Button x:Name="SaveButton"
 										AutomationProperties.Name="Save current load order"
 										Style="{StaticResource ToolbarCompactIconButtonStyle}"
-										ToolTip="Save changes to the selected load order">
+										ToolTip="{Binding Keys.Save.CommandToolTip}">
 										<controls:ReduxIcon x:Name="SaveButtonIcon"
 											StrokeData="{StaticResource Redux.Icon.Save}" />
 									</Button>
 									<Button x:Name="SaveAsOrderButton"
 										AutomationProperties.Name="Save as a new load order"
 										Style="{StaticResource ToolbarCompactIconButtonStyle}"
-										ToolTip="Save as a new named load order">
+										ToolTip="{Binding Keys.SaveAs.CommandToolTip}">
 										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Duplicate}" />
 									</Button>
 									<Button Command="{Binding DeleteOrderCommand}"
@@ -1530,19 +1530,19 @@
 									<Button x:Name="UndoLoadOrderButton"
 										AutomationProperties.Name="Undo last action"
 										Style="{StaticResource ToolbarUtilityButtonStyle}"
-										ToolTip="Undo Last Action (Ctrl+Z)">
+										ToolTip="{Binding Keys.UndoLoadOrderChange.CommandToolTip}">
 										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Undo}" />
 									</Button>
 									<Button x:Name="RedoLoadOrderButton"
 										AutomationProperties.Name="Redo last action"
 										Style="{StaticResource ToolbarUtilityButtonStyle}"
-										ToolTip="Redo Last Action (Ctrl+Y)">
+										ToolTip="{Binding Keys.RedoLoadOrderChange.CommandToolTip}">
 										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Redo}" />
 									</Button>
-									<Button x:Name="RefreshButton" Style="{StaticResource ToolbarUtilityButtonStyle}" ToolTip="Refresh Mods">
+									<Button x:Name="RefreshButton" Style="{StaticResource ToolbarUtilityButtonStyle}" ToolTip="{Binding Keys.Refresh.CommandToolTip}">
 										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.RefreshStroke}" />
 									</Button>
-									<Button x:Name="OpenExtenderLogsFolderButton" Style="{StaticResource ToolbarUtilityButtonStyle}" ToolTip="Open Logs Folder">
+									<Button x:Name="OpenExtenderLogsFolderButton" Style="{StaticResource ToolbarUtilityButtonStyle}" ToolTip="{Binding Keys.OpenLogsFolder.CommandToolTip}">
 										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.DocumentText}" />
 										<Button.ContextMenu>
 											<ContextMenu>
@@ -1646,7 +1646,7 @@
 									ToolTip="Choose what happens after launching the game." />
 									<Button x:Name="OpenGameButton"
 										Style="{StaticResource ToolbarWorkflowButtonStyle}"
-										ToolTip="Launch Game (Ctrl+Shift+G)">
+										ToolTip="{Binding Keys.LaunchGame.CommandToolTip}">
 										<StackPanel Orientation="Horizontal">
 											<controls:ReduxIcon Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.GameController}" Style="{StaticResource ToolbarWorkflowIconStyle}" />
 											<TextBlock Text="Launch Game" />

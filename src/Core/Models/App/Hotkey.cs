@@ -22,9 +22,22 @@ public class Hotkey : ReactiveObject, IHotkey
 
 	[Reactive] public string DisplayName { get; set; }
 	[Reactive] public string Category { get; set; }
+	[Reactive] public string Description { get; set; }
 
 	private readonly ObservableAsPropertyHelper<string> _tooltip;
 	public string ToolTip => _tooltip.Value;
+	public string CommandToolTip
+	{
+		get
+		{
+			var title = Key == Key.None
+				? DisplayName
+				: $"{DisplayName} ({DisplayBindingText})";
+			return String.IsNullOrWhiteSpace(Description)
+				? title
+				: $"{title}\n{Description}";
+		}
+	}
 
 	[Reactive] public string DisplayBindingText { get; private set; }
 	public string MenuDisplayBindingText => Key == Key.None ? String.Empty : DisplayBindingText;
@@ -112,6 +125,7 @@ public class Hotkey : ReactiveObject, IHotkey
 	{
 		DisplayName = "";
 		Category = "";
+		Description = "";
 		Key = key;
 		Modifiers = modifiers;
 		_defaultKey = key;
@@ -140,6 +154,13 @@ public class Hotkey : ReactiveObject, IHotkey
 		_tooltip = this.WhenAnyValue(x => x.DisplayName, x => x.IsDefault)
 			.Select(x => !x.Item2 ? $"{x.Item1} (Modified)" : x.Item1)
 			.ToProperty(this, nameof(ToolTip), scheduler: RxApp.MainThreadScheduler);
+
+		this.WhenAnyValue(
+				x => x.DisplayName,
+				x => x.Description,
+				x => x.DisplayBindingText,
+				x => x.Key)
+			.Subscribe(_ => this.RaisePropertyChanged(nameof(CommandToolTip)));
 
 		var canReset = isDefaultObservable.Select(b => !b);
 		var canClear = this.WhenAnyValue(x => x.Key, x => x.Modifiers, (k, m) => k != Key.None);

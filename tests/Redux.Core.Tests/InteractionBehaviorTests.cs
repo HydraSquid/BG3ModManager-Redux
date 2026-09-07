@@ -1,6 +1,7 @@
 using DivinityModManager.AppServices;
 using DivinityModManager.Controls;
 using DivinityModManager.Models;
+using DivinityModManager.Models.App;
 using DivinityModManager.Models.Modio;
 using DivinityModManager.Util;
 
@@ -147,5 +148,23 @@ public sealed class InteractionBehaviorTests
 		RegressionAssert.True(ReduxMenuItemExtension.IsPositiveCommitAction("Export Redux Modlist..."));
 		RegressionAssert.False(ReduxMenuItemExtension.IsPositiveCommitAction("Save Game Manager..."));
 		RegressionAssert.False(ReduxMenuItemExtension.IsPositiveCommitAction("Save Games Folder"));
+	}
+
+	public void CommandTooltipUsesLiveShortcutAndSharedDescription()
+	{
+		var hotkey = new Hotkey(System.Windows.Input.Key.S, System.Windows.Input.ModifierKeys.Control)
+		{
+			DisplayName = "Save Current Order",
+			Description = "Save changes to the selected load order."
+		};
+
+		RegressionAssert.Equal(
+			"Save Current Order (Ctrl + S)\nSave changes to the selected load order.",
+			hotkey.CommandToolTip);
+
+		hotkey.Clear();
+		RegressionAssert.Equal(
+			"Save Current Order\nSave changes to the selected load order.",
+			hotkey.CommandToolTip);
 	}
 }

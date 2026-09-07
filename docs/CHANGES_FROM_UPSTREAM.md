@@ -25,6 +25,7 @@ claim that every visible behavior originated in Redux.
 | Portability | Existing order formats | `.bg3redux` Modlists for selected Redux presentation and public source data |
 | Saves | Profile and save-path discovery | Profile-aware Save Game Manager with campaign grouping and guarded imports |
 | Game-directory mods | Game-path and Script Extender foundations | Reviewed native-package catalog with staged placement, ownership, rollback, and a separate manager |
+| Nexus downloads | Nexus metadata and API foundations | Optional NXM protocol handling, persistent resumable queue, verified archives, and guarded installer handoff |
 | Interface | Existing WPF application and accessibility foundations | Redux design system, themes, custom appearance, Quick Access, motion controls |
 
 ## The upstream core Redux preserves
@@ -194,6 +195,29 @@ The initial catalog is intentionally narrow and based on reviewed archive layout
 layout and executable architecture does not establish publisher provenance or guarantee that a mod
 is safe for a particular system. Script Extender continues to use Redux's existing dedicated
 workflow.
+
+## Nexus Mod Manager downloads
+
+Redux adds optional per-user `nxm://` registration with an ownership marker, repair support, and
+restoration of a previous handler where possible. Non-BG3 links are forwarded only when the saved
+handler can be invoked safely. BG3 links are delivered to the existing Redux process rather than
+starting a second full application instance.
+
+The Redux-owned download pipeline strictly separates link receipt, metadata resolution, transfer,
+package inspection, installation, activation, ordering, and game sync. Its versioned queue uses
+atomic persistence with recovery for corrupt or interrupted state, bounded FIFO concurrency,
+pause/resume/retry controls, validated range requests, transfer limits, and publish-by-rename.
+Completed files receive a SHA-256 identity and are revalidated before installation. Temporary NXM
+authorization keys and signed download URLs remain memory-only and are excluded from settings,
+queue data, logs, and error details.
+
+**Nexus Downloads** is available from Tools, Quick Access, the Setup toolbar, and the assignable
+shortcut system. Ordinary packages enter the established inactive-mod review and import path;
+reviewed native packages use the guarded game-directory transaction; and save packages use Save
+Game Manager. Mixed, ambiguous, corrupt, or unsupported content is blocked without filesystem
+changes. Installed entries move into a separate history tab that can be cleared without deleting
+the downloaded archive or uninstalling content. Downloading or installing never activates,
+reorders, or syncs a mod automatically.
 
 ## Filesystem and privacy hardening
 

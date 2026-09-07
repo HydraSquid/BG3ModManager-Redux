@@ -94,6 +94,7 @@ public partial class MainViewControl : MainViewControlViewBase
 			[nameof(AppKeys.ToggleUpdatesView)] = ("Redux.Icon.RefreshStroke", true, null),
 			[nameof(AppKeys.OpenSaveGameManager)] = ("Redux.Icon.BookOpen", true, null),
 			[nameof(AppKeys.OpenGameDirectoryModManager)] = ("Redux.Icon.Blocks", true, null),
+			[nameof(AppKeys.OpenNexusDownloads)] = ("Redux.Icon.Download", true, null),
 			[nameof(AppKeys.ExtractSelectedMods)] = ("Redux.Icon.Archive", true, null),
 			[nameof(AppKeys.ExtractSelectedAdventure)] = ("Redux.Icon.Archive", true, null),
 			[nameof(AppKeys.ToggleVersionGeneratorWindow)] = ("Redux.Icon.Build", true, null),
@@ -213,6 +214,19 @@ public partial class MainViewControl : MainViewControlViewBase
 		}
 
 		new ReduxSaveManagerWindow(main, ViewModel, pendingImportPaths).ShowDialog();
+	}
+
+	public bool ShowSaveManagerForImport(string pendingImportPath)
+	{
+		if (ViewModel.SelectedProfile?.Folder == null)
+		{
+			ViewModel.ShowAlert("Select a BG3 player profile before installing saves.", AlertType.Warning);
+			return false;
+		}
+
+		var window = new ReduxSaveManagerWindow(main, ViewModel, [pendingImportPath]);
+		window.ShowDialog();
+		return window.ImportedSaveCount > 0;
 	}
 
 	private void SaveGameManagerButton_Click(object sender, RoutedEventArgs e) => ShowSaveManager();

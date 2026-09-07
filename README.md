@@ -139,6 +139,26 @@ or removal.
 > source you trust, close BG3 first, and use the manager's status and recovery information instead
 > of manually deleting Redux-owned files.
 
+### Nexus Mod Manager downloads
+
+Redux can optionally register itself for Baldur's Gate 3 `nxm://` links. Enable online mod
+information, add a Nexus Mods API key, and enable NXM links during onboarding or in Preferences.
+Choosing **Mod Manager Download** on Nexus then sends the link to the existing Redux process and
+opens **Nexus Downloads**. An optional preference controls whether protocol activations bring that
+window to the front.
+
+Downloads are queued in a managed folder with bounded concurrency, visible progress,
+pause/resume/retry behavior, restart recovery, and a verified SHA-256 archive identity. Free-user
+downloads that lose their temporary authorization ask for a new link without saving the temporary
+key or signed URL. Completed packages remain separate from installation until **Install** is
+chosen. Redux then verifies the archive again and routes ordinary PAKs to Inactive Mods, reviewed
+native packages through Game-Directory Mod Manager, and saves through Save Game Manager. It never
+activates, reorders, or syncs a downloaded mod automatically.
+
+Completed installations move to the **Installed** tab with their destination. Clearing installed
+history keeps both the installed content and downloaded archive; removing an uninstalled completed
+download explicitly offers to move its archive to the Recycle Bin.
+
 ### Redux Modlists
 
 A `.bg3redux` Modlist can carry a saved order plus selected Redux presentation data:

@@ -190,6 +190,13 @@ public class AppKeys : ReactiveObject
 		"Install, review, and safely remove supported native or root-level BG3 mods outside the PAK load order.")]
 	public Hotkey OpenGameDirectoryModManager { get; private set; } = new Hotkey(Key.None);
 
+	[MenuSettings(
+		"Tools",
+		"Nexus Downloads...",
+		false,
+		"View, pause, resume, and review files received through Nexus Mod Manager Download links.")]
+	public Hotkey OpenNexusDownloads { get; private set; } = new Hotkey(Key.None);
+
 	[MenuSettings("Go", "Open Mods Folder", false, "Open the configured Baldur's Gate 3 Mods folder.")]
 	public Hotkey OpenModsFolder { get; private set; } = new Hotkey(Key.D1, ModifierKeys.Control);
 

@@ -180,6 +180,22 @@ public class DivinityModManagerSettings : ReactiveObject
 	[DataMember, Reactive] public bool HasSeenReduxWelcome { get; set; }
 
 	[DefaultValue("")]
+	[SettingsEntry("Nexus link registration owner", "Private ownership marker used to restore the previous Windows NXM handler.", HideFromUI = true)]
+	[DataMember, Reactive] public string NxmAssociationOwnerId { get; set; } = String.Empty;
+
+	[DefaultValue(3)]
+	[SettingsEntry("Concurrent Nexus downloads", "Maximum simultaneous Nexus file transfers, from 1 through 6.")]
+	[DataMember, Reactive] public int NxmActiveDownloadLimit { get; set; } = 3;
+
+	[DefaultValue(true)]
+	[SettingsEntry("Confirm Nexus downloads", "Review Nexus file details before adding a new download to the queue.")]
+	[DataMember, Reactive] public bool ConfirmCleanNxmDownloads { get; set; } = true;
+
+	[DefaultValue(true)]
+	[SettingsEntry("Bring Nexus downloads forward", "Bring Redux and its Downloads window to the front when Windows sends a Nexus Mod Manager link.")]
+	[DataMember, Reactive] public bool BringNxmDownloadsToFront { get; set; } = true;
+
+	[DefaultValue("")]
 	[DataMember, Reactive] public string ActiveCustomThemeId { get; set; } = String.Empty;
 
 	[DataMember, Reactive] public ObservableCollection<ReduxCustomTheme> CustomThemes { get; set; } = new();

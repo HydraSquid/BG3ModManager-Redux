@@ -44,6 +44,14 @@ internal static class Program
 		var loadOrderOrganizer = new LoadOrderAdvisorOrganizerTests();
 		var saveGames = new SaveGameServiceTests();
 		var nativeMods = new ReduxGameDirectoryInstallServiceTests();
+		var nxmLinks = new NexusModManagerLinkTests();
+		var nxmResolver = new NexusNxmResolverTests();
+		var nxmActivation = new NxmActivationTests();
+		var nxmAssociation = new NxmAssociationTests();
+		var nxmManager = new NxmDownloadManagerTests();
+		var nxmScheduler = new NxmDownloadSchedulerTests();
+		var nxmStore = new NxmDownloadStoreTests();
+		var nxmTransfer = new NxmTransferTests();
 		var tests = new (string Name, Action Run)[]
 		{
 			(nameof(interactionBehavior.SaveCampaignAnimationReplacesFrozenTransforms), interactionBehavior.SaveCampaignAnimationReplacesFrozenTransforms),
@@ -297,7 +305,87 @@ internal static class Program
 			(nameof(nativeMods.RelatedProjectUpdateKeepsOneReduxOwnershipRecord), nativeMods.RelatedProjectUpdateKeepsOneReduxOwnershipRecord),
 			(nameof(nativeMods.MixedPackageStagesOnlyNativeFilesAndReportsItsCompanionPak), nativeMods.MixedPackageStagesOnlyNativeFilesAndReportsItsCompanionPak),
 			(nameof(nativeMods.TrueThirdPersonCameraRefusesLegacyCameraFiles), nativeMods.TrueThirdPersonCameraRefusesLegacyCameraFiles),
-			(nameof(nativeMods.RestoreRefusesActivePluginsThenRestoresOnlyOwnedFiles), nativeMods.RestoreRefusesActivePluginsThenRestoresOnlyOwnedFiles)
+			(nameof(nativeMods.RestoreRefusesActivePluginsThenRestoresOnlyOwnedFiles), nativeMods.RestoreRefusesActivePluginsThenRestoresOnlyOwnedFiles),
+			(nameof(nxmLinks.ParsesAuthenticatedBg3Link), nxmLinks.ParsesAuthenticatedBg3Link),
+			(nameof(nxmLinks.ParsesPremiumBg3LinkWithoutAuthorizationQuery), nxmLinks.ParsesPremiumBg3LinkWithoutAuthorizationQuery),
+			(nameof(nxmLinks.RejectsWrongSchemeOrGame), nxmLinks.RejectsWrongSchemeOrGame),
+			(nameof(nxmLinks.RejectsUnsafeAuthorityAndPathForms), nxmLinks.RejectsUnsafeAuthorityAndPathForms),
+			(nameof(nxmLinks.RejectsMalformedOrUnexpectedQueryData), nxmLinks.RejectsMalformedOrUnexpectedQueryData),
+			(nameof(nxmLinks.RejectsExpiredAuthorization), nxmLinks.RejectsExpiredAuthorization),
+			(nameof(nxmLinks.RejectsOversizedInput), nxmLinks.RejectsOversizedInput),
+			(nameof(nxmLinks.RedactsAuthorizationValues), nxmLinks.RedactsAuthorizationValues),
+			(nameof(nxmResolver.FreeUserResolutionUsesExactFileAndAuthorization), nxmResolver.FreeUserResolutionUsesExactFileAndAuthorization),
+			(nameof(nxmResolver.PremiumResolutionDoesNotForwardShortLivedAuthorization), nxmResolver.PremiumResolutionDoesNotForwardShortLivedAuthorization),
+			(nameof(nxmResolver.FreeUserRequiresFreshMatchingAuthorization), nxmResolver.FreeUserRequiresFreshMatchingAuthorization),
+			(nameof(nxmResolver.ResolutionRejectsWrongFileAndUnsafeDownloadUri), nxmResolver.ResolutionRejectsWrongFileAndUnsafeDownloadUri),
+			(nameof(nxmResolver.ThirdPartyFailureDoesNotExposeSignedUrl), nxmResolver.ThirdPartyFailureDoesNotExposeSignedUrl),
+			(nameof(nxmActivation.SameUserPipeDeliversValidatedLink), nxmActivation.SameUserPipeDeliversValidatedLink),
+			(nameof(nxmActivation.OversizedMessageIsRejectedBeforeConnection), nxmActivation.OversizedMessageIsRejectedBeforeConnection),
+			(nameof(nxmActivation.ListenerSurvivesMalformedClientMessage), nxmActivation.ListenerSurvivesMalformedClientMessage),
+			(nameof(nxmAssociation.EnableAndDisableRestoresPriorUserHandler), nxmAssociation.EnableAndDisableRestoresPriorUserHandler),
+			(nameof(nxmAssociation.DisableRevealsMachineHandlerWhenNoUserHandlerExisted), nxmAssociation.DisableRevealsMachineHandlerWhenNoUserHandlerExisted),
+			(nameof(nxmAssociation.RepairUpdatesOnlyOwnedMovedRegistration), nxmAssociation.RepairUpdatesOnlyOwnedMovedRegistration),
+			(nameof(nxmAssociation.DisableNeverOverwritesAnInterveningHandler), nxmAssociation.DisableNeverOverwritesAnInterveningHandler),
+			(nameof(nxmAssociation.DifferentReduxInstallationCannotRepairOrDisableOwner), nxmAssociation.DifferentReduxInstallationCannotRepairOrDisableOwner),
+			(nameof(nxmAssociation.RegistrySnapshotPreservesValueKindsAndSubkeys), nxmAssociation.RegistrySnapshotPreservesValueKindsAndSubkeys),
+			(nameof(nxmAssociation.ProductionRegistryStoreRoundTripsOnlyDisposableHkcuPaths), nxmAssociation.ProductionRegistryStoreRoundTripsOnlyDisposableHkcuPaths),
+			(nameof(nxmAssociation.FailedEnableRestoresPriorHandler), nxmAssociation.FailedEnableRestoresPriorHandler),
+			(nameof(nxmAssociation.FailedDisableKeepsOwnedHandlerAndBackup), nxmAssociation.FailedDisableKeepsOwnedHandlerAndBackup),
+			(nameof(nxmAssociation.ReduxShapedInterveningCommandIsNotOwned), nxmAssociation.ReduxShapedInterveningCommandIsNotOwned),
+			(nameof(nxmAssociation.MissingExecutableMarkerIsAnOwnershipConflict), nxmAssociation.MissingExecutableMarkerIsAnOwnershipConflict),
+			(nameof(nxmAssociation.PreviousHandlerCommandIsParsedWithoutShell), nxmAssociation.PreviousHandlerCommandIsParsedWithoutShell),
+			(nameof(nxmAssociation.PreviousHandlerRejectsEmbeddedPlaceholderAndReduxRecursion), nxmAssociation.PreviousHandlerRejectsEmbeddedPlaceholderAndReduxRecursion),
+			(nameof(nxmManager.DuplicateLinkFocusesExistingItem), nxmManager.DuplicateLinkFocusesExistingItem),
+			(nameof(nxmManager.ResolvedItemsDownloadWithoutBlockingIngress), nxmManager.ResolvedItemsDownloadWithoutBlockingIngress),
+			(nameof(nxmManager.RemovingResolvingItemCancelsItBeforeTransfer), nxmManager.RemovingResolvingItemCancelsItBeforeTransfer),
+			(nameof(nxmManager.CancelWinsRaceWithTransferCompletion), nxmManager.CancelWinsRaceWithTransferCompletion),
+			(nameof(nxmManager.HttpProgressTotalReplacesMetadataEstimate), nxmManager.HttpProgressTotalReplacesMetadataEstimate),
+			(nameof(nxmManager.PauseWaitsForTheOwnedTransferAndRejectsItsLateCompletion), nxmManager.PauseWaitsForTheOwnedTransferAndRejectsItsLateCompletion),
+			(nameof(nxmManager.DisablingNetworkWaitsForTransfersAndReenableDoesNotResumeThem), nxmManager.DisablingNetworkWaitsForTransfersAndReenableDoesNotResumeThem),
+			(nameof(nxmManager.EnqueueSaveFailureDoesNotPublishTheItem), nxmManager.EnqueueSaveFailureDoesNotPublishTheItem),
+			(nameof(nxmManager.ReservedWindowsFilenameUsesAStableSafeName), nxmManager.ReservedWindowsFilenameUsesAStableSafeName),
+			(nameof(nxmManager.InitializeRestartsPersistedQueuedDownload), nxmManager.InitializeRestartsPersistedQueuedDownload),
+			(nameof(nxmManager.FailedPauseSaveDoesNotPublishPausedState), nxmManager.FailedPauseSaveDoesNotPublishPausedState),
+			(nameof(nxmManager.PermanentTransferFailureDoesNotEnterRetryLoop), nxmManager.PermanentTransferFailureDoesNotEnterRetryLoop),
+			(nameof(nxmManager.MetadataCompletionOrderDoesNotChangeQueueFifo), nxmManager.MetadataCompletionOrderDoesNotChangeQueueFifo),
+			(nameof(nxmManager.ShutdownRejectsLateEnqueue), nxmManager.ShutdownRejectsLateEnqueue),
+			(nameof(nxmManager.FreshLinkSaveFailureDoesNotPublishResolvingState), nxmManager.FreshLinkSaveFailureDoesNotPublishResolvingState),
+			(nameof(nxmManager.ResolvedMetadataIsDurableBeforeConfirmationCompletes), nxmManager.ResolvedMetadataIsDurableBeforeConfirmationCompletes),
+			(nameof(nxmManager.InitializeHydratesLegacyPlaceholderWithoutChangingFreshLinkState), nxmManager.InitializeHydratesLegacyPlaceholderWithoutChangingFreshLinkState),
+			(nameof(nxmManager.FailedShutdownCanBeRetriedUntilPausedStateIsDurable), nxmManager.FailedShutdownCanBeRetriedUntilPausedStateIsDurable),
+			(nameof(nxmManager.ShutdownAfterCompletedInstallDoesNotWaitForOperationCleanup), nxmManager.ShutdownAfterCompletedInstallDoesNotWaitForOperationCleanup),
+			(nameof(nxmManager.ClearingInstalledHistoryKeepsOtherQueueItems), nxmManager.ClearingInstalledHistoryKeepsOtherQueueItems),
+			(nameof(nxmManager.QueueStatesHaveHumanReadableLabels), nxmManager.QueueStatesHaveHumanReadableLabels),
+			(nameof(nxmManager.InstallFailuresHaveDedicatedHumanReadableState), nxmManager.InstallFailuresHaveDedicatedHumanReadableState),
+			(nameof(nxmManager.DownloadAgainPreservesTheArchiveAndUsesFreshAuthorizationWhenRequired), nxmManager.DownloadAgainPreservesTheArchiveAndUsesFreshAuthorizationWhenRequired),
+			(nameof(nxmManager.FailedRedownloadSavePreservesTheOriginalQueueRecord), nxmManager.FailedRedownloadSavePreservesTheOriginalQueueRecord),
+			(nameof(nxmManager.DownloadAgainNeverReusesExistingPartialData), nxmManager.DownloadAgainNeverReusesExistingPartialData),
+			(nameof(nxmManager.RedownloadAfterMetadataFailureUsesResolvedPakExtension), nxmManager.RedownloadAfterMetadataFailureUsesResolvedPakExtension),
+			(nameof(nxmScheduler.DefaultLimitRunsFourAndQueuesTheRest), nxmScheduler.DefaultLimitRunsFourAndQueuesTheRest),
+			(nameof(nxmScheduler.RaisingLimitDispatchesQueuedItemsInFifoOrder), nxmScheduler.RaisingLimitDispatchesQueuedItemsInFifoOrder),
+			(nameof(nxmScheduler.CancellationRemovesSuspendedQueuedWorkImmediately), nxmScheduler.CancellationRemovesSuspendedQueuedWorkImmediately),
+			(nameof(nxmStore.RoundTripPreservesPublicQueueStateWithoutCapabilities), nxmStore.RoundTripPreservesPublicQueueStateWithoutCapabilities),
+			(nameof(nxmStore.InstalledHistorySurvivesWhenItsArchiveWasRemoved), nxmStore.InstalledHistorySurvivesWhenItsArchiveWasRemoved),
+			(nameof(nxmStore.DetailedInstallFailureSurvivesRestartAndMissingFileInvalidation), nxmStore.DetailedInstallFailureSurvivesRestartAndMissingFileInvalidation),
+			(nameof(nxmStore.ReconcileRequiresFreshLinkForIncompleteFreeDownload), nxmStore.ReconcileRequiresFreshLinkForIncompleteFreeDownload),
+			(nameof(nxmStore.ReconcileMarksMissingCompletedFileAsFailed), nxmStore.ReconcileMarksMissingCompletedFileAsFailed),
+			(nameof(nxmStore.ReconcileRejectsCompletedFileWithWrongLength), nxmStore.ReconcileRejectsCompletedFileWithWrongLength),
+			(nameof(nxmStore.ReconcileRejectsCompletedFileWithChangedContents), nxmStore.ReconcileRejectsCompletedFileWithChangedContents),
+			(nameof(nxmStore.ReconcileRecoversInterruptedResolvingAndInstallingStates), nxmStore.ReconcileRecoversInterruptedResolvingAndInstallingStates),
+			(nameof(nxmStore.ReconcileValidatesRetainedArchiveForInstallFailure), nxmStore.ReconcileValidatesRetainedArchiveForInstallFailure),
+			(nameof(nxmStore.ReconcileRecoversLegacyRetryWhenCompletedArchiveIsIntact), nxmStore.ReconcileRecoversLegacyRetryWhenCompletedArchiveIsIntact),
+			(nameof(nxmStore.ReconcilePersistsLegacyRecoveryWhenPartialCleanupFails), nxmStore.ReconcilePersistsLegacyRecoveryWhenPartialCleanupFails),
+			(nameof(nxmStore.CorruptManifestIsQuarantinedWithoutBlockingStartup), nxmStore.CorruptManifestIsQuarantinedWithoutBlockingStartup),
+			(nameof(nxmStore.CorruptManifestRecoversLastKnownGoodBackup), nxmStore.CorruptManifestRecoversLastKnownGoodBackup),
+			(nameof(nxmTransfer.MatchingRangeResponseResumesPartialFile), nxmTransfer.MatchingRangeResponseResumesPartialFile),
+			(nameof(nxmTransfer.FullResponseRestartsInsteadOfAppendingPartialFile), nxmTransfer.FullResponseRestartsInsteadOfAppendingPartialFile),
+			(nameof(nxmTransfer.SidecarValidatorEnablesResumeAfterRestart), nxmTransfer.SidecarValidatorEnablesResumeAfterRestart),
+			(nameof(nxmTransfer.MismatchedResumeValidatorRestartsFromZero), nxmTransfer.MismatchedResumeValidatorRestartsFromZero),
+			(nameof(nxmTransfer.ShortResponseIsNotPublishedAsComplete), nxmTransfer.ShortResponseIsNotPublishedAsComplete),
+			(nameof(nxmTransfer.ApproximateMetadataSizeDoesNotRejectCompleteResponse), nxmTransfer.ApproximateMetadataSizeDoesNotRejectCompleteResponse),
+			(nameof(nxmTransfer.UnsolicitedPartialResponseIsNotPublished), nxmTransfer.UnsolicitedPartialResponseIsNotPublished),
+			(nameof(nxmTransfer.ResponseWithoutADeclaredLengthIsNotPublished), nxmTransfer.ResponseWithoutADeclaredLengthIsNotPublished),
+			(nameof(nxmTransfer.StalledResponseBodyTimesOutWithoutPublishing), nxmTransfer.StalledResponseBodyTimesOutWithoutPublishing)
 		};
 
 		var failures = 0;

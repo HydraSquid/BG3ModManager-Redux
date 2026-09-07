@@ -15,7 +15,8 @@ public enum ReduxCommandPaletteTone
 	Neutral,
 	Success,
 	Warning,
-	Error
+	Error,
+	Nexus
 }
 
 public sealed class ReduxCommandPaletteItem
@@ -308,6 +309,7 @@ public partial class ReduxCommandPaletteWindow : AdonisUI.Controls.AdonisWindow
 		nameof(AppKeys.ToggleUpdatesView) => "refresh",
 		nameof(AppKeys.OpenSaveGameManager) => "book-open",
 		nameof(AppKeys.OpenGameDirectoryModManager) => "blocks",
+		nameof(AppKeys.OpenNexusDownloads) => "download",
 		nameof(AppKeys.OpenModsFolder) => "folder",
 		nameof(AppKeys.OpenGameFolder) => "folder",
 		nameof(AppKeys.OpenLogsFolder) => "folder",
@@ -336,6 +338,7 @@ public partial class ReduxCommandPaletteWindow : AdonisUI.Controls.AdonisWindow
 			or nameof(AppKeys.ExportReduxLoadOrder)
 			or nameof(AppKeys.ExportOrderToZip) => ReduxCommandPaletteTone.Success,
 		nameof(AppKeys.DeleteSelectedMods) => ReduxCommandPaletteTone.Error,
+		nameof(AppKeys.OpenNexusDownloads) => ReduxCommandPaletteTone.Nexus,
 		_ => ReduxCommandPaletteTone.Neutral
 	};
 
@@ -347,6 +350,7 @@ public partial class ReduxCommandPaletteWindow : AdonisUI.Controls.AdonisWindow
 		nameof(AppKeys.NewOrder) => "new empty clean create order",
 		nameof(AppKeys.CompareLoadOrders) => "diff differences orders",
 		nameof(AppKeys.OrganizeLoadOrder) => "sort autosort advisor arrange separators sections preview",
+		nameof(AppKeys.OpenNexusDownloads) => "nexus nxm mod manager download queue pause resume review install",
 		nameof(AppKeys.RestorePoints) => "snapshots restore rollback history",
 		nameof(AppKeys.ImportOrderFromSave) => "game save load order",
 		nameof(AppKeys.ImportOrderFromSaveAsNew) => "game save new copy load order",

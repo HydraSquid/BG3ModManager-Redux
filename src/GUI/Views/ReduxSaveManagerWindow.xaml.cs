@@ -66,6 +66,7 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 	private readonly HashSet<Expander> _campaignExpanders = new();
 	private string[] _campaignKeys = [];
 	private bool _isBulkCampaignUpdate;
+	public int ImportedSaveCount { get; private set; }
 
 	public ReduxSaveManagerWindow(Window owner, MainWindowViewModel viewModel, IEnumerable<string> pendingImportPaths = null)
 	{
@@ -167,6 +168,7 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 			SaveList.IsEnabled = false;
 			DeleteButton.IsEnabled = false;
 			var imported = await Task.Run(() => Bg3SaveGameService.Import(sourcePath, _storyFolder, replace));
+			ImportedSaveCount += imported.Count;
 			RefreshSaves();
 			_viewModel?.ShowAlert($"Installed {imported.Count} save{(imported.Count == 1 ? "" : "s")}.", AlertType.Success, 12);
 		}

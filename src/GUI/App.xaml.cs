@@ -9,6 +9,7 @@ using AutoUpdaterDotNET;
 
 using System.Globalization;
 using System.ComponentModel;
+using System.Collections.Concurrent;
 using System.Net.Http;
 using System.Windows;
 using System.Windows.Input;
@@ -29,8 +30,11 @@ public partial class App : Application
 	private const double StartupRevealOpacity = 0.4;
 	private static readonly Duration StartupRevealDuration = TimeSpan.FromMilliseconds(280);
 
-	public App()
+	private readonly ConcurrentQueue<string> _pendingNxmActivations;
+
+	public App(ConcurrentQueue<string> pendingNxmActivations = null)
 	{
+		_pendingNxmActivations = pendingNxmActivations ?? new ConcurrentQueue<string>();
 		Services.RegisterSingleton<IFileWatcherService>(new FileWatcherService());
 		Services.RegisterSingleton<IScreenReaderService>(new ScreenReaderService());
 
@@ -130,9 +134,32 @@ public partial class App : Application
 
 			MainWindow = mainWindow;
 			mainWindow.Show();
+			DrainNxmActivations();
 			startupWindow.Owner = mainWindow;
 			startupWindow.Activate();
 		}));
+	}
+
+	public void NotifyNxmActivationAvailable()
+	{
+		Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
+		{
+			if (MainWindow is Views.MainWindow mainWindow
+				&& mainWindow.ViewModel.Settings.BringNxmDownloadsToFront)
+			{
+				if (mainWindow.WindowState == WindowState.Minimized) mainWindow.WindowState = WindowState.Normal;
+				mainWindow.Show();
+				mainWindow.Activate();
+			}
+			DrainNxmActivations();
+		}));
+	}
+
+	private void DrainNxmActivations()
+	{
+		if (MainWindow is not Views.MainWindow mainWindow) return;
+		while (_pendingNxmActivations.TryDequeue(out var value))
+			mainWindow.ViewModel.EnqueueNxmActivation(value);
 	}
 
 	private static void OnPreviewMouseDown(object sender, MouseButtonEventArgs e)

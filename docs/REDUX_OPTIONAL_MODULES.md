@@ -84,6 +84,14 @@ that BG3 or Steam Cloud may restore managed content.
 Provider keys are masked and stored outside ordinary settings using protection tied to the current
 Windows account. They are excluded from diagnostic exports and contribution reports.
 
+NXM link handling belongs to this optional boundary. Redux registers `nxm://` only after an
+explicit choice, restores the previous per-user handler where possible, and disables network queue
+work when online mod information or the Nexus API key is unavailable. Public project/file identity,
+safe filenames, transfer state, and archive hashes may be persisted. Temporary download keys and
+signed URLs must remain memory-only and must never appear in settings, queue files, logs, crash
+reports, or exported diagnostics. Receiving or completing a download never authorizes activation,
+load-order changes, or game sync.
+
 ## Optional Load Order Advisor
 
 **Enable Load Order Advisor** adds an experimental guidance family to Mod Diagnostics. It uses exact

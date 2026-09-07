@@ -3,6 +3,7 @@
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:adonisUI="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
 	xmlns:controls="clr-namespace:DivinityModManager.Controls"
+	xmlns:dapp="clr-namespace:DivinityModManager;assembly=DivinityModManagerCore"
 	xmlns:data="clr-namespace:DivinityModManager.Models;assembly=DivinityModManagerCore"
 	xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
 	Title="Welcome to BG3 Mod Manager Redux"
@@ -324,6 +325,16 @@
 											<PasswordBox x:Name="ModioApiKeyTextBox" Height="30" ToolTip="Read-only mod.io API key used for mod information" />
 											</StackPanel>
 										</Grid>
+										<CheckBox x:Name="NxmLinksCheckBox" Margin="24,11,0,0" Style="{StaticResource ReduxCheckBoxStyle}">
+											<Grid>
+												<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+												<ContentControl Width="16" Height="16" Margin="0,1,8,0" ContentTemplate="{DynamicResource NexusPlatformIconTemplate}" Visibility="{Binding Path=(dapp:DivinityApp.ShowInterfaceIcons), Converter={StaticResource BoolToVisibilityConverter}}" />
+												<StackPanel Grid.Column="1">
+													<TextBlock Style="{StaticResource WelcomeChoiceTitleStyle}" Text="Open Nexus download links in Redux" />
+													<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}" Text="Connect Nexus Mods’ Mod Manager Download button to Redux. Files download into a review queue and are never installed automatically." />
+												</StackPanel>
+											</Grid>
+										</CheckBox>
 										<Grid Margin="24,10,0,0">
 											<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
 											<controls:ReduxIcon Width="15" Height="15" Margin="0,1,7,0"

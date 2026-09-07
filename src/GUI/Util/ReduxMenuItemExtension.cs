@@ -219,7 +219,8 @@ public static class ReduxMenuItemExtension
 
 		string hoverBrushResource = null;
 		string railBrushResource = null;
-		if (header.Contains("Nexus Mods", StringComparison.OrdinalIgnoreCase))
+		if (header.Contains("Nexus Mods", StringComparison.OrdinalIgnoreCase)
+			|| header.Contains("Nexus Download", StringComparison.OrdinalIgnoreCase))
 		{
 			hoverBrushResource = "Redux.Pill.Nexus.Background";
 			railBrushResource = "Redux.Pill.Nexus.Border";

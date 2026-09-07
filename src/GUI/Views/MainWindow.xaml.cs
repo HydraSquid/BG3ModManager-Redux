@@ -534,6 +534,8 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 	}
 
 	private bool _closeConfirmed;
+	private bool _nxmShutdownReady;
+	private bool _nxmShutdownInProgress;
 
 	private bool ConfirmDiscardUnsavedLoadOrder()
 	{
@@ -553,9 +555,34 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 		return true;
 	}
 
-	private void MainWindow_Closing(object sender, CancelEventArgs e)
+	private async void MainWindow_Closing(object sender, CancelEventArgs e)
 	{
-		if (!ConfirmDiscardUnsavedLoadOrder()) e.Cancel = true;
+		if (!ConfirmDiscardUnsavedLoadOrder())
+		{
+			e.Cancel = true;
+			return;
+		}
+		if (_nxmShutdownReady) return;
+		e.Cancel = true;
+		if (_nxmShutdownInProgress) return;
+		_nxmShutdownInProgress = true;
+		try
+		{
+			await ViewModel.ShutdownNxmDownloadsAsync();
+			_nxmShutdownReady = true;
+			Close();
+		}
+		catch (Exception ex)
+		{
+			DivinityApp.Log($"Could not stop Nexus downloads during shutdown:\n{ex}");
+			ReduxMessageBox.Show(this,
+				"Redux could not safely pause and save the Nexus download queue. The window will remain open so you can try again.",
+				"Shutdown Paused", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning, System.Windows.MessageBoxResult.OK);
+		}
+		finally
+		{
+			_nxmShutdownInProgress = false;
+		}
 	}
 
 	private void OnClosed()
@@ -678,6 +705,7 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 				OpenGameDirectoryModManager,
 				ViewModel.WhenAnyValue(x => x.Settings.GameExecutablePath)
 					.Select(_ => ReduxGameDirectoryModManagerWindow.CanOpen(ViewModel)));
+			ViewModel.Keys.OpenNexusDownloads.AddAction(() => _ = OpenNexusDownloadsAsync());
 			ViewModel.Keys.OpenAboutWindow.AddAction(ToggleAboutWindow);
 
 			ViewModel.Keys.ToggleVersionGeneratorWindow.AddAction(() =>
@@ -717,6 +745,47 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 			ReduxMessageBox.Show(this, ex.Message, "Could Not Open Game-Directory Mod Manager",
 				System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error, System.Windows.MessageBoxResult.OK);
 		}
+	}
+
+	private ReduxNexusDownloadsWindow _nexusDownloadsWindow;
+
+	public async Task OpenNexusDownloadsAsync(bool bringToFront = true)
+	{
+		try
+		{
+			await ViewModel.EnsureNxmDownloadsInitializedAsync();
+			if (_nexusDownloadsWindow?.IsVisible == true)
+			{
+				if (bringToFront) BringNexusDownloadsToFront();
+				return;
+			}
+			_nexusDownloadsWindow = new ReduxNexusDownloadsWindow(this, ViewModel);
+			_nexusDownloadsWindow.Closed += (_, _) => _nexusDownloadsWindow = null;
+			_nexusDownloadsWindow.ShowActivated = bringToFront;
+			_nexusDownloadsWindow.Show();
+			if (bringToFront) BringNexusDownloadsToFront();
+		}
+		catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or InvalidOperationException)
+		{
+			ReduxMessageBox.Show(this, ex.Message, "Could Not Open Nexus Downloads",
+				System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error, System.Windows.MessageBoxResult.OK);
+		}
+	}
+
+	private void BringNexusDownloadsToFront()
+	{
+		if (_nexusDownloadsWindow == null) return;
+		if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
+		Show();
+		Activate();
+		_nexusDownloadsWindow.Show();
+		_nexusDownloadsWindow.Activate();
+		_nexusDownloadsWindow.Topmost = true;
+		_nexusDownloadsWindow.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ApplicationIdle,
+			new Action(() =>
+			{
+				if (_nexusDownloadsWindow != null) _nexusDownloadsWindow.Topmost = false;
+			}));
 	}
 
 	private void OpenCommandPalette()

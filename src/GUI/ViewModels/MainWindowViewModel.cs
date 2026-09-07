@@ -4,6 +4,7 @@ using AutoUpdaterDotNET;
 using DivinityModManager.AppServices;
 using DivinityModManager.Controls;
 using DivinityModManager.Extensions;
+using DivinityModManager.GUI.AppServices;
 using DivinityModManager.Models;
 using DivinityModManager.Models.App;
 using DivinityModManager.Models.Extender;
@@ -108,6 +109,13 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	private const string QuickSaveOrderName = "Current Order";
 	private const string ProviderCredentialFileName = "provider-credentials.dat";
 	private readonly StartupNotificationQueue _startupNotifications = new();
+	private readonly SemaphoreSlim _nxmActivationGate = new(1, 1);
+	private NxmDownloadManager _nxmDownloadManager;
+	private Task _initializeNxmDownloadsTask = Task.CompletedTask;
+	private bool _nxmShuttingDown;
+	[Reactive] public ReadOnlyObservableCollection<NxmDownloadItem> NxmDownloads { get; private set; }
+	[Reactive] public NxmDownloadItem SelectedNxmDownload { get; set; }
+	public string NxmDownloadsDirectory => DivinityApp.GetAppDirectory("Data", "Downloads");
 
 	protected readonly SourceCache<DivinityModData, string> mods = new(mod => mod.UUID);
 
@@ -518,6 +526,278 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	/// activated, and allowed to complete a layout/render turn.
 	/// </summary>
 	public void NotifyMainWindowReady() => _startupNotifications.MarkReadyAndDrain();
+
+	public void EnqueueNxmActivation(string value) =>
+		ShowWhenMainWindowReady($"nxm-{Guid.NewGuid():N}", () => _ = HandleNxmLinkAsync(value, fromProtocolActivation: true));
+
+	public async Task HandleNxmLinkAsync(string value, bool fromProtocolActivation = false)
+	{
+		await _nxmActivationGate.WaitAsync();
+		try
+		{
+			if (_nxmShuttingDown) return;
+			if (!NexusModManagerLinkParser.TryParseBg3(value, DateTimeOffset.UtcNow, out var link, out var error))
+			{
+				ShowAlert(error, AlertType.Danger, 25);
+				return;
+			}
+			if (!Modules.SourceIntegrationsEnabled || String.IsNullOrWhiteSpace(Settings.NexusModsAPIKey))
+			{
+				ReduxMessageBox.Show(Window,
+					"Nexus downloads require online mod information and a Nexus Mods API key. Configure them in Preferences, then open the Mod Manager Download link again.",
+					"Nexus Downloads Not Configured", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
+				return;
+			}
+			await EnsureNxmDownloadsInitializedAsync();
+			await _nxmDownloadManager.EnqueueAsync(link);
+			await Window.OpenNexusDownloadsAsync(!fromProtocolActivation || Settings.BringNxmDownloadsToFront);
+		}
+		catch (Exception ex)
+		{
+			DivinityApp.Log($"NXM intake failed for {NexusModManagerLinkParser.Redact(value)}: {ex.GetType().Name}");
+			ShowAlert("Redux could not add that Nexus download.", AlertType.Danger, 25);
+		}
+		finally
+		{
+			_nxmActivationGate.Release();
+		}
+	}
+
+	public Task EnsureNxmDownloadsInitializedAsync()
+	{
+		if (_initializeNxmDownloadsTask.IsCompleted
+			&& (_nxmDownloadManager == null || !_initializeNxmDownloadsTask.IsCompletedSuccessfully))
+		{
+			_initializeNxmDownloadsTask = InitializeNxmDownloadsAsync();
+		}
+		return _initializeNxmDownloadsTask;
+	}
+
+	private async Task InitializeNxmDownloadsAsync()
+	{
+		Settings.NxmActiveDownloadLimit = Math.Clamp(Settings.NxmActiveDownloadLimit, 1, 6);
+		Directory.CreateDirectory(NxmDownloadsDirectory);
+		var factory = new NxmResolverFactory(() => Settings.NexusModsAPIKey, () => AppTitle, () => Version.ToString());
+		_nxmDownloadManager = new NxmDownloadManager(
+			NxmDownloadsDirectory,
+			new NxmDownloadStore(NxmDownloadsDirectory),
+			factory,
+			new NxmTransfer(),
+			Settings.NxmActiveDownloadLimit,
+			() => Settings.ConfirmCleanNxmDownloads,
+			async (descriptor, cancellationToken) => await Application.Current.Dispatcher.InvokeAsync(() =>
+			{
+				var dialog = new NxmDownloadConfirmationWindow(Window, descriptor);
+				var accepted = ReduxWindowBehavior.ShowDialogWithOwnerBackdrop(dialog, Window) == true;
+				if (accepted && dialog.SkipFutureCleanConfirmations)
+				{
+					Settings.ConfirmCleanNxmDownloads = false;
+					SaveSettings();
+				}
+				return accepted;
+			}),
+			Modules.SourceIntegrationsEnabled && !String.IsNullOrWhiteSpace(Settings.NexusModsAPIKey));
+		NxmDownloads = _nxmDownloadManager.Items;
+		_nxmDownloadManager.FocusRequested += id => Application.Current.Dispatcher.BeginInvoke(() =>
+			SelectedNxmDownload = NxmDownloads.FirstOrDefault(item => item.Id == id));
+		await _nxmDownloadManager.InitializeAsync();
+	}
+
+	public NxmAssociationResult GetNxmAssociationStatus()
+	{
+		var ownerId = Guid.TryParseExact(Settings.NxmAssociationOwnerId, "D", out _)
+			? Settings.NxmAssociationOwnerId
+			: Guid.Empty.ToString("D");
+		return CreateNxmAssociationService(ownerId).GetStatus();
+	}
+
+	public void ConfigureNxmAssociation()
+	{
+		var status = GetNxmAssociationStatus();
+		if (!status.Success)
+		{
+			ShowAlert(status.Message, AlertType.Danger, 25);
+			return;
+		}
+		if (status.Status == NxmAssociationStatus.OwnedByAnotherHandler)
+		{
+			ShowAlert("Another Redux installation owns the current NXM registration. Redux left it unchanged.", AlertType.Warning, 25);
+			return;
+		}
+		var disable = status.Status == NxmAssociationStatus.Owned;
+		var repair = status.Status == NxmAssociationStatus.NeedsRepair;
+		var prompt = disable
+			? "Stop Redux from handling NXM links and restore the previous per-user handler?"
+			: repair
+				? "Repair this Redux installation's NXM link registration?"
+				: $"Let Redux handle Nexus Mod Manager links for this Windows account?\n\nCurrent handler: {status.CurrentHandler ?? "None"}\n\nNon-BG3 links are forwarded to the previous handler when it can be invoked safely.";
+		if (ReduxMessageBox.Show(Window, prompt, "Nexus Mod Manager Links", MessageBoxButton.YesNo,
+			MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+
+		if (!Guid.TryParseExact(Settings.NxmAssociationOwnerId, "D", out _))
+		{
+			Settings.NxmAssociationOwnerId = Guid.NewGuid().ToString("D");
+			if (!SaveSettings())
+			{
+				Settings.NxmAssociationOwnerId = String.Empty;
+				ShowAlert("Redux could not save the NXM registration owner, so Windows was not changed.", AlertType.Danger, 25);
+				return;
+			}
+		}
+		var service = CreateNxmAssociationService();
+		var result = disable ? service.Disable() : repair ? service.Repair() : service.Enable();
+		ShowAlert(result.Message, result.Success ? AlertType.Success : AlertType.Danger, 25);
+	}
+
+	public void ApplyNxmAssociationPreference(bool enabled)
+	{
+		var status = GetNxmAssociationStatus();
+		if (!status.Success || status.Status == NxmAssociationStatus.OwnedByAnotherHandler)
+		{
+			if (enabled) ShowAlert(status.Message, AlertType.Warning, 25);
+			return;
+		}
+		var currentlyOwned = status.Status is NxmAssociationStatus.Owned or NxmAssociationStatus.NeedsRepair;
+		if (enabled == currentlyOwned && status.Status != NxmAssociationStatus.NeedsRepair) return;
+
+		if (enabled && !Guid.TryParseExact(Settings.NxmAssociationOwnerId, "D", out _))
+		{
+			Settings.NxmAssociationOwnerId = Guid.NewGuid().ToString("D");
+			if (!SaveSettings())
+			{
+				Settings.NxmAssociationOwnerId = String.Empty;
+				ShowAlert("Redux could not save the NXM registration owner, so Windows was not changed.", AlertType.Danger, 25);
+				return;
+			}
+		}
+
+		var service = CreateNxmAssociationService();
+		var result = enabled
+			? status.Status == NxmAssociationStatus.NeedsRepair ? service.Repair() : service.Enable()
+			: service.Disable();
+		ShowAlert(result.Message, result.Success ? AlertType.Success : AlertType.Danger, 25);
+	}
+
+	private INxmAssociationService CreateNxmAssociationService(string ownerId = null) => new NxmAssociationService(
+		new NxmRegistryStore(), ownerId ?? Settings.NxmAssociationOwnerId,
+		Environment.ProcessPath ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BG3ModManager.exe"));
+
+	public Task PauseNxmDownloadAsync(NxmDownloadItem item) => item == null || _nxmDownloadManager == null
+		? Task.CompletedTask : _nxmDownloadManager.PauseAsync(item.Id);
+	public Task ResumeNxmDownloadAsync(NxmDownloadItem item) => item == null || _nxmDownloadManager == null
+		? Task.CompletedTask : _nxmDownloadManager.ResumeAsync(item.Id);
+	public Task PauseAllNxmDownloadsAsync() => _nxmDownloadManager?.PauseAllAsync() ?? Task.CompletedTask;
+	public Task ResumeAllNxmDownloadsAsync() => _nxmDownloadManager?.ResumeAllAsync() ?? Task.CompletedTask;
+
+	public async Task RemoveNxmDownloadAsync(NxmDownloadItem item)
+	{
+		if (item == null || _nxmDownloadManager == null) return;
+		if (item.State == NxmDownloadState.Installed)
+		{
+			if (ReduxMessageBox.Show(Window,
+				"Clear this item from installed download history? The installed content and downloaded archive will be kept.",
+				"Clear Installed Download", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+			await _nxmDownloadManager.RemoveAsync(item.Id, false);
+			return;
+		}
+		var hasArchive = item.State is NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview
+			or NxmDownloadState.InstallFailed;
+		if (ReduxMessageBox.Show(Window,
+			hasArchive ? "Remove this entry and move its downloaded archive to the Recycle Bin?" : "Cancel and remove this download?",
+			"Remove Nexus Download", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+		await _nxmDownloadManager.RemoveAsync(item.Id, hasArchive);
+	}
+
+	public async Task ClearInstalledNxmHistoryAsync()
+	{
+		if (_nxmDownloadManager == null || !NxmDownloads.Any(item => item.State == NxmDownloadState.Installed)) return;
+		if (ReduxMessageBox.Show(Window,
+			"Clear every item from installed download history? Installed content and downloaded archives will be kept.",
+			"Clear Installed History", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+		await _nxmDownloadManager.ClearInstalledHistoryAsync();
+	}
+
+	public async Task ReviewNxmDownloadAsync(NxmDownloadItem item)
+	{
+		if (item?.State is not (NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview or NxmDownloadState.InstallFailed)) return;
+		var archivePath = GetNxmArchivePath(item);
+		try
+		{
+			await VerifyNxmArchiveAsync(item, archivePath);
+			var installed = mods.Items.Where(mod => mod != null && !mod.IsVisualDivider).ToArray();
+			if (Path.GetExtension(archivePath).Equals(".pak", StringComparison.OrdinalIgnoreCase))
+			{
+				if (await ReviewAndImportDroppedModsAsync([archivePath], false,
+					new NexusModManagerLink(item.ModId, item.FileId, null, null, null)))
+					await _nxmDownloadManager.SetInstalledAsync(item.Id, "Inactive Mods");
+				return;
+			}
+
+			var inspection = await ArchivePackagePreflightService.AnalyzeAsync(archivePath, installed);
+			switch (inspection.Kind)
+			{
+				case ArchivePackagePreflightKind.ReviewedGameDirectory:
+					if (await ReduxGameDirectoryModManagerWindow.ReviewAndInstallAsync(Window, this, archivePath))
+						await _nxmDownloadManager.SetInstalledAsync(item.Id, "Game-directory Mods");
+					break;
+				case ArchivePackagePreflightKind.SaveGame:
+					if (View?.ShowSaveManagerForImport(archivePath) == true)
+						await _nxmDownloadManager.SetInstalledAsync(item.Id, "Save Games");
+					break;
+				case ArchivePackagePreflightKind.PakArchive:
+					if (await ReviewAndImportDroppedModsAsync([archivePath], false,
+						new NexusModManagerLink(item.ModId, item.FileId, null, null, null)))
+						await _nxmDownloadManager.SetInstalledAsync(item.Id, "Inactive Mods");
+					break;
+				case ArchivePackagePreflightKind.Mixed when inspection.GameDirectoryInspection != null:
+					if (await ReduxGameDirectoryModManagerWindow.ReviewAndInstallAsync(Window, this, archivePath))
+						await _nxmDownloadManager.SetInstalledAsync(item.Id, "Game-directory Mods");
+					break;
+				default:
+					await _nxmDownloadManager.SetStateAsync(item.Id, NxmDownloadState.NeedsReview, "unsupported-layout",
+						"This download mixes content types or contains an unreviewed native layout. Redux did not change any files.");
+					ReduxMessageBox.Show(Window,
+						"This package is mixed, ambiguous, or contains an unreviewed native layout. Redux did not change any files.",
+						"Package Needs Manual Review", MessageBoxButton.OK, MessageBoxImage.Warning, MessageBoxResult.OK);
+					break;
+			}
+		}
+		catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException)
+		{
+			DivinityApp.Log($"NXM review failed for {item.Identity}: {ex.GetType().Name}");
+			await _nxmDownloadManager.SetStateAsync(item.Id, NxmDownloadState.InstallFailed, "review-failed", ex.Message);
+			ReduxMessageBox.Show(Window, ex.Message, "Could Not Review Download",
+				MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+		}
+	}
+
+	private string GetNxmArchivePath(NxmDownloadItem item)
+	{
+		if (String.IsNullOrWhiteSpace(item.CompletedFileName) || item.CompletedFileName != Path.GetFileName(item.CompletedFileName))
+			throw new InvalidDataException("The download record contains an invalid archive filename.");
+		return Path.Combine(NxmDownloadsDirectory, item.CompletedFileName);
+	}
+
+	private static async Task VerifyNxmArchiveAsync(NxmDownloadItem item, string path)
+	{
+		if (!File.Exists(path)) throw new FileNotFoundException("The downloaded archive is missing.", path);
+		var info = new FileInfo(path);
+		if (item.SizeBytes > 0 && info.Length != item.SizeBytes)
+			throw new InvalidDataException("The downloaded archive size changed after completion.");
+		if (String.IsNullOrWhiteSpace(item.ArchiveSha256))
+			throw new InvalidDataException("The download does not have a verified SHA-256 identity. Download it again before review.");
+		await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
+			65536, FileOptions.Asynchronous | FileOptions.SequentialScan);
+		var digest = Convert.ToHexString(await System.Security.Cryptography.SHA256.HashDataAsync(stream)).ToLowerInvariant();
+		if (!String.Equals(digest, item.ArchiveSha256, StringComparison.OrdinalIgnoreCase))
+			throw new InvalidDataException("The downloaded archive changed after inspection. Download it again before review.");
+	}
+
+	public async Task ShutdownNxmDownloadsAsync()
+	{
+		_nxmShuttingDown = true;
+		if (_nxmDownloadManager != null) await _nxmDownloadManager.ShutdownAsync();
+	}
 
 	private void ShowWhenMainWindowReady(string key, Action showNotification) =>
 		_startupNotifications.EnqueueOrRun(key, showNotification);
@@ -1302,7 +1582,12 @@ Directory the zip will be extracted to:
 			UpdateHandler.Nexus.AppName = AppTitle;
 			UpdateHandler.Nexus.AppVersion = Version.ToString();
 			ApplyNexusDataLoaderMode();
+			if (_nxmDownloadManager != null)
+				_ = _nxmDownloadManager.SetNetworkEnabledAsync(Modules.SourceIntegrationsEnabled && !String.IsNullOrWhiteSpace(key));
 		});
+
+		Settings.WhenAnyValue(x => x.NxmActiveDownloadLimit).Subscribe(limit =>
+			_nxmDownloadManager?.SetActiveDownloadLimit(Math.Clamp(limit, 1, 6)));
 
 		Settings.WhenAnyValue(x => x.ModioAPIKey)
 			.Subscribe(key => UpdateHandler.Modio.APIKey = key);
@@ -1312,6 +1597,8 @@ Directory the zip will be extracted to:
 			.Subscribe(sourceIntegrationsEnabled =>
 			{
 				ApplySourceLinkingMode(sourceIntegrationsEnabled);
+				if (_nxmDownloadManager != null)
+					_ = _nxmDownloadManager.SetNetworkEnabledAsync(sourceIntegrationsEnabled && !String.IsNullOrWhiteSpace(Settings.NexusModsAPIKey));
 				if (IsInitialized)
 				{
 					SaveSettings();
@@ -2489,9 +2776,11 @@ Directory the zip will be extracted to:
 		return taskResult;
 	}
 
-	public void ImportMods(IEnumerable<string> files, bool? toActiveList = null)
+	public bool ImportMods(IEnumerable<string> files, bool? toActiveList = null, NexusModManagerLink nexusSource = null,
+		Action<ImportOperationResults> completed = null)
 	{
-		if (!MainProgressIsActive)
+		var fileList = files?.ToList() ?? [];
+		if (MainProgressIsActive || fileList.Count == 0) return false;
 		{
 			MainProgressTitle = "Importing mods";
 			MainProgressWorkText = "Preparing selected files…";
@@ -2500,96 +2789,124 @@ Directory the zip will be extracted to:
 			IsRefreshing = true;
 			var result = new ImportOperationResults()
 			{
-				TotalFiles = files.Count()
+				TotalFiles = fileList.Count
 			};
 
 			RxApp.TaskpoolScheduler.ScheduleAsync(async (ctrl, t) =>
 			{
-				var builtinMods = DivinityApp.IgnoredMods.Items.SafeToDictionary(x => x.Folder, x => x);
-				MainProgressToken = new CancellationTokenSource();
-				foreach (var f in files)
+				try
 				{
-					await AddModFromFile(builtinMods, result, f, MainProgressToken.Token, toActiveList);
-				}
-
-				if (Modules.SourceIntegrationsEnabled && UpdateHandler.Nexus.IsEnabled && result.Mods.Count > 0 && result.Mods.Any(x => x.NexusModsData.ModId >= DivinityApp.NEXUSMODS_MOD_ID_START))
-				{
-					var cacheChanged = await UpdateHandler.Nexus.Update(result.Mods, MainProgressToken.Token);
-					cacheChanged |= await NexusModsDataLoader.LoadChangelogsAsync(result.Mods, MainProgressToken.Token);
-					if (cacheChanged)
+					var builtinMods = DivinityApp.IgnoredMods.Items.SafeToDictionary(x => x.Folder, x => x);
+					MainProgressToken = new CancellationTokenSource();
+					foreach (var f in fileList)
 					{
-						foreach (var mod in result.Mods.Where(mod => mod.NexusModsData.ModId >= DivinityApp.NEXUSMODS_MOD_ID_START))
+						var previousCount = result.Mods.Count;
+						await AddModFromFile(builtinMods, result, f, MainProgressToken.Token, toActiveList);
+						if (nexusSource != null)
 						{
-							UpdateHandler.Nexus.CacheData.Mods[mod.UUID] = mod.NexusModsData;
+							var exactSource = new NexusModFileVersionData
+							{
+								ModId = nexusSource.ModId,
+								FileId = nexusSource.FileId,
+								Success = true
+							};
+							foreach (var imported in result.Mods.Skip(previousCount))
+								ApplyImportedNexusAssociation(imported, exactSource, null);
 						}
-						await UpdateHandler.Nexus.SaveCacheAsync(false, Version.ToString(), MainProgressToken.Token);
 					}
+
+					if (Modules.SourceIntegrationsEnabled && UpdateHandler.Nexus.IsEnabled && result.Mods.Count > 0 && result.Mods.Any(x => x.NexusModsData.ModId >= DivinityApp.NEXUSMODS_MOD_ID_START))
+					{
+						var cacheChanged = await UpdateHandler.Nexus.Update(result.Mods, MainProgressToken.Token);
+						cacheChanged |= await NexusModsDataLoader.LoadChangelogsAsync(result.Mods, MainProgressToken.Token);
+						if (cacheChanged)
+						{
+							foreach (var mod in result.Mods.Where(mod => mod.NexusModsData.ModId >= DivinityApp.NEXUSMODS_MOD_ID_START))
+							{
+								UpdateHandler.Nexus.CacheData.Mods[mod.UUID] = mod.NexusModsData;
+							}
+							await UpdateHandler.Nexus.SaveCacheAsync(false, Version.ToString(), MainProgressToken.Token);
+						}
+					}
+				}
+				catch (Exception ex)
+				{
+					DivinityApp.Log($"Mod import operation failed:\n{ex}");
+					result.AddError("Import operation", ex);
 				}
 
 				await ctrl.Yield();
 				RxApp.MainThreadScheduler.Schedule(_ =>
 				{
-					IsRefreshing = false;
-					OnMainProgressComplete();
-
-					if (result.Errors.Count > 0)
+					try
 					{
-						var sysFormat = CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern.Replace("/", "-");
-						var errorOutputPath = DivinityApp.GetAppDirectory("_Logs", $"ImportMods_{DateTime.Now.ToString(sysFormat + "_HH-mm-ss")}_Errors.log");
-						var logsDir = Path.GetDirectoryName(errorOutputPath);
-						if (!Directory.Exists(logsDir))
-						{
-							Directory.CreateDirectory(logsDir);
-						}
-						File.WriteAllText(errorOutputPath, String.Join("\n", result.Errors.Select(x => $"File: {x.File}\nError:\n{x.Exception}")));
-					}
+						IsRefreshing = false;
+						OnMainProgressComplete();
 
-					var total = result.Mods.Count;
-					if (result.Success)
-					{
-						if (result.Mods.Count > 1)
+						if (result.Errors.Count > 0)
 						{
-							ShowAlert($"Imported {total} mods.", AlertType.Success, 20);
+							var sysFormat = CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern.Replace("/", "-");
+							var errorOutputPath = DivinityApp.GetAppDirectory("_Logs", $"ImportMods_{DateTime.Now.ToString(sysFormat + "_HH-mm-ss")}_Errors.log");
+							var logsDir = Path.GetDirectoryName(errorOutputPath);
+							if (!Directory.Exists(logsDir))
+							{
+								Directory.CreateDirectory(logsDir);
+							}
+							File.WriteAllText(errorOutputPath, String.Join("\n", result.Errors.Select(x => $"File: {x.File}\nError:\n{x.Exception}")));
 						}
-						else if (total == 1)
+
+						var total = result.Mods.Count;
+						if (result.Success)
 						{
-							var modFileName = result.Mods.First().FileName;
-							var fileNames = String.Join(", ", files.Select(x => Path.GetFileName(x)));
-							ShowAlert($"Successfully imported '{modFileName}' from '{fileNames}'", AlertType.Success, 20);
+							if (result.Mods.Count > 1)
+							{
+								ShowAlert($"Imported {total} mods.", AlertType.Success, 20);
+							}
+							else if (total == 1)
+							{
+								var modFileName = result.Mods.First().FileName;
+								var fileNames = String.Join(", ", fileList.Select(x => Path.GetFileName(x)));
+								ShowAlert($"Successfully imported '{modFileName}' from '{fileNames}'", AlertType.Success, 20);
+							}
+							else
+							{
+								ShowAlert("No .pak file was found to import.", AlertType.Warning, 20);
+							}
+							var selectNext = result.Mods.Select(x => x.UUID).ToHashSet();
+							RxApp.MainThreadScheduler.Schedule(TimeSpan.FromMilliseconds(20), () =>
+							{
+								var selectMods = mods.Items.Where(x => selectNext.Contains(x.UUID));
+								DeselectAllMods();
+								Layout.DeselectAll();
+								Layout.SelectMods(selectMods);
+							});
 						}
 						else
 						{
-							ShowAlert("No .pak file was found to import.", AlertType.Warning, 20);
-						}
-						var selectNext = result.Mods.Select(x => x.UUID).ToHashSet();
-						RxApp.MainThreadScheduler.Schedule(TimeSpan.FromMilliseconds(20), () =>
-						{
-							var selectMods = mods.Items.Where(x => selectNext.Contains(x.UUID));
-							DeselectAllMods();
-							Layout.DeselectAll();
-							Layout.SelectMods(selectMods);
-						});
-					}
-					else
-					{
-						if (total == 0)
-						{
-							ShowAlert("No mods imported. Does the file contain a .pak?", AlertType.Warning, 60);
-						}
-						else
-						{
-							ShowAlert($"Imported {total} of {result.TotalPaks} mods. Check the log for details.", AlertType.Danger, 60);
+							if (total == 0)
+							{
+								ShowAlert("No mods imported. Does the file contain a .pak?", AlertType.Warning, 60);
+							}
+							else
+							{
+								ShowAlert($"Imported {total} of {result.TotalPaks} mods. Check the log for details.", AlertType.Danger, 60);
+							}
 						}
 					}
+					finally { completed?.Invoke(result); }
 				});
 				return Disposable.Empty;
 			});
+			return true;
 		}
 	}
 
-	public async Task ReviewAndImportDroppedModsAsync(IReadOnlyList<string> files, bool toActiveList)
+	public async Task<bool> ReviewAndImportDroppedModsAsync(
+		IReadOnlyList<string> files,
+		bool toActiveList,
+		NexusModManagerLink nexusSource = null)
 	{
-		if (files == null || files.Count == 0) return;
+		if (files == null || files.Count == 0) return false;
 		var destination = toActiveList ? "Active Mods" : "Inactive Mods";
 		var installed = mods.Items
 			.Where(mod => mod != null && !mod.IsVisualDivider)
@@ -2625,7 +2942,7 @@ Directory the zip will be extracted to:
 			DivinityApp.Log($"Dropped-mod review failed:\n{ex}");
 			ReduxMessageBox.Show(Window, "Redux could not inspect the dropped files. No mods were installed.",
 				"Could Not Review Mods", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
-			return;
+			return false;
 		}
 
 		var updateCount = reviewItems.Count(item => item.Status.StartsWith("Update", StringComparison.Ordinal));
@@ -2637,8 +2954,15 @@ Directory the zip will be extracted to:
 		if (replacementCount > 0) summaryParts.Add($"{replacementCount} replacement{(replacementCount == 1 ? String.Empty : "s")} to review");
 		var dialog = new ReduxInstallReviewWindow(Window, reviewItems, false, destination,
 			$"Destination: {destination} · {String.Join(" · ", summaryParts)}");
-		if (dialog.ShowDialog() == true || dialog.Accepted)
-			ImportMods(files.ToList(), toActiveList);
+		if (dialog.ShowDialog() != true && !dialog.Accepted) return false;
+		var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+		if (!ImportMods(files.ToList(), toActiveList, nexusSource,
+			result => completion.TrySetResult(result.Errors.Count == 0 && result.Mods.Count > 0)))
+		{
+			ShowAlert("Finish the current operation before installing another package.", AlertType.Warning, 20);
+			return false;
+		}
+		return await completion.Task;
 	}
 
 	private static ReduxInstallReviewItem CreateModInstallReviewItem(PackagePreflightReport report, IReadOnlyList<DivinityModData> installedMods)
@@ -3546,7 +3870,8 @@ Directory the zip will be extracted to:
 			Settings.DisableBackgroundEffects = welcomeWindow.SelectedDisableBackgroundEffects;
 		}
 
-		SaveSettings();
+		if (SaveSettings() && welcomeWindow.ApplyChanges)
+			ApplyNxmAssociationPreference(welcomeWindow.SelectedNxmAssociationEnabled);
 	}
 
 	private async Task CheckForEmptyOrderAsync(IScheduler sch, CancellationToken token)
@@ -6758,6 +7083,11 @@ Directory the zip will be extracted to:
 		IsModDetailsExpanded = Settings.ModDetailsPanelExpanded;
 		Keys.LoadKeybindings(this);
 		SaveSettings();
+		_ = EnsureNxmDownloadsInitializedAsync().ContinueWith(task =>
+		{
+			if (task.Exception != null)
+				DivinityApp.Log($"Nexus download queue initialization failed: {task.Exception.GetBaseException().GetType().Name}");
+		}, TaskScheduler.Default);
 
 		if (loaded && Settings.SaveWindowLocation)
 		{

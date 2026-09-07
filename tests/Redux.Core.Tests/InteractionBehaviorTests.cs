@@ -4,6 +4,7 @@ using DivinityModManager.Controls;
 using DivinityModManager.Models;
 using DivinityModManager.Models.App;
 using DivinityModManager.Models.Modio;
+using DivinityModManager.Models.NexusMods;
 using DivinityModManager.Util;
 using DivinityModManager.Views;
 
@@ -269,6 +270,19 @@ public sealed class InteractionBehaviorTests
 
 	public void ReduxDialogTemplatesResolveCoreBindingsAtRuntime()
 	{
+		var nexusDownloads = new ReduxNexusDownloadsWindow();
+		var downloadsList = (ListBox)nexusDownloads.FindName("DownloadsList");
+		downloadsList.ItemsSource = new[]
+		{
+			new NxmDownloadItem
+			{
+				ProjectName = "Runtime template check",
+				FileName = "runtime-template-check.zip",
+				State = NxmDownloadState.Downloaded,
+				ThumbnailUrl = ""
+			}
+		};
+
 		var windows = new Window[]
 		{
 			new ReduxSaveManagerWindow(null!, null!),
@@ -280,7 +294,8 @@ public sealed class InteractionBehaviorTests
 				0,
 				0,
 				0,
-				0))
+				0)),
+			nexusDownloads
 		};
 
 		try

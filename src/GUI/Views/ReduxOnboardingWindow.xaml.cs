@@ -1,3 +1,4 @@
+using DivinityModManager.AppServices;
 using DivinityModManager.Models;
 using DivinityModManager.Util;
 
@@ -23,6 +24,7 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 	private bool _themePreviewActive;
 	private bool _modulePreviewActive;
 	private bool _accessibilityPreviewActive;
+	private bool _nxmAssociationChoiceAvailable = true;
 	private bool _isInitializing = true;
 	private double _availableHeight = 780;
 
@@ -39,6 +41,7 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 	public bool SelectedDisableBackgroundEffects => DisableBackgroundEffectsCheckBox.IsChecked == true;
 	public string SelectedNexusApiKey => NexusApiKeyTextBox.Password?.Trim() ?? String.Empty;
 	public string SelectedModioApiKey => ModioApiKeyTextBox.Password?.Trim() ?? String.Empty;
+	public bool SelectedNxmAssociationEnabled => NxmLinksCheckBox.IsChecked == true;
 
 	public ReduxOnboardingWindow(Window owner, DivinityModManagerSettings settings)
 	{
@@ -72,6 +75,13 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 			ModioApiKeyTextBox.Password = settings.ModioAPIKey ?? String.Empty;
 			ReduceMotionCheckBox.IsChecked = settings.ReduceMotion;
 			DisableBackgroundEffectsCheckBox.IsChecked = settings.DisableBackgroundEffects;
+			var nxmStatus = _ownerWindow?.ViewModel?.GetNxmAssociationStatus();
+			NxmLinksCheckBox.IsChecked = nxmStatus?.Status is NxmAssociationStatus.Owned or NxmAssociationStatus.NeedsRepair;
+			_nxmAssociationChoiceAvailable = nxmStatus?.Success != false
+				&& nxmStatus?.Status != NxmAssociationStatus.OwnedByAnotherHandler;
+			NxmLinksCheckBox.ToolTip = _nxmAssociationChoiceAvailable
+				? nxmStatus?.Message
+				: "Another Redux installation manages Nexus Mod Manager links.";
 		}
 		else
 		{
@@ -121,6 +131,7 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 		}
 
 		var showCredentials = SourceIntegrationsCheckBox.IsChecked == true;
+		NxmLinksCheckBox.IsEnabled = showCredentials && _nxmAssociationChoiceAvailable;
 		if (!IsLoaded || ReduxWindowBehavior.ReduceMotion)
 		{
 			SourceCredentialsPanel.BeginAnimation(FrameworkElement.HeightProperty, null);

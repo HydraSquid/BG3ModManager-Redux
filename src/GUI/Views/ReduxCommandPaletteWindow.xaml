@@ -3,6 +3,7 @@
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:adonisUI="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
 	xmlns:controls="clr-namespace:DivinityModManager.Controls"
+	xmlns:dapp="clr-namespace:DivinityModManager;assembly=DivinityModManager.Core"
 	xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
 	Title="Quick Access"
 	Width="620" Height="530" MinWidth="520" MinHeight="420" MaxWidth="760" MaxHeight="760"
@@ -50,16 +51,17 @@
 										<ColumnDefinition Width="*" />
 										<ColumnDefinition Width="Auto" />
 									</Grid.ColumnDefinitions>
-									<Border Width="30" Height="30"
+									<Border Width="30" Height="30" Margin="0,0,10,0"
 										Background="{DynamicResource ReduxAccentSoftBrush}"
-										CornerRadius="{DynamicResource Redux.CornerRadius.Control}">
+										CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
+										Visibility="{Binding Path=(dapp:DivinityApp.ShowInterfaceIcons), Converter={StaticResource BoolToVisibilityConverter}}">
 										<controls:ReduxIcon Width="15" Height="15"
 											HorizontalAlignment="Center"
 											VerticalAlignment="Center"
 											Foreground="{DynamicResource ReduxAccentBrush}"
 											IconKey="{Binding IconKey}" />
 									</Border>
-									<StackPanel Grid.Column="1" Margin="10,0,12,0" VerticalAlignment="Center">
+									<StackPanel Grid.Column="1" Margin="0,0,12,0" VerticalAlignment="Center">
 										<TextBlock Foreground="{DynamicResource ReduxTextPrimaryBrush}"
 											FontWeight="{DynamicResource Redux.FontWeight.Control}"
 											Text="{Binding Name}"
@@ -133,6 +135,7 @@
 							Margin="0,0,9,0"
 							VerticalAlignment="Center"
 							Foreground="{DynamicResource ReduxTextMutedBrush}"
+							Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 							StrokeData="{StaticResource Redux.Icon.Funnel}" />
 						<TextBox x:Name="SearchBox"
 							Grid.Column="1"
@@ -177,6 +180,7 @@
 							<controls:ReduxIcon Width="25" Height="25"
 								HorizontalAlignment="Center"
 								Foreground="{DynamicResource ReduxTextMutedBrush}"
+								Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 								StrokeData="{StaticResource Redux.Icon.Flash}" />
 							<TextBlock Margin="0,8,0,0"
 								Foreground="{DynamicResource ReduxTextSecondaryBrush}"

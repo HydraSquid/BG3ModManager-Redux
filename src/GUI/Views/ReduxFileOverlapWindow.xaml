@@ -61,6 +61,7 @@
 											<controls:ReduxIcon Width="13" Height="13" Margin="0,0,7,0"
 												VerticalAlignment="Center"
 												Foreground="{DynamicResource ReduxTextMutedBrush}"
+												Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 												StrokeData="{StaticResource Redux.Icon.Package}" />
 											<TextBlock Grid.Column="1"
 												Foreground="{DynamicResource ReduxTextSecondaryBrush}"
@@ -201,6 +202,7 @@
 						<controls:ReduxIcon x:Name="EmptyStateIcon" Width="30" Height="30"
 							HorizontalAlignment="Center"
 							Foreground="{DynamicResource ReduxInfoBrush}"
+							Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 							StrokeData="{StaticResource Redux.Icon.Blocks}" />
 						<TextBlock x:Name="EmptyStateTitle" Margin="0,9,0,0"
 							HorizontalAlignment="Center"

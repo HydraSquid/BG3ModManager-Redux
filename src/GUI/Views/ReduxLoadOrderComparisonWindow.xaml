@@ -220,6 +220,7 @@
 								<controls:ReduxIcon Width="28" Height="28"
 									HorizontalAlignment="Center"
 									Foreground="{DynamicResource ReduxSuccessBrush}"
+									Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 									StrokeData="{StaticResource Redux.Icon.Check}" />
 								<TextBlock Margin="0,9,0,0"
 									HorizontalAlignment="Center"

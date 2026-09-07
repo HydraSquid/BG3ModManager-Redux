@@ -133,6 +133,7 @@
 							</Grid.ColumnDefinitions>
 							<controls:ReduxIcon Width="24" Height="24" Margin="0,2,12,0"
 								Foreground="{DynamicResource ReduxAccentHoverBrush}"
+								Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 								StrokeData="{DynamicResource Redux.Icon.Sparkles}" />
 							<StackPanel Grid.Column="1">
 								<TextBlock FontSize="{DynamicResource Redux.FontSize.20}"
@@ -233,21 +234,21 @@
 									</Grid.ColumnDefinitions>
 									<Border Style="{StaticResource WelcomeFeatureCardStyle}">
 										<StackPanel>
-											<controls:ReduxIcon Width="17" Height="17" HorizontalAlignment="Left" Foreground="{DynamicResource ReduxAccentHoverBrush}" StrokeData="{DynamicResource Redux.Icon.ReorderStroke}" />
+											<controls:ReduxIcon Width="17" Height="17" HorizontalAlignment="Left" Foreground="{DynamicResource ReduxAccentHoverBrush}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{DynamicResource Redux.Icon.ReorderStroke}" />
 											<TextBlock Margin="0,7,0,0" Style="{StaticResource WelcomeChoiceTitleStyle}" Text="Arrange with confidence" />
 											<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}" Text="Install mods, organize categories and separators, then undo or redo list changes when needed." />
 										</StackPanel>
 									</Border>
 									<Border Grid.Column="2" Style="{StaticResource WelcomeFeatureCardStyle}">
 										<StackPanel>
-											<controls:ReduxIcon Width="17" Height="17" HorizontalAlignment="Left" Foreground="{DynamicResource ReduxSuccessBrush}" StrokeData="{DynamicResource Redux.Icon.Save}" />
+											<controls:ReduxIcon Width="17" Height="17" HorizontalAlignment="Left" Foreground="{DynamicResource ReduxSuccessBrush}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{DynamicResource Redux.Icon.Save}" />
 											<TextBlock Margin="0,7,0,0" Style="{StaticResource WelcomeChoiceTitleStyle}" Text="Save, then apply" />
 											<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}" Text="Save Current Order keeps your Redux order. Sync Load Order to Game applies its changes to Baldur's Gate 3." />
 										</StackPanel>
 									</Border>
 									<Border Grid.Column="4" Style="{StaticResource WelcomeFeatureCardStyle}">
 										<StackPanel>
-											<controls:ReduxIcon Width="17" Height="17" HorizontalAlignment="Left" Foreground="{DynamicResource ReduxInfoBrush}" StrokeData="{DynamicResource Redux.Icon.Package}" />
+											<controls:ReduxIcon Width="17" Height="17" HorizontalAlignment="Left" Foreground="{DynamicResource ReduxInfoBrush}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{DynamicResource Redux.Icon.Package}" />
 											<TextBlock Margin="0,7,0,0" Style="{StaticResource WelcomeChoiceTitleStyle}" Text="Use more when useful" />
 											<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}" Text="Manage saves, share Redux Modlists, and review built-in Mod Diagnostics. The optional Advisor adds ordering guidance." />
 										</StackPanel>
@@ -267,7 +268,7 @@
 										Unchecked="SourceIntegrationsCheckBox_Changed">
 										<Grid>
 											<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-											<controls:ReduxIcon Width="17" Height="17" Margin="0,1,9,0" Foreground="{DynamicResource ReduxInfoBrush}" StrokeData="{DynamicResource Redux.Icon.LinkStroke}" />
+											<controls:ReduxIcon Width="17" Height="17" Margin="0,1,9,0" Foreground="{DynamicResource ReduxInfoBrush}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{DynamicResource Redux.Icon.LinkStroke}" />
 											<StackPanel Grid.Column="1">
 												<TextBlock Style="{StaticResource WelcomeChoiceTitleStyle}" Text="Source linking" />
 												<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}" Text="Link installed mods to Nexus Mods or mod.io for authors, versions, images, and update information." />
@@ -281,7 +282,7 @@
 										Unchecked="GuidanceCheckBox_Changed">
 										<Grid>
 											<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-											<controls:ReduxIcon Width="17" Height="17" Margin="0,1,9,0" Foreground="{DynamicResource ReduxWarningBrush}" StrokeData="{DynamicResource Redux.Icon.Flag}" />
+											<controls:ReduxIcon Width="17" Height="17" Margin="0,1,9,0" Foreground="{DynamicResource ReduxWarningBrush}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{DynamicResource Redux.Icon.Flag}" />
 											<StackPanel Grid.Column="1">
 												<TextBlock Style="{StaticResource WelcomeChoiceTitleStyle}" Text="Load Order Advisor (experimental)" />
 												<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}" Text="Add placement checks and organizer suggestions. Redux never changes the order unless you review and apply them." />
@@ -300,7 +301,7 @@
 									<StackPanel>
 										<Grid>
 											<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-											<controls:ReduxIcon Width="16" Height="16" Margin="0,0,8,0" Foreground="{DynamicResource ReduxInfoBrush}" StrokeData="{DynamicResource Redux.Icon.Key}" />
+											<controls:ReduxIcon Width="16" Height="16" Margin="0,0,8,0" Foreground="{DynamicResource ReduxInfoBrush}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{DynamicResource Redux.Icon.Key}" />
 											<StackPanel Grid.Column="1">
 											<TextBlock Style="{StaticResource WelcomeChoiceTitleStyle}" Text="Mod service keys" />
 											<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}" Text="Optional. Keys are stored on this computer and can be changed or removed later in Preferences." />
@@ -350,7 +351,7 @@
 										Unchecked="AccessibilityCheckBox_Changed">
 										<Grid>
 											<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-											<controls:ReduxIcon Width="17" Height="17" Margin="0,1,9,0" Foreground="{DynamicResource ReduxAccentHoverBrush}" StrokeData="{DynamicResource Redux.Icon.Flash}" />
+											<controls:ReduxIcon Width="17" Height="17" Margin="0,1,9,0" Foreground="{DynamicResource ReduxAccentHoverBrush}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{DynamicResource Redux.Icon.Flash}" />
 											<StackPanel Grid.Column="1">
 												<TextBlock Style="{StaticResource WelcomeChoiceTitleStyle}" Text="Reduce motion" />
 												<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}" Text="Remove sliding, scaling, smooth scrolling, and animated window or menu transitions while keeping clear interface feedback." />
@@ -363,7 +364,7 @@
 										Unchecked="AccessibilityCheckBox_Changed">
 										<Grid>
 											<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-											<controls:ReduxIcon Width="17" Height="17" Margin="0,1,9,0" Foreground="{DynamicResource ReduxAccentHoverBrush}" StrokeData="{DynamicResource Redux.Icon.Eye}" />
+											<controls:ReduxIcon Width="17" Height="17" Margin="0,1,9,0" Foreground="{DynamicResource ReduxAccentHoverBrush}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{DynamicResource Redux.Icon.Eye}" />
 											<StackPanel Grid.Column="1">
 												<TextBlock Style="{StaticResource WelcomeChoiceTitleStyle}" Text="Disable blur and dimming" />
 												<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}" Text="Keep the main interface clear behind dialogs and secondary windows." />
@@ -385,13 +386,13 @@
 					<StackPanel Grid.Column="1" Margin="18,0,0,0" Orientation="Horizontal">
 						<Button MinWidth="92" Click="CloseButton_Click" IsCancel="True" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
 							<StackPanel Orientation="Horizontal">
-								<controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" StrokeData="{DynamicResource Redux.Icon.Close}" />
+								<controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{DynamicResource Redux.Icon.Close}" />
 								<TextBlock Text="Not now" />
 							</StackPanel>
 						</Button>
 						<Button MinWidth="132" Margin="8,0,0,0" Click="SaveButton_Click" IsDefault="True" Style="{StaticResource ReduxPrimaryActionButtonStyle}">
 							<StackPanel Orientation="Horizontal">
-								<controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" Foreground="{DynamicResource ReduxAccentForegroundBrush}" StrokeData="{DynamicResource Redux.Icon.Check}" />
+								<controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" Foreground="{DynamicResource ReduxAccentForegroundBrush}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{DynamicResource Redux.Icon.Check}" />
 								<TextBlock Text="Save &amp; Continue" />
 							</StackPanel>
 						</Button>

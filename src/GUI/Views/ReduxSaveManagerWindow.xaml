@@ -3,6 +3,7 @@
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:adonisUI="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
 	xmlns:controls="clr-namespace:DivinityModManager.Controls"
+	xmlns:dapp="clr-namespace:DivinityModManager;assembly=DivinityModManager.Core"
 	xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
 	Title="Save Game Manager" Width="820" Height="620" MinWidth="680" MinHeight="480"
 	AllowDrop="True" Drop="Window_Drop" DragOver="Window_DragOver"
@@ -118,16 +119,16 @@
 
 				<StackPanel Grid.Row="1" Margin="0,12,0,10" Orientation="Horizontal">
 					<Button Margin="0,0,7,0" Click="ImportArchiveButton_Click" Style="{StaticResource ReduxPrimaryActionButtonStyle}">
-						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="15" Height="15" Margin="0,0,7,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.Download}" /><TextBlock Text="Install Save..." /></StackPanel>
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="15" Height="15" Margin="0,0,7,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{StaticResource Redux.Icon.Download}" /><TextBlock Text="Install Save..." /></StackPanel>
 					</Button>
 					<Button Margin="0,0,7,0" Click="ImportFolderButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
-						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="15" Height="15" Margin="0,0,7,0" StrokeData="{StaticResource Redux.Icon.FolderOpen}" /><TextBlock Text="Install Folder..." /></StackPanel>
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="15" Height="15" Margin="0,0,7,0" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{StaticResource Redux.Icon.FolderOpen}" /><TextBlock Text="Install Folder..." /></StackPanel>
 					</Button>
 					<Button Margin="0,0,7,0" Click="OpenFolderButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
-						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="15" Height="15" Margin="0,0,7,0" StrokeData="{StaticResource Redux.Icon.FolderOpen}" /><TextBlock Text="Open Folder" /></StackPanel>
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="15" Height="15" Margin="0,0,7,0" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{StaticResource Redux.Icon.FolderOpen}" /><TextBlock Text="Open Folder" /></StackPanel>
 					</Button>
 					<Button Click="RefreshButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
-						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="15" Height="15" Margin="0,0,7,0" StrokeData="{StaticResource Redux.Icon.RefreshStroke}" /><TextBlock Text="Refresh" /></StackPanel>
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="15" Height="15" Margin="0,0,7,0" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{StaticResource Redux.Icon.RefreshStroke}" /><TextBlock Text="Refresh" /></StackPanel>
 					</Button>
 				</StackPanel>
 
@@ -152,7 +153,7 @@
 													<Expander.Header>
 														<Grid>
 															<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-															<controls:ReduxIcon Width="15" Height="15" Margin="0,0,8,0" Foreground="{DynamicResource ReduxAccentHoverBrush}" StrokeData="{StaticResource Redux.Icon.BookOpen}" />
+															<controls:ReduxIcon Width="15" Height="15" Margin="0,0,8,0" Foreground="{DynamicResource ReduxAccentHoverBrush}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{StaticResource Redux.Icon.BookOpen}" />
 															<TextBlock Grid.Column="1" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="{Binding Name}" />
 															<Border Grid.Column="2" Margin="10,0,6,0" Padding="7,2" BorderThickness="1"
 																CornerRadius="{DynamicResource Redux.CornerRadius.Pill}"
@@ -243,7 +244,8 @@
 						</ListBox.ItemTemplate>
 					</ListBox>
 					<StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center">
-						<Border Width="48" Height="48" HorizontalAlignment="Center" Background="{DynamicResource ReduxAccentPillBackground}" CornerRadius="24">
+						<Border Width="48" Height="48" HorizontalAlignment="Center" Background="{DynamicResource ReduxAccentPillBackground}" CornerRadius="24"
+							Visibility="{Binding Path=(dapp:DivinityApp.ShowInterfaceIcons), Converter={StaticResource BoolToVisibilityConverter}}">
 							<controls:ReduxIcon Width="22" Height="22" Foreground="{DynamicResource ReduxAccentHoverBrush}" IconKey="folder" />
 						</Border>
 						<TextBlock Margin="0,10,0,0" HorizontalAlignment="Center" FontWeight="SemiBold" Text="No story saves found" />
@@ -256,7 +258,7 @@
 					<TextBlock x:Name="ProfilePathText" VerticalAlignment="Center" Foreground="{DynamicResource ReduxTextMutedBrush}" TextTrimming="CharacterEllipsis" />
 					<Button x:Name="DeleteButton" Grid.Column="1" MinWidth="88" Margin="8,0" IsEnabled="False"
 						Click="DeleteButton_Click" Style="{StaticResource ReduxDestructiveActionButtonStyle}">
-						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.Trash}" /><TextBlock Text="Delete" /></StackPanel>
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{StaticResource Redux.Icon.Trash}" /><TextBlock Text="Delete" /></StackPanel>
 					</Button>
 					<Button Grid.Column="2" MinWidth="88" Content="Close" IsCancel="True" Style="{StaticResource ReduxSecondaryActionButtonStyle}" />
 				</Grid>

@@ -681,6 +681,7 @@
 						<Grid Margin="6,0,0,0">
 							<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
 							<controls:ReduxIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"
+								Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 								Foreground="{DynamicResource ReduxAccentBrush}" StrokeData="{StaticResource Redux.Icon.ReorderStroke}" />
 							<StackPanel Grid.Column="1">
 								<TextBlock FontWeight="SemiBold" Text="Use category colors for selection" />
@@ -694,6 +695,7 @@
 						<Grid Margin="6,0,0,0">
 							<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
 							<controls:ReduxIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"
+								Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 								Foreground="{DynamicResource ReduxAccentBrush}" StrokeData="{StaticResource Redux.Icon.ListStroke}" />
 							<StackPanel Grid.Column="1">
 								<TextBlock FontWeight="SemiBold" Text="Hide icons" />
@@ -706,6 +708,7 @@
 						<Grid Margin="6,0,0,0">
 							<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
 							<controls:ReduxIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"
+								Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 								Foreground="{DynamicResource ReduxAccentBrush}" StrokeData="{StaticResource Redux.Icon.Pricetag}" />
 							<StackPanel Grid.Column="1">
 								<TextBlock FontWeight="SemiBold" Text="Colored text" />
@@ -719,6 +722,7 @@
 						<Grid Margin="6,0,0,0">
 							<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
 							<controls:ReduxIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"
+								Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 								Foreground="{DynamicResource ReduxAccentBrush}" StrokeData="{StaticResource Redux.Icon.Albums}" />
 							<StackPanel Grid.Column="1">
 								<TextBlock FontWeight="SemiBold" Text="Hide icon labels" />
@@ -734,6 +738,7 @@
 								<ColumnDefinition Width="*" />
 							</Grid.ColumnDefinitions>
 							<controls:ReduxIcon Width="16" Height="16" Margin="0,0,8,0"
+								Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 								VerticalAlignment="Center" Foreground="{DynamicResource ReduxAccentBrush}"
 								StrokeData="{StaticResource Redux.Icon.Sparkles}" />
 							<StackPanel Grid.Column="1">

@@ -405,6 +405,7 @@
 										<controls:ReduxIcon
 											Width="18" Height="18"
 											Margin="0,0,12,0"
+											Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 											VerticalAlignment="Center"
 											Foreground="{DynamicResource ReduxAccentBrush}"
 											StrokeData="{StaticResource Redux.Icon.ReorderStroke}" />
@@ -430,6 +431,7 @@
 										<controls:ReduxIcon
 											Width="18" Height="18"
 											Margin="0,0,12,0"
+											Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 											VerticalAlignment="Center"
 											Foreground="{DynamicResource ReduxAccentBrush}"
 											StrokeData="{StaticResource Redux.Icon.ListStroke}" />
@@ -455,6 +457,7 @@
 										<controls:ReduxIcon
 											Width="18" Height="18"
 											Margin="0,0,12,0"
+											Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 											VerticalAlignment="Center"
 											Foreground="{DynamicResource ReduxAccentBrush}"
 											StrokeData="{StaticResource Redux.Icon.Pricetag}" />
@@ -481,6 +484,7 @@
 										<controls:ReduxIcon
 											Width="18" Height="18"
 											Margin="0,0,12,0"
+											Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 											VerticalAlignment="Center"
 											Foreground="{DynamicResource ReduxAccentBrush}"
 											StrokeData="{StaticResource Redux.Icon.Albums}" />
@@ -504,6 +508,7 @@
 											<ColumnDefinition Width="*" />
 										</Grid.ColumnDefinitions>
 										<controls:ReduxIcon Width="18" Height="18" Margin="0,0,12,0"
+											Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 											VerticalAlignment="Center" Foreground="{DynamicResource ReduxAccentBrush}"
 											StrokeData="{StaticResource Redux.Icon.Sparkles}" />
 										<StackPanel Grid.Column="1">

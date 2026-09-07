@@ -1485,6 +1485,17 @@
 			<Trigger Property="IconKey" Value="wand-sparkles"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.WandSparkles}" /></Trigger>
 		</Style.Triggers>
 	</Style>
+	<!-- Apply explicitly to decorative icons that have an adjacent text label. Icon-only
+	     controls and semantic warning/error indicators remain usable when icons are hidden. -->
+	<Style x:Key="ReduxOptionalInterfaceIconStyle"
+		BasedOn="{StaticResource {x:Type controls:ReduxIcon}}"
+		TargetType="{x:Type controls:ReduxIcon}">
+		<Style.Triggers>
+			<DataTrigger Binding="{Binding Path=(dapp:DivinityApp.ShowInterfaceIcons)}" Value="False">
+				<Setter Property="Visibility" Value="Collapsed" />
+			</DataTrigger>
+		</Style.Triggers>
+	</Style>
 	<!-- Declared after the ReduxIcon catalog so popup templates defined near the top of this
 	     dictionary can resolve category keys through a deferred DynamicResource reference. -->
 	<DataTemplate x:Key="ReduxCategoryGlyphTemplate" DataType="{x:Type data:ModCategoryDisplayData}">

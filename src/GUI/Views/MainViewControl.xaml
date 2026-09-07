@@ -1264,7 +1264,7 @@
 							</Grid.ColumnDefinitions>
 
 							<!-- Setup: choose where the work applies, then install into it. -->
-							<Grid Grid.Column="0" Margin="0,0,12,0">
+							<Grid Grid.Column="0" Margin="0,0,10,0">
 								<Grid.RowDefinitions>
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
@@ -1272,7 +1272,7 @@
 								<TextBlock Style="{StaticResource ToolbarGroupLabelStyle}" Text="Setup" />
 								<StackPanel Grid.Row="1" VerticalAlignment="Center" Orientation="Horizontal">
 									<Button x:Name="ImportModButton"
-										Margin="1,0,7,0"
+										Margin="1,0,5,0"
 										Style="{StaticResource ToolbarWorkflowButtonStyle}"
 										ToolTip="{Binding Keys.ImportMod.CommandToolTip}">
 										<StackPanel Orientation="Horizontal">
@@ -1280,7 +1280,7 @@
 											<TextBlock Text="Install Mod" />
 										</StackPanel>
 									</Button>
-									<Button x:Name="OpenModsFolderButton" Margin="0,0,9,0" Style="{StaticResource ToolbarUtilityButtonStyle}" ToolTip="{Binding Keys.OpenModsFolder.CommandToolTip}">
+									<Button x:Name="OpenModsFolderButton" Style="{StaticResource ToolbarUtilityButtonStyle}" ToolTip="{Binding Keys.OpenModsFolder.CommandToolTip}">
 										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.FolderOpen}" />
 										<Button.ContextMenu>
 											<ContextMenu>
@@ -1290,14 +1290,14 @@
 											</ContextMenu>
 										</Button.ContextMenu>
 									</Button>
-									<Button Margin="0,0,9,0"
+									<Button Margin="1,0,7,0"
 										AutomationProperties.Name="Open Game-Directory Mod Manager"
 										Command="{Binding Keys.OpenGameDirectoryModManager.Command}"
 										Style="{StaticResource ToolbarUtilityButtonStyle}"
 										ToolTip="{Binding Keys.OpenGameDirectoryModManager.CommandToolTip}">
 										<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Blocks}" />
 									</Button>
-									<controls:ReduxIcon Margin="0,0,5,0" StrokeData="{StaticResource Redux.Icon.Person}" Foreground="{DynamicResource ReduxTextSecondaryBrush}" />
+									<controls:ReduxIcon Margin="0,0,4,0" StrokeData="{StaticResource Redux.Icon.Person}" Foreground="{DynamicResource ReduxTextSecondaryBrush}" />
 									<ComboBox x:Name="ProfilesComboBox"
 										Width="116"
 										DisplayMemberPath="Name"
@@ -1316,7 +1316,7 @@
 											</ContextMenu>
 										</ComboBox.ContextMenu>
 									</ComboBox>
-									<controls:ReduxIcon Margin="9,0,5,0" StrokeData="{StaticResource Redux.Icon.Map}" Foreground="{DynamicResource ReduxTextSecondaryBrush}" />
+									<controls:ReduxIcon Margin="8,0,4,0" StrokeData="{StaticResource Redux.Icon.Map}" Foreground="{DynamicResource ReduxTextSecondaryBrush}" />
 									<ComboBox x:Name="AdventureModComboBox"
 										Width="104"
 										DisplayMemberPath="DisplayName"
@@ -1339,8 +1339,8 @@
 
 							<Rectangle Grid.Column="1" Width="1" Margin="0,8" Fill="{DynamicResource ReduxBorderBrush}" Opacity="0.7" />
 
-							<!-- Order & Export: select, save, then publish the active load order. -->
-							<Grid Grid.Column="2" Margin="12,0" ClipToBounds="False">
+							<!-- Load Order & Sync: select, save, then apply the active load order. -->
+							<Grid Grid.Column="2" Margin="10,0" ClipToBounds="False">
 								<Grid.RowDefinitions>
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
@@ -1350,7 +1350,7 @@
 									<ColumnDefinition Width="*" />
 									<ColumnDefinition Width="Auto" />
 								</Grid.ColumnDefinitions>
-								<TextBlock Grid.ColumnSpan="2" Style="{StaticResource ToolbarGroupLabelStyle}" Text="Order &amp; Export" />
+								<TextBlock Grid.ColumnSpan="2" Style="{StaticResource ToolbarGroupLabelStyle}" Text="Load Order &amp; Sync" />
 								<TextBlock Grid.Column="2"
 									Margin="0,0,0,3"
 									HorizontalAlignment="Right"
@@ -1591,7 +1591,7 @@
 							<Rectangle Grid.Column="3" Width="1" Margin="0,8" Fill="{DynamicResource ReduxBorderBrush}" Opacity="0.7" />
 
 							<!-- Save Games: a compact entry point kept separate from load-order file operations. -->
-							<Grid Grid.Column="4" Margin="12,0">
+							<Grid Grid.Column="4" Margin="10,0">
 								<Grid.RowDefinitions>
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
@@ -1643,7 +1643,7 @@
 							<Rectangle Grid.Column="5" Width="1" Margin="0,8" Fill="{DynamicResource ReduxBorderBrush}" Opacity="0.7" />
 
 							<!-- Play: the final action remains visually distinct and anchored to the right edge. -->
-							<Grid Grid.Column="6" Margin="12,0,0,0">
+							<Grid Grid.Column="6" Margin="10,0,0,0">
 								<Grid.RowDefinitions>
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />

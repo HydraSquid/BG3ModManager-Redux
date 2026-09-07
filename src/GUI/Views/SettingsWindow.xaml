@@ -1056,7 +1056,7 @@
 						</TextBlock>
 					</Grid>
 					<Border Grid.Row="2"
-						Grid.ColumnSpan="2"
+						Grid.ColumnSpan="3"
 						Padding="0"
 						ClipToBounds="True"
 						Style="{StaticResource SettingsSectionCardStyle}">

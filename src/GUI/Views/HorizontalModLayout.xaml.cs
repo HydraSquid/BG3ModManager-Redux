@@ -1351,13 +1351,16 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			if (activeList) UpdateActiveSeparatorBulkToggleButton();
 		}
 
-		if (ReduxWindowBehavior.ReduceMotion || !SystemParameters.ClientAreaAnimation || !listView.IsLoaded)
+		listView.ApplyTemplate();
+		var animationTarget = listView.FindVisualChildren<ItemsPresenter>().FirstOrDefault();
+		if (ReduxWindowBehavior.ReduceMotion || !SystemParameters.ClientAreaAnimation ||
+			!listView.IsLoaded || animationTarget == null)
 		{
 			ApplyState();
 			return;
 		}
 
-		var restingOpacity = listView.Opacity;
+		var restingOpacity = animationTarget.Opacity;
 		var stateApplied = false;
 		VisualDividerAnimation transition = null;
 		void Update(double progress)
@@ -1368,7 +1371,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			if (progress < fadeOutEnd)
 			{
 				var phase = progress / fadeOutEnd;
-				listView.Opacity = restingOpacity * (1 - ((1 - transitionOpacity) * phase));
+				animationTarget.Opacity = restingOpacity * (1 - ((1 - transitionOpacity) * phase));
 				return;
 			}
 
@@ -1381,12 +1384,12 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 
 			if (progress <= fadeInStart)
 			{
-				listView.Opacity = restingOpacity * transitionOpacity;
+				animationTarget.Opacity = restingOpacity * transitionOpacity;
 				return;
 			}
 
 			var fadeInProgress = (progress - fadeInStart) / (1 - fadeInStart);
-			listView.Opacity = restingOpacity *
+			animationTarget.Opacity = restingOpacity *
 				(transitionOpacity + ((1 - transitionOpacity) * fadeInProgress));
 		}
 
@@ -1398,7 +1401,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			}
 			finally
 			{
-				listView.Opacity = restingOpacity;
+				animationTarget.Opacity = restingOpacity;
 				if (activeList && ReferenceEquals(_activeVisualDividerTransition, transition))
 					_activeVisualDividerTransition = null;
 				else if (!activeList && ReferenceEquals(_inactiveVisualDividerTransition, transition))
@@ -1421,6 +1424,11 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		var collapsedTarget = ViewModel.ResolveAllVisualDividersCollapsedTarget(activeList: true);
 		var collapse = collapsedTarget != false;
 		var action = collapse ? "Collapse all active separators" : "Expand all active separators";
+		var hasMultipleSeparators = ViewModel.Settings.VisualModListDividers?
+			.Count(divider => divider != null && divider.IsActiveList) > 1;
+		ActiveSeparatorBulkToggleButton.Visibility = hasMultipleSeparators
+			? Visibility.Visible
+			: Visibility.Collapsed;
 		ActiveSeparatorBulkToggleButton.IsEnabled = collapsedTarget.HasValue && ViewModel.IsInitialized && !ViewModel.IsLocked;
 		ActiveSeparatorBulkToggleButton.ToolTip = collapsedTarget.HasValue
 			? action

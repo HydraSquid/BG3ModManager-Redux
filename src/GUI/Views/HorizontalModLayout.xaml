@@ -1892,6 +1892,7 @@
 					<Button x:Name="ActiveSeparatorBulkToggleButton"
 						Style="{StaticResource ModPaneHeaderActionButtonStyle}"
 						IsEnabled="False"
+						Visibility="Collapsed"
 						Click="ActiveSeparatorBulkToggleButton_Click"
 						Loaded="ActiveSeparatorBulkToggleButton_Loaded"
 						MouseEnter="ActiveSeparatorBulkToggleButton_MouseEnter"

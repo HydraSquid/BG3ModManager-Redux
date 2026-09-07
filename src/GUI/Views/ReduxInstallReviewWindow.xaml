@@ -43,7 +43,7 @@
 							CornerRadius="{DynamicResource Redux.CornerRadius.Pill}">
 							<StackPanel Orientation="Horizontal">
 								<controls:ReduxIcon x:Name="StatusIcon" Width="13" Height="13" Margin="0,0,6,0"
-									Foreground="{DynamicResource ReduxInfoBrush}" IconKey="add-circle"
+									Foreground="{DynamicResource ReduxInfoBrush}" StrokeData="{StaticResource Redux.Icon.AddCircle}"
 									Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
 								<TextBlock x:Name="StatusText" VerticalAlignment="Center" FontWeight="SemiBold"
 									Foreground="{DynamicResource ReduxInfoBrush}" Text="{Binding Status}"
@@ -58,7 +58,7 @@
 							<Setter TargetName="StatusPill" Property="Background" Value="{DynamicResource ReduxSuccessPillBackground}" />
 							<Setter TargetName="StatusPill" Property="BorderBrush" Value="{DynamicResource ReduxSuccessBrush}" />
 							<Setter TargetName="StatusIcon" Property="Foreground" Value="{DynamicResource ReduxSuccessBrush}" />
-							<Setter TargetName="StatusIcon" Property="IconKey" Value="refresh" />
+							<Setter TargetName="StatusIcon" Property="StrokeData" Value="{StaticResource Redux.Icon.RefreshStroke}" />
 							<Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource ReduxSuccessBrush}" />
 						</DataTrigger>
 						<DataTrigger Binding="{Binding Tone}" Value="Warning">
@@ -66,8 +66,11 @@
 							<Setter TargetName="StatusPill" Property="Background" Value="{DynamicResource ReduxWarningPillBackground}" />
 							<Setter TargetName="StatusPill" Property="BorderBrush" Value="{DynamicResource ReduxWarningBrush}" />
 							<Setter TargetName="StatusIcon" Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" />
-							<Setter TargetName="StatusIcon" Property="IconKey" Value="warning" />
+							<Setter TargetName="StatusIcon" Property="StrokeData" Value="{StaticResource Redux.Icon.Warning}" />
 							<Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" />
+						</DataTrigger>
+						<DataTrigger Binding="{Binding Status}" Value="New mod">
+							<Setter TargetName="StatusIcon" Property="StrokeData" Value="{StaticResource Redux.Icon.AddCircle}" />
 						</DataTrigger>
 				</DataTemplate.Triggers>
 			</DataTemplate>
@@ -116,8 +119,11 @@
 
 				<Grid Grid.Row="3" Margin="0,10,0,0">
 					<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-					<TextBlock x:Name="FootnoteText" Margin="0,0,14,0" VerticalAlignment="Center"
-						Foreground="{DynamicResource ReduxTextMutedBrush}" TextWrapping="Wrap" />
+					<StackPanel Margin="0,0,14,0" VerticalAlignment="Center">
+						<TextBlock x:Name="FootnoteText" Foreground="{DynamicResource ReduxTextMutedBrush}" TextWrapping="Wrap" />
+						<CheckBox x:Name="SkipCleanReviewCheckBox" Margin="0,8,0,0"
+							Content="Don't show this review for clean packages" Visibility="Collapsed" />
+					</StackPanel>
 					<StackPanel Grid.Column="1" Orientation="Horizontal">
 						<Button MinWidth="86" Style="{StaticResource ReduxSecondaryActionButtonStyle}" IsCancel="True" Click="CancelButton_Click" Content="Cancel" />
 						<Button x:Name="InstallButton" MinWidth="112" Margin="8,0,0,0" Style="{StaticResource ReduxPrimaryActionButtonStyle}"

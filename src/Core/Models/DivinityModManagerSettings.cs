@@ -192,6 +192,10 @@ public class DivinityModManagerSettings : ReactiveObject
 	[DataMember, Reactive] public bool ConfirmCleanNxmDownloads { get; set; } = true;
 
 	[DefaultValue(true)]
+	[SettingsEntry("Review clean mod installs", "Show the install review for clean, brand-new PAK packages. Updates, replacements, and packages with warnings are always reviewed.")]
+	[DataMember, Reactive] public bool ConfirmCleanModInstalls { get; set; } = true;
+
+	[DefaultValue(true)]
 	[SettingsEntry("Bring Nexus downloads forward", "Bring Redux and its Downloads window to the front when Windows sends a Nexus Mod Manager link.")]
 	[DataMember, Reactive] public bool BringNxmDownloadsToFront { get; set; } = true;
 

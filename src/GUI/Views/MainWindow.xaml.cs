@@ -18,9 +18,11 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Effects;
 using System.Windows.Threading;
 
 using WpfScreenHelper;
@@ -33,6 +35,14 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 	public static MainWindow Self => self;
 
 	[DllImport("user32")] public static extern int FlashWindow(IntPtr hwnd, bool bInvert);
+	[DllImport("user32.dll")] private static extern bool GetCursorPos(out NativePoint point);
+
+	[StructLayout(LayoutKind.Sequential)]
+	private struct NativePoint
+	{
+		public int X;
+		public int Y;
+	}
 
 	public MainViewControl MainView { get; private set; }
 
@@ -193,6 +203,13 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 
 	private static IDisposable _saveWindowPositionTask = null;
 	private IDisposable _resizeGlowFadeTask = null;
+	private int _installDropOverlayTransitionVersion;
+	private bool _installDropOverlayShown;
+	private DispatcherTimer _installDropWatchdog;
+	private DateTime _lastInstallDragOverUtc;
+	private Effect _installDropPreviousEffect;
+	private double _installDropPreviousOpacity = 1;
+	private bool _installDropBackgroundEffectApplied;
 	private bool _isPreparingStartup;
 	private WindowSettings _deferredStartupWindowSettings;
 
@@ -209,7 +226,11 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 		_saveWindowPositionTask = RxApp.MainThreadScheduler.Schedule(TimeSpan.FromMilliseconds(500), SaveWindowSettings);
 	}
 
-	private void OnWindowResizeFeedback(object sender, SizeChangedEventArgs e)
+	private void OnWindowResizeFeedback(object sender, SizeChangedEventArgs e) => ShowWindowFrameFeedback();
+
+	private void OnWindowMoveFeedback(object sender, EventArgs e) => ShowWindowFrameFeedback();
+
+	private void ShowWindowFrameFeedback()
 	{
 		if (!IsLoaded || WindowState == WindowState.Maximized || ReduxWindowBehavior.ReduceMotion)
 		{
@@ -237,59 +258,171 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 		});
 	}
 
+	private static bool TryGetExternalInstallDropPaths(DragEventArgs e, out string[] paths)
+	{
+		paths = [];
+		if (e?.Data?.GetDataPresent(DataFormats.FileDrop) != true
+			|| e.Data.GetData(DataFormats.FileDrop) is not string[] droppedPaths
+			|| droppedPaths.Length == 0)
+			return false;
+		paths = droppedPaths;
+		return true;
+	}
+
+	private static bool IsSupportedExternalInstallDrop(string path) =>
+		MainWindowViewModel.IsSupportedDownloadManagerInput(path)
+		|| Bg3SaveGameService.IsSupportedSaveInput(path);
+
+	private void MainWindow_PreviewDragEnter(object sender, DragEventArgs e) => UpdateExternalInstallDrag(e);
+
+	private void MainWindow_PreviewDragOver(object sender, DragEventArgs e) => UpdateExternalInstallDrag(e);
+
+	private void UpdateExternalInstallDrag(DragEventArgs e)
+	{
+		if (!TryGetExternalInstallDropPaths(e, out var paths)) return;
+		_lastInstallDragOverUtc = DateTime.UtcNow;
+		var acceptsDrop = paths.All(IsSupportedExternalInstallDrop);
+		e.Effects = acceptsDrop ? DragDropEffects.Copy : DragDropEffects.None;
+		e.Handled = true;
+		if (acceptsDrop) ShowInstallDropOverlay();
+		else HideInstallDropOverlay();
+	}
+
+	private void MainWindow_PreviewDragLeave(object sender, DragEventArgs e)
+	{
+		if (!TryGetExternalInstallDropPaths(e, out _)) return;
+		_lastInstallDragOverUtc = DateTime.UtcNow;
+		EnsureInstallDropWatchdog();
+	}
+
+	private void EnsureInstallDropWatchdog()
+	{
+		if (_installDropWatchdog == null)
+		{
+			_installDropWatchdog = new DispatcherTimer(DispatcherPriority.Input)
+			{
+				Interval = TimeSpan.FromMilliseconds(90)
+			};
+			_installDropWatchdog.Tick += (_, _) =>
+			{
+				if (!_installDropOverlayShown)
+				{
+					_installDropWatchdog.Stop();
+					return;
+				}
+
+				var cursorOutside = true;
+				if (GetCursorPos(out var cursor))
+				{
+					var local = PointFromScreen(new Point(cursor.X, cursor.Y));
+					cursorOutside = local.X < 0 || local.Y < 0 || local.X > ActualWidth || local.Y > ActualHeight;
+				}
+				var dragReleased = DateTime.UtcNow - _lastInstallDragOverUtc > TimeSpan.FromMilliseconds(180)
+					&& Mouse.LeftButton != MouseButtonState.Pressed
+					&& Mouse.RightButton != MouseButtonState.Pressed;
+				if (cursorOutside || dragReleased) HideInstallDropOverlay();
+			};
+		}
+		if (!_installDropWatchdog.IsEnabled) _installDropWatchdog.Start();
+	}
+
+	private void ShowInstallDropOverlay()
+	{
+		if (_installDropOverlayShown) return;
+		_installDropOverlayShown = true;
+		_lastInstallDragOverUtc = DateTime.UtcNow;
+		EnsureInstallDropWatchdog();
+		if (!ReduxWindowBehavior.BackgroundEffectsDisabled && !_installDropBackgroundEffectApplied)
+		{
+			_installDropPreviousEffect = WindowContentLayer.Effect;
+			_installDropPreviousOpacity = WindowContentLayer.Opacity;
+			WindowContentLayer.Effect = new BlurEffect { Radius = 2.5, RenderingBias = RenderingBias.Performance };
+			WindowContentLayer.Opacity = 0.88;
+			InstallDropScrim.Visibility = Visibility.Visible;
+			_installDropBackgroundEffectApplied = true;
+		}
+		else if (ReduxWindowBehavior.BackgroundEffectsDisabled)
+		{
+			InstallDropScrim.Visibility = Visibility.Collapsed;
+		}
+		var transitionVersion = ++_installDropOverlayTransitionVersion;
+		InstallDropOverlay.BeginAnimation(OpacityProperty, null);
+		InstallDropOverlay.Visibility = Visibility.Visible;
+		if (ReduxWindowBehavior.ReduceMotion)
+		{
+			InstallDropOverlay.Opacity = 1;
+			return;
+		}
+		var fade = new DoubleAnimation(InstallDropOverlay.Opacity, 1, TimeSpan.FromMilliseconds(130))
+		{
+			EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+		};
+		fade.Completed += (_, _) =>
+		{
+			if (transitionVersion == _installDropOverlayTransitionVersion)
+				InstallDropOverlay.Opacity = 1;
+		};
+		InstallDropOverlay.BeginAnimation(OpacityProperty, fade);
+	}
+
+	private void HideInstallDropOverlay()
+	{
+		if (!_installDropOverlayShown && InstallDropOverlay.Visibility != Visibility.Visible) return;
+		_installDropOverlayShown = false;
+		_installDropWatchdog?.Stop();
+		RestoreInstallDropBackgroundEffect();
+		var transitionVersion = ++_installDropOverlayTransitionVersion;
+		InstallDropOverlay.BeginAnimation(OpacityProperty, null);
+		if (InstallDropOverlay.Visibility != Visibility.Visible) return;
+		if (ReduxWindowBehavior.ReduceMotion)
+		{
+			InstallDropOverlay.Opacity = 0;
+			InstallDropOverlay.Visibility = Visibility.Collapsed;
+			return;
+		}
+		var fade = new DoubleAnimation(InstallDropOverlay.Opacity, 0, TimeSpan.FromMilliseconds(105))
+		{
+			EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+		};
+		fade.Completed += (_, _) =>
+		{
+			if (transitionVersion != _installDropOverlayTransitionVersion) return;
+			InstallDropOverlay.Opacity = 0;
+			InstallDropOverlay.Visibility = Visibility.Collapsed;
+		};
+		InstallDropOverlay.BeginAnimation(OpacityProperty, fade);
+	}
+
+	private void RestoreInstallDropBackgroundEffect()
+	{
+		if (!_installDropBackgroundEffectApplied) return;
+		WindowContentLayer.Effect = _installDropPreviousEffect;
+		WindowContentLayer.Opacity = _installDropPreviousOpacity;
+		_installDropPreviousEffect = null;
+		_installDropBackgroundEffectApplied = false;
+	}
+
 	private async void MainWindow_PreviewDrop(object sender, DragEventArgs e)
 	{
-		if (!e.Data.GetDataPresent(DataFormats.FileDrop)
-			|| e.Data.GetData(DataFormats.FileDrop) is not string[] paths
-			|| paths.Length == 0)
-			return;
+		if (!TryGetExternalInstallDropPaths(e, out var paths)) return;
+		HideInstallDropOverlay();
+		e.Handled = true;
 
 		try
 		{
-			var gameDirectoryArchives = new List<string>();
-			var unsupportedGameDirectoryArchives = new List<string>();
-			foreach (var path in paths)
+			var packageFiles = paths.Where(MainWindowViewModel.IsSupportedDownloadManagerInput).ToArray();
+			if (packageFiles.Length > 0)
 			{
-				try
-				{
-					if (File.Exists(path)
-						&& ReduxGameDirectoryInstallService.TryInspectKnownArchive(path, computeArchiveHash: false) != null)
-						gameDirectoryArchives.Add(path);
-				}
-				catch (ReduxUnsupportedGameDirectoryArchiveException)
-				{
-					unsupportedGameDirectoryArchives.Add(Path.GetFileName(path));
-				}
-				catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
-				{
-					// Unrecognized or malformed archives remain available to the normal mod-drop review.
-				}
-			}
-			if (unsupportedGameDirectoryArchives.Count > 0)
-			{
-				ReduxMessageBox.Show(this,
-					$"Redux found native DLLs in {String.Join(", ", unsupportedGameDirectoryArchives)} but the archive layout is not reviewed. No files were installed.",
-					"Unsupported Game-Directory Package", System.Windows.MessageBoxButton.OK,
-					System.Windows.MessageBoxImage.Warning, System.Windows.MessageBoxResult.OK);
-				e.Handled = true;
-				return;
-			}
-			if (gameDirectoryArchives.Count > 0)
-			{
-				// Stop the routed drop before staging yields; otherwise the underlying mod
-				// list can begin its ordinary PAK import for the same archive.
-				e.Handled = true;
-				if (gameDirectoryArchives.Count != paths.Length)
+				if (packageFiles.Length != paths.Length)
 				{
 					ReduxMessageBox.Show(this,
-						"This drop mixes game-directory packages with ordinary mods or saves. Drop each install type separately so Redux can show the correct destinations and safeguards.",
-						"Separate Install Types", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning, System.Windows.MessageBoxResult.OK);
+						"This drop mixes supported package files with folders or unsupported files. Add those separately so Download Manager can inspect each package safely.",
+						"Separate Package Types", System.Windows.MessageBoxButton.OK,
+						System.Windows.MessageBoxImage.Warning, System.Windows.MessageBoxResult.OK);
+					return;
 				}
-				else
-				{
-					foreach (var path in gameDirectoryArchives)
-						await ReduxGameDirectoryModManagerWindow.ReviewAndInstallAsync(this, ViewModel, path);
-				}
+				await ViewModel.AddLocalPackagesToDownloadManagerAsync(packageFiles);
+				await OpenNexusDownloadsAsync();
 				return;
 			}
 
@@ -305,7 +438,6 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 					"This drop contains both save-game and mod files. Drop saves and mods separately so Redux can use the correct installer.",
 					"Separate Saves and Mods", System.Windows.MessageBoxButton.OK,
 					System.Windows.MessageBoxImage.Warning, System.Windows.MessageBoxResult.OK);
-				e.Handled = true;
 				return;
 			}
 
@@ -315,7 +447,6 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 				: Path.Combine(ViewModel.SelectedProfile.Folder, "Savegames", "Story");
 			if (ReduxSaveManagerWindow.ConfirmDroppedSaveInstall(this, names, storyFolder))
 				MainView.ShowSaveManager(saveSources.Select(source => source.Path));
-			e.Handled = true;
 		}
 		catch (Exception ex) when (ex is InvalidDataException or SharpCompress.Common.InvalidFormatException)
 		{
@@ -584,7 +715,7 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 		{
 			DivinityApp.Log($"Could not stop Nexus downloads during shutdown:\n{ex}");
 			ReduxMessageBox.Show(this,
-				"Redux could not safely pause and save the Nexus download queue. The window will remain open so you can try again.",
+				"Redux could not safely pause and save the download queue. The window will remain open so you can try again.",
 				"Shutdown Paused", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning, System.Windows.MessageBoxResult.OK);
 		}
 		finally
@@ -619,6 +750,7 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 		InitializeComponent();
 		ApplyAdaptiveDefaultSize();
 		SizeChanged += OnWindowResizeFeedback;
+		LocationChanged += OnWindowMoveFeedback;
 		self = this;
 
 		_logsDir = DivinityApp.GetAppDirectory("_Logs");
@@ -776,7 +908,7 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 		}
 		catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or InvalidOperationException)
 		{
-			ReduxMessageBox.Show(this, ex.Message, "Could Not Open Nexus Downloads",
+			ReduxMessageBox.Show(this, ex.Message, "Could Not Open Download Manager",
 				System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error, System.Windows.MessageBoxResult.OK);
 		}
 	}

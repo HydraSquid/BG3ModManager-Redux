@@ -7,12 +7,13 @@
 	xmlns:dapp="clr-namespace:DivinityModManager;assembly=DivinityModManagerCore"
 	xmlns:util="clr-namespace:DivinityModManager.Util"
 	xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
-	Title="Nexus Downloads" Width="900" Height="680" MinWidth="720" MinHeight="520"
+	Title="Download Manager" Width="940" Height="700" MinWidth="760" MinHeight="540"
 	FontFamily="{DynamicResource Redux.FontFamily.UI}" FontSize="{DynamicResource Redux.FontSize.12}"
 	FontWeight="{DynamicResource Redux.FontWeight.Body}" ResizeMode="CanResize" ShowInTaskbar="False"
 	WindowStartupLocation="CenterOwner" WindowStyle="SingleBorderWindow"
 	Template="{DynamicResource ReduxWindowTemplate}" Background="{DynamicResource ReduxWindowBrush}"
-	Foreground="{DynamicResource ReduxTextPrimaryBrush}" UseLayoutRounding="True" SnapsToDevicePixels="True">
+	Foreground="{DynamicResource ReduxTextPrimaryBrush}" UseLayoutRounding="True" SnapsToDevicePixels="True"
+	AllowDrop="True" PreviewDrop="Window_PreviewDrop">
 	<shell:WindowChrome.WindowChrome>
 		<shell:WindowChrome CaptionHeight="0" CornerRadius="0" GlassFrameThickness="0"
 			ResizeBorderThickness="6" UseAeroCaptionButtons="False" />
@@ -92,6 +93,9 @@
 				<Setter Property="Padding" Value="8,4" />
 				<Setter Property="Margin" Value="6,0,0,0" />
 				<Setter Property="MinWidth" Value="0" />
+				<Style.Triggers>
+					<DataTrigger Binding="{Binding HasNexusSource}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
+				</Style.Triggers>
 			</Style>
 			<Style x:Key="RemoveDownloadButton" BasedOn="{StaticResource ReduxMinorDestructiveActionButtonStyle}" TargetType="{x:Type Button}">
 				<Setter Property="Padding" Value="8,4" />
@@ -118,6 +122,7 @@
 					<DataTrigger Binding="{Binding State}" Value="Queued"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
 					<DataTrigger Binding="{Binding State}" Value="Downloading"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
 					<DataTrigger Binding="{Binding State}" Value="RetryWaiting"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+					<DataTrigger Binding="{Binding HasNexusSource}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
 				</Style.Triggers>
 			</Style>
 			<Style x:Key="ResumeDownloadButton" BasedOn="{StaticResource DownloadActionButton}" TargetType="{x:Type Button}">
@@ -125,6 +130,7 @@
 				<Style.Triggers>
 					<DataTrigger Binding="{Binding State}" Value="Paused"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
 					<DataTrigger Binding="{Binding State}" Value="Failed"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+					<DataTrigger Binding="{Binding HasNexusSource}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
 				</Style.Triggers>
 			</Style>
 			<Style x:Key="ReviewDownloadButton" BasedOn="{StaticResource DownloadActionButton}" TargetType="{x:Type Button}">
@@ -134,8 +140,8 @@
 				<Setter Property="Foreground" Value="{DynamicResource ReduxSuccessBrush}" />
 				<Style.Triggers>
 					<DataTrigger Binding="{Binding State}" Value="Downloaded"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
-					<DataTrigger Binding="{Binding State}" Value="NeedsReview"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
 					<DataTrigger Binding="{Binding State}" Value="InstallFailed"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+					<DataTrigger Binding="{Binding State}" Value="Installed"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
 				</Style.Triggers>
 			</Style>
 			<DataTemplate x:Key="DownloadItemTemplate">
@@ -208,6 +214,7 @@
 					<DataTrigger Binding="{Binding State}" Value="Resolving"><Setter TargetName="DownloadProgress" Property="Visibility" Value="Visible" /><Setter TargetName="DownloadProgress" Property="IsIndeterminate" Value="True" /></DataTrigger>
 					<DataTrigger Binding="{Binding State}" Value="Queued"><Setter TargetName="DownloadProgress" Property="Visibility" Value="Visible" /><Setter TargetName="DownloadProgress" Property="IsIndeterminate" Value="True" /></DataTrigger>
 					<DataTrigger Binding="{Binding State}" Value="Downloading"><Setter TargetName="DownloadProgress" Property="Visibility" Value="Visible" /></DataTrigger>
+					<DataTrigger Binding="{Binding State}" Value="Installing"><Setter TargetName="DownloadProgress" Property="Visibility" Value="Visible" /><Setter TargetName="DownloadProgress" Property="IsIndeterminate" Value="True" /></DataTrigger>
 					<DataTrigger Binding="{Binding State}" Value="Paused"><Setter TargetName="DownloadProgress" Property="Visibility" Value="Visible" /></DataTrigger>
 					<DataTrigger Binding="{Binding State}" Value="RetryWaiting"><Setter TargetName="DownloadProgress" Property="Visibility" Value="Visible" /><Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" /><Setter TargetName="StatusIcon" Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" /><Setter TargetName="StatusIcon" Property="StrokeData" Value="{StaticResource Redux.Icon.Warning}" /></DataTrigger>
 					<DataTrigger Binding="{Binding State}" Value="Downloaded"><Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource ReduxSuccessBrush}" /><Setter TargetName="StatusIcon" Property="Foreground" Value="{DynamicResource ReduxSuccessBrush}" /><Setter TargetName="StatusIcon" Property="StrokeData" Value="{StaticResource Redux.Icon.CircleCheck}" /></DataTrigger>
@@ -224,6 +231,10 @@
 						<MultiDataTrigger.Conditions><Condition Binding="{Binding State}" Value="Queued" /><Condition Binding="{Binding DataContext.Settings.ReduceMotion, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" Value="True" /></MultiDataTrigger.Conditions>
 						<Setter TargetName="DownloadProgress" Property="IsIndeterminate" Value="False" />
 					</MultiDataTrigger>
+					<MultiDataTrigger>
+						<MultiDataTrigger.Conditions><Condition Binding="{Binding State}" Value="Installing" /><Condition Binding="{Binding DataContext.Settings.ReduceMotion, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" Value="True" /></MultiDataTrigger.Conditions>
+						<Setter TargetName="DownloadProgress" Property="IsIndeterminate" Value="False" />
+					</MultiDataTrigger>
 				</DataTemplate.Triggers>
 			</DataTemplate>
 		</ResourceDictionary>
@@ -236,12 +247,17 @@
 			<Grid>
 				<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
 				<StackPanel>
-					<TextBlock FontSize="{DynamicResource Redux.FontSize.20}" FontWeight="{DynamicResource Redux.FontWeight.Title}" Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="Nexus downloads" />
+					<TextBlock FontSize="{DynamicResource Redux.FontSize.20}" FontWeight="{DynamicResource Redux.FontWeight.Title}" Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="Download Manager" />
 					<TextBlock Margin="0,5,0,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}" TextWrapping="Wrap"
-						Text="Downloads stay here until you review them. Downloading never installs, activates, reorders, or syncs mods." />
+						Text="NXM downloads and local packages stay here until you install them. Intake never activates, reorders, or syncs mods." />
 				</StackPanel>
 				<StackPanel Grid.Row="1" Margin="0,12,0,10" Orientation="Horizontal">
-					<Button Margin="0,0,7,0" Click="PasteLinkButton_Click" Style="{StaticResource ReduxPrimaryActionButtonStyle}">
+					<Button Margin="0,0,7,0" Click="AddPackageButton_Click" Style="{StaticResource ReduxPrimaryActionButtonStyle}">
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0"
+							Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+							StrokeData="{StaticResource Redux.Icon.Package}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Add Package..." /></StackPanel>
+					</Button>
+					<Button Margin="0,0,7,0" Click="PasteLinkButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
 						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0"
 							Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 							StrokeData="{StaticResource Redux.Icon.LinkStroke}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Paste NXM Link" /></StackPanel>
@@ -256,13 +272,13 @@
 					<Button x:Name="ClearInstalledButton" Margin="7,0,0,0" Click="ClearInstalledButton_Click"
 						Style="{StaticResource ReduxMinorWarningActionButtonStyle}" Visibility="Collapsed">
 						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,6,0"
-							Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+							Foreground="{DynamicResource ReduxWarningBrush}"
 							StrokeData="{StaticResource Redux.Icon.Trash}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Clear Installed History" /></StackPanel>
 					</Button>
 				</StackPanel>
 				<TabControl x:Name="DownloadsTabs" Grid.Row="2" Margin="0" SelectionChanged="DownloadsTabs_SelectionChanged"
 					ItemContainerStyle="{StaticResource ReduxContentTabItemStyle}" Style="{StaticResource ReduxContentTabControlStyle}">
-					<TabItem Header="Downloads">
+					<TabItem Header="Inbox">
 						<Grid Margin="0,7,0,0">
 							<Border Background="{DynamicResource ReduxListInteriorBrush}" BorderBrush="{DynamicResource ReduxBorderBrush}"
 								BorderThickness="1" CornerRadius="{DynamicResource Redux.CornerRadius.Card}" />
@@ -272,7 +288,7 @@
 								ItemTemplate="{StaticResource DownloadItemTemplate}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
 							<TextBlock x:Name="EmptyText" HorizontalAlignment="Center" VerticalAlignment="Center"
 								Foreground="{DynamicResource ReduxTextMutedBrush}" TextAlignment="Center" TextWrapping="Wrap"
-								Text="No downloads need attention.&#x0a;Use Mod Manager Download on Nexus Mods, or paste an NXM link here." />
+								Text="No packages need attention.&#x0a;Drop a package here, add a local file, or use Mod Manager Download on Nexus Mods." />
 						</Grid>
 					</TabItem>
 					<TabItem Header="Installed">

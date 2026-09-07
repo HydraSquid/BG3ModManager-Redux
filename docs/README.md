@@ -34,8 +34,9 @@ quick picture of Redux.
 - **Contribution report** means a privacy-limited `.bg3redux-report` prepared for database review.
 - **Game-directory mod** means a reviewed native or root-level package installed outside the normal
   PAK Mods folder and managed through Redux's separate guarded workflow.
-- **Nexus Downloads** means Redux's optional NXM acquisition queue. Downloading remains separate
-  from package installation, activation, ordering, and game sync.
+- **Download Manager** means Redux's shared local-package and optional NXM acquisition inbox.
+  Acquisition remains separate from package inspection, installation, activation, ordering, and
+  game sync.
 
 > [!IMPORTANT]
 > Review logs, screenshots, and reports before sharing them. Contribution reports are designed to

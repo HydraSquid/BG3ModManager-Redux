@@ -25,7 +25,7 @@ claim that every visible behavior originated in Redux.
 | Portability | Existing order formats | `.bg3redux` Modlists for selected Redux presentation and public source data |
 | Saves | Profile and save-path discovery | Profile-aware Save Game Manager with campaign grouping and guarded imports |
 | Game-directory mods | Game-path and Script Extender foundations | Reviewed native-package catalog with staged placement, ownership, rollback, and a separate manager |
-| Nexus downloads | Nexus metadata and API foundations | Optional NXM protocol handling, persistent resumable queue, verified archives, and guarded installer handoff |
+| Download Manager | Nexus metadata and package-inspection foundations | Shared local/NXM inbox, persistent resumable network queue, verified archives, and guarded destination routing |
 | Interface | Existing WPF application and accessibility foundations | Redux design system, themes, custom appearance, Quick Access, motion controls |
 
 ## The upstream core Redux preserves
@@ -207,18 +207,24 @@ the existing PAK preflight behavior for ordinary mod releases.
 
 The initial catalog is intentionally narrow and based on reviewed archive layouts. Matching a
 layout and executable architecture does not establish publisher provenance or guarantee that a mod
-is safe for a particular system. Script Extender continues to use Redux's existing dedicated
-workflow.
+is safe for a particular system. Script Extender uses the same guarded staged transaction and
+ownership record as other reviewed game-directory packages.
 
-## Nexus Mod Manager downloads
+## Download Manager and Nexus Mod Manager links
 
 Redux adds optional per-user `nxm://` registration with an ownership marker, repair support, and
 restoration of a previous handler where possible. Non-BG3 links are forwarded only when the saved
 handler can be invoked safely. BG3 links are delivered to the existing Redux process rather than
 starting a second full application instance.
 
-The Redux-owned download pipeline strictly separates link receipt, metadata resolution, transfer,
-package inspection, installation, activation, ordering, and game sync. Its versioned queue uses
+The Redux-owned Download Manager combines local PAK, LSV, ZIP, 7z, RAR, TAR, and GZip intake with
+optional NXM acquisition. Local files are copied into the managed Downloads folder; both local and
+network entries carry a source kind, stable archive identity, inspection result, detected content
+kind, destination, and independent installation state. The pipeline strictly separates link
+receipt, metadata resolution, transfer, package inspection, installation, activation, ordering,
+and game sync. Local intake also resolves available installed or bundled source artwork before
+installation so the shared inbox can present a known package consistently across acquisition paths.
+Its versioned queue uses
 atomic persistence with recovery for corrupt or interrupted state, bounded FIFO concurrency,
 pause/resume/retry controls, validated range requests, transfer limits, and publish-by-rename.
 Completed files receive a SHA-256 identity and are revalidated before installation. Temporary NXM
@@ -226,14 +232,25 @@ authorization keys and signed download URLs remain memory-only and are excluded 
 queue data, logs, and error details. On application exit, Redux pauses and persists only active
 queue work; finished downloads and installed-history records cannot hold shutdown open.
 
-**Nexus Downloads** is available from Tools, Quick Access, the **Mods & Campaign** toolbar group, and the assignable
-shortcut system. Ordinary packages enter the established inactive-mod review and import path;
-reviewed native packages use the guarded game-directory transaction; and save packages use Save
-Game Manager. Mixed, ambiguous, corrupt, or unsupported content is blocked without filesystem
-changes. Installed entries move into a separate history tab that can be cleared without deleting
-the downloaded archive or uninstalling content. The clear-history action is available with the
-Installed view rather than consuming space inside the history list. Downloading or installing never
-activates, reorders, or syncs a mod automatically.
+**Download Manager** is available from Tools, Quick Access, the **Mods & Campaign** toolbar group,
+and the assignable shortcut system. Files can also be added with its picker or dropped onto either
+the manager or the unified full-window install target in the main Redux window. Pane location no
+longer selects an Active or Inactive destination. Finalized packages are inspected automatically: ordinary packages
+enter the established inactive-mod review and import path; reviewed native packages and Script
+Extender use the guarded game-directory transaction; and save packages use Save Game Manager.
+Mixed, ambiguous, corrupt, or unsupported content is blocked without filesystem changes. Installed
+entries move into a separate history tab that can be cleared without deleting the downloaded
+archive or uninstalling content. The clear-history action is available with the Installed view
+rather than consuming space inside the history list. Downloading or installing never activates,
+reorders, or syncs a mod automatically.
+Retained Download Manager archives can be reinstalled directly from history. Explicitly adding an
+identical local archive returns its existing record to the inbox and refreshes its classification
+and artwork instead of duplicating it. Uninstall state, Download Manager history, and any future
+opt-in long-term archive library remain separate ownership concerns.
+
+Clean, brand-new PAK batches have a distinct success review and an opt-out that can be reversed in
+Preferences. The bypass is deliberately narrow: updates, replacements, downgrades, unreadable
+packages, and any warning-bearing batch continue to require review.
 
 ## Filesystem and privacy hardening
 
@@ -255,8 +272,11 @@ Redux retains upstream speech and screen-reader support while adding:
 - keyboard-operable Redux dialogs and a searchable, grouped shortcut editor with remembered group
   state and group-wide expand/collapse controls;
 - selectable dialog text and consistent focus behavior;
-- lightweight automation for realized rows in large virtualized lists; and
-- independent reduced-motion and reduced-background-effects preferences.
+- lightweight automation for realized rows in large virtualized lists;
+- independent reduced-motion and reduced-background-effects preferences, including the unified
+  full-window drop target; and
+- one full-window accent frame for install drops and native move/resize feedback, including the
+  custom title bar.
 
 ## Targeted upstream corrections
 

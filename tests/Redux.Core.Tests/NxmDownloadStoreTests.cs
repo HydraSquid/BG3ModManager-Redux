@@ -10,6 +10,37 @@ namespace Redux.Core.Tests;
 
 internal sealed class NxmDownloadStoreTests
 {
+	public void LocalPackageIdentityAndInspectionSurviveRestart()
+	{
+		using var fixture = new StoreFixture();
+		var item = new NxmDownloadItem
+		{
+			QueuePosition = 1,
+			SourceKind = AcquiredPackageSourceKind.LocalFile,
+			SourceFileName = "Example.zip",
+			ProjectName = "Example",
+			CompletedFileName = "Example.zip",
+			SizeBytes = 4,
+			BytesReceived = 4,
+			ArchiveSha256 = "9f64a747e1b97f131fabb6b447296c9b6f0201e79fb3c5356e6c77e89b6a806a",
+			DetectedContentKind = "PAK mod archive",
+			DetectedDestination = "Inactive Mods",
+			InspectionSummary = "Ready for Inactive Mods",
+			InspectionCompleted = true,
+			State = NxmDownloadState.Downloaded
+		};
+		File.WriteAllBytes(Path.Combine(fixture.Directory, item.CompletedFileName), [1, 2, 3, 4]);
+		fixture.Store.SaveAsync([item]).GetAwaiter().GetResult();
+
+		var restored = fixture.Store.ReconcileAsync().GetAwaiter().GetResult().Single();
+
+		RegressionAssert.Equal(AcquiredPackageSourceKind.LocalFile, restored.SourceKind);
+		RegressionAssert.Equal("local:" + item.ArchiveSha256, restored.Identity);
+		RegressionAssert.Equal("PAK mod archive", restored.DetectedContentKind);
+		RegressionAssert.Equal("Inactive Mods", restored.DetectedDestination);
+		RegressionAssert.True(restored.InspectionCompleted);
+	}
+
 	public void RoundTripPreservesPublicQueueStateWithoutCapabilities()
 	{
 		using var fixture = new StoreFixture();

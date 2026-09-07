@@ -14,7 +14,7 @@ public enum ReduxGameDirectoryModKind
 {
 	NativeLoader,
 	NativePlugin,
-	ExistingReduxWorkflow
+	ScriptExtender
 }
 
 public sealed record ReduxGameDirectoryModLayout(
@@ -45,7 +45,7 @@ public sealed record ReduxGameDirectoryModDefinition(
 	string SourceUrl,
 	string Requirements)
 {
-	public bool SupportsGuardedInstall => Kind != ReduxGameDirectoryModKind.ExistingReduxWorkflow;
+	public bool SupportsGuardedInstall => true;
 	public bool ReplacesExistingGameFiles { get; init; }
 	public IReadOnlyDictionary<string, string> ReplacementOriginals { get; init; }
 		= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -201,10 +201,10 @@ public static class ReduxGameDirectoryModCatalog
 				Fingerprint("bin/NativeMods/Streamline/sl.pcl.dll", 359552, "699ab461e64e95189a7fe6a21c79ad237cf56b60ea748cb6c840cd5431ba91d1", ""),
 				Fingerprint("bin/NativeMods/Streamline/sl.reflex.dll", 382080, "7e6e4ccc4b561bd449fb0da90709d9b96b08c3f6f4697362caaa359e72a58a67", ""))
 		},
-		new ReduxGameDirectoryModDefinition(2172, "script-extender", "Baldur's Gate 3 Script Extender", ReduxGameDirectoryModKind.ExistingReduxWorkflow, false,
+		new ReduxGameDirectoryModDefinition(2172, "script-extender", "Baldur's Gate 3 Script Extender", ReduxGameDirectoryModKind.ScriptExtender, false,
 			Files("bin/DWrite.dll"), Preserve(),
 			[Layout("Bin contents", Map(("DWrite.dll", "bin/DWrite.dll")))],
-			"https://www.nexusmods.com/baldursgate3/mods/2172", "Handled by Redux's existing Script Extender workflow rather than the native-mod manager.")
+			"https://www.nexusmods.com/baldursgate3/mods/2172", "Installs DWrite.dll through Redux's guarded game-directory workflow.")
 		{
 			BinaryFingerprints = Fingerprints(
 				Fingerprint("bin/DWrite.dll", 5837824, "25151fb060cdad69fc322bb338edbf822d77291ef75661958a72df186d1a2fcb", "31"),

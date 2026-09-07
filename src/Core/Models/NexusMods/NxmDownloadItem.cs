@@ -18,6 +18,13 @@ public enum NxmDownloadState
 	InstallFailed
 }
 
+public enum AcquiredPackageSourceKind
+{
+	NexusMods,
+	LocalFile,
+	ReduxDownload
+}
+
 public sealed record NxmArchiveInspection(string FileName, long Length, DateTime LastWriteUtc,
 	IReadOnlyList<ModuleShortDesc> Modules);
 
@@ -111,6 +118,12 @@ public sealed class NxmDownloadItem : ReactiveObject
 	[DataMember(Order = 24), Reactive] public string ThumbnailUrl { get; set; } = String.Empty;
 	[DataMember(Order = 25), Reactive] public string InstallDestination { get; set; } = String.Empty;
 	[DataMember(Order = 26), Reactive] public DateTimeOffset? InstalledAt { get; set; }
+	[DataMember(Order = 27), Reactive] public AcquiredPackageSourceKind SourceKind { get; set; }
+	[DataMember(Order = 28), Reactive] public string SourceFileName { get; set; } = String.Empty;
+	[DataMember(Order = 29), Reactive] public string DetectedContentKind { get; set; } = String.Empty;
+	[DataMember(Order = 30), Reactive] public string DetectedDestination { get; set; } = String.Empty;
+	[DataMember(Order = 31), Reactive] public string InspectionSummary { get; set; } = String.Empty;
+	[DataMember(Order = 32), Reactive] public bool InspectionCompleted { get; set; }
 
 	[IgnoreDataMember] public NexusModManagerLink Authorization { get; set; }
 	[IgnoreDataMember] public NxmArchiveInspection Inspection { get; set; }
@@ -129,7 +142,16 @@ public sealed class NxmDownloadItem : ReactiveObject
 	[IgnoreDataMember, Reactive] public string NativeRequirementLabel { get; set; } = String.Empty;
 	[IgnoreDataMember, Reactive] public bool NativeRequirementWarning { get; set; }
 
-	public string Identity => $"{ModId}:{FileId}";
+	public string Identity => SourceKind != AcquiredPackageSourceKind.NexusMods
+		? $"local:{ArchiveSha256}"
+		: $"{ModId}:{FileId}";
+	public bool HasNexusSource => SourceKind == AcquiredPackageSourceKind.NexusMods && ModId > 0;
+	public string SourceText => SourceKind switch
+	{
+		AcquiredPackageSourceKind.LocalFile => "Local package",
+		AcquiredPackageSourceKind.ReduxDownload => "Redux download",
+		_ => "Nexus Mods"
+	};
 	public string StatusText => State switch
 	{
 		NxmDownloadState.Resolving => "Getting file details",
@@ -175,6 +197,7 @@ public sealed class NxmDownloadItem : ReactiveObject
 		get
 		{
 			var details = new List<string>();
+			details.Add(SourceText);
 			if (!String.IsNullOrWhiteSpace(Author)) details.Add($"by {Author}");
 			if (!String.IsNullOrWhiteSpace(Version)) details.Add($"v{Version}");
 			if (SizeBytes > 0) details.Add(FormatBytes(SizeBytes));
@@ -188,12 +211,31 @@ public sealed class NxmDownloadItem : ReactiveObject
 		NxmDownloadState.Paused when BytesReceived > 0 => $"{FormatBytes(BytesReceived)} downloaded",
 		NxmDownloadState.RetryWaiting when BytesReceived > 0 => $"{FormatBytes(BytesReceived)} downloaded  ·  retrying shortly",
 		NxmDownloadState.NeedsFreshLink => "Open its Nexus file page to request a fresh Mod Manager Download link.",
+		NxmDownloadState.Downloaded when !String.IsNullOrWhiteSpace(InspectionSummary) => InspectionSummary,
 		NxmDownloadState.Failed or NxmDownloadState.InstallFailed or NxmDownloadState.NeedsReview
 			=> FailureDetails,
 		_ => String.Empty
 	};
 	public string NexusActionText => State == NxmDownloadState.NeedsFreshLink ? "Get New Link" : "Open Nexus";
-	public string InstallActionText => State == NxmDownloadState.InstallFailed ? "Try Install Again" : "Install";
+	public string InstallActionText
+	{
+		get
+		{
+			var prefix = State switch
+			{
+				NxmDownloadState.InstallFailed => "Try Again",
+				NxmDownloadState.Installed => "Reinstall",
+				_ => "Install"
+			};
+			return DetectedDestination switch
+			{
+				"Inactive Mods" => $"{prefix} to Inactive Mods",
+				"Save Games" => $"{prefix} with Save Manager",
+				"Game-directory Mods" => $"{prefix} with Game-directory Manager",
+				_ => prefix
+			};
+		}
+	}
 	public string RemoveActionText => State == NxmDownloadState.Installed ? "Clear" : "Remove";
 	public bool IsInstalledHistory => State == NxmDownloadState.Installed;
 	public string NexusActionToolTip => State == NxmDownloadState.NeedsFreshLink

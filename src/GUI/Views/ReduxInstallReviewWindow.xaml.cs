@@ -27,15 +27,17 @@ public sealed record ReduxInstallReviewItem(
 public partial class ReduxInstallReviewWindow : AdonisUI.Controls.AdonisWindow
 {
 	public bool Accepted { get; private set; }
+	public bool SkipFutureCleanReviews => SkipCleanReviewCheckBox.IsChecked == true;
 
 	public ReduxInstallReviewWindow(
 		Window owner,
 		IReadOnlyList<ReduxInstallReviewItem> items,
 		bool isSaveInstall,
 		string destination,
-		string summaryDetail)
+		string summaryDetail,
+		bool canSkipCleanReview = false)
 		: this(owner, items, isSaveInstall ? ReduxInstallReviewKind.Saves : ReduxInstallReviewKind.Mods,
-			destination, summaryDetail)
+			destination, summaryDetail, canSkipCleanReview)
 	{
 	}
 
@@ -44,7 +46,8 @@ public partial class ReduxInstallReviewWindow : AdonisUI.Controls.AdonisWindow
 		IReadOnlyList<ReduxInstallReviewItem> items,
 		ReduxInstallReviewKind kind,
 		string destination,
-		string summaryDetail)
+		string summaryDetail,
+		bool canSkipCleanReview = false)
 	{
 		InitializeComponent();
 		ReduxWindowBehavior.AttachDialogTransitions(this, 40);
@@ -61,8 +64,8 @@ public partial class ReduxInstallReviewWindow : AdonisUI.Controls.AdonisWindow
 		var noun = isSaveInstall ? "save" : isGameDirectoryInstall ? "change" : "mod";
 		var count = items?.Count ?? 0;
 		Title = isSaveInstall ? "Install Saves" : isGameDirectoryInstall ? "Review Game-Directory Changes" : "Install Mods";
-		HeadingText.Text = isSaveInstall ? "Install dropped saves?"
-			: isGameDirectoryInstall ? "Apply these game-directory changes?" : "Install dropped mods?";
+		HeadingText.Text = isSaveInstall ? "Install saves?"
+			: isGameDirectoryInstall ? "Apply these game-directory changes?" : "Install mods?";
 		DescriptionText.Text = isSaveInstall
 			? "Review what Save Game Manager found before anything is copied into the selected profile."
 			: isGameDirectoryInstall
@@ -78,6 +81,8 @@ public partial class ReduxInstallReviewWindow : AdonisUI.Controls.AdonisWindow
 				? "Redux rechecks the archive, prerequisites, destinations, and ownership record immediately before applying anything."
 				: "Packages are validated again during installation.";
 		InstallButtonText.Text = isSaveInstall ? "Install Saves" : isGameDirectoryInstall ? "Apply Changes" : "Install Mods";
+		SkipCleanReviewCheckBox.Visibility = canSkipCleanReview && kind == ReduxInstallReviewKind.Mods
+			? Visibility.Visible : Visibility.Collapsed;
 	}
 
 	private void InstallButton_Click(object sender, RoutedEventArgs e)

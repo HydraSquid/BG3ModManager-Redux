@@ -11,6 +11,70 @@ namespace Redux.Core.Tests;
 
 internal sealed class NxmDownloadManagerTests
 {
+	public void LocalPackageIsCopiedHashedAndDeduplicatedInTheSharedInbox()
+	{
+		var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ReduxLocalIntakeTests", Guid.NewGuid().ToString("N"));
+		var downloads = System.IO.Path.Combine(root, "Downloads");
+		System.IO.Directory.CreateDirectory(downloads);
+		var source = System.IO.Path.Combine(root, "Example Mod.pak");
+		System.IO.File.WriteAllBytes(source, [1, 2, 3, 4]);
+		var manager = new NxmDownloadManager(downloads, new MemoryStore(), new ResolverFactory(),
+			new FakeTransfer(), 4, () => false, (_, _) => Task.FromResult(true));
+		try
+		{
+			var first = manager.AddLocalPackageAsync(source, "9f64a747e1b97f131fabb6b447296c9b6f0201e79fb3c5356e6c77e89b6a806a",
+				"Example Mod", "PAK mod", "Inactive Mods", "Ready for Inactive Mods",
+				thumbnailUrl: "https://static.example.test/example-mod.png").GetAwaiter().GetResult();
+			manager.SetInstalledAsync(first, "Inactive Mods").GetAwaiter().GetResult();
+			System.IO.File.Delete(System.IO.Path.Combine(downloads, manager.Items.Single().CompletedFileName));
+			var second = manager.AddLocalPackageAsync(source, "9f64a747e1b97f131fabb6b447296c9b6f0201e79fb3c5356e6c77e89b6a806a",
+				"Example Mod", "PAK mod", "Inactive Mods", "Ready for Inactive Mods",
+				thumbnailUrl: "https://static.example.test/example-mod-updated.png").GetAwaiter().GetResult();
+
+			var item = manager.Items.Single();
+			RegressionAssert.Equal(first, second);
+			RegressionAssert.Equal(AcquiredPackageSourceKind.LocalFile, item.SourceKind);
+			RegressionAssert.Equal(NxmDownloadState.Downloaded, item.State);
+			RegressionAssert.Equal("Inactive Mods", item.DetectedDestination);
+			RegressionAssert.Equal("https://static.example.test/example-mod-updated.png", item.ThumbnailUrl);
+			RegressionAssert.True(item.InstalledAt == null);
+			RegressionAssert.True(item.InspectionCompleted);
+			RegressionAssert.True(System.IO.File.Exists(System.IO.Path.Combine(downloads, item.CompletedFileName)));
+		}
+		finally
+		{
+			if (System.IO.Directory.Exists(root)) System.IO.Directory.Delete(root, true);
+		}
+	}
+
+	public void UnsafeLocalPackageRemainsVisibleButCannotEnterInstallState()
+	{
+		var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ReduxLocalIntakeTests", Guid.NewGuid().ToString("N"));
+		var downloads = System.IO.Path.Combine(root, "Downloads");
+		System.IO.Directory.CreateDirectory(downloads);
+		var source = System.IO.Path.Combine(root, "Unknown Native.zip");
+		System.IO.File.WriteAllBytes(source, [5, 6, 7]);
+		var sha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
+			System.IO.File.ReadAllBytes(source))).ToLowerInvariant();
+		var manager = new NxmDownloadManager(downloads, new MemoryStore(), new ResolverFactory(),
+			new FakeTransfer(), 4, () => false, (_, _) => Task.FromResult(true));
+		try
+		{
+			manager.AddLocalPackageAsync(source, sha256,
+				"Unknown Native", "Unreviewed native package", String.Empty,
+				"Redux cannot safely determine the destination.").GetAwaiter().GetResult();
+
+			var item = manager.Items.Single();
+			RegressionAssert.Equal(NxmDownloadState.NeedsReview, item.State);
+			RegressionAssert.Equal("unsupported-layout", item.ErrorCode);
+			RegressionAssert.Equal(String.Empty, item.DetectedDestination);
+		}
+		finally
+		{
+			if (System.IO.Directory.Exists(root)) System.IO.Directory.Delete(root, true);
+		}
+	}
+
 	public void DuplicateLinkFocusesExistingItem()
 	{
 		var fixture = new ManagerFixture();

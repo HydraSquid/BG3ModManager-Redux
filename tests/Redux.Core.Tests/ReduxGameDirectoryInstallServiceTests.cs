@@ -32,7 +32,7 @@ public sealed class ReduxGameDirectoryInstallServiceTests
 		RegressionAssert.SequenceEqual(reviewed, File.ReadAllBytes(fixture.LoaderPath));
 	}
 
-	public void CatalogContainsReviewedNativeProjectsAndRoutesExistingWorkflows()
+	public void CatalogContainsReviewedNativeProjectsAndGuardedWorkflows()
 	{
 		RegressionAssert.Equal(12, ReduxGameDirectoryModCatalog.All.Count);
 		RegressionAssert.Equal("Native Mod Loader", ReduxGameDirectoryModCatalog.Find(944)!.Name);
@@ -42,7 +42,7 @@ public sealed class ReduxGameDirectoryInstallServiceTests
 		RegressionAssert.Equal("Native Camera Tweaks", ReduxGameDirectoryModCatalog.Find(945)!.Name);
 		RegressionAssert.Equal("native-camera-tweaks", ReduxGameDirectoryModCatalog.Find(22892)!.PackageId);
 		RegressionAssert.Equal("native-camera-tweaks", ReduxGameDirectoryModCatalog.Find(945)!.PackageId);
-		RegressionAssert.False(ReduxGameDirectoryModCatalog.Find(2172)!.SupportsGuardedInstall);
+		RegressionAssert.True(ReduxGameDirectoryModCatalog.Find(2172)!.SupportsGuardedInstall);
 		RegressionAssert.Equal(null, ReduxGameDirectoryModCatalog.Find(1));
 		RegressionAssert.SequenceEqual(
 			new[] { "bin/bink2w64.dll", "bin/bink2w64_original.dll" },
@@ -136,14 +136,38 @@ public sealed class ReduxGameDirectoryInstallServiceTests
 		RegressionAssert.Equal("native-camera-tweaks", camera.Definition.PackageId);
 	}
 
-	public void ArchiveRecognitionRoutesScriptExtenderToItsExistingReduxWorkflow()
+	public void ArchiveRecognitionRoutesScriptExtenderToGuardedGameDirectoryWorkflow()
 	{
 		using var fixture = new NativeFixture();
 		var scriptExtender = Path.Combine(Path.GetDirectoryName(fixture.LoaderArchivePath)!, "ScriptExtender.zip");
 		fixture.CreateArchive(scriptExtender, ("DWrite.dll", fixture.Pe("script extender")));
 		var inspection = ReduxGameDirectoryInstallService.TryInspectKnownArchive(scriptExtender);
 		RegressionAssert.Equal(2172L, inspection!.Definition.NexusModId);
-		RegressionAssert.False(inspection.Definition.SupportsGuardedInstall);
+		RegressionAssert.True(inspection.Definition.SupportsGuardedInstall);
+	}
+
+	public void ScriptExtenderUsesTheSameStagedCommitAndOwnershipRecordAsOtherGameDirectoryMods()
+	{
+		using var fixture = new NativeFixture();
+		var scriptExtender = Path.Combine(Path.GetDirectoryName(fixture.LoaderArchivePath)!, "ScriptExtender.zip");
+		var dll = fixture.Pe("script extender guarded install");
+		fixture.CreateArchive(scriptExtender, ("DWrite.dll", dll));
+		var transaction = fixture.Installer().StageAsync(2172, scriptExtender, CancellationToken.None)
+			.GetAwaiter().GetResult();
+		try
+		{
+			RegressionAssert.False(File.Exists(Path.Combine(fixture.GameBin, "DWrite.dll")));
+			transaction.CommitAsync(CancellationToken.None).GetAwaiter().GetResult();
+		}
+		finally
+		{
+			transaction.DisposeAsync().AsTask().GetAwaiter().GetResult();
+		}
+
+		RegressionAssert.SequenceEqual(dll, File.ReadAllBytes(Path.Combine(fixture.GameBin, "DWrite.dll")));
+		var managed = fixture.Installer().GetInstalledMods().Single();
+		RegressionAssert.Equal("script-extender", managed.PackageId);
+		RegressionAssert.Equal(ReduxGameDirectoryModStatus.Managed, managed.Status);
 	}
 
 	public void UnreviewedDllArchiveIsNeverTreatedAsAnOrdinaryModArchive()

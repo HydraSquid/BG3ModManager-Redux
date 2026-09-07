@@ -185,7 +185,10 @@ public sealed class NxmDownloadStore : INxmDownloadStore
 
 	private static IReadOnlyList<NxmDownloadItem> Normalize(IEnumerable<NxmDownloadItem> items) =>
 		(items ?? Enumerable.Empty<NxmDownloadItem>())
-		.Where(item => item != null && !String.IsNullOrWhiteSpace(item.Id) && item.ModId > 0 && item.FileId > 0)
+		.Where(item => item != null && !String.IsNullOrWhiteSpace(item.Id)
+			&& (item.SourceKind is AcquiredPackageSourceKind.LocalFile or AcquiredPackageSourceKind.ReduxDownload
+				? !String.IsNullOrWhiteSpace(item.ArchiveSha256)
+				: item.SourceKind == AcquiredPackageSourceKind.NexusMods && item.ModId > 0 && item.FileId > 0))
 		.OrderBy(item => item.QueuePosition)
 		.ThenBy(item => item.Id, StringComparer.Ordinal)
 		.ToArray();

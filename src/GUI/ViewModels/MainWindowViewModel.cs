@@ -110,6 +110,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	private const string ProviderCredentialFileName = "provider-credentials.dat";
 	private readonly StartupNotificationQueue _startupNotifications = new();
 	private readonly SemaphoreSlim _nxmActivationGate = new(1, 1);
+	private readonly HashSet<string> _acquiredPackageInspections = new(StringComparer.Ordinal);
 	private NxmDownloadManager _nxmDownloadManager;
 	private Task _initializeNxmDownloadsTask = Task.CompletedTask;
 	private bool _nxmShuttingDown;
@@ -385,6 +386,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	[Reactive] public string MainProgressWorkText { get; set; }
 	[Reactive] public bool MainProgressIsActive { get; set; }
 	[Reactive] public double MainProgressValue { get; set; }
+	[Reactive] public bool DownloadManagerInstallIsActive { get; set; }
 
 	public void IncreaseMainProgressValue(double val, string message = "")
 	{
@@ -548,7 +550,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			{
 				ReduxMessageBox.Show(Window,
 					"Nexus downloads require online mod information and a Nexus Mods API key. Configure them in Preferences, then open the Mod Manager Download link again.",
-					"Nexus Downloads Not Configured", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
+					"NXM Links Not Configured", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
 				return;
 			}
 			await EnsureNxmDownloadsInitializedAsync();
@@ -603,8 +605,171 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		NxmDownloads = _nxmDownloadManager.Items;
 		_nxmDownloadManager.FocusRequested += id => Application.Current.Dispatcher.BeginInvoke(() =>
 			SelectedNxmDownload = NxmDownloads.FirstOrDefault(item => item.Id == id));
+		_nxmDownloadManager.ItemChanged += item =>
+		{
+			if (NeedsAcquiredPackageInspection(item))
+				_ = InspectAcquiredPackageAsync(item);
+		};
 		await _nxmDownloadManager.InitializeAsync();
+		foreach (var item in NxmDownloads.Where(NeedsAcquiredPackageInspection))
+			_ = InspectAcquiredPackageAsync(item);
 	}
+
+	private static bool NeedsAcquiredPackageInspection(NxmDownloadItem item) => item != null
+		&& item.State is (NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview
+			or NxmDownloadState.InstallFailed or NxmDownloadState.Installed)
+		&& (!item.InspectionCompleted
+			|| (String.IsNullOrWhiteSpace(item.ThumbnailUrl)
+				&& !String.IsNullOrWhiteSpace(item.DetectedDestination)));
+
+	public static bool IsSupportedDownloadManagerInput(string path) => File.Exists(path)
+		&& (Path.GetExtension(path).Equals(".pak", StringComparison.OrdinalIgnoreCase)
+			|| Path.GetExtension(path).Equals(".lsv", StringComparison.OrdinalIgnoreCase)
+			|| ArchivePackagePreflightService.IsSupportedArchive(path));
+
+	public async Task<int> AddLocalPackagesToDownloadManagerAsync(IEnumerable<string> paths)
+	{
+		var candidates = (paths ?? Enumerable.Empty<string>())
+			.Where(IsSupportedDownloadManagerInput)
+			.Select(Path.GetFullPath)
+			.Distinct(StringComparer.OrdinalIgnoreCase)
+			.ToArray();
+		if (candidates.Length == 0) return 0;
+		await EnsureNxmDownloadsInitializedAsync();
+		var added = 0;
+		foreach (var path in candidates)
+		{
+			try
+			{
+				var classification = await ClassifyAcquiredPackageAsync(path);
+				var sha256 = await ComputeAcquiredPackageSha256Async(path);
+				await _nxmDownloadManager.AddLocalPackageAsync(path, sha256, classification.ProjectName,
+					classification.ContentKind, classification.Destination, classification.Summary,
+					thumbnailUrl: classification.ThumbnailUrl);
+				added++;
+			}
+			catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException)
+			{
+				DivinityApp.Log($"Local package intake failed for '{Path.GetFileName(path)}': {ex.GetType().Name}");
+				ShowAlert($"Redux could not add {Path.GetFileName(path)} to Download Manager.", AlertType.Danger, 25);
+			}
+		}
+		return added;
+	}
+
+	private async Task InspectAcquiredPackageAsync(NxmDownloadItem item)
+	{
+		if (!NeedsAcquiredPackageInspection(item) || _nxmDownloadManager == null) return;
+		var hadCompletedInspection = item.InspectionCompleted;
+		lock (_acquiredPackageInspections)
+			if (!_acquiredPackageInspections.Add(item.Id)) return;
+		try
+		{
+			var path = GetNxmArchivePath(item);
+			await VerifyNxmArchiveAsync(item, path);
+			var classification = await ClassifyAcquiredPackageAsync(path);
+			await _nxmDownloadManager.SetInspectionAsync(item.Id, classification.ProjectName,
+				classification.ContentKind, classification.Destination, classification.Summary, classification.Installable,
+				classification.ThumbnailUrl);
+		}
+		catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException)
+		{
+			if (!hadCompletedInspection)
+				await _nxmDownloadManager.SetInspectionAsync(item.Id, null, "Unreadable package", String.Empty,
+					"Redux could not inspect this package. No files were changed.", false);
+			DivinityApp.Log($"Package inspection failed for {item.Identity}: {ex.GetType().Name}");
+		}
+		finally
+		{
+			lock (_acquiredPackageInspections) _acquiredPackageInspections.Remove(item.Id);
+		}
+	}
+
+	private async Task<AcquiredPackageClassification> ClassifyAcquiredPackageAsync(string path)
+	{
+		var installed = mods.Items.Where(mod => mod != null && !mod.IsVisualDivider).ToArray();
+		if (Path.GetExtension(path).Equals(".pak", StringComparison.OrdinalIgnoreCase))
+		{
+			var report = await PackagePreflightService.AnalyzeAsync(path, installed);
+			var thumbnail = report.IsReadable
+				? await ResolveAcquiredPackageThumbnailAsync(path, [report.Mod], installed)
+				: String.Empty;
+			return report.IsReadable
+				? new AcquiredPackageClassification(report.DisplayName, "PAK mod", "Inactive Mods",
+					"PAK mod · Ready to install to Inactive Mods", true, thumbnail)
+				: new AcquiredPackageClassification(Path.GetFileNameWithoutExtension(path), "Unreadable PAK", String.Empty,
+					"Redux could not read usable mod metadata from this PAK. No files were changed.", false, String.Empty);
+		}
+
+		var inspection = await ArchivePackagePreflightService.AnalyzeAsync(path, installed);
+		var archiveThumbnail = await ResolveAcquiredPackageThumbnailAsync(path,
+			inspection.Packages.Select(package => package.Mod), installed);
+		return inspection.Kind switch
+		{
+			ArchivePackagePreflightKind.ReviewedGameDirectory => new AcquiredPackageClassification(
+				inspection.GameDirectoryInspection?.Definition?.Name ?? Path.GetFileNameWithoutExtension(path),
+				"Game-directory mod", "Game-directory Mods",
+				"Reviewed game-directory package · Ready for Game-directory Mod Manager", true, archiveThumbnail),
+			ArchivePackagePreflightKind.SaveGame when inspection.SaveGames.Count > 0 => new AcquiredPackageClassification(
+				inspection.SaveGames.Count == 1 ? inspection.SaveGames[0].DisplayName : Path.GetFileNameWithoutExtension(path),
+				"Save game", "Save Games",
+				$"{inspection.SaveGames.Count} save{(inspection.SaveGames.Count == 1 ? String.Empty : "s")} · Ready for Save Manager", true, archiveThumbnail),
+			ArchivePackagePreflightKind.PakArchive when inspection.Packages.Count > 0 => new AcquiredPackageClassification(
+				inspection.Packages.Count == 1 ? inspection.Packages[0].DisplayName : Path.GetFileNameWithoutExtension(path),
+				"PAK mod archive", "Inactive Mods",
+				$"{inspection.Packages.Count} PAK mod{(inspection.Packages.Count == 1 ? String.Empty : "s")} · Ready to install to Inactive Mods", true, archiveThumbnail),
+			ArchivePackagePreflightKind.Mixed when inspection.GameDirectoryInspection != null => new AcquiredPackageClassification(
+				inspection.GameDirectoryInspection.Definition.Name, "Hybrid game-directory mod", "Game-directory Mods",
+				"Reviewed hybrid package · Ready for Game-directory Mod Manager", true, archiveThumbnail),
+			ArchivePackagePreflightKind.UnreviewedNative => new AcquiredPackageClassification(
+				Path.GetFileNameWithoutExtension(path), "Unreviewed native package", String.Empty,
+				"Native files were found, but Redux cannot safely determine their destinations.", false, archiveThumbnail),
+			ArchivePackagePreflightKind.Mixed => new AcquiredPackageClassification(
+				Path.GetFileNameWithoutExtension(path), "Mixed package", String.Empty,
+				"This package mixes install types. Redux did not change any files.", false, archiveThumbnail),
+			_ => new AcquiredPackageClassification(Path.GetFileNameWithoutExtension(path), "Unsupported package", String.Empty,
+				"Redux could not find supported installable content. No files were changed.", false, archiveThumbnail)
+		};
+	}
+
+	private static async Task<string> ResolveAcquiredPackageThumbnailAsync(string path,
+		IEnumerable<DivinityModData> packageMods, IReadOnlyList<DivinityModData> installedMods)
+	{
+		var incoming = (packageMods ?? Enumerable.Empty<DivinityModData>()).Where(mod => mod != null).ToArray();
+		foreach (var mod in incoming)
+		{
+			var direct = mod.Metadata?.PreviewImageUri?.AbsoluteUri;
+			if (!String.IsNullOrWhiteSpace(direct)) return direct;
+			var installed = installedMods?.FirstOrDefault(candidate =>
+				!String.IsNullOrWhiteSpace(mod.UUID)
+				&& String.Equals(candidate.UUID, mod.UUID, StringComparison.OrdinalIgnoreCase));
+			var existing = installed?.Metadata?.PreviewImageUri?.AbsoluteUri;
+			if (!String.IsNullOrWhiteSpace(existing)) return existing;
+		}
+
+		ReduxModDatabaseMatch match = null;
+		if (Path.GetExtension(path).Equals(".pak", StringComparison.OrdinalIgnoreCase))
+		{
+			if (ReduxModDatabaseService.CouldMatchPak(path))
+				match = await ReduxModDatabaseService.TryResolvePakAsync(path, CancellationToken.None);
+		}
+		else if (ReduxModDatabaseService.CouldMatchArchive(path))
+		{
+			match = await ReduxModDatabaseService.TryResolveArchiveAsync(path, CancellationToken.None);
+		}
+		match ??= incoming.Select(ReduxModDatabaseService.TryResolveIdentity).FirstOrDefault(candidate => candidate != null);
+		return match?.CreateMetadata(incoming.FirstOrDefault()?.UUID ?? String.Empty)?.PreviewImageUrl ?? String.Empty;
+	}
+
+	private static async Task<string> ComputeAcquiredPackageSha256Async(string path)
+	{
+		await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
+			65536, FileOptions.Asynchronous | FileOptions.SequentialScan);
+		return Convert.ToHexString(await System.Security.Cryptography.SHA256.HashDataAsync(stream)).ToLowerInvariant();
+	}
+
+	private sealed record AcquiredPackageClassification(string ProjectName, string ContentKind,
+		string Destination, string Summary, bool Installable, string ThumbnailUrl);
 
 	public NxmAssociationResult GetNxmAssociationStatus()
 	{
@@ -707,7 +872,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			or NxmDownloadState.InstallFailed;
 		if (ReduxMessageBox.Show(Window,
 			hasArchive ? "Remove this entry and move its downloaded archive to the Recycle Bin?" : "Cancel and remove this download?",
-			"Remove Nexus Download", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+			"Remove Package", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
 		await _nxmDownloadManager.RemoveAsync(item.Id, hasArchive);
 	}
 
@@ -720,19 +885,45 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		await _nxmDownloadManager.ClearInstalledHistoryAsync();
 	}
 
-	public async Task ReviewNxmDownloadAsync(NxmDownloadItem item)
+	public async Task ReviewNxmDownloadAsync(NxmDownloadItem item, Window owner = null)
 	{
-		if (item?.State is not (NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview or NxmDownloadState.InstallFailed)) return;
+		if (item?.State is not (NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview
+			or NxmDownloadState.InstallFailed or NxmDownloadState.Installed)) return;
+		if (!item.InspectionCompleted) await InspectAcquiredPackageAsync(item);
+		if (item.State == NxmDownloadState.NeedsReview || String.IsNullOrWhiteSpace(item.DetectedDestination)) return;
 		var archivePath = GetNxmArchivePath(item);
+		var dialogOwner = owner?.IsLoaded == true ? owner : Window;
+		var previousState = item.State;
+
+		async Task InstallPakAsync()
+		{
+			var installStarted = false;
+			var nexusSource = item.HasNexusSource
+				? new NexusModManagerLink(item.ModId, item.FileId, null, null, null)
+				: null;
+			var installed = await ReviewAndImportModsAsync([archivePath], false, nexusSource, dialogOwner,
+				async () =>
+				{
+					installStarted = true;
+					await _nxmDownloadManager.SetStateAsync(item.Id, NxmDownloadState.Installing);
+				});
+			if (installed)
+				await _nxmDownloadManager.SetInstalledAsync(item.Id, "Inactive Mods");
+			else if (installStarted)
+				await _nxmDownloadManager.SetStateAsync(item.Id, NxmDownloadState.InstallFailed,
+					"install-failed", "Redux could not finish installing this package. Review the import error and try again.");
+			else if (item.State != previousState)
+				await _nxmDownloadManager.SetStateAsync(item.Id, previousState);
+		}
+
+		DownloadManagerInstallIsActive = true;
 		try
 		{
 			await VerifyNxmArchiveAsync(item, archivePath);
 			var installed = mods.Items.Where(mod => mod != null && !mod.IsVisualDivider).ToArray();
 			if (Path.GetExtension(archivePath).Equals(".pak", StringComparison.OrdinalIgnoreCase))
 			{
-				if (await ReviewAndImportDroppedModsAsync([archivePath], false,
-					new NexusModManagerLink(item.ModId, item.FileId, null, null, null)))
-					await _nxmDownloadManager.SetInstalledAsync(item.Id, "Inactive Mods");
+				await InstallPakAsync();
 				return;
 			}
 
@@ -740,26 +931,24 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			switch (inspection.Kind)
 			{
 				case ArchivePackagePreflightKind.ReviewedGameDirectory:
-					if (await ReduxGameDirectoryModManagerWindow.ReviewAndInstallAsync(Window, this, archivePath))
+					if (await ReduxGameDirectoryModManagerWindow.ReviewAndInstallAsync(dialogOwner, this, archivePath))
 						await _nxmDownloadManager.SetInstalledAsync(item.Id, "Game-directory Mods");
 					break;
 				case ArchivePackagePreflightKind.SaveGame:
-					if (View?.ShowSaveManagerForImport(archivePath) == true)
+					if (View?.ShowSaveManagerForImport(archivePath, dialogOwner) == true)
 						await _nxmDownloadManager.SetInstalledAsync(item.Id, "Save Games");
 					break;
 				case ArchivePackagePreflightKind.PakArchive:
-					if (await ReviewAndImportDroppedModsAsync([archivePath], false,
-						new NexusModManagerLink(item.ModId, item.FileId, null, null, null)))
-						await _nxmDownloadManager.SetInstalledAsync(item.Id, "Inactive Mods");
+					await InstallPakAsync();
 					break;
 				case ArchivePackagePreflightKind.Mixed when inspection.GameDirectoryInspection != null:
-					if (await ReduxGameDirectoryModManagerWindow.ReviewAndInstallAsync(Window, this, archivePath))
+					if (await ReduxGameDirectoryModManagerWindow.ReviewAndInstallAsync(dialogOwner, this, archivePath))
 						await _nxmDownloadManager.SetInstalledAsync(item.Id, "Game-directory Mods");
 					break;
 				default:
 					await _nxmDownloadManager.SetStateAsync(item.Id, NxmDownloadState.NeedsReview, "unsupported-layout",
 						"This download mixes content types or contains an unreviewed native layout. Redux did not change any files.");
-					ReduxMessageBox.Show(Window,
+					ReduxMessageBox.Show(dialogOwner,
 						"This package is mixed, ambiguous, or contains an unreviewed native layout. Redux did not change any files.",
 						"Package Needs Manual Review", MessageBoxButton.OK, MessageBoxImage.Warning, MessageBoxResult.OK);
 					break;
@@ -769,8 +958,12 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		{
 			DivinityApp.Log($"NXM review failed for {item.Identity}: {ex.GetType().Name}");
 			await _nxmDownloadManager.SetStateAsync(item.Id, NxmDownloadState.InstallFailed, "review-failed", ex.Message);
-			ReduxMessageBox.Show(Window, ex.Message, "Could Not Review Download",
+			ReduxMessageBox.Show(dialogOwner, ex.Message, "Could Not Review Download",
 				MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+		}
+		finally
+		{
+			DownloadManagerInstallIsActive = false;
 		}
 	}
 
@@ -809,100 +1002,67 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 	public bool DebugMode { get; set; }
 
-	private bool _justDownloadedScriptExtender;
-
-	private void DownloadScriptExtender(string exeDir)
+	private async void DownloadScriptExtender()
 	{
-		var isLoggingEnabled = Window.DebugLogListener != null;
-		if (!isLoggingEnabled) Window.ToggleLogging(true);
-
-		double taskStepAmount = 1.0 / 3;
-		MainProgressTitle = $"Setting up the Script Extender...";
+		MainProgressTitle = "Downloading Script Extender";
 		MainProgressValue = 0d;
 		MainProgressToken = new CancellationTokenSource();
 		CanCancelProgress = true;
 		MainProgressIsActive = true;
-
-		string dllDestination = Path.Combine(exeDir, DivinityApp.EXTENDER_UPDATER_FILE);
-
-		RxApp.TaskpoolScheduler.ScheduleAsync(async (ctrl, t) =>
+		Directory.CreateDirectory(NxmDownloadsDirectory);
+		var intakePath = Path.Combine(NxmDownloadsDirectory, $".script-extender-intake-{Guid.NewGuid():N}.zip");
+		try
 		{
-			int successes = 0;
-			Stream webStream = null;
-			try
+			await SetMainProgressTextAsync("Downloading the reviewed Script Extender package...");
+			await using var webStream = await WebHelper.DownloadFileAsStreamAsync(
+				PathwayData.ScriptExtenderLatestReleaseUrl, MainProgressToken.Token);
+			if (webStream == null) throw new IOException("The Script Extender download returned no data.");
+			await AtomicFileWriter.WriteFileAsync(intakePath, async (temporaryPath, cancellationToken) =>
 			{
-				await SetMainProgressTextAsync($"Downloading {PathwayData.ScriptExtenderLatestReleaseUrl}...");
-				webStream = await WebHelper.DownloadFileAsStreamAsync(PathwayData.ScriptExtenderLatestReleaseUrl, MainProgressToken.Token);
-				if (webStream != null)
+				await using var output = new FileStream(temporaryPath, FileMode.CreateNew, FileAccess.Write,
+					FileShare.None, 65536, FileOptions.Asynchronous | FileOptions.WriteThrough);
+				await webStream.CopyToAsync(output, 65536, cancellationToken);
+				await output.FlushAsync(cancellationToken);
+				output.Flush(true);
+			}, validateTemporaryFile: path => new FileInfo(path).Length > 0,
+				cancellationToken: MainProgressToken.Token);
+			MainProgressValue = 0.55;
+			await SetMainProgressTextAsync("Inspecting the game-directory destination...");
+			var classification = await ClassifyAcquiredPackageAsync(intakePath);
+			if (!classification.Installable || classification.Destination != "Game-directory Mods")
+				throw new InvalidDataException("The downloaded Script Extender archive does not match Redux's reviewed layout.");
+			var sha256 = await ComputeAcquiredPackageSha256Async(intakePath);
+			await EnsureNxmDownloadsInitializedAsync();
+			await _nxmDownloadManager.AddLocalPackageAsync(intakePath, sha256, classification.ProjectName,
+				classification.ContentKind, classification.Destination, classification.Summary,
+				AcquiredPackageSourceKind.ReduxDownload, classification.ThumbnailUrl, MainProgressToken.Token);
+			MainProgressValue = 1;
+			HighlightExtenderDownload = false;
+			ShowAlert("Script Extender is ready in Download Manager. Install it with the guarded game-directory workflow.",
+				AlertType.Success, 25);
+			await Window.OpenNexusDownloadsAsync();
+		}
+		catch (OperationCanceledException)
+		{
+			DivinityApp.Log("Script Extender download was cancelled.");
+		}
+		catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or InvalidOperationException)
+		{
+			DivinityApp.Log($"Script Extender intake failed: {ex}");
+			ShowAlert("Redux could not add Script Extender to Download Manager. Check the log for details.", AlertType.Danger, 30);
+		}
+		finally
+		{
+			if (File.Exists(intakePath))
+			{
+				try { File.Delete(intakePath); }
+				catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
 				{
-					successes += 1;
-					await IncreaseMainProgressValueAsync(taskStepAmount, $"Extracting zip to {exeDir}...");
-					using ZipArchive archive = new ZipArchive(webStream, ZipArchiveMode.Read, true);
-					foreach (ZipArchiveEntry entry in archive.Entries)
-					{
-						if (MainProgressToken.IsCancellationRequested) break;
-						if (entry.Name.Equals(DivinityApp.EXTENDER_UPDATER_FILE, StringComparison.OrdinalIgnoreCase))
-						{
-							await AtomicFileWriter.WriteFileAsync(dllDestination, async (temporaryPath, cancellationToken) =>
-							{
-								await using var entryStream = entry.Open();
-								await using var output = new FileStream(temporaryPath, FileMode.CreateNew, FileAccess.Write,
-									FileShare.None, 4096, FileOptions.Asynchronous | FileOptions.WriteThrough);
-								await entryStream.CopyToAsync(output, 4096, cancellationToken);
-								await output.FlushAsync(cancellationToken);
-								output.Flush(true);
-							}, validateTemporaryFile: temporaryPath =>
-								new FileInfo(temporaryPath).Length == entry.Length,
-								cancellationToken: MainProgressToken.Token);
-							successes += 1;
-							break;
-						}
-					}
-					await IncreaseMainProgressValueAsync(taskStepAmount);
+					DivinityApp.Log($"Could not remove Script Extender intake file: {ex.Message}");
 				}
 			}
-			catch (OperationCanceledException)
-			{
-				DivinityApp.Log("Script Extender installation was cancelled.");
-			}
-			catch (Exception ex)
-			{
-				DivinityApp.Log($"Error extracting package: {ex}");
-			}
-			finally
-			{
-				await SetMainProgressTextAsync("Cleaning up...");
-				webStream?.Close();
-				successes += 1;
-				await IncreaseMainProgressValueAsync(taskStepAmount);
-			}
-
-			await Observable.Start(() =>
-			{
-				OnMainProgressComplete();
-				if (successes >= 3)
-				{
-					ShowAlert($"Successfully installed the Extender updater {DivinityApp.EXTENDER_UPDATER_FILE} to '{exeDir}'", AlertType.Success, 20);
-					HighlightExtenderDownload = false;
-					Settings.ExtenderUpdaterSettings.UpdaterIsAvailable = true;
-					_justDownloadedScriptExtender = true;
-				}
-				else
-				{
-					ShowAlert($"Error occurred when installing the Extender updater {DivinityApp.EXTENDER_UPDATER_FILE} - Check the log", AlertType.Danger, 30);
-				}
-			}, RxApp.MainThreadScheduler);
-
-			if (Settings.ExtenderUpdaterSettings.UpdaterIsAvailable)
-			{
-				await LoadExtenderSettingsAsync(t);
-				await Observable.Start(() => UpdateExtender(true), RxApp.TaskpoolScheduler);
-			}
-
-			if (!isLoggingEnabled) await Observable.Start(() => Window.ToggleLogging(false), RxApp.MainThreadScheduler);
-
-			return Disposable.Empty;
-		});
+			OnMainProgressComplete();
+		}
 	}
 
 	private void OnToolboxOutput(object sender, DataReceivedEventArgs e)
@@ -974,24 +1134,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		{
 			if (!String.IsNullOrWhiteSpace(Settings.GameExecutablePath) && File.Exists(Settings.GameExecutablePath))
 			{
-				string exeDir = Path.GetDirectoryName(Settings.GameExecutablePath);
-				string messageText = String.Format(@"Download and install the Script Extender?
-The Script Extender is used by mods to extend the scripting language of the game, allowing new functionality.
-The extender needs to only be installed once, as it automatically updates when you launch the game.
-Download url: 
-{0}
-Directory the zip will be extracted to:
-{1}", PathwayData.ScriptExtenderLatestReleaseUrl, exeDir);
-
-				var result = ReduxMessageBox.Show(Window,
-				messageText,
-				"Download & Install the Script Extender?",
-				MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
-
-				if (result == MessageBoxResult.Yes)
-				{
-					DownloadScriptExtender(exeDir);
-				}
+				DownloadScriptExtender();
 			}
 			else
 			{
@@ -1052,8 +1195,6 @@ Directory the zip will be extracted to:
 			DivinityApp.Log($"Extender updater {DivinityApp.EXTENDER_UPDATER_FILE} not found.");
 		}
 	}
-
-	private IDisposable _warnExtenderUpdateFailureTask = null;
 
 	public bool CheckExtenderInstalledVersion(CancellationToken? t)
 	{
@@ -1123,19 +1264,6 @@ Directory the zip will be extracted to:
 		else
 		{
 			DivinityApp.Log($"Extender Local AppData folder not found at '{extenderAppDataDir}'. Skipping.");
-		}
-		//Recently downloaded DWrite.dll, but Toolbox may have failed to invoke an update
-		if (t?.IsCancellationRequested == false && _justDownloadedScriptExtender)
-		{
-			_warnExtenderUpdateFailureTask?.Dispose();
-			_warnExtenderUpdateFailureTask = RxApp.MainThreadScheduler.Schedule(() =>
-			{
-				_justDownloadedScriptExtender = false;
-				ReduxMessageBox.Show(Window,
-				"The Script Extender has been successfully downloaded.\n\nPlease start the game once to complete the installation process.",
-				"Script Extender Installation",
-				MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
-			});
 		}
 		return false;
 	}
@@ -2904,10 +3032,12 @@ Directory the zip will be extracted to:
 		}
 	}
 
-	public async Task<bool> ReviewAndImportDroppedModsAsync(
+	public async Task<bool> ReviewAndImportModsAsync(
 		IReadOnlyList<string> files,
 		bool toActiveList,
-		NexusModManagerLink nexusSource = null)
+		NexusModManagerLink nexusSource = null,
+		Window owner = null,
+		Func<Task> installStarting = null)
 	{
 		if (files == null || files.Count == 0) return false;
 		var destination = toActiveList ? "Active Mods" : "Inactive Mods";
@@ -2942,8 +3072,8 @@ Directory the zip will be extracted to:
 		}
 		catch (Exception ex)
 		{
-			DivinityApp.Log($"Dropped-mod review failed:\n{ex}");
-			ReduxMessageBox.Show(Window, "Redux could not inspect the dropped files. No mods were installed.",
+			DivinityApp.Log($"Mod-install review failed:\n{ex}");
+			ReduxMessageBox.Show(owner ?? Window, "Redux could not inspect the selected packages. No mods were installed.",
 				"Could Not Review Mods", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
 			return false;
 		}
@@ -2951,13 +3081,24 @@ Directory the zip will be extracted to:
 		var updateCount = reviewItems.Count(item => item.Status.StartsWith("Update", StringComparison.Ordinal));
 		var replacementCount = reviewItems.Count(item => item.Tone == ReduxInstallReviewTone.Warning);
 		var newCount = reviewItems.Count - updateCount - replacementCount;
+		var isEntirelyCleanNewInstall = reviewItems.Count > 0
+			&& reviewItems.All(item => String.Equals(item.Status, "New mod", StringComparison.Ordinal));
 		var summaryParts = new List<string>();
 		if (newCount > 0) summaryParts.Add($"{newCount} new");
 		if (updateCount > 0) summaryParts.Add($"{updateCount} update{(updateCount == 1 ? String.Empty : "s")}");
 		if (replacementCount > 0) summaryParts.Add($"{replacementCount} replacement{(replacementCount == 1 ? String.Empty : "s")} to review");
-		var dialog = new ReduxInstallReviewWindow(Window, reviewItems, false, destination,
-			$"Destination: {destination} · {String.Join(" · ", summaryParts)}");
-		if (dialog.ShowDialog() != true && !dialog.Accepted) return false;
+		if (!isEntirelyCleanNewInstall || Settings.ConfirmCleanModInstalls)
+		{
+			var dialog = new ReduxInstallReviewWindow(owner ?? Window, reviewItems, false, destination,
+				$"Destination: {destination} · {String.Join(" · ", summaryParts)}", isEntirelyCleanNewInstall);
+			if (dialog.ShowDialog() != true && !dialog.Accepted) return false;
+			if (dialog.SkipFutureCleanReviews)
+			{
+				Settings.ConfirmCleanModInstalls = false;
+				SaveSettings();
+			}
+		}
+		if (installStarting != null) await installStarting();
 		var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 		if (!ImportMods(files.ToList(), toActiveList, nexusSource,
 			result => completion.TrySetResult(result.Errors.Count == 0 && result.Mods.Count > 0)))
@@ -2982,7 +3123,7 @@ Directory the zip will be extracted to:
 			GetReviewSourceName(report.PackagePath)
 		}.Where(value => !String.IsNullOrWhiteSpace(value));
 		if (installed == null)
-			return new ReduxInstallReviewItem(report.DisplayName, String.Join(" · ", detailParts), "New mod", ReduxInstallReviewTone.Info);
+			return new ReduxInstallReviewItem(report.DisplayName, String.Join(" · ", detailParts), "New mod", ReduxInstallReviewTone.Success);
 
 		var incomingVersion = incoming.Version?.VersionInt ?? 0;
 		var installedVersion = installed.Version?.VersionInt ?? 0;

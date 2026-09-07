@@ -77,13 +77,6 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 					"Package Not Recognized", MessageBoxButton.OK, MessageBoxImage.Warning, MessageBoxResult.OK);
 				return false;
 			}
-			if (!inspection.Definition.SupportsGuardedInstall)
-			{
-				ReduxMessageBox.Show(owner,
-					$"{inspection.Definition.Name} is handled by Redux's existing Script Extender installer. This downloaded archive was not copied into the game directory.",
-					"Use the Existing Redux Installer", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
-				return false;
-			}
 		}
 		catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
 		{
@@ -201,7 +194,7 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 		{
 			ReduxGameDirectoryModKind.NativeLoader => "Native loader",
 			ReduxGameDirectoryModKind.NativePlugin => "Native plugin",
-			ReduxGameDirectoryModKind.ExistingReduxWorkflow => "Script Extender",
+			ReduxGameDirectoryModKind.ScriptExtender => "Script Extender",
 			_ => "Game-directory files"
 		};
 		var creator = !String.IsNullOrWhiteSpace(metadata?.Author) ? metadata.Author : metadata?.UploadedBy;

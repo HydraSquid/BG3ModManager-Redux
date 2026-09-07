@@ -19,13 +19,22 @@
 				<ColumnDefinition Width="Auto" />
 				<ColumnDefinition Width="*" />
 			</Grid.ColumnDefinitions>
-			<controls:ReduxIcon Width="22"
-				Height="22"
+			<Border Width="38"
+				Height="38"
 				Margin="0,0,12,0"
 				HorizontalAlignment="Center"
 				VerticalAlignment="Center"
-				Foreground="{Binding IconBrush, ElementName=Root}"
-				IconKey="{Binding IconKey, ElementName=Root}" />
+				Background="{DynamicResource ReduxSurfaceMutedBrush}"
+				BorderBrush="{Binding IconBrush, ElementName=Root}"
+				BorderThickness="1"
+				CornerRadius="{DynamicResource Redux.CornerRadius.Control}">
+				<controls:ReduxIcon Width="19"
+					Height="19"
+					HorizontalAlignment="Center"
+					VerticalAlignment="Center"
+					Foreground="{Binding IconBrush, ElementName=Root}"
+					IconKey="{Binding IconKey, ElementName=Root}" />
+			</Border>
 			<StackPanel Grid.Column="1" VerticalAlignment="Center">
 				<TextBlock Style="{DynamicResource Redux.Text.SectionTitle}"
 					Text="{Binding Title, ElementName=Root}"
@@ -60,14 +69,15 @@
 			Margin="0,16,0,0"
 			HorizontalAlignment="Right"
 			Command="{Binding CancelCommand, ElementName=Root}"
-			Style="{DynamicResource ReduxSecondaryActionButtonStyle}"
+			Style="{DynamicResource ReduxMinorActionButtonStyle}"
 			Visibility="{Binding CanCancel, ElementName=Root, Converter={StaticResource BoolVisibility}}">
 			<StackPanel Orientation="Horizontal">
 				<controls:ReduxIcon Width="14"
 					Height="14"
 					Margin="0,0,7,0"
 					Foreground="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"
-					StrokeData="{DynamicResource Redux.Icon.Close}" />
+					StrokeData="{DynamicResource Redux.Icon.Close}"
+					Style="{DynamicResource ReduxOptionalInterfaceIconStyle}" />
 				<TextBlock Text="Cancel" />
 			</StackPanel>
 		</Button>

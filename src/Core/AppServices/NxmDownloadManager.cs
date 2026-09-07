@@ -18,6 +18,11 @@ public interface INxmDownloadManager
 	event Action<NxmDownloadItem> ItemChanged;
 	Task InitializeAsync(CancellationToken cancellationToken = default);
 	Task<string> EnqueueAsync(NexusModManagerLink link, CancellationToken cancellationToken = default);
+	Task<string> AddLocalPackageAsync(string sourcePath, string archiveSha256, string projectName,
+		string contentKind, string destination, string inspectionSummary,
+		AcquiredPackageSourceKind sourceKind = AcquiredPackageSourceKind.LocalFile,
+		string thumbnailUrl = "",
+		CancellationToken cancellationToken = default);
 	Task PauseAsync(string itemId);
 	Task ResumeAsync(string itemId);
 	Task CancelAsync(string itemId);
@@ -25,6 +30,8 @@ public interface INxmDownloadManager
 	Task RemoveAsync(string itemId, bool deleteCompletedFile);
 	Task ClearInstalledHistoryAsync();
 	Task SetStateAsync(string itemId, NxmDownloadState state, string errorCode = "", string errorDetails = "");
+	Task SetInspectionAsync(string itemId, string projectName, string contentKind, string destination,
+		string inspectionSummary, bool installable, string thumbnailUrl = "");
 	Task SetInstalledAsync(string itemId, string destination);
 	Task DownloadAgainAsync(string itemId);
 	Task PauseAllAsync();
@@ -47,6 +54,7 @@ public sealed class NxmDownloadManager : INxmDownloadManager
 	private readonly Func<bool> _confirmCleanDownloads;
 	private readonly string _directory;
 	private readonly SemaphoreSlim _stateGate = new(1, 1);
+	private readonly SemaphoreSlim _localIntakeGate = new(1, 1);
 	private readonly SemaphoreSlim _confirmationGate = new(1, 1);
 	private readonly SemaphoreSlim _shutdownGate = new(1, 1);
 	private readonly Dictionary<string, OwnedOperation> _operations = new(StringComparer.Ordinal);
@@ -152,6 +160,149 @@ public sealed class NxmDownloadManager : INxmDownloadManager
 		if (existing) FocusRequested?.Invoke(item.Id);
 		if (startResolution) StartResolution(item, link, cancellationToken);
 		return item.Id;
+	}
+
+	public async Task<string> AddLocalPackageAsync(string sourcePath, string archiveSha256, string projectName,
+		string contentKind, string destination, string inspectionSummary,
+		AcquiredPackageSourceKind sourceKind = AcquiredPackageSourceKind.LocalFile,
+		string thumbnailUrl = "",
+		CancellationToken cancellationToken = default)
+	{
+		if (String.IsNullOrWhiteSpace(sourcePath)) throw new ArgumentException("A local package path is required.", nameof(sourcePath));
+		var normalizedPath = Path.GetFullPath(sourcePath);
+		if (!File.Exists(normalizedPath)) throw new FileNotFoundException("The local package could not be found.", normalizedPath);
+		if (String.IsNullOrWhiteSpace(archiveSha256)) throw new ArgumentException("A verified archive identity is required.", nameof(archiveSha256));
+		if (sourceKind is not (AcquiredPackageSourceKind.LocalFile or AcquiredPackageSourceKind.ReduxDownload))
+			throw new ArgumentOutOfRangeException(nameof(sourceKind), "Local intake requires a local or Redux download source kind.");
+		var sourceInfo = new FileInfo(normalizedPath);
+		if (sourceInfo.Length > MaximumDownloadBytes) throw new InvalidDataException("The local package exceeds Redux's 32 GB safety limit.");
+
+		await _localIntakeGate.WaitAsync(cancellationToken);
+		try
+		{
+			string completedFileName;
+			string reusedId = null;
+			NxmDownloadItem existing = null;
+			await _stateGate.WaitAsync(cancellationToken);
+			try
+			{
+				if (_shuttingDown) throw new InvalidOperationException("The download manager is shutting down.");
+				existing = _items.FirstOrDefault(item => item.SourceKind != AcquiredPackageSourceKind.NexusMods
+					&& String.Equals(item.ArchiveSha256, archiveSha256, StringComparison.OrdinalIgnoreCase));
+				var retainedArchive = existing == null ? null : SafePath(existing.CompletedFileName);
+				if (existing != null && retainedArchive != null && File.Exists(retainedArchive))
+				{
+					var candidate = PersistentCopy(existing);
+					candidate.SourceFileName = Path.GetFileName(normalizedPath);
+					candidate.FileDisplayName = Path.GetFileName(normalizedPath);
+					if (!String.IsNullOrWhiteSpace(projectName)) candidate.ProjectName = projectName;
+					candidate.DetectedContentKind = contentKind ?? String.Empty;
+					candidate.DetectedDestination = destination ?? String.Empty;
+					candidate.InspectionSummary = inspectionSummary ?? String.Empty;
+					candidate.InspectionCompleted = true;
+					if (!String.IsNullOrWhiteSpace(thumbnailUrl)) candidate.ThumbnailUrl = thumbnailUrl;
+					if (candidate.State == NxmDownloadState.Installed)
+					{
+						candidate.State = String.IsNullOrWhiteSpace(destination)
+							? NxmDownloadState.NeedsReview : NxmDownloadState.Downloaded;
+						candidate.InstallDestination = String.Empty;
+						candidate.InstalledAt = null;
+						candidate.ErrorCode = String.IsNullOrWhiteSpace(destination) ? "unsupported-layout" : String.Empty;
+						candidate.ErrorDetails = String.IsNullOrWhiteSpace(destination)
+							? inspectionSummary ?? String.Empty : String.Empty;
+					}
+					await _store.SaveAsync(ReplaceForSave(existing, candidate), cancellationToken);
+					ApplyPersistentValues(candidate, existing);
+					existing.Progress = 1;
+					ItemChanged?.Invoke(existing);
+					reusedId = existing.Id;
+				}
+				completedFileName = reusedId != null ? null
+					: existing != null && !String.IsNullOrWhiteSpace(existing.CompletedFileName)
+						? existing.CompletedFileName
+						: AllocateLocalFileName(Path.GetFileName(normalizedPath));
+			}
+			finally { _stateGate.Release(); }
+			if (reusedId != null)
+			{
+				FocusRequested?.Invoke(reusedId);
+				return reusedId;
+			}
+
+			var completedPath = Path.Combine(_directory, completedFileName);
+			try
+			{
+				await using (var input = new FileStream(normalizedPath, FileMode.Open, FileAccess.Read, FileShare.Read,
+					65536, FileOptions.Asynchronous | FileOptions.SequentialScan))
+				await using (var output = new FileStream(completedPath, FileMode.CreateNew, FileAccess.Write, FileShare.None,
+					65536, FileOptions.Asynchronous | FileOptions.SequentialScan))
+					await input.CopyToAsync(output, cancellationToken);
+			}
+			catch
+			{
+				if (File.Exists(completedPath)) File.Delete(completedPath);
+				throw;
+			}
+			if (!String.Equals(archiveSha256, await ComputeFileSha256Async(completedPath, cancellationToken),
+				StringComparison.OrdinalIgnoreCase))
+			{
+				File.Delete(completedPath);
+				throw new InvalidDataException("The local package changed while Redux was adding it. Try again after the file is no longer being modified.");
+			}
+
+			var item = new NxmDownloadItem
+			{
+				SourceKind = sourceKind,
+				SourceFileName = Path.GetFileName(normalizedPath),
+				ProjectName = String.IsNullOrWhiteSpace(projectName) ? Path.GetFileNameWithoutExtension(normalizedPath) : projectName,
+				FileDisplayName = Path.GetFileName(normalizedPath),
+				FileName = Path.GetFileName(normalizedPath),
+				CompletedFileName = completedFileName,
+				SizeBytes = sourceInfo.Length,
+				BytesReceived = sourceInfo.Length,
+				ArchiveSha256 = archiveSha256,
+				ThumbnailUrl = thumbnailUrl ?? String.Empty,
+				DetectedContentKind = contentKind ?? String.Empty,
+				DetectedDestination = destination ?? String.Empty,
+				InspectionSummary = inspectionSummary ?? String.Empty,
+				InspectionCompleted = true,
+				State = String.IsNullOrWhiteSpace(destination) ? NxmDownloadState.NeedsReview : NxmDownloadState.Downloaded,
+				ErrorCode = String.IsNullOrWhiteSpace(destination) ? "unsupported-layout" : String.Empty,
+				ErrorDetails = String.IsNullOrWhiteSpace(destination) ? inspectionSummary ?? String.Empty : String.Empty,
+				Progress = 1
+			};
+			await _stateGate.WaitAsync(cancellationToken);
+			try
+			{
+				if (_shuttingDown) throw new InvalidOperationException("The download manager is shutting down.");
+				if (existing != null && _items.Contains(existing))
+				{
+					item.Id = existing.Id;
+					item.QueuePosition = existing.QueuePosition;
+					await _store.SaveAsync(ReplaceForSave(existing, item), cancellationToken);
+					ApplyPersistentValues(item, existing);
+					existing.Progress = 1;
+					item = existing;
+					ItemChanged?.Invoke(existing);
+				}
+				else
+				{
+					item.QueuePosition = _nextQueuePosition + 1;
+					await _store.SaveAsync(_items.Concat([item]), cancellationToken);
+					_nextQueuePosition = item.QueuePosition;
+					_items.Add(item);
+					ItemChanged?.Invoke(item);
+				}
+			}
+			catch
+			{
+				if (File.Exists(completedPath)) File.Delete(completedPath);
+				throw;
+			}
+			finally { _stateGate.Release(); }
+			return item.Id;
+		}
+		finally { _localIntakeGate.Release(); }
 	}
 
 	public Task PauseAsync(string itemId) => StopOperationAsync(itemId, NxmDownloadState.Paused, "paused");
@@ -458,9 +609,10 @@ public sealed class NxmDownloadManager : INxmDownloadManager
 
 	private async Task RefreshMissingMetadataAsync(CancellationToken cancellationToken)
 	{
-		var incomplete = _items.Where(item => String.IsNullOrWhiteSpace(item.FileName)
+		var incomplete = _items.Where(item => item.SourceKind == AcquiredPackageSourceKind.NexusMods
+			&& (String.IsNullOrWhiteSpace(item.FileName)
 			|| String.Equals(item.ProjectName, $"Nexus mod {item.ModId}", StringComparison.Ordinal)
-			|| String.Equals(item.FileDisplayName, $"File {item.FileId}", StringComparison.Ordinal)).ToArray();
+			|| String.Equals(item.FileDisplayName, $"File {item.FileId}", StringComparison.Ordinal))).ToArray();
 		foreach (var item in incomplete)
 		{
 			try
@@ -839,6 +991,42 @@ public sealed class NxmDownloadManager : INxmDownloadManager
 		item.PartialFileName = candidate + ".part";
 	}
 
+	public Task SetInspectionAsync(string itemId, string projectName, string contentKind, string destination,
+		string inspectionSummary, bool installable, string thumbnailUrl = "")
+	{
+		var item = Find(itemId);
+		return item == null ? Task.CompletedTask : UpdatePersistedAsync(item, candidate =>
+		{
+			if (!String.IsNullOrWhiteSpace(projectName)) candidate.ProjectName = projectName;
+			candidate.DetectedContentKind = contentKind ?? String.Empty;
+			candidate.DetectedDestination = destination ?? String.Empty;
+			candidate.InspectionSummary = inspectionSummary ?? String.Empty;
+			if (!String.IsNullOrWhiteSpace(thumbnailUrl)) candidate.ThumbnailUrl = thumbnailUrl;
+			candidate.InspectionCompleted = true;
+			if (!installable && candidate.State == NxmDownloadState.Downloaded)
+			{
+				candidate.State = NxmDownloadState.NeedsReview;
+				candidate.ErrorCode = "unsupported-layout";
+				candidate.ErrorDetails = inspectionSummary ?? String.Empty;
+			}
+		});
+	}
+
+	private string AllocateLocalFileName(string value)
+	{
+		var fileName = Path.GetFileName(value ?? String.Empty);
+		var invalid = Path.GetInvalidFileNameChars();
+		fileName = new String(fileName.Select(character => invalid.Contains(character) ? '_' : character).ToArray()).TrimEnd(' ', '.');
+		if (String.IsNullOrWhiteSpace(fileName)) fileName = $"Local-{Guid.NewGuid():N}.zip";
+		var stem = Path.GetFileNameWithoutExtension(fileName);
+		var extension = Path.GetExtension(fileName);
+		var candidate = fileName;
+		for (var suffix = 1; _items.Any(other => other.CompletedFileName.Equals(candidate, StringComparison.OrdinalIgnoreCase))
+			|| File.Exists(Path.Combine(_directory, candidate)); suffix++)
+			candidate = $"{stem} ({suffix}){extension}";
+		return candidate;
+	}
+
 	private IEnumerable<NxmDownloadItem> ReplaceForSave(NxmDownloadItem item, NxmDownloadItem candidate) =>
 		_items.Select(current => ReferenceEquals(current, item) ? candidate : current);
 
@@ -869,6 +1057,12 @@ public sealed class NxmDownloadManager : INxmDownloadManager
 		ThumbnailUrl = item.ThumbnailUrl,
 		InstallDestination = item.InstallDestination,
 		InstalledAt = item.InstalledAt,
+		SourceKind = item.SourceKind,
+		SourceFileName = item.SourceFileName,
+		DetectedContentKind = item.DetectedContentKind,
+		DetectedDestination = item.DetectedDestination,
+		InspectionSummary = item.InspectionSummary,
+		InspectionCompleted = item.InspectionCompleted,
 		IsSelected = item.IsSelected
 	};
 
@@ -887,6 +1081,12 @@ public sealed class NxmDownloadManager : INxmDownloadManager
 		target.CompletedFileName = source.CompletedFileName;
 		target.InstallDestination = source.InstallDestination;
 		target.InstalledAt = source.InstalledAt;
+		target.SourceKind = source.SourceKind;
+		target.SourceFileName = source.SourceFileName;
+		target.DetectedContentKind = source.DetectedContentKind;
+		target.DetectedDestination = source.DetectedDestination;
+		target.InspectionSummary = source.InspectionSummary;
+		target.InspectionCompleted = source.InspectionCompleted;
 		target.State = source.State;
 		target.RequiresAuthorization = source.RequiresAuthorization;
 		target.RetryCount = source.RetryCount;
@@ -898,6 +1098,8 @@ public sealed class NxmDownloadManager : INxmDownloadManager
 		target.IsSelected = source.IsSelected;
 		target.RaisePropertyChanged(nameof(target.MetadataText));
 		target.RaisePropertyChanged(nameof(target.DownloadDetailText));
+		target.RaisePropertyChanged(nameof(target.InstallActionText));
+		target.RaisePropertyChanged(nameof(target.HasNexusSource));
 	}
 
 	private static string SafeWindowsFileName(string value, long modId, long fileId)
@@ -921,6 +1123,14 @@ public sealed class NxmDownloadManager : INxmDownloadManager
 	private static bool IsTransient(HttpRequestException exception) => exception.StatusCode == null
 		|| exception.StatusCode is System.Net.HttpStatusCode.RequestTimeout or System.Net.HttpStatusCode.TooManyRequests
 		|| (int)exception.StatusCode >= 500;
+
+	private static async Task<string> ComputeFileSha256Async(string path, CancellationToken cancellationToken)
+	{
+		await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
+			65536, FileOptions.Asynchronous | FileOptions.SequentialScan);
+		return Convert.ToHexString(await System.Security.Cryptography.SHA256.HashDataAsync(stream, cancellationToken))
+			.ToLowerInvariant();
+	}
 
 	private NxmDownloadItem Find(string itemId) => _items.FirstOrDefault(item => item.Id == itemId);
 

@@ -54,6 +54,8 @@ internal static class Program
 		var nxmTransfer = new NxmTransferTests();
 		var tests = new (string Name, Action Run)[]
 		{
+			(nameof(nxmManager.LocalPackageIsCopiedHashedAndDeduplicatedInTheSharedInbox), nxmManager.LocalPackageIsCopiedHashedAndDeduplicatedInTheSharedInbox),
+			(nameof(nxmManager.UnsafeLocalPackageRemainsVisibleButCannotEnterInstallState), nxmManager.UnsafeLocalPackageRemainsVisibleButCannotEnterInstallState),
 			(nameof(interactionBehavior.SaveCampaignAnimationReplacesFrozenTransforms), interactionBehavior.SaveCampaignAnimationReplacesFrozenTransforms),
 			(nameof(source.ReviewedModuleUuidResolvesItsProject), source.ReviewedModuleUuidResolvesItsProject),
 			(nameof(source.CommunityModuleUuidResolvesItsDependencySource), source.CommunityModuleUuidResolvesItsDependencySource),
@@ -281,12 +283,13 @@ internal static class Program
 			(nameof(saveGames.RejectsUnsafeArchivePathsBeforeImport), saveGames.RejectsUnsafeArchivePathsBeforeImport),
 			(nameof(saveGames.ExistingSaveIsPreservedUntilReplacementIsRequested), saveGames.ExistingSaveIsPreservedUntilReplacementIsRequested),
 			(nameof(nativeMods.AtomicReplacementRejectsSourceChangedSinceItsReviewedHash), nativeMods.AtomicReplacementRejectsSourceChangedSinceItsReviewedHash),
-			(nameof(nativeMods.CatalogContainsReviewedNativeProjectsAndRoutesExistingWorkflows), nativeMods.CatalogContainsReviewedNativeProjectsAndRoutesExistingWorkflows),
+			(nameof(nativeMods.CatalogContainsReviewedNativeProjectsAndGuardedWorkflows), nativeMods.CatalogContainsReviewedNativeProjectsAndGuardedWorkflows),
 			(nameof(nativeMods.ReviewedCameraFingerprintsDistinguishLegacyAndGuiProjects), nativeMods.ReviewedCameraFingerprintsDistinguishLegacyAndGuiProjects),
 			(nameof(nativeMods.ReviewedCatalogFingerprintsCoverEveryKnownDllProject), nativeMods.ReviewedCatalogFingerprintsCoverEveryKnownDllProject),
 			(nameof(nativeMods.UnknownSharedCameraBinaryRemainsAnUnverifiedVariant), nativeMods.UnknownSharedCameraBinaryRemainsAnUnverifiedVariant),
 			(nameof(nativeMods.ArchiveRecognitionUsesReviewedLayoutAndCorroboratesOverlappingProjects), nativeMods.ArchiveRecognitionUsesReviewedLayoutAndCorroboratesOverlappingProjects),
-			(nameof(nativeMods.ArchiveRecognitionRoutesScriptExtenderToItsExistingReduxWorkflow), nativeMods.ArchiveRecognitionRoutesScriptExtenderToItsExistingReduxWorkflow),
+			(nameof(nativeMods.ArchiveRecognitionRoutesScriptExtenderToGuardedGameDirectoryWorkflow), nativeMods.ArchiveRecognitionRoutesScriptExtenderToGuardedGameDirectoryWorkflow),
+			(nameof(nativeMods.ScriptExtenderUsesTheSameStagedCommitAndOwnershipRecordAsOtherGameDirectoryMods), nativeMods.ScriptExtenderUsesTheSameStagedCommitAndOwnershipRecordAsOtherGameDirectoryMods),
 			(nameof(nativeMods.UnreviewedDllArchiveIsNeverTreatedAsAnOrdinaryModArchive), nativeMods.UnreviewedDllArchiveIsNeverTreatedAsAnOrdinaryModArchive),
 			(nameof(nativeMods.EveryReviewedCatalogLayoutHasARecognizableFixture), nativeMods.EveryReviewedCatalogLayoutHasARecognizableFixture),
 			(nameof(nativeMods.ZipValidationRejectsOtherFormatsTraversalAndUnexpectedFilesWithoutChangingGameFiles), nativeMods.ZipValidationRejectsOtherFormatsTraversalAndUnexpectedFilesWithoutChangingGameFiles),
@@ -372,6 +375,7 @@ internal static class Program
 			(nameof(nxmScheduler.RaisingLimitDispatchesQueuedItemsInFifoOrder), nxmScheduler.RaisingLimitDispatchesQueuedItemsInFifoOrder),
 			(nameof(nxmScheduler.CancellationRemovesSuspendedQueuedWorkImmediately), nxmScheduler.CancellationRemovesSuspendedQueuedWorkImmediately),
 			(nameof(nxmStore.RoundTripPreservesPublicQueueStateWithoutCapabilities), nxmStore.RoundTripPreservesPublicQueueStateWithoutCapabilities),
+			(nameof(nxmStore.LocalPackageIdentityAndInspectionSurviveRestart), nxmStore.LocalPackageIdentityAndInspectionSurviveRestart),
 			(nameof(nxmStore.InstalledHistorySurvivesWhenItsArchiveWasRemoved), nxmStore.InstalledHistorySurvivesWhenItsArchiveWasRemoved),
 			(nameof(nxmStore.DetailedInstallFailureSurvivesRestartAndMissingFileInvalidation), nxmStore.DetailedInstallFailureSurvivesRestartAndMissingFileInvalidation),
 			(nameof(nxmStore.ReconcileRequiresFreshLinkForIncompleteFreeDownload), nxmStore.ReconcileRequiresFreshLinkForIncompleteFreeDownload),

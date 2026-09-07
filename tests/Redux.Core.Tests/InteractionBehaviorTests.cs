@@ -271,6 +271,11 @@ public sealed class InteractionBehaviorTests
 	public void ReduxDialogTemplatesResolveCoreBindingsAtRuntime()
 	{
 		var nexusDownloads = new ReduxNexusDownloadsWindow();
+		var installReview = new ReduxInstallReviewWindow(null!,
+			[new ReduxInstallReviewItem("Clean package", "Version 1.0", "New mod", ReduxInstallReviewTone.Success)],
+			false, "Inactive Mods", "Destination: Inactive Mods · 1 new", true);
+		RegressionAssert.Equal(Visibility.Visible,
+			((CheckBox)installReview.FindName("SkipCleanReviewCheckBox")).Visibility);
 		var downloadsList = (ListBox)nexusDownloads.FindName("DownloadsList");
 		downloadsList.ItemsSource = new[]
 		{
@@ -295,7 +300,8 @@ public sealed class InteractionBehaviorTests
 				0,
 				0,
 				0)),
-			nexusDownloads
+			nexusDownloads,
+			installReview
 		};
 
 		try

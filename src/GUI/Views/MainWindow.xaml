@@ -31,6 +31,9 @@
 	FontFamily="{DynamicResource Redux.FontFamily.UI}" FontSize="{DynamicResource Redux.FontSize.12}"
 	FontWeight="Medium"
 	AllowDrop="True"
+	PreviewDragEnter="MainWindow_PreviewDragEnter"
+	PreviewDragOver="MainWindow_PreviewDragOver"
+	PreviewDragLeave="MainWindow_PreviewDragLeave"
 	PreviewDrop="MainWindow_PreviewDrop"
 	TextOptions.TextFormattingMode="Ideal"
 	TextOptions.TextRenderingMode="ClearType"
@@ -55,34 +58,89 @@
 	<Window.TaskbarItemInfo>
 		<TaskbarItemInfo />
 	</Window.TaskbarItemInfo>
-	<Grid>
+	<Grid x:Name="WindowRoot">
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />
 			<RowDefinition Height="*" />
 		</Grid.RowDefinitions>
-		<controls:ReduxWindowTitleBar
-			Background="{DynamicResource ReduxWindowBrush}"
-			BottomBorderThickness="0"
-			IconSource="{Binding Icon, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" />
-		<Grid x:Name="MainGrid"
-			Grid.Row="1"
-			HorizontalAlignment="Stretch"
-			VerticalAlignment="Stretch">
-			<Border x:Name="WindowResizeGlow"
-				Margin="1"
-				Panel.ZIndex="1000"
-				Background="Transparent"
+		<Grid x:Name="WindowContentLayer" Grid.RowSpan="2">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="*" />
+			</Grid.RowDefinitions>
+			<controls:ReduxWindowTitleBar
+				Background="{DynamicResource ReduxWindowBrush}"
+				BottomBorderThickness="0"
+				IconSource="{Binding Icon, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" />
+			<Grid x:Name="MainGrid"
+				Grid.Row="1"
+				HorizontalAlignment="Stretch"
+				VerticalAlignment="Stretch" />
+		</Grid>
+		<Border x:Name="WindowResizeGlow"
+			Grid.RowSpan="2"
+			Margin="1"
+			Panel.ZIndex="1000"
+			Background="Transparent"
+			BorderBrush="{DynamicResource ReduxAccentHoverBrush}"
+			BorderThickness="2"
+			CornerRadius="6"
+			IsHitTestVisible="False"
+			Opacity="0">
+			<Border.Effect>
+				<DropShadowEffect BlurRadius="10"
+					Color="{DynamicResource ReduxAccentHoverColor}"
+					Opacity="0.75"
+					ShadowDepth="0" />
+			</Border.Effect>
+		</Border>
+		<Grid x:Name="InstallDropOverlay"
+			Grid.RowSpan="2"
+			Panel.ZIndex="2000"
+			IsHitTestVisible="False"
+			Opacity="0"
+			Visibility="Collapsed">
+			<Border x:Name="InstallDropScrim"
+				Background="{DynamicResource ReduxAppBackgroundBrush}"
+				Opacity="0.62" />
+			<Border Margin="2"
 				BorderBrush="{DynamicResource ReduxAccentHoverBrush}"
 				BorderThickness="2"
-				CornerRadius="6"
-				IsHitTestVisible="False"
-				Opacity="0">
+				CornerRadius="6">
 				<Border.Effect>
-					<DropShadowEffect BlurRadius="10"
+					<DropShadowEffect BlurRadius="12"
 						Color="{DynamicResource ReduxAccentHoverColor}"
-						Opacity="0.75"
+						Opacity="0.72"
 						ShadowDepth="0" />
 				</Border.Effect>
+			</Border>
+			<Border HorizontalAlignment="Center"
+				VerticalAlignment="Center"
+				Padding="28,22"
+				Background="{DynamicResource ReduxSurfaceElevatedBrush}"
+				BorderBrush="{DynamicResource ReduxAccentHoverBrush}"
+				BorderThickness="1"
+				CornerRadius="12">
+				<StackPanel HorizontalAlignment="Center">
+					<Border Width="52" Height="52"
+						HorizontalAlignment="Center"
+						Background="{DynamicResource ReduxAccentPillBackground}"
+						CornerRadius="26">
+						<controls:ReduxIcon Width="22" Height="22"
+							Foreground="{DynamicResource ReduxAccentHoverBrush}"
+							StrokeData="{StaticResource Redux.Icon.Download}" />
+					</Border>
+					<TextBlock Margin="0,12,0,0"
+						HorizontalAlignment="Center"
+						FontSize="{DynamicResource Redux.FontSize.20}"
+						FontWeight="{DynamicResource Redux.FontWeight.Title}"
+						Foreground="{DynamicResource ReduxTextPrimaryBrush}"
+						Text="Drop to install" />
+					<TextBlock Margin="0,5,0,0"
+						HorizontalAlignment="Center"
+						Foreground="{DynamicResource ReduxTextSecondaryBrush}"
+						Text="Redux will inspect and route supported mods and saves." />
+				</StackPanel>
 			</Border>
 		</Grid>
 	</Grid>

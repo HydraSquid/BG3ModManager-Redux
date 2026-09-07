@@ -106,18 +106,12 @@ public class ModListDropHandler : DefaultDropHandler
 			dropInfo.DropTargetAdorner = null;
 			return;
 		}
-		if (dropInfo.Effects == DragDropEffects.None && dropInfo.Data is DataObject data && data.ContainsFileDropList())
+		// External packages are handled once by MainWindow's full-window install target.
+		// A mod pane must never imply that dropping on it selects the install destination.
+		if (dropInfo.Data is DataObject data && data.ContainsFileDropList())
 		{
-			var files = data.GetFileDropList();
-			foreach (var file in files)
-			{
-				if (MainWindowViewModel.IsImportablePath(file))
-				{
-					dropInfo.Effects = DragDropEffects.Copy | DragDropEffects.Move;
-					dropInfo.DropTargetAdorner = DropTargetAdorners.Highlight;
-					break;
-				}
-			}
+			dropInfo.Effects = DragDropEffects.None;
+			dropInfo.DropTargetAdorner = null;
 		}
 	}
 
@@ -140,18 +134,7 @@ public class ModListDropHandler : DefaultDropHandler
 
 		bool isActive = dropInfo.TargetCollection == _viewModel.ActiveMods || dropInfo.TargetCollection == _viewModel.DisplayActiveMods;
 
-		if (dropInfo.Data is DataObject dropFileData)
-		{
-			if (dropFileData.ContainsFileDropList())
-			{
-				var files = dropFileData.GetFileDropList()?.Cast<string>()
-					.Where(MainWindowViewModel.IsImportablePath)
-					.ToList();
-				if (files is { Count: > 0 })
-					_ = _viewModel.ReviewAndImportDroppedModsAsync(files, isActive);
-			}
-			return;
-		}
+		if (dropInfo.Data is DataObject dropFileData && dropFileData.ContainsFileDropList()) return;
 
 		if (dropInfo.DragInfo == null) return;
 

@@ -622,8 +622,8 @@
 								<MenuItem Command="{Binding Keys.OpenGameDirectoryModManager.Command}" Header="Game-Directory Mod Manager..." InputGestureText="{Binding Keys.OpenGameDirectoryModManager.MenuDisplayBindingText}">
 									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Blocks}" /></MenuItem.Icon>
 								</MenuItem>
-								<MenuItem Command="{Binding Keys.OpenNexusDownloads.Command}" Header="Nexus Downloads" InputGestureText="{Binding Keys.OpenNexusDownloads.MenuDisplayBindingText}">
-									<MenuItem.Icon><ContentControl Width="16" Height="16" IsHitTestVisible="False" ContentTemplate="{DynamicResource NexusPlatformIconTemplate}" /></MenuItem.Icon>
+								<MenuItem Command="{Binding Keys.OpenNexusDownloads.Command}" Header="Download Manager" InputGestureText="{Binding Keys.OpenNexusDownloads.MenuDisplayBindingText}">
+									<MenuItem.Icon><controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Download}" /></MenuItem.Icon>
 								</MenuItem>
 								<Separator />
 								<MenuItem x:Name="ToolbarProfileMenu"
@@ -1320,11 +1320,11 @@
 												ToolTip="{Binding Keys.OpenGameDirectoryModManager.CommandToolTip}">
 												<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Blocks}" />
 											</Button>
-											<Button AutomationProperties.Name="Open Nexus Downloads"
+											<Button AutomationProperties.Name="Open Download Manager"
 												Command="{Binding Keys.OpenNexusDownloads.Command}"
 												Style="{StaticResource ToolbarUtilityButtonStyle}"
 												ToolTip="{Binding Keys.OpenNexusDownloads.CommandToolTip}">
-												<ContentControl Width="16" Height="16" IsHitTestVisible="False" ContentTemplate="{DynamicResource NexusPlatformIconTemplate}" />
+												<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Download}" />
 											</Button>
 										</StackPanel>
 									</Border>
@@ -1385,10 +1385,10 @@
 								</Grid.ColumnDefinitions>
 								<TextBlock Style="{StaticResource ToolbarGroupLabelStyle}" Text="Load Order" />
 								<Rectangle x:Name="ToolbarOrderUtilityDivider" Grid.RowSpan="2" Grid.Column="1"
-									Width="1" Margin="0,3,0,0" HorizontalAlignment="Left"
+									Width="1" Margin="10,3,0,0" HorizontalAlignment="Left"
 									Fill="{DynamicResource ReduxBorderBrush}" Opacity="0.7" />
 								<TextBlock x:Name="ToolbarOrderUtilityLabel" Grid.Column="1"
-									Margin="12,0,0,3"
+									Margin="22,0,0,3"
 									HorizontalAlignment="Left"
 									Style="{StaticResource ToolbarGroupLabelStyle}"
 									Text="Actions" />
@@ -1586,7 +1586,7 @@
 									</Button>
 								</StackPanel>
 								<Border x:Name="ToolbarOrderUtilityCluster" Grid.Row="1" Grid.Column="1"
-									Margin="12,0,0,0" HorizontalAlignment="Left"
+									Margin="22,0,0,0" HorizontalAlignment="Left"
 										Style="{StaticResource ToolbarActionClusterStyle}">
 										<StackPanel Orientation="Horizontal">
 									<Button x:Name="UndoLoadOrderButton"

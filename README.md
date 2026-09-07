@@ -40,8 +40,9 @@ stronger organization, safer review workflows, and optional offline-assisted gui
 
 ### The main workflow
 
-1. **Install and inspect.** Drop PAKs or supported archives into Active or Inactive Mods. Redux
-   previews new installs, updates, same-version replacements, and possible downgrades first.
+1. **Install and inspect.** Drop a supported package anywhere on the main Redux window. Its unified
+   install target inspects and routes the package; ordinary PAK mods always enter Inactive Mods
+   after Redux previews new installs, updates, same-version replacements, and possible downgrades.
 2. **Organize without losing intent.** Assign categories, create separators, move mods, and use
    <kbd>Ctrl</kbd> + <kbd>Z</kbd> / <kbd>Ctrl</kbd> + <kbd>Y</kbd> for reversible edits.
 3. **Save deliberately.** Working changes do not overwrite the selected saved order until **Save**
@@ -123,9 +124,9 @@ destination before applying a change and clearly warns that native DLLs execute 
 
 The first alpha.14 catalog recognizes reviewed layouts for Native Mod Loader, WASD and camera
 plugins, Achievement Enabler, Baldur's Priority, Improved Camera, Best of Hands, BG3WASD Camera
-Follow, True Third-Person Camera, and bg3fgvk. Script Extender archives are directed to Redux's
-existing Script Extender workflow. Mixed native-and-PAK packages send their companion PAK through
-the normal inactive-mod import path.
+Follow, True Third-Person Camera, bg3fgvk, and Script Extender. Script Extender now uses the same
+staged game-directory transaction and ownership record as the rest of the reviewed catalog. Mixed
+native-and-PAK packages send their companion PAK through the normal inactive-mod import path.
 
 Archives may be selected in the manager or dropped onto Redux. Installation is staged and bounded;
 paths, layouts, reviewed DLL fingerprints, AMD64 DLL headers, prerequisites, the source archive, and
@@ -148,27 +149,47 @@ the ownership record.
 > source you trust, close BG3 first, and use the manager's status and recovery information instead
 > of manually deleting Redux-owned files.
 
-### Nexus Mod Manager downloads
+### Download Manager
 
-Redux can optionally register itself for Baldur's Gate 3 `nxm://` links. Enable online mod
-information, add a Nexus Mods API key, and enable NXM links during onboarding or in Preferences.
-Choosing **Mod Manager Download** on Nexus then sends the link to the existing Redux process and
-opens **Nexus Downloads**. An optional preference controls whether protocol activations bring that
-window to the front.
+**Download Manager** is Redux's shared intake inbox for local packages and optional Nexus Mod
+Manager downloads. Add a package from the window or drop supported PAK, LSV, ZIP, 7z, RAR, TAR, or
+GZip files onto Redux's full-window install target. Drop location never selects Active versus
+Inactive Mods. Local inputs are copied into the managed Downloads folder, assigned a stable SHA-256
+identity, inspected, and shown in the same persistent inbox as network acquisitions.
+Known local packages reuse installed or bundled source artwork during intake, so their Download
+Manager cards do not have to wait for installation before showing an available thumbnail.
+
+For Nexus, enable online mod information, add a Nexus Mods API key, and enable NXM links during
+onboarding or in Preferences. Choosing **Mod Manager Download** then sends the `nxm://` link to the
+existing Redux process and opens **Download Manager**. An optional preference controls whether
+protocol activations bring that window to the front.
 
 Downloads are queued in a managed folder with bounded concurrency, visible progress,
 pause/resume/retry behavior, restart recovery, and a verified SHA-256 archive identity. Free-user
 downloads that lose their temporary authorization ask for a new link without saving the temporary
-key or signed URL. Completed packages remain separate from installation until **Install** is
-chosen. Redux then verifies the archive again and routes ordinary PAKs to Inactive Mods, reviewed
-native packages through Game-Directory Mod Manager, and saves through Save Game Manager. It never
-activates, reorders, or syncs a downloaded mod automatically.
+key or signed URL. Network state remains separate from package inspection and installation.
+Completed packages are automatically classified and remain separate from installation until their
+destination-aware **Install** action is chosen. Redux then verifies the archive again and routes
+ordinary PAKs to Inactive Mods, reviewed native and Script Extender packages through Game-Directory
+Mod Manager, and saves through Save Game Manager. Mixed, ambiguous, malformed, and unreviewed native
+layouts stay blocked in the inbox without changing files. Intake never activates, reorders, or syncs
+a mod automatically.
+
+The PAK install review distinguishes clean new mods from updates, replacements, downgrades, and
+unreadable packages. **Review clean mod installs** can be turned off from a clean review or restored
+in Preferences; only entirely clean, brand-new PAK batches bypass that dialog. Anything requiring a
+decision continues to stop for review.
 
 Active transfers are paused and their queue state is saved before Redux exits. Finished downloads
 and completed installation history do not keep the application open. Completed installations move
 to the **Installed** tab with their destination. **Clear Installed History** removes those records
 without deleting the installed content or downloaded archives; removing an uninstalled completed
 download explicitly offers to move its archive to the Recycle Bin.
+
+Installed-history entries can be reinstalled from their retained Download Manager archive. Adding
+the same local archive again returns that record to the inbox instead of creating a duplicate or
+leaving it stranded as completed history. Deleting a mod never implicitly deletes a retained
+download; a future optional archive library remains separate from both uninstall and history state.
 
 ### Redux Modlists
 

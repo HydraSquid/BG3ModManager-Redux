@@ -125,11 +125,38 @@ public partial class ReduxNexusDownloadsWindow : AdonisUI.Controls.AdonisWindow
 		await _viewModel.HandleNxmLinkAsync(Clipboard.GetText());
 	}
 
+	private async void AddPackageButton_Click(object sender, RoutedEventArgs e)
+	{
+		var dialog = new Microsoft.Win32.OpenFileDialog
+		{
+			Title = "Add Packages to Download Manager",
+			Filter = "Supported packages|*.pak;*.lsv;*.zip;*.7z;*.7zip;*.rar;*.tar;*.gz;*.gzip;*.tgz|All files|*.*",
+			Multiselect = true,
+			CheckFileExists = true
+		};
+		if (dialog.ShowDialog(this) == true)
+			await _viewModel.AddLocalPackagesToDownloadManagerAsync(dialog.FileNames);
+	}
+
+	private async void Window_PreviewDrop(object sender, DragEventArgs e)
+	{
+		if (!e.Data.GetDataPresent(DataFormats.FileDrop)
+			|| e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
+		e.Handled = true;
+		var supported = paths.Where(MainWindowViewModel.IsSupportedDownloadManagerInput).ToArray();
+		if (supported.Length != paths.Length)
+		{
+			_viewModel.ShowAlert("Download Manager accepts PAK, save, ZIP, 7z, RAR, TAR, and GZip package files.", AlertType.Warning, 25);
+			return;
+		}
+		await _viewModel.AddLocalPackagesToDownloadManagerAsync(supported);
+	}
+
 	private async void PauseAllButton_Click(object sender, RoutedEventArgs e) => await _viewModel.PauseAllNxmDownloadsAsync();
 	private async void ResumeAllButton_Click(object sender, RoutedEventArgs e) => await _viewModel.ResumeAllNxmDownloadsAsync();
 	private async void PauseButton_Click(object sender, RoutedEventArgs e) => await _viewModel.PauseNxmDownloadAsync(Item(sender));
 	private async void ResumeButton_Click(object sender, RoutedEventArgs e) => await _viewModel.ResumeNxmDownloadAsync(Item(sender));
-	private async void ReviewButton_Click(object sender, RoutedEventArgs e) => await _viewModel.ReviewNxmDownloadAsync(Item(sender));
+	private async void ReviewButton_Click(object sender, RoutedEventArgs e) => await _viewModel.ReviewNxmDownloadAsync(Item(sender), this);
 	private async void RemoveButton_Click(object sender, RoutedEventArgs e) => await _viewModel.RemoveNxmDownloadAsync(Item(sender));
 	private async void ClearInstalledButton_Click(object sender, RoutedEventArgs e) => await _viewModel.ClearInstalledNxmHistoryAsync();
 	private void NexusButton_Click(object sender, RoutedEventArgs e)

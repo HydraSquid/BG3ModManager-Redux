@@ -192,9 +192,9 @@ public class AppKeys : ReactiveObject
 
 	[MenuSettings(
 		"Tools",
-		"Nexus Downloads...",
+		"Download Manager...",
 		false,
-		"View, pause, resume, and review files received through Nexus Mod Manager Download links.")]
+		"Inspect and install local packages or files received through Nexus Mod Manager Download links.")]
 	public Hotkey OpenNexusDownloads { get; private set; } = new Hotkey(Key.None);
 
 	[MenuSettings("Go", "Open Mods Folder", false, "Open the configured Baldur's Gate 3 Mods folder.")]

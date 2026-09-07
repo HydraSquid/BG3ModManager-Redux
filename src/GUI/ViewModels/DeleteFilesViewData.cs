@@ -42,6 +42,8 @@ public class DeleteFilesViewData : BaseProgressViewModel
 
 	private readonly ObservableAsPropertyHelper<string> _selectAllTooltip;
 	public string SelectAllTooltip => _selectAllTooltip.Value;
+	private readonly ObservableAsPropertyHelper<string> _selectionSummary;
+	public string SelectionSummary => _selectionSummary.Value;
 
 	private readonly ObservableAsPropertyHelper<string> _title;
 	public string Title => _title.Value;
@@ -150,6 +152,13 @@ public class DeleteFilesViewData : BaseProgressViewModel
 
 		_allSelected = filesChanged.Select(x => x.All(y => y.IsSelected)).ToProperty(this, nameof(AllSelected), true, RxApp.MainThreadScheduler);
 		_selectAllTooltip = this.WhenAnyValue(x => x.AllSelected).Select(b => $"{(b ? "Deselect" : "Select")} All").ToProperty(this, nameof(SelectAllTooltip), true, RxApp.MainThreadScheduler);
+		_selectionSummary = filesChanged
+			.Select(files =>
+			{
+				var selected = files.Count(file => file.IsSelected);
+				return $"{selected} of {files.Count} file{(files.Count == 1 ? String.Empty : "s")} selected";
+			})
+			.ToProperty(this, nameof(SelectionSummary), "No files selected", scheduler: RxApp.MainThreadScheduler);
 
 		SelectAllCommand = ReactiveCommand.Create(ToggleSelectAll, this.RunCommand.IsExecuting.Select(b => !b), RxApp.MainThreadScheduler);
 

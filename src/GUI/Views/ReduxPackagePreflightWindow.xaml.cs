@@ -235,7 +235,7 @@ public partial class ReduxPackagePreflightWindow : AdonisUI.Controls.AdonisWindo
 			{
 				ReduxGameDirectoryModKind.NativeLoader => "Native loader",
 				ReduxGameDirectoryModKind.NativePlugin => "Native plugin",
-				ReduxGameDirectoryModKind.ExistingReduxWorkflow => "Script Extender",
+				ReduxGameDirectoryModKind.ScriptExtender => "Script Extender",
 				_ => report.Kind == ArchivePackagePreflightKind.Mixed ? "Mixed / hybrid archive" : "Unreviewed native archive"
 			};
 			var statusTitle = findings.Any(finding => finding.Severity == ModHealthSeverity.Error)

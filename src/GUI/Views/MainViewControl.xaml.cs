@@ -217,7 +217,7 @@ public partial class MainViewControl : MainViewControlViewBase
 		new ReduxSaveManagerWindow(main, ViewModel, pendingImportPaths).ShowDialog();
 	}
 
-	public bool ShowSaveManagerForImport(string pendingImportPath)
+	public bool ShowSaveManagerForImport(string pendingImportPath, Window owner = null)
 	{
 		if (ViewModel.SelectedProfile?.Folder == null)
 		{
@@ -225,7 +225,7 @@ public partial class MainViewControl : MainViewControlViewBase
 			return false;
 		}
 
-		var window = new ReduxSaveManagerWindow(main, ViewModel, [pendingImportPath]);
+		var window = new ReduxSaveManagerWindow(owner ?? main, ViewModel, [pendingImportPath]);
 		window.ShowDialog();
 		return window.ImportedSaveCount > 0;
 	}
@@ -1569,7 +1569,11 @@ public partial class MainViewControl : MainViewControlViewBase
 			.Subscribe(_ => Mouse.Synchronize());
 
 		this.OneWayBind(ViewModel, vm => vm.IsDeletingFiles, view => view.ModListRectangle.Visibility, BoolToVisibilityConverter.FromBool);
-		this.OneWayBind(ViewModel, vm => vm.MainProgressIsActive, view => view.MainBusyIndicator.IsBusy);
+		this.WhenAnyValue(
+			view => view.ViewModel.MainProgressIsActive,
+			view => view.ViewModel.DownloadManagerInstallIsActive,
+			(isBusy, isDownloadManagerInstall) => isBusy && !isDownloadManagerInstall)
+			.BindTo(this, view => view.MainBusyIndicator.IsBusy);
 
 		this.WhenAnyValue(x => x.ViewModel).BindTo(this, x => x.ModLayout.ViewModel);
 

@@ -1098,39 +1098,80 @@
 									</GroupStyle>
 								</ListView.GroupStyle>
 								<ListView.ItemContainerStyle>
-									<Style TargetType="ListViewItem">
+									<Style TargetType="{x:Type ListViewItem}">
 										<Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
 										<Setter Property="Tag" Value="{Binding}" />
 										<Setter Property="Background" Value="Transparent" />
 										<Setter Property="BorderBrush" Value="Transparent" />
-										<Setter Property="BorderThickness" Value="0" />
+										<Setter Property="BorderThickness" Value="3,0,0,0" />
 										<Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" />
 										<Setter Property="FocusVisualStyle" Value="{x:Null}" />
 										<Setter Property="HorizontalContentAlignment" Value="Stretch" />
-										<Setter Property="OverridesDefaultStyle" Value="True" />
-										<Setter Property="Padding" Value="0" />
+										<Setter Property="Margin" Value="0,0,0,1" />
+										<Setter Property="MinHeight" Value="32" />
+										<Setter Property="Padding" Value="10,4" />
 										<Setter Property="VerticalContentAlignment" Value="Center" />
 										<Setter Property="ToolTip" Value="{Binding ToolTip}" />
 										<Setter Property="Template">
 											<Setter.Value>
 												<ControlTemplate TargetType="{x:Type ListViewItem}">
-													<Border x:Name="RowChrome"
-														Margin="6,2"
-														Background="Transparent"
-														BorderBrush="Transparent"
-														BorderThickness="1"
-														CornerRadius="{DynamicResource Redux.CornerRadius.Card}"
-														ClipToBounds="True"
+													<Border x:Name="RowBorder"
+														MinHeight="{TemplateBinding MinHeight}"
+														Background="{TemplateBinding Background}"
+														BorderBrush="{TemplateBinding BorderBrush}"
+														BorderThickness="{TemplateBinding BorderThickness}"
 														SnapsToDevicePixels="True">
 														<Grid>
-															<Border x:Name="SelectionRail"
-																Width="3"
-																Margin="3,5,0,5"
-																HorizontalAlignment="Left"
-																Background="{DynamicResource ReduxAccentBrush}"
-																CornerRadius="2"
+															<Border x:Name="RowSelectionSurface"
+																Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
+																Background="{DynamicResource ReduxAccentSoftBrush}"
+																CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}"
+																OpacityMask="{StaticResource Redux.Hover.WashMask}"
+																IsHitTestVisible="False"
 																Opacity="0" />
+															<Border x:Name="RowSelectionRail"
+																Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
+																BorderBrush="{DynamicResource ReduxAccentBrush}"
+																BorderThickness="{DynamicResource Redux.Rail.Thickness}"
+																CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}"
+																IsHitTestVisible="False"
+																Opacity="0" />
+															<Border x:Name="RowHoverSurface"
+																Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
+																CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}"
+																OpacityMask="{StaticResource Redux.Hover.WashMask}"
+																IsHitTestVisible="False"
+																Opacity="0">
+																<Border.Style>
+																	<Style TargetType="{x:Type Border}">
+																		<Setter Property="Background" Value="{DynamicResource ReduxAccentSoftBrush}" />
+																		<Style.Triggers>
+																			<DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type ListViewItem}}}" Value="True">
+																				<Setter Property="Background" Value="Transparent" />
+																			</DataTrigger>
+																		</Style.Triggers>
+																	</Style>
+																</Border.Style>
+															</Border>
+															<Border x:Name="RowHoverRail"
+																Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
+																BorderThickness="{DynamicResource Redux.Rail.Thickness}"
+																CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}"
+																IsHitTestVisible="False"
+																Opacity="0">
+																<Border.Style>
+																	<Style TargetType="{x:Type Border}">
+																		<Setter Property="BorderBrush" Value="{DynamicResource ReduxAccentBrush}" />
+																		<Style.Triggers>
+																			<DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type ListViewItem}}}" Value="True">
+																				<Setter Property="BorderBrush" Value="Transparent" />
+																			</DataTrigger>
+																		</Style.Triggers>
+																	</Style>
+																</Border.Style>
+															</Border>
 															<ContentPresenter
+																Margin="{TemplateBinding Padding}"
 																HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
 																VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
 																Content="{TemplateBinding Content}"
@@ -1138,20 +1179,36 @@
 																ContentTemplateSelector="{TemplateBinding ContentTemplateSelector}" />
 														</Grid>
 													</Border>
-											<ControlTemplate.Triggers>
-													<MultiTrigger>
-														<MultiTrigger.Conditions>
-															<Condition Property="IsMouseOver" Value="True" />
-															<Condition Property="IsSelected" Value="False" />
-														</MultiTrigger.Conditions>
-														<Setter TargetName="RowChrome" Property="Background" Value="{DynamicResource ReduxHoverBrush}" />
-														<Setter TargetName="RowChrome" Property="BorderBrush" Value="{DynamicResource ReduxBorderBrush}" />
-													</MultiTrigger>
+													<ControlTemplate.Triggers>
+														<Trigger Property="IsMouseOver" Value="True">
+															<Setter TargetName="RowBorder" Property="Background" Value="Transparent" />
+															<Setter TargetName="RowBorder" Property="BorderBrush" Value="Transparent" />
+															<Trigger.EnterActions>
+																<BeginStoryboard>
+																	<Storyboard>
+																		<DoubleAnimation Storyboard.TargetName="RowHoverSurface" Storyboard.TargetProperty="Opacity"
+																			To="0.62" Duration="{StaticResource Redux.Motion.Fast}" EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
+																		<DoubleAnimation Storyboard.TargetName="RowHoverRail" Storyboard.TargetProperty="Opacity"
+																			To="1" Duration="{StaticResource Redux.Motion.Fast}" EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
+																	</Storyboard>
+																</BeginStoryboard>
+															</Trigger.EnterActions>
+															<Trigger.ExitActions>
+																<BeginStoryboard>
+																	<Storyboard>
+																		<DoubleAnimation Storyboard.TargetName="RowHoverSurface" Storyboard.TargetProperty="Opacity"
+																			To="0" Duration="{StaticResource Redux.Motion.Standard}" />
+																		<DoubleAnimation Storyboard.TargetName="RowHoverRail" Storyboard.TargetProperty="Opacity"
+																			To="0" Duration="{StaticResource Redux.Motion.Standard}" />
+																	</Storyboard>
+																</BeginStoryboard>
+															</Trigger.ExitActions>
+														</Trigger>
 														<Trigger Property="IsSelected" Value="True">
-															<Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" />
-															<Setter TargetName="RowChrome" Property="Background" Value="{DynamicResource ReduxSurfaceElevatedBrush}" />
-															<Setter TargetName="RowChrome" Property="BorderBrush" Value="{DynamicResource ReduxAccentBrush}" />
-															<Setter TargetName="SelectionRail" Property="Opacity" Value="1" />
+															<Setter TargetName="RowBorder" Property="Background" Value="Transparent" />
+															<Setter TargetName="RowBorder" Property="BorderBrush" Value="Transparent" />
+															<Setter TargetName="RowSelectionSurface" Property="Opacity" Value="0.62" />
+															<Setter TargetName="RowSelectionRail" Property="Opacity" Value="1" />
 														</Trigger>
 														<Trigger Property="IsEnabled" Value="False">
 															<Setter Property="Opacity" Value="0.55" />
@@ -1176,7 +1233,7 @@
 								</ListView.ItemContainerStyle>
 								<ListView.ItemTemplate>
 									<DataTemplate>
-										<Grid MinHeight="34" Margin="10,0,6,0">
+										<Grid MinHeight="24">
 											<Grid.ColumnDefinitions>
 												<ColumnDefinition Width="*" />
 												<ColumnDefinition Width="166" />

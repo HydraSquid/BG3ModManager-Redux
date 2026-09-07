@@ -6,8 +6,8 @@ selected artifact.
 
 ## Inspect a package
 
-Open **Tools > Inspect Mod Package...** and choose a PAK or supported ZIP, 7z, RAR, TAR, or
-GZip-family archive.
+Open **Tools > Inspect Mod Package...** and choose a PAK, loose BG3 save, or supported ZIP, 7z,
+RAR, TAR, or GZip-family archive.
 
 Redux reports:
 
@@ -22,6 +22,15 @@ For a release archive, Redux inspects every contained PAK and also checks the ou
 unsafe paths, duplicate PAK filenames, development debris, and an accidentally bundled
 `modsettings.lsx`.
 
+The same read-only preflight recognizes reviewed native and game-directory layouts using the
+guarded install catalog. It reports DLL and configuration files, expected destinations, loader
+requirements, source identity, and companion PAKs. Unknown DLL layouts are described without
+guessing an identity or destination.
+
+Save archives and loose `.lsv` files reuse Save Game Manager's validation and metadata reader.
+Recognized saves show campaign, difficulty, timestamp, and contents, together with a clear route to
+Save Game Manager rather than the normal mod installer.
+
 ## Understand the result
 
 | Result | Meaning |
@@ -30,9 +39,9 @@ unsafe paths, duplicate PAK filenames, development debris, and an accidentally b
 | Review recommended | Redux found something intentional in some mods but worth confirming. |
 | No blocking issue | The inspected checks passed. This is not a compatibility guarantee. |
 
-The preflight never installs, extracts into the Mods folder, edits, registers, sorts, activates, or
-exports the selected package. It also does not run the mod or prove that it behaves correctly in
-game.
+The preflight uses an isolated temporary staging directory when it must read contained PAK or save
+metadata. It never installs into the Mods, game, or profile folders; edits, registers, sorts,
+activates, or exports the selected package; runs native code; or proves in-game compatibility.
 
 ## Add stable source identity
 

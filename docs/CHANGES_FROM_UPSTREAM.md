@@ -181,7 +181,14 @@ mod importer rather than bypassing package validation.
 
 The manager is available from Tools, Quick Access, the Setup toolbar, and the assignable shortcut
 system. Its compact entries use the same semantic pills, source identity, destructive actions, and
-hover or selection language as Redux's other mod surfaces.
+hover or selection language as Redux's other mod surfaces. Available provider metadata can enrich
+recognized entries with a project thumbnail, summary, author, version, and update time; thumbnail
+frames use the same 16:9 language as Redux's other visual mod and save surfaces.
+
+Inspect Mod Package reuses the guarded layout catalog to distinguish reviewed game-directory
+packages, unreviewed DLL archives, and native-and-PAK hybrids without executing or installing them.
+It also reuses Save Game Manager validation for save archives and loose `.lsv` files, while retaining
+the existing PAK preflight behavior for ordinary mod releases.
 
 The initial catalog is intentionally narrow and based on reviewed archive layouts. Matching a
 layout and executable architecture does not establish publisher provenance or guarantee that a mod

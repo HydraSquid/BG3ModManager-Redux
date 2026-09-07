@@ -216,10 +216,11 @@ Redux reworks and extends many of these systems while retaining their credit. Se
 
 ## For mod authors
 
-**Tools > Inspect Mod Package** performs a read-only release preflight on a PAK or common release
-archive. It reviews module identity, declared dependencies, embedded creator metadata, Script
-Extender and Osiris signals, override behavior, and common development debris without installing
-or modifying the package. A clean result is not a guarantee of in-game compatibility.
+**Tools > Inspect Mod Package** performs a read-only preflight on PAKs, common release archives,
+reviewed or unknown native/DLL layouts, hybrid packages, save archives, and loose `.lsv` files. It
+reviews identity, expected destinations, dependencies, embedded creator metadata, Script Extender
+and Osiris signals, override behavior, and common development debris without installing or
+modifying the selected file. A clean result is not a guarantee of in-game compatibility.
 
 Authors may also include an optional root-level
 [`redux.mod.json`](docs/REDUX_CREATOR_MANIFEST.md) inside a PAK. Redux validates its module claim

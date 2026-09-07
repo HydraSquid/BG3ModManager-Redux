@@ -23,6 +23,16 @@ public sealed record ReduxGameDirectoryModLayout(
 	IReadOnlyList<string> PackageEntries,
 	IReadOnlyList<string> IgnoredEntries);
 
+public sealed record ReduxGameDirectoryBinaryFingerprint(
+	string RelativePath,
+	long Length,
+	string Sha256,
+	string Version);
+
+public sealed record ReduxGameDirectoryBinaryMatch(
+	ReduxGameDirectoryModDefinition Definition,
+	ReduxGameDirectoryBinaryFingerprint Fingerprint);
+
 public sealed record ReduxGameDirectoryModDefinition(
 	long NexusModId,
 	string PackageId,
@@ -36,6 +46,11 @@ public sealed record ReduxGameDirectoryModDefinition(
 	string Requirements)
 {
 	public bool SupportsGuardedInstall => Kind != ReduxGameDirectoryModKind.ExistingReduxWorkflow;
+	public bool ReplacesExistingGameFiles { get; init; }
+	public IReadOnlyDictionary<string, string> ReplacementOriginals { get; init; }
+		= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+	public IReadOnlyList<ReduxGameDirectoryBinaryFingerprint> BinaryFingerprints { get; init; }
+		= Array.Empty<ReduxGameDirectoryBinaryFingerprint>();
 }
 
 public static class ReduxGameDirectoryModCatalog
@@ -44,6 +59,10 @@ public static class ReduxGameDirectoryModCatalog
 		new Dictionary<string, string>(entries.ToDictionary(item => item.Archive, item => item.Canonical), StringComparer.OrdinalIgnoreCase);
 	private static IReadOnlyList<string> Files(params string[] entries) => Array.AsReadOnly(entries);
 	private static IReadOnlySet<string> Preserve(params string[] entries) => new HashSet<string>(entries, StringComparer.OrdinalIgnoreCase);
+	private static IReadOnlyList<ReduxGameDirectoryBinaryFingerprint> Fingerprints(
+		params ReduxGameDirectoryBinaryFingerprint[] entries) => Array.AsReadOnly(entries);
+	private static ReduxGameDirectoryBinaryFingerprint Fingerprint(string path, long length, string sha256, string version) =>
+		new(path, length, sha256.ToLowerInvariant(), version);
 	private static ReduxGameDirectoryModLayout Layout(string name, IReadOnlyDictionary<string, string> managed,
 		IReadOnlyList<string>? packages = null, IReadOnlyList<string>? ignored = null) =>
 		new(name, managed, packages ?? Array.Empty<string>(), ignored ?? Array.Empty<string>());
@@ -53,46 +72,98 @@ public static class ReduxGameDirectoryModCatalog
 		new ReduxGameDirectoryModDefinition(944, "native-mod-loader", "Native Mod Loader", ReduxGameDirectoryModKind.NativeLoader, false,
 			Files("bin/bink2w64.dll", "bin/bink2w64_original.dll"), Preserve(),
 			[Layout("Standard", Map(("bin/bink2w64.dll", "bin/bink2w64.dll"), ("bin/bink2w64_original.dll", "bin/bink2w64_original.dll")))],
-			"https://www.nexusmods.com/baldursgate3/mods/944", "Replaces the game's bink2w64 loader and retains the packaged original."),
+			"https://www.nexusmods.com/baldursgate3/mods/944", "Replaces the game's bink2w64 loader and retains the packaged original.")
+		{
+			ReplacesExistingGameFiles = true,
+			ReplacementOriginals = Map(("bin/bink2w64.dll", "bin/bink2w64_original.dll")),
+			BinaryFingerprints = Fingerprints(
+				Fingerprint("bin/bink2w64.dll", 232448, "6c2932d54e56dcb1a6e9e0d9cd13c2dbacb9bdf9d4175b0bcbb0e0cab0fc20fc", "1.0"),
+				Fingerprint("bin/bink2w64_original.dll", 411136, "7c3ac825eb7fe769c3831540e108282dd90f6275b0f61dec8beeea0a6615b0c1", ""))
+		},
 		new ReduxGameDirectoryModDefinition(781, "bg3-wasd", "WASD Character Movement", ReduxGameDirectoryModKind.NativePlugin, true,
 			Files("bin/NativeMods/BG3WASD.dll", "bin/NativeMods/BG3WASD.toml"), Preserve("bin/NativeMods/BG3WASD.toml"),
 			[Layout("Standard", Map(("bin/NativeMods/BG3WASD.dll", "bin/NativeMods/BG3WASD.dll"), ("bin/NativeMods/BG3WASD.toml", "bin/NativeMods/BG3WASD.toml")))],
-			"https://www.nexusmods.com/baldursgate3/mods/781", "Requires Native Mod Loader."),
+			"https://www.nexusmods.com/baldursgate3/mods/781", "Requires Native Mod Loader.")
+		{
+			BinaryFingerprints = Fingerprints(
+				Fingerprint("bin/NativeMods/BG3WASD.dll", 1080832, "b75aa02bbda0186287aca3946efc03b78b1c05bec7a152aebb809071b52c6e8c", "1.9.7"),
+				Fingerprint("bin/NativeMods/BG3WASD.dll", 1080832, "05de4bfef58f13c142717e8b73b58885d9b8b259648d77f1ee1d3caf90601196", "1.9.8"),
+				Fingerprint("bin/NativeMods/BG3WASD.dll", 1074688, "5d7106834dcd0938edf367324f5688f9c518a8faaae056cde77c9ced52616d74", "1.9.9"))
+		},
 		new ReduxGameDirectoryModDefinition(945, "native-camera-tweaks", "Native Camera Tweaks", ReduxGameDirectoryModKind.NativePlugin, true,
 			Files("bin/NativeMods/BG3NativeCameraTweaks.dll", "bin/NativeMods/BG3NativeCameraTweaks.toml"), Preserve("bin/NativeMods/BG3NativeCameraTweaks.toml"),
 			[Layout("Standard", Map(("bin/NativeMods/BG3NativeCameraTweaks.dll", "bin/NativeMods/BG3NativeCameraTweaks.dll"), ("bin/NativeMods/BG3NativeCameraTweaks.toml", "bin/NativeMods/BG3NativeCameraTweaks.toml")))],
-			"https://www.nexusmods.com/baldursgate3/mods/945", "Requires Native Mod Loader."),
+			"https://www.nexusmods.com/baldursgate3/mods/945", "Requires Native Mod Loader.")
+		{
+			BinaryFingerprints = Fingerprints(
+				Fingerprint("bin/NativeMods/BG3NativeCameraTweaks.dll", 782336, "3953996c3a08e63c7a56580463240d19cdcd4e4368b336d963a53c890fc904cb", "2.4.2"),
+				Fingerprint("bin/NativeMods/BG3NativeCameraTweaks.dll", 782336, "a866fb3bc1c9ffedfb038ae74d9dd8f1f359db7a77047d4b35a790252bfbe5a5", "2.4.3"),
+				Fingerprint("bin/NativeMods/BG3NativeCameraTweaks.dll", 782336, "bf9d45ecb5390a6b6bfa447911b4dcad834c40a81b54d640af67f39abe35ba09", "2.4.4"),
+				Fingerprint("bin/NativeMods/BG3NativeCameraTweaks.dll", 774656, "7d183b30892c69978534af5875fbf2b7ae510a2fd3408387b50a21f3612491ca", "2.4.5"))
+		},
 		new ReduxGameDirectoryModDefinition(22892, "native-camera-tweaks", "Native Camera Tweaks with GUI", ReduxGameDirectoryModKind.NativePlugin, true,
 			Files("bin/NativeMods/BG3NativeCameraTweaks.dll", "bin/NativeMods/BG3NativeCameraTweaks.toml"), Preserve("bin/NativeMods/BG3NativeCameraTweaks.toml"),
 			[Layout("Standard", Map(("bin/NativeMods/BG3NativeCameraTweaks.dll", "bin/NativeMods/BG3NativeCameraTweaks.dll"), ("bin/NativeMods/BG3NativeCameraTweaks.toml", "bin/NativeMods/BG3NativeCameraTweaks.toml")))],
-			"https://www.nexusmods.com/baldursgate3/mods/22892", "Requires Native Mod Loader; supersedes the earlier Native Camera Tweaks project."),
+			"https://www.nexusmods.com/baldursgate3/mods/22892", "Requires Native Mod Loader; supersedes the earlier Native Camera Tweaks project.")
+		{
+			BinaryFingerprints = Fingerprints(
+				Fingerprint("bin/NativeMods/BG3NativeCameraTweaks.dll", 1387008, "6d033888ba0e3b6e5fe36196c2568d39b86384397d14f0d0720c551195058776", "2.5.0"),
+				Fingerprint("bin/NativeMods/BG3NativeCameraTweaks.dll", 1360384, "6b12004f021238878dca17b8700abb506a1b0e9054a8121d66f9b7555427f7ff", "2.5.1"),
+				Fingerprint("bin/NativeMods/BG3NativeCameraTweaks.dll", 1361408, "e254d1195b45b7c94add56b3a16fc823e2d7589d7b6e3d8b6ad45fcece266543", "2.5.1"))
+		},
 		new ReduxGameDirectoryModDefinition(668, "achievement-enabler", "Achievement Enabler", ReduxGameDirectoryModKind.NativePlugin, true,
 			Files("bin/NativeMods/BG3AchievementEnabler.dll"), Preserve(),
 			[
 				Layout("Game root", Map(("bin/NativeMods/BG3AchievementEnabler.dll", "bin/NativeMods/BG3AchievementEnabler.dll"))),
 				Layout("Bin contents", Map(("NativeMods/BG3AchievementEnabler.dll", "bin/NativeMods/BG3AchievementEnabler.dll")))
 			],
-			"https://www.nexusmods.com/baldursgate3/mods/668", "Requires Native Mod Loader."),
+			"https://www.nexusmods.com/baldursgate3/mods/668", "Requires Native Mod Loader.")
+		{
+			BinaryFingerprints = Fingerprints(
+				Fingerprint("bin/NativeMods/BG3AchievementEnabler.dll", 376832, "6d473b79f535e76eee37ad3a9bdaeb08a398488964acfac504a82868b3c710e0", "RC2"),
+				Fingerprint("bin/NativeMods/BG3AchievementEnabler.dll", 462848, "a423345bf1084edaa9d6a1b567cd9bfab0a04ef875c415ea48f1d607f7d1163b", "1.2"),
+				Fingerprint("bin/NativeMods/BG3AchievementEnabler.dll", 469504, "15568bd0e0c1aea0b3d73e0f89944fabdd043a6ec447b7e210852718f9506aa8", "1.3"))
+		},
 		new ReduxGameDirectoryModDefinition(1326, "baldurs-priority", "Baldur's Priority", ReduxGameDirectoryModKind.NativePlugin, true,
 			Files("bin/NativeMods/CpuOptimizer.dll", "bin/NativeMods/CpuOptimizer.ini"), Preserve("bin/NativeMods/CpuOptimizer.ini"),
 			[Layout("Standard", Map(("bin/NativeMods/CpuOptimizer.dll", "bin/NativeMods/CpuOptimizer.dll"), ("bin/NativeMods/CpuOptimizer.ini", "bin/NativeMods/CpuOptimizer.ini")))],
-			"https://www.nexusmods.com/baldursgate3/mods/1326", "Requires Native Mod Loader."),
+			"https://www.nexusmods.com/baldursgate3/mods/1326", "Requires Native Mod Loader.")
+		{
+			BinaryFingerprints = Fingerprints(
+				Fingerprint("bin/NativeMods/CpuOptimizer.dll", 234496, "d239ba0e32691413b57192aaf76a0bd4bc8b281f223066681bd76c2d32aaace3", "1.0.0"))
+		},
 		new ReduxGameDirectoryModDefinition(742, "improved-camera", "Improved Camera", ReduxGameDirectoryModKind.NativePlugin, true,
 			Files("bin/NativeMods/BGIII_ImprovedCamera.dll", "bin/NativeMods/BGIII_ImprovedCamera.toml"), Preserve("bin/NativeMods/BGIII_ImprovedCamera.toml"),
 			[Layout("Legacy wrapper", Map(("BGIII_ImprovedCamera - DLL/BGIII_ImprovedCamera.dll", "bin/NativeMods/BGIII_ImprovedCamera.dll"), ("BGIII_ImprovedCamera - DLL/BGIII_ImprovedCamera.toml", "bin/NativeMods/BGIII_ImprovedCamera.toml")))],
-			"https://www.nexusmods.com/baldursgate3/mods/742", "Requires Native Mod Loader."),
+			"https://www.nexusmods.com/baldursgate3/mods/742", "Requires Native Mod Loader.")
+		{
+			BinaryFingerprints = Fingerprints(
+				Fingerprint("bin/NativeMods/BGIII_ImprovedCamera.dll", 278528, "66b1c2b99cd6b91d3f18e4a948a00dab674b1c557e35c03ed39cc1dc2008419a", "2.0"))
+		},
 		new ReduxGameDirectoryModDefinition(23881, "best-of-hands", "Best of Hands", ReduxGameDirectoryModKind.NativePlugin, true,
 			Files("bin/NativeMods/BestofHands.dll"), Preserve(),
 			[Layout("Native and PAK", Map(("bin/NativeMods/BestofHands.dll", "bin/NativeMods/BestofHands.dll")), Files("BestofHands.pak"), Files("info.json"))],
-			"https://www.nexusmods.com/baldursgate3/mods/23881", "Requires Native Mod Loader; its PAK must be reviewed by Redux's normal package installer."),
+			"https://www.nexusmods.com/baldursgate3/mods/23881", "Requires Native Mod Loader; its PAK must be reviewed by Redux's normal package installer.")
+		{
+			BinaryFingerprints = Fingerprints(
+				Fingerprint("bin/NativeMods/BestofHands.dll", 900608, "bd5f14955e61e3b032d8433550d5424df3f43d389125eea98f3a65503b454b0f", "2.2.0"))
+		},
 		new ReduxGameDirectoryModDefinition(23413, "bg3-wasd", "BG3WASD Camera Follow", ReduxGameDirectoryModKind.NativePlugin, true,
 			Files("bin/NativeMods/BG3WASD.dll", "bin/NativeMods/BG3WASD.toml"), Preserve("bin/NativeMods/BG3WASD.toml"),
 			[Layout("Native and PAK", Map(("bin/NativeMods/BG3WASD.dll", "bin/NativeMods/BG3WASD.dll"), ("bin/NativeMods/BG3WASD.toml", "bin/NativeMods/BG3WASD.toml")), Files("Mods/BG3YawBridge.pak"), Files("CREDITS.txt", "LICENSE.txt", "README.txt"))],
-			"https://www.nexusmods.com/baldursgate3/mods/23413", "Requires Native Mod Loader; its PAK must be reviewed by Redux's normal package installer."),
+			"https://www.nexusmods.com/baldursgate3/mods/23413", "Requires Native Mod Loader; its PAK must be reviewed by Redux's normal package installer.")
+		{
+			BinaryFingerprints = Fingerprints(
+				Fingerprint("bin/NativeMods/BG3WASD.dll", 1110016, "6b62ac4b2859c64ee73977ae451f515ea19eef7d2c66bb25e58b2cc90e406e66", "1.2"))
+		},
 		new ReduxGameDirectoryModDefinition(23959, "true-third-person-camera", "True Third-Person Camera", ReduxGameDirectoryModKind.NativePlugin, true,
 			Files("bin/NativeMods/TrueThirdPersonCamera.dll"), Preserve(),
 			[Layout("Guided wrapper", Map(("1 - Main Game Folder Files/bin/NativeMods/TrueThirdPersonCamera.dll", "bin/NativeMods/TrueThirdPersonCamera.dll")), Files("2 - BG3 Mod Manager File/TrueThirdPersonCamera.pak"), Files("README.txt"))],
-			"https://www.nexusmods.com/baldursgate3/mods/23959", "Requires Native Mod Loader and removal of legacy camera files before first installation; its PAK must use Redux's normal package installer."),
+			"https://www.nexusmods.com/baldursgate3/mods/23959", "Requires Native Mod Loader and removal of legacy camera files before first installation; its PAK must use Redux's normal package installer.")
+		{
+			BinaryFingerprints = Fingerprints(
+				Fingerprint("bin/NativeMods/TrueThirdPersonCamera.dll", 640512, "2baa24e55f87e395ccfd33068b7d5207b34fd97327273af0fbfe05d208e02249", "2.0"))
+		},
 		new ReduxGameDirectoryModDefinition(24804, "bg3fgvk", "bg3fgvk", ReduxGameDirectoryModKind.NativePlugin, true,
 			Files(
 				"bin/NativeMods/fgvk.dll",
@@ -117,17 +188,48 @@ public static class ReduxGameDirectoryModCatalog
 				("NativeMods/Streamline/sl.reflex.dll", "bin/NativeMods/Streamline/sl.reflex.dll"),
 				("NativeMods/Streamline/STREAMLINE-LICENSE.txt", "bin/NativeMods/Streamline/STREAMLINE-LICENSE.txt")),
 				ignored: Files("INSTALL.txt", "LICENSE.txt", "README.md"))],
-			"https://www.nexusmods.com/baldursgate3/mods/24804", "Requires Native Mod Loader, Vulkan, supported NVIDIA hardware, and hardware-accelerated GPU scheduling."),
+			"https://www.nexusmods.com/baldursgate3/mods/24804", "Requires Native Mod Loader, Vulkan, supported NVIDIA hardware, and hardware-accelerated GPU scheduling.")
+		{
+			BinaryFingerprints = Fingerprints(
+				Fingerprint("bin/NativeMods/fgvk.dll", 76800, "30eaa46d415eca4f1fd2b207ec42eaffc178a9b1bea8ba376b946135fa03cc42", "0.1.0"),
+				Fingerprint("bin/NativeMods/fgvk.dll", 78336, "bc5dfafb1a263bb7ddb69368f6002933055aefda18477b2f7016d041578c2399", "1.0"),
+				Fingerprint("bin/NativeMods/Streamline/NvLowLatencyVk.dll", 57840, "2a77dc3e1c724b7eea5755be0ae7423752e79a2459fae72181a9f00e3507e5d6", ""),
+				Fingerprint("bin/NativeMods/Streamline/nvngx_dlssg.dll", 7519856, "135eaf0733c1e37381a8c28abcf7a862404a54132b81787c04e35d09efc5e36f", ""),
+				Fingerprint("bin/NativeMods/Streamline/sl.common.dll", 830080, "c57930ef5a8a3fe9be85efdf71a61d8107c1148e8a6aed456464547128f7f4ae", ""),
+				Fingerprint("bin/NativeMods/Streamline/sl.dlss_g.dll", 612992, "1fec3f8fdfc59d78c4445c276c1a0fb798bf251985f348597dc2b44d0c995e52", ""),
+				Fingerprint("bin/NativeMods/Streamline/sl.interposer.dll", 647808, "2a79db6857ae8c75bbd871a9489c48bc6a39f7fcc88b9b02afd53d0376cbec66", ""),
+				Fingerprint("bin/NativeMods/Streamline/sl.pcl.dll", 359552, "699ab461e64e95189a7fe6a21c79ad237cf56b60ea748cb6c840cd5431ba91d1", ""),
+				Fingerprint("bin/NativeMods/Streamline/sl.reflex.dll", 382080, "7e6e4ccc4b561bd449fb0da90709d9b96b08c3f6f4697362caaa359e72a58a67", ""))
+		},
 		new ReduxGameDirectoryModDefinition(2172, "script-extender", "Baldur's Gate 3 Script Extender", ReduxGameDirectoryModKind.ExistingReduxWorkflow, false,
 			Files("bin/DWrite.dll"), Preserve(),
 			[Layout("Bin contents", Map(("DWrite.dll", "bin/DWrite.dll")))],
 			"https://www.nexusmods.com/baldursgate3/mods/2172", "Handled by Redux's existing Script Extender workflow rather than the native-mod manager.")
+		{
+			BinaryFingerprints = Fingerprints(
+				Fingerprint("bin/DWrite.dll", 5837824, "25151fb060cdad69fc322bb338edbf822d77291ef75661958a72df186d1a2fcb", "31"),
+				Fingerprint("bin/DWrite.dll", 5988352, "8f3c0782461cc280cab4adfc270979549211f6cac91ad851baa2b2716118ecb0", "32"),
+				Fingerprint("bin/DWrite.dll", 5987840, "3d2496c8e2e88accc53ef50f5cca7967b437409c4e11b744861cc3ae2816c777", "32 hotfix 1"))
+		}
 	});
 
 	public static ReduxGameDirectoryModDefinition? Find(long id) => All.FirstOrDefault(definition => definition.NexusModId == id);
 	public static IReadOnlyList<ReduxGameDirectoryModDefinition> FindByPackageId(string packageId) => All
 		.Where(definition => definition.PackageId.Equals(packageId, StringComparison.OrdinalIgnoreCase))
 		.ToArray();
+
+	public static ReduxGameDirectoryBinaryMatch? FindByBinaryFingerprint(string relativePath, long length, string sha256)
+	{
+		if (String.IsNullOrWhiteSpace(relativePath) || length <= 0 || String.IsNullOrWhiteSpace(sha256)) return null;
+		var normalizedPath = relativePath.Replace('\\', '/');
+		var matches = All.SelectMany(definition => definition.BinaryFingerprints
+			.Where(fingerprint => fingerprint.Length == length
+				&& fingerprint.RelativePath.Equals(normalizedPath, StringComparison.OrdinalIgnoreCase)
+				&& fingerprint.Sha256.Equals(sha256, StringComparison.OrdinalIgnoreCase))
+			.Select(fingerprint => new ReduxGameDirectoryBinaryMatch(definition, fingerprint)))
+			.Take(2).ToArray();
+		return matches.Length == 1 ? matches[0] : null;
+	}
 }
 
 public sealed record ReduxNativeLoaderStatus(bool IsPresent, bool IsVerified, string Description);
@@ -166,7 +268,9 @@ public sealed record ReduxGameDirectoryModEntry(
 	ReduxGameDirectoryModStatus Status,
 	string StatusText,
 	IReadOnlyList<string> Files,
-	bool CanRestore);
+	bool CanRestore,
+	string DetectedVersion = "",
+	bool CanAdopt = false);
 
 public sealed class ReduxGameDirectoryRecoveryException(string message, Exception? innerException = null) : IOException(message, innerException) { }
 public sealed class ReduxUnsupportedGameDirectoryArchiveException(string message) : IOException(message) { }
@@ -206,15 +310,21 @@ public sealed class ReduxGameDirectoryInstallService
 	private readonly string _stateLockPath;
 	private readonly string _gameBinIdentity;
 	private readonly Version? _gameVersion;
+	private readonly bool _enforceReviewedReplacementOriginals;
 	private readonly SemaphoreSlim _operationGate = new(1, 1);
 	public string GameBin => _gameBin;
 	public string RecoveryDirectory => _stateRoot;
 
 	public ReduxGameDirectoryInstallService(string gameBin, string stateDirectory, Version gameVersion)
+		: this(gameBin, stateDirectory, gameVersion, true) { }
+
+	internal ReduxGameDirectoryInstallService(string gameBin, string stateDirectory, Version gameVersion,
+		bool enforceReviewedReplacementOriginals)
 	{
 		_gameBin = NormalizeExistingDirectory(gameBin, nameof(gameBin));
 		ValidateGameBin();
 		_gameVersion = gameVersion;
+		_enforceReviewedReplacementOriginals = enforceReviewedReplacementOriginals;
 		_gameBinIdentity = HashText(_gameBin.ToUpperInvariant());
 
 		var root = NormalizeOrCreateDirectory(stateDirectory, nameof(stateDirectory));
@@ -266,7 +376,7 @@ public sealed class ReduxGameDirectoryInstallService
 					installation.PackageId, installation.NexusModId, installation.Name, installation.SourceUrl,
 					installation.ArchiveName,
 					status, statusText, installation.Files.Select(file => file.RelativePath).ToArray(),
-					status == ReduxGameDirectoryModStatus.Managed));
+					status == ReduxGameDirectoryModStatus.Managed, installation.DetectedVersion));
 			}
 		}
 
@@ -275,22 +385,44 @@ public sealed class ReduxGameDirectoryInstallService
 			.GroupBy(definition => definition.PackageId, StringComparer.OrdinalIgnoreCase))
 		{
 			if (managedPackages.Contains(package.Key)) continue;
-			var existingPaths = package.SelectMany(definition => definition.RelativeFiles)
+			var existingSnapshots = package.SelectMany(definition => definition.RelativeFiles)
 				.Select(ToTargetRelative).Distinct(StringComparer.Ordinal)
-				.Where(relativePath => CaptureDestination(relativePath).Exists).ToArray();
-			if (existingPaths.Length == 0) continue;
-			var representative = package.OrderByDescending(definition => definition.NexusModId).First();
-			var externalName = package.Key switch
+				.Select(CaptureDestination).Where(snapshot => snapshot.Exists).ToArray();
+			if (!existingSnapshots.Any(snapshot => snapshot.RelativePath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)))
+				continue;
+
+			var definitions = package.ToArray();
+			var exactMatches = existingSnapshots
+				.Where(snapshot => snapshot.Hash != null)
+				.Select(snapshot => ReduxGameDirectoryModCatalog.FindByBinaryFingerprint(
+					$"bin/{snapshot.RelativePath}", snapshot.Length, snapshot.Hash!))
+				.Where(match => match != null && definitions.Any(definition => definition.NexusModId == match.Definition.NexusModId))
+				.Cast<ReduxGameDirectoryBinaryMatch>()
+				.GroupBy(match => match.Definition.NexusModId)
+				.Select(group => group.First()).ToArray();
+			var exactMatch = exactMatches.Length == 1 ? exactMatches[0] : null;
+			var representative = exactMatch?.Definition ?? (definitions.Length == 1 ? definitions[0] : null);
+			var isUnverifiedVariant = representative == null;
+			var externalName = representative?.Name ?? package.Key switch
 			{
-				"native-camera-tweaks" => "Native Camera Tweaks",
-				"bg3-wasd" => "BG3WASD",
-				_ => representative.Name
+				"native-camera-tweaks" => "Native Camera Tweaks (unverified variant)",
+				"bg3-wasd" => "BG3WASD (unverified variant)",
+				_ => "Unverified game-directory mod variant"
 			};
+			var detectedVersion = exactMatch?.Fingerprint.Version ?? String.Empty;
+			var statusText = isUnverifiedVariant ? "Installed outside Redux · unverified variant"
+				: String.IsNullOrWhiteSpace(detectedVersion) ? "Installed outside Redux"
+				: $"Installed outside Redux · identified v{detectedVersion}";
+			if (representative?.ReplacesExistingGameFiles == true)
+				statusText = "Can't manage · no protected original backup";
+			var canAdopt = exactMatch?.Definition.Kind == ReduxGameDirectoryModKind.NativePlugin
+				&& !exactMatch.Definition.ReplacesExistingGameFiles
+				&& FindExactReviewedDllSetIdentity(exactMatch.Definition, existingSnapshots) != null;
 			results.Add(new ReduxGameDirectoryModEntry(
-				package.Key, representative.NexusModId,
+				package.Key, representative?.NexusModId ?? -1,
 				externalName,
-				String.Empty, String.Empty, ReduxGameDirectoryModStatus.External, "Installed outside Redux",
-				existingPaths, false));
+				representative?.SourceUrl ?? String.Empty, String.Empty, ReduxGameDirectoryModStatus.External, statusText,
+				existingSnapshots.Select(snapshot => snapshot.RelativePath).ToArray(), false, detectedVersion, canAdopt));
 		}
 
 		var nativeModsDirectory = Path.Combine(_gameBin, "NativeMods");
@@ -328,6 +460,82 @@ public sealed class ReduxGameDirectoryInstallService
 	}
 
 	/// <summary>
+	/// Records ownership of an already-installed reviewed native plugin without changing game files.
+	/// Only exact catalog fingerprints can be adopted; settings and companion content remain user-owned.
+	/// </summary>
+	public async Task AdoptExternalAsync(long projectId, CancellationToken cancellationToken = default)
+	{
+		var definition = ReduxGameDirectoryModCatalog.Find(projectId)
+			?? throw new InvalidDataException("This game-directory mod is not in Redux's reviewed catalog.");
+		if (definition.Kind != ReduxGameDirectoryModKind.NativePlugin)
+			throw new InvalidOperationException("Only reviewed native plugins can be adopted by the game-directory manager.");
+		if (definition.ReplacesExistingGameFiles)
+			throw new InvalidOperationException($"Redux cannot adopt {definition.Name} because it did not preserve the original files before they were replaced.");
+
+		await _operationGate.WaitAsync(cancellationToken);
+		try
+		{
+			using var stateLock = AcquireStateLock();
+			cancellationToken.ThrowIfCancellationRequested();
+			ValidateGameBin();
+			ThrowIfGameRunning();
+			EnsureNoPendingJournals();
+			var manifest = ReadManifest();
+			if (manifest != null && FindInstallation(manifest, definition.PackageId) != null)
+				throw new InvalidOperationException($"{definition.Name} is already managed by Redux.");
+
+			var dllPaths = definition.RelativeFiles
+				.Where(path => path.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+				.Select(ToTargetRelative).Distinct(StringComparer.Ordinal).ToArray();
+			if (dllPaths.Length == 0)
+				throw new InvalidDataException("This catalog entry has no native DLL to adopt.");
+			var snapshots = dllPaths.Select(CaptureDestination).ToArray();
+			if (snapshots.Any(snapshot => !snapshot.Exists || snapshot.Hash == null))
+				throw new InvalidOperationException($"Redux cannot adopt {definition.Name} because its reviewed DLL set is incomplete.");
+
+			var identity = FindExactReviewedDllSetIdentity(definition, snapshots);
+			if (identity == null)
+				throw new InvalidOperationException($"Redux cannot adopt {definition.Name} because the installed DLL does not exactly match a reviewed version.");
+			foreach (var snapshot in snapshots)
+				ValidateAmd64PeDll(ResolveTargetPath(snapshot.RelativePath, createParent: false));
+
+			var installation = new NativeOwnedInstallation
+			{
+				PackageId = definition.PackageId,
+				NexusModId = definition.NexusModId,
+				Name = definition.Name,
+				SourceUrl = definition.SourceUrl,
+				ArchiveName = "Adopted external installation",
+				ArchiveHash = HashText(String.Join("\n", snapshots.OrderBy(snapshot => snapshot.RelativePath, StringComparer.Ordinal)
+					.Select(snapshot => $"{snapshot.RelativePath}:{snapshot.Hash}"))),
+				DetectedVersion = identity.Fingerprint.Version,
+				InstalledAtUtc = DateTimeOffset.UtcNow,
+				Files = snapshots.Select(snapshot => new NativeOwnedFile
+				{
+					RelativePath = snapshot.RelativePath,
+					InstalledHash = snapshot.Hash!,
+					Created = true
+				}).ToList()
+			};
+
+			cancellationToken.ThrowIfCancellationRequested();
+			ThrowIfGameRunning();
+			foreach (var snapshot in snapshots)
+			{
+				if (!SameSnapshot(snapshot, CaptureDestination(snapshot.RelativePath)))
+					throw new InvalidOperationException("A native DLL changed while Redux was adopting the installation. Refresh and try again.");
+			}
+			var nextManifest = CreateOrCloneManifest(manifest);
+			nextManifest.Installations.Add(installation);
+			await WriteManifestAsync(nextManifest, cancellationToken);
+		}
+		finally
+		{
+			_operationGate.Release();
+		}
+	}
+
+	/// <summary>
 	/// Conservatively identifies a reviewed game-directory archive without changing either Redux state
 	/// or the game. Layout alone is sufficient only when it identifies one catalog project; overlapping
 	/// layouts additionally require a Nexus-generated filename carrying the matching project id.
@@ -359,13 +567,14 @@ public sealed class ReduxGameDirectoryInstallService
 				}
 				return null;
 			}
+			var exactBinaryMatch = FindExactBinaryMatch(matching, entries);
 			var nexusIdentity = NexusModFileVersionData.FromFilePath(normalizedArchive);
 			var projectMatches = nexusIdentity.Success
 				? matching.Where(match => match.Definition.NexusModId == nexusIdentity.ModId).ToArray()
 				: Array.Empty<(ReduxGameDirectoryModDefinition Definition, ReduxGameDirectoryModLayout Layout)>();
-			var selected = projectMatches.Length == 1
+			var selected = exactBinaryMatch ?? (projectMatches.Length == 1
 				? projectMatches[0]
-				: matching.Count == 1 ? matching[0] : default;
+				: matching.Count == 1 ? matching[0] : default);
 			if (selected.Definition == null)
 				throw new ReduxUnsupportedGameDirectoryArchiveException(
 					"This native archive matches more than one reviewed package. Keep its Nexus-generated filename so Redux can identify the intended project safely.");
@@ -667,6 +876,14 @@ public sealed class ReduxGameDirectoryInstallService
 				guards.Add(CaptureDestination(ToTargetRelative(loaderFile)));
 		}
 		var stagedHashes = stagedFiles.ToDictionary(pair => pair.Key, pair => HashFile(pair.Value), StringComparer.Ordinal);
+		if (existing == null) EnsureReplacementOriginalsAreClean(definition, snapshots, stagedFiles, stagedHashes);
+		var detectedVersion = definition.BinaryFingerprints.FirstOrDefault(fingerprint =>
+		{
+			var relativePath = ToTargetRelative(fingerprint.RelativePath);
+			return stagedFiles.TryGetValue(relativePath, out var stagedPath)
+				&& new FileInfo(stagedPath).Length == fingerprint.Length
+				&& String.Equals(stagedHashes[relativePath], fingerprint.Sha256, StringComparison.OrdinalIgnoreCase);
+		})?.Version ?? String.Empty;
 		var installation = new NativeOwnedInstallation
 		{
 			PackageId = definition.PackageId,
@@ -675,6 +892,7 @@ public sealed class ReduxGameDirectoryInstallService
 			SourceUrl = definition.SourceUrl,
 			ArchiveName = Path.GetFileName(archivePath),
 			ArchiveHash = archiveFingerprint.Hash,
+			DetectedVersion = detectedVersion,
 			InstalledAtUtc = DateTimeOffset.UtcNow
 		};
 		var writes = new List<PlannedWrite>();
@@ -763,9 +981,9 @@ public sealed class ReduxGameDirectoryInstallService
 
 			if (snapshot.Exists)
 			{
-				if (prior == null)
+				if (prior == null && !definition.ReplacementOriginals.ContainsKey(canonicalPath))
 					throw new InvalidOperationException($"Redux will not replace the unmanaged native file '{relativePath}'.");
-				EnsureOwnedFileUnchanged(prior, snapshot);
+				if (prior != null) EnsureOwnedFileUnchanged(prior, snapshot);
 			}
 			else if (prior != null)
 			{
@@ -776,6 +994,37 @@ public sealed class ReduxGameDirectoryInstallService
 			next.InstalledHash = stagedHashes[relativePath];
 			installation.Files.Add(next);
 			writes.Add(new PlannedWrite(relativePath, stagedHashes[relativePath], snapshot, next));
+		}
+	}
+
+	private void EnsureReplacementOriginalsAreClean(ReduxGameDirectoryModDefinition definition,
+		IReadOnlyDictionary<string, DestinationSnapshot> snapshots,
+		IReadOnlyDictionary<string, string> stagedFiles,
+		IReadOnlyDictionary<string, string> stagedHashes)
+	{
+		if (!definition.ReplacesExistingGameFiles || !_enforceReviewedReplacementOriginals) return;
+		if (definition.ReplacementOriginals.Count == 0)
+			throw new InvalidOperationException($"Redux has no reviewed clean-file proof for {definition.Name} and will not back up or replace existing game files.");
+
+		foreach (var replacement in definition.ReplacementOriginals)
+		{
+			var targetPath = ToTargetRelative(replacement.Key);
+			var originalPath = ToTargetRelative(replacement.Value);
+			if (!snapshots.TryGetValue(targetPath, out var current) || !current.Exists || current.Hash == null
+				|| !stagedFiles.TryGetValue(originalPath, out var stagedOriginal)
+				|| !stagedHashes.TryGetValue(originalPath, out var stagedOriginalHash))
+			{
+				throw new InvalidOperationException($"Redux cannot prove that '{targetPath}' is a clean BG3 file, so it will not back it up or replace it.");
+			}
+			var originalInfo = new FileInfo(stagedOriginal);
+			var reviewedOriginal = ReduxGameDirectoryModCatalog.FindByBinaryFingerprint(
+				replacement.Value, originalInfo.Length, stagedOriginalHash);
+			if (reviewedOriginal?.Definition.NexusModId != definition.NexusModId
+				|| current.Length != originalInfo.Length
+				|| !String.Equals(current.Hash, stagedOriginalHash, StringComparison.Ordinal))
+			{
+				throw new InvalidOperationException($"Redux cannot verify that '{targetPath}' is an unmodified BG3 file. Verify the game files before installing this replacer through Redux.");
+			}
 		}
 	}
 
@@ -869,6 +1118,41 @@ public sealed class ReduxGameDirectoryInstallService
 				.ToHashSet(StringComparer.OrdinalIgnoreCase);
 			return files.SetEquals(allowed) && layout.ManagedEntries.Keys.All(path => files.Contains(NormalizeArchivePath(path)));
 		}).ToArray();
+	}
+
+	private static (ReduxGameDirectoryModDefinition Definition, ReduxGameDirectoryModLayout Layout)? FindExactBinaryMatch(
+		IReadOnlyList<(ReduxGameDirectoryModDefinition Definition, ReduxGameDirectoryModLayout Layout)> matching,
+		IReadOnlyList<IArchiveEntry> archiveEntries)
+	{
+		var entryHashes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		var exactMatches = new List<(ReduxGameDirectoryModDefinition Definition, ReduxGameDirectoryModLayout Layout)>();
+		foreach (var candidate in matching)
+		{
+			foreach (var fingerprint in candidate.Definition.BinaryFingerprints)
+			{
+				var archivePath = candidate.Layout.ManagedEntries
+					.FirstOrDefault(mapping => NormalizeArchivePath(mapping.Value)
+						.Equals(fingerprint.RelativePath, StringComparison.OrdinalIgnoreCase)).Key;
+				if (String.IsNullOrWhiteSpace(archivePath)) continue;
+				var normalizedArchivePath = NormalizeArchivePath(archivePath);
+				var entry = archiveEntries.FirstOrDefault(item => !item.IsDirectory
+					&& NormalizeArchivePath(item.Key).Equals(normalizedArchivePath, StringComparison.OrdinalIgnoreCase));
+				if (entry == null || entry.Size != fingerprint.Length) continue;
+				if (!entryHashes.TryGetValue(normalizedArchivePath, out var hash))
+				{
+					using var stream = entry.OpenEntryStream();
+					hash = Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
+					entryHashes[normalizedArchivePath] = hash;
+				}
+				if (fingerprint.Sha256.Equals(hash, StringComparison.OrdinalIgnoreCase))
+					exactMatches.Add(candidate);
+			}
+		}
+
+		var distinct = exactMatches
+			.GroupBy(match => (match.Definition.NexusModId, match.Layout.Name))
+			.Select(group => group.First()).Take(2).ToArray();
+		return distinct.Length == 1 ? distinct[0] : null;
 	}
 
 	private static async Task CopyArchiveEntryAsync(IArchiveEntry entry, string destinationPath,
@@ -1236,6 +1520,25 @@ public sealed class ReduxGameDirectoryInstallService
 		return new DestinationSnapshot(relativePath, true, HashFile(path), info.Length, info.LastWriteTimeUtc.Ticks);
 	}
 
+	private static ReduxGameDirectoryBinaryMatch? FindExactReviewedDllSetIdentity(
+		ReduxGameDirectoryModDefinition definition, IReadOnlyCollection<DestinationSnapshot> snapshots)
+	{
+		var matches = new List<ReduxGameDirectoryBinaryMatch>();
+		foreach (var relativePath in definition.RelativeFiles
+			.Where(path => path.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)).Select(ToTargetRelative))
+		{
+			var snapshot = snapshots.SingleOrDefault(item =>
+				String.Equals(item.RelativePath, relativePath, StringComparison.Ordinal));
+			if (snapshot is not { Exists: true, Hash: not null }) return null;
+			var match = ReduxGameDirectoryModCatalog.FindByBinaryFingerprint(
+				$"bin/{snapshot.RelativePath}", snapshot.Length, snapshot.Hash);
+			if (match?.Definition.NexusModId != definition.NexusModId) return null;
+			matches.Add(match);
+		}
+		return matches.FirstOrDefault(match => !String.IsNullOrWhiteSpace(match.Fingerprint.Version))
+			?? matches.FirstOrDefault();
+	}
+
 	private string ResolveTargetPath(string relativePath, bool createParent)
 	{
 		if (!IsTargetRelativePath(relativePath)) throw new InvalidDataException("A native target path is invalid.");
@@ -1449,6 +1752,7 @@ public sealed class ReduxGameDirectoryInstallService
 				|| sourceUri.Scheme != Uri.UriSchemeHttps || !IsHash(installation.ArchiveHash)
 				|| String.IsNullOrWhiteSpace(installation.ArchiveName) || installation.ArchiveName.Length > 260
 				|| !String.Equals(installation.ArchiveName, Path.GetFileName(installation.ArchiveName), StringComparison.Ordinal)
+				|| installation.DetectedVersion == null || installation.DetectedVersion.Length > 64
 				|| installation.InstalledAtUtc == default || installation.Files == null || installation.Files.Count == 0)
 				throw new InvalidDataException("Redux's native ownership manifest has an invalid installation entry.");
 			var allowed = definition.RelativeFiles.Select(ToTargetRelative).ToHashSet(StringComparer.Ordinal);
@@ -1514,6 +1818,7 @@ public sealed class ReduxGameDirectoryInstallService
 		SourceUrl = installation.SourceUrl,
 		ArchiveName = installation.ArchiveName,
 		ArchiveHash = installation.ArchiveHash,
+		DetectedVersion = installation.DetectedVersion,
 		InstalledAtUtc = installation.InstalledAtUtc,
 		Files = installation.Files.Select(CloneOwnedFile).ToList()
 	};
@@ -1715,6 +2020,7 @@ public sealed class ReduxGameDirectoryInstallService
 		public string SourceUrl { get; set; } = String.Empty;
 		public string ArchiveName { get; set; } = String.Empty;
 		public string ArchiveHash { get; set; } = String.Empty;
+		public string DetectedVersion { get; set; } = String.Empty;
 		public DateTimeOffset InstalledAtUtc { get; set; }
 		public List<NativeOwnedFile> Files { get; set; } = new();
 	}

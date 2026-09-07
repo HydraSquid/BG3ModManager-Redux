@@ -126,7 +126,7 @@
 									Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
 								<Border x:Name="StatusPill" Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource ReduxStatusPillBaseStyle}"
 									Background="{DynamicResource ReduxSuccessPillBackground}" BorderBrush="{DynamicResource ReduxSuccessBrush}"
-									BorderThickness="1.5">
+									BorderThickness="1.5" ToolTip="{Binding ManagementNote}">
 									<StackPanel Orientation="Horizontal">
 										<controls:ReduxIcon x:Name="StatusIcon" Width="11" Height="11" Margin="0,0,5,0"
 											Foreground="{DynamicResource ReduxSuccessBrush}" StrokeData="{StaticResource Redux.Icon.ShieldCheck}" />
@@ -152,6 +152,15 @@
 									<TextBlock Text="Source" />
 								</StackPanel>
 							</Button>
+							<Button Margin="0,0,6,0" Padding="9,5" Style="{StaticResource ReduxMinorSuccessActionButtonStyle}"
+								Click="AdoptButton_Click" Visibility="{Binding CanAdopt, Converter={StaticResource BoolToVisibilityConverter}}">
+								<StackPanel Orientation="Horizontal">
+									<controls:ReduxIcon Width="13" Height="13" Margin="0,0,6,0"
+										Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+										StrokeData="{StaticResource Redux.Icon.ShieldCheck}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
+									<TextBlock Text="Manage" />
+								</StackPanel>
+							</Button>
 							<Button Padding="9,5" Style="{StaticResource ReduxDeleteButtonStyle}"
 								Click="DeleteButton_Click" IsEnabled="{Binding CanRestore}">
 								<StackPanel Orientation="Horizontal">
@@ -171,6 +180,13 @@
 						<Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource ReduxTextSecondaryBrush}" />
 						<Setter TargetName="StatusIcon" Property="Foreground" Value="{DynamicResource ReduxTextSecondaryBrush}" />
 						<Setter TargetName="StatusIcon" Property="StrokeData" Value="{StaticResource Redux.Icon.Information}" />
+					</DataTrigger>
+					<DataTrigger Binding="{Binding IsExternalReplacement}" Value="True">
+						<Setter TargetName="StatusPill" Property="Background" Value="{DynamicResource ReduxWarningPillBackground}" />
+						<Setter TargetName="StatusPill" Property="BorderBrush" Value="{DynamicResource ReduxWarningBrush}" />
+						<Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" />
+						<Setter TargetName="StatusIcon" Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" />
+						<Setter TargetName="StatusIcon" Property="StrokeData" Value="{StaticResource Redux.Icon.Warning}" />
 					</DataTrigger>
 					<DataTrigger Binding="{Binding Status}" Value="Changed">
 						<Setter TargetName="StatusPill" Property="Background" Value="{DynamicResource ReduxWarningPillBackground}" />

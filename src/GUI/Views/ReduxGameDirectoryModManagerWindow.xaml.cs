@@ -23,6 +23,13 @@ public sealed record ReduxGameDirectoryModListItem(
 	public ReduxGameDirectoryModStatus Status => Entry.Status;
 	public string StatusText => Entry.StatusText;
 	public bool CanRestore => Entry.CanRestore;
+	public bool CanAdopt => Entry.CanAdopt;
+	public bool IsAdopted => Entry.ArchiveName == "Adopted external installation";
+	public bool IsExternalReplacement => Entry.Status == ReduxGameDirectoryModStatus.External
+		&& ReduxGameDirectoryModCatalog.Find(Entry.NexusModId)?.ReplacesExistingGameFiles == true;
+	public string ManagementNote => IsExternalReplacement
+		? "This mod already replaced BG3 files, so Redux has no trusted originals to restore.\nRemove it, verify BG3's files in Steam or GOG, then install it through Redux."
+		: String.Empty;
 	public bool HasSource => !String.IsNullOrWhiteSpace(SourceUrl);
 }
 
@@ -110,11 +117,12 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 					? file.DestinationPath[4..] : file.DestinationPath;
 				var destination = Path.Combine(installer.GameBin, relative.Replace('/', Path.DirectorySeparatorChar));
 				var preserve = file.PreserveExisting && File.Exists(destination);
+				var replacesExisting = inspection.Definition.ReplacesExistingGameFiles && File.Exists(destination) && !preserve;
 				return new ReduxInstallReviewItem(
 					Path.GetFileName(file.DestinationPath),
 					$"Destination: BG3\\bin\\{relative.Replace('/', '\\')}",
-					preserve ? "Keep existing settings" : isUpdate ? "Update managed file" : "Install managed file",
-					preserve ? ReduxInstallReviewTone.Info
+					preserve ? "Keep existing settings" : replacesExisting ? "Replace file · protect original" : isUpdate ? "Update managed file" : "Install managed file",
+					preserve || replacesExisting ? ReduxInstallReviewTone.Info
 						: isUpdate ? ReduxInstallReviewTone.Success : ReduxInstallReviewTone.Info);
 			}).ToList();
 			reviewItems.AddRange(inspection.PackageEntries.Select(package => new ReduxInstallReviewItem(
@@ -197,12 +205,14 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 			_ => "Game-directory files"
 		};
 		var creator = !String.IsNullOrWhiteSpace(metadata?.Author) ? metadata.Author : metadata?.UploadedBy;
+		var displayVersion = !String.IsNullOrWhiteSpace(entry.DetectedVersion)
+			? entry.DetectedVersion : metadata?.Version;
 		var details = String.Join(" · ", new[]
 		{
 			kind,
 			String.IsNullOrWhiteSpace(sourceUrl) ? null : "Nexus Mods",
 			String.IsNullOrWhiteSpace(creator) ? null : $"by {creator}",
-			String.IsNullOrWhiteSpace(metadata?.Version) ? null : $"v{metadata.Version}",
+			String.IsNullOrWhiteSpace(displayVersion) ? null : $"v{displayVersion}",
 			metadata?.UpdatedAt is DateTime updated ? $"Updated {updated:g}" : null
 		}.Where(value => !String.IsNullOrWhiteSpace(value)));
 		var files = entry.Files.Count == 0 ? "No installed-file details are available"
@@ -275,8 +285,11 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 	private async void DeleteButton_Click(object sender, RoutedEventArgs e)
 	{
 		if (sender is not FrameworkElement { DataContext: ReduxGameDirectoryModListItem item } || !item.CanRestore) return;
+		var detail = item.IsAdopted
+			? "Redux will remove only the adopted DLL files, and only if each still matches the version you adopted. Settings files and companion content remain untouched."
+			: "Files Redux added will be removed, and any files it replaced will be restored. Redux will only continue if every managed file still matches its installation record.";
 		var answer = ReduxMessageBox.Show(this,
-			$"Delete Redux's managed installation of {item.Name}? Files Redux added will be removed, and any files it replaced will be restored. Redux will only continue if every managed file still matches its installation record.",
+			$"Delete Redux's managed installation of {item.Name}? {detail}",
 			"Delete Game-Directory Mod", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
 		if (answer != MessageBoxResult.Yes) return;
 		try
@@ -288,6 +301,26 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 		catch (Exception ex) when (ex is IOException or InvalidDataException or InvalidOperationException or UnauthorizedAccessException)
 		{
 			ReduxMessageBox.Show(this, ex.Message, "Delete Stopped",
+				MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+		}
+	}
+
+	private async void AdoptButton_Click(object sender, RoutedEventArgs e)
+	{
+		if (sender is not FrameworkElement { DataContext: ReduxGameDirectoryModListItem item } || !item.CanAdopt) return;
+		var answer = ReduxMessageBox.Show(this,
+			$"Manage the installed {item.Name} DLL with Redux?\n\nRedux verified this exact binary against its reviewed catalog. No game files will change now. If you delete it later, Redux will remove only unchanged adopted DLLs; settings files and companion PAKs remain yours.",
+			"Manage Existing Installation", MessageBoxButton.YesNo, MessageBoxImage.Information, MessageBoxResult.No);
+		if (answer != MessageBoxResult.Yes) return;
+		try
+		{
+			await _installer.AdoptExternalAsync(item.Entry.NexusModId);
+			_viewModel.ShowAlert($"Redux now manages {item.Name}.", AlertType.Success, 20);
+			RefreshList();
+		}
+		catch (Exception ex) when (ex is IOException or InvalidDataException or InvalidOperationException or UnauthorizedAccessException)
+		{
+			ReduxMessageBox.Show(this, ex.Message, "Could Not Manage Installation",
 				MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
 		}
 	}

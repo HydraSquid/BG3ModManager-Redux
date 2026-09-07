@@ -36,6 +36,8 @@ public sealed class ReduxGameDirectoryInstallServiceTests
 	{
 		RegressionAssert.Equal(12, ReduxGameDirectoryModCatalog.All.Count);
 		RegressionAssert.Equal("Native Mod Loader", ReduxGameDirectoryModCatalog.Find(944)!.Name);
+		RegressionAssert.True(ReduxGameDirectoryModCatalog.Find(944)!.ReplacesExistingGameFiles);
+		RegressionAssert.False(ReduxGameDirectoryModCatalog.Find(781)!.ReplacesExistingGameFiles);
 		RegressionAssert.Equal("WASD Character Movement", ReduxGameDirectoryModCatalog.Find(781)!.Name);
 		RegressionAssert.Equal("Native Camera Tweaks", ReduxGameDirectoryModCatalog.Find(945)!.Name);
 		RegressionAssert.Equal("native-camera-tweaks", ReduxGameDirectoryModCatalog.Find(22892)!.PackageId);
@@ -51,6 +53,64 @@ public sealed class ReduxGameDirectoryInstallServiceTests
 		RegressionAssert.SequenceEqual(
 			new[] { "bin/NativeMods/BG3NativeCameraTweaks.dll", "bin/NativeMods/BG3NativeCameraTweaks.toml" },
 			ReduxGameDirectoryModCatalog.Find(945)!.RelativeFiles);
+	}
+
+	public void ReviewedCameraFingerprintsDistinguishLegacyAndGuiProjects()
+	{
+		var legacy = ReduxGameDirectoryModCatalog.FindByBinaryFingerprint(
+			"bin/NativeMods/BG3NativeCameraTweaks.dll", 774656,
+			"7D183B30892C69978534AF5875FBF2B7AE510A2FD3408387B50A21F3612491CA");
+		var gui = ReduxGameDirectoryModCatalog.FindByBinaryFingerprint(
+			"bin/NativeMods/BG3NativeCameraTweaks.dll", 1361408,
+			"E254D1195B45B7C94ADD56B3A16FC823E2D7589D7B6E3D8B6AD45FCECE266543");
+
+		RegressionAssert.Equal(945L, legacy!.Definition.NexusModId);
+		RegressionAssert.Equal("2.4.5", legacy.Fingerprint.Version);
+		RegressionAssert.Equal(22892L, gui!.Definition.NexusModId);
+		RegressionAssert.Equal("2.5.1", gui.Fingerprint.Version);
+		RegressionAssert.Equal(null, ReduxGameDirectoryModCatalog.FindByBinaryFingerprint(
+			"bin/NativeMods/BG3NativeCameraTweaks.dll", 774656, new string('0', 64)));
+	}
+
+	public void ReviewedCatalogFingerprintsCoverEveryKnownDllProject()
+	{
+		var expectedVersions = new (long ProjectId, string Version)[]
+		{
+			(944, "1.0"), (781, "1.9.9"), (945, "2.4.5"), (22892, "2.5.1"),
+			(668, "1.3"), (1326, "1.0.0"), (742, "2.0"), (23881, "2.2.0"),
+			(23413, "1.2"), (23959, "2.0"), (24804, "1.0"), (2172, "32 hotfix 1")
+		};
+		foreach (var expected in expectedVersions)
+		{
+			var definition = ReduxGameDirectoryModCatalog.Find(expected.ProjectId)!;
+			RegressionAssert.True(definition.BinaryFingerprints.Any(fingerprint => fingerprint.Version == expected.Version));
+			RegressionAssert.True(definition.BinaryFingerprints.All(fingerprint =>
+				definition.RelativeFiles.Contains(fingerprint.RelativePath, StringComparer.OrdinalIgnoreCase)));
+		}
+
+		var wasd = ReduxGameDirectoryModCatalog.FindByBinaryFingerprint(
+			"BIN\\NativeMods\\BG3WASD.dll", 1074688,
+			"5D7106834DCD0938EDF367324F5688F9C518A8FAAAE056CDE77C9CED52616D74");
+		var follow = ReduxGameDirectoryModCatalog.FindByBinaryFingerprint(
+			"bin/NativeMods/BG3WASD.dll", 1110016,
+			"6B62AC4B2859C64EE73977AE451F515EA19EEF7D2C66BB25E58B2CC90E406E66");
+		RegressionAssert.Equal(781L, wasd!.Definition.NexusModId);
+		RegressionAssert.Equal(23413L, follow!.Definition.NexusModId);
+	}
+
+	public void UnknownSharedCameraBinaryRemainsAnUnverifiedVariant()
+	{
+		using var fixture = new NativeFixture();
+		Directory.CreateDirectory(fixture.NativeModsDirectory);
+		File.WriteAllBytes(Path.Combine(fixture.NativeModsDirectory, "BG3NativeCameraTweaks.dll"), fixture.Pe("unknown camera variant"));
+		File.WriteAllText(Path.Combine(fixture.NativeModsDirectory, "BG3NativeCameraTweaks.toml"), "[camera]\nfov = 75\n");
+
+		var entry = fixture.Installer().GetInstalledMods().Single();
+
+		RegressionAssert.Equal(-1L, entry.NexusModId);
+		RegressionAssert.Contains(entry.Name, "unverified variant");
+		RegressionAssert.Contains(entry.StatusText, "unverified variant");
+		RegressionAssert.Equal(String.Empty, entry.SourceUrl);
 	}
 
 	public void ArchiveRecognitionUsesReviewedLayoutAndCorroboratesOverlappingProjects()
@@ -225,6 +285,37 @@ public sealed class ReduxGameDirectoryInstallServiceTests
 		RegressionAssert.Contains(status.Description, "verified");
 	}
 
+	public void ReduxInstalledLoaderKeepsAProtectedCopyOfTheUsersOriginalDll()
+	{
+		using var fixture = new NativeFixture();
+		var original = fixture.Pe("user game dll");
+		fixture.WriteVanillaLoader(original);
+		fixture.CreateLoaderArchive(fixture.Pe("reviewed loader"), original);
+		fixture.Install(944, fixture.LoaderArchivePath, null);
+
+		using var manifest = System.Text.Json.JsonDocument.Parse(File.ReadAllText(fixture.ManifestPath));
+		var loader = manifest.RootElement.GetProperty("Installations")[0].GetProperty("Files")
+			.EnumerateArray().Single(file => file.GetProperty("RelativePath").GetString() == "bink2w64.dll");
+		RegressionAssert.False(loader.GetProperty("Created").GetBoolean());
+		var backupId = loader.GetProperty("OriginalBackupId").GetString();
+		RegressionAssert.True(!String.IsNullOrWhiteSpace(backupId));
+		var backupPath = Path.Combine(Path.GetDirectoryName(fixture.ManifestPath)!, "backups", backupId + ".bin");
+		RegressionAssert.SequenceEqual(original, File.ReadAllBytes(backupPath));
+	}
+
+	public void ReplacerInstallNeverBacksUpAnUnreviewedOrModdedDll()
+	{
+		using var fixture = new NativeFixture();
+		var modded = fixture.Pe("already modded game dll");
+		fixture.WriteVanillaLoader(modded);
+		fixture.CreateLoaderArchive(fixture.Pe("unreviewed loader"), modded);
+
+		RegressionAssert.Throws<InvalidOperationException>(() => fixture.StrictInstaller().StageAsync(
+			944, fixture.LoaderArchivePath, CancellationToken.None).GetAwaiter().GetResult());
+		RegressionAssert.SequenceEqual(modded, File.ReadAllBytes(fixture.LoaderPath));
+		RegressionAssert.False(File.Exists(fixture.ManifestPath));
+	}
+
 	public void ExternalLoaderPairIsPresentButUnverifiedAndUnmanagedOriginalConflicts()
 	{
 		using var fixture = new NativeFixture();
@@ -276,6 +367,8 @@ public sealed class ReduxGameDirectoryInstallServiceTests
 		var external = externalFixture.Installer().GetInstalledMods().Single();
 		RegressionAssert.Equal(ReduxGameDirectoryModStatus.External, external.Status);
 		RegressionAssert.False(external.CanRestore);
+		RegressionAssert.False(external.CanAdopt);
+		RegressionAssert.Contains(external.StatusText, "no protected original backup");
 	}
 
 	public void ManagerSurfacesUnknownNativeDllsWithoutClaimingOwnership()
@@ -289,6 +382,31 @@ public sealed class ReduxGameDirectoryInstallServiceTests
 		RegressionAssert.Equal(ReduxGameDirectoryModStatus.External, external.Status);
 		RegressionAssert.False(external.CanRestore);
 		RegressionAssert.SequenceEqual(new[] { "NativeMods/Uncatalogued.dll" }, external.Files);
+	}
+
+	public void UnknownExternalDllCannotBeAdoptedOrCreateOwnershipState()
+	{
+		using var fixture = new NativeFixture();
+		Directory.CreateDirectory(fixture.NativeModsDirectory);
+		var dllPath = Path.Combine(fixture.NativeModsDirectory, "BG3WASD.dll");
+		File.WriteAllBytes(dllPath, fixture.Pe("unreviewed wasd build"));
+
+		var detected = fixture.Installer().GetInstalledMods().Single();
+		RegressionAssert.Equal(ReduxGameDirectoryModStatus.External, detected.Status);
+		RegressionAssert.False(detected.CanAdopt);
+		RegressionAssert.Throws<InvalidOperationException>(() => fixture.Installer().AdoptExternalAsync(
+			781, CancellationToken.None).GetAwaiter().GetResult());
+		RegressionAssert.False(File.Exists(fixture.ManifestPath));
+		RegressionAssert.True(File.Exists(dllPath));
+	}
+
+	public void LeftoverExternalConfigurationIsNotReportedAsAnInstalledDllMod()
+	{
+		using var fixture = new NativeFixture();
+		Directory.CreateDirectory(fixture.NativeModsDirectory);
+		File.WriteAllText(Path.Combine(fixture.NativeModsDirectory, "BG3WASD.toml"), "[input]\nforward = \"W\"\n");
+
+		RegressionAssert.Equal(0, fixture.Installer().GetInstalledMods().Count);
 	}
 
 	public void CommitRejectsArchiveAndDestinationChangesAfterReview()
@@ -572,6 +690,9 @@ public sealed class ReduxGameDirectoryInstallServiceTests
 		}
 
 		public ReduxGameDirectoryInstallService Installer(Version? version = null) =>
+			new(GameBin, StateDirectory, version!, false);
+
+		public ReduxGameDirectoryInstallService StrictInstaller(Version? version = null) =>
 			new(GameBin, StateDirectory, version!);
 
 		public byte[] InstallLoader()

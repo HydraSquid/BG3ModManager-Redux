@@ -181,6 +181,19 @@ external edits. User configuration files are placed only when missing, remain us
 updates or removal. Mixed native-and-PAK archives route the PAK portion through the existing normal
 mod importer rather than bypassing package validation.
 
+The catalog also carries exact reviewed DLL sizes and SHA-256 fingerprints. These distinguish related
+projects that deliberately share filenames, surface known versions, and leave unknown variants
+unclaimed. Exact add-only plugins installed by another tool can be adopted without changing game
+files; Redux records their current DLL hashes, leaves configuration and companion PAKs user-owned,
+and later deletes only unchanged adopted DLLs.
+
+Catalog entries that replace existing game files follow a separate rule. External replacers cannot be
+adopted because Redux has no trusted original to restore. Their manager status explains the recovery
+order: remove the replacer, verify BG3 through Steam or GOG, then install through Redux. A Redux-led
+replacer install first proves that every replacement target is a known clean game file, stores the
+user's own original in protected backup storage, and refuses unknown or already-modded targets. No
+BG3 binary is distributed with Redux.
+
 The manager is available from Tools, Quick Access, the **Mods & Campaign** toolbar group, and the assignable shortcut
 system. Its compact entries use the same semantic pills, source identity, destructive actions, and
 hover or selection language as Redux's other mod surfaces. Available provider metadata can enrich

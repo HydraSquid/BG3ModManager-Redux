@@ -104,9 +104,9 @@
 			</Style>
 			<Style x:Key="ClearDownloadHistoryButton" BasedOn="{StaticResource DownloadActionButton}" TargetType="{x:Type Button}">
 				<Setter Property="Visibility" Value="Collapsed" />
-				<Setter Property="Background" Value="{DynamicResource ReduxErrorPillBackground}" />
-				<Setter Property="BorderBrush" Value="{DynamicResource ReduxErrorBrush}" />
-				<Setter Property="Foreground" Value="{DynamicResource ReduxErrorBrush}" />
+				<Setter Property="Background" Value="{DynamicResource ReduxWarningPillBackground}" />
+				<Setter Property="BorderBrush" Value="{DynamicResource ReduxWarningBrush}" />
+				<Setter Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" />
 				<Style.Triggers>
 					<DataTrigger Binding="{Binding State}" Value="Installed"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
 				</Style.Triggers>
@@ -254,7 +254,7 @@
 							StrokeData="{StaticResource Redux.Icon.FolderOpen}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Open Folder" /></StackPanel>
 					</Button>
 					<Button x:Name="ClearInstalledButton" Margin="7,0,0,0" Click="ClearInstalledButton_Click"
-						Style="{StaticResource ReduxMinorDestructiveActionButtonStyle}" Visibility="Collapsed">
+						Style="{StaticResource ReduxMinorWarningActionButtonStyle}" Visibility="Collapsed">
 						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,6,0"
 							Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 							StrokeData="{StaticResource Redux.Icon.Trash}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Clear Installed History" /></StackPanel>

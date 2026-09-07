@@ -20,6 +20,9 @@
 		<Optimize>False</Optimize>
 	</PropertyGroup>
 	<ItemGroup>
+		<InternalsVisibleTo Include="Redux.Core.Tests" />
+	</ItemGroup>
+	<ItemGroup>
 		<ProjectReference Include="..\..\External\lslib\LSLibNative\LSLibNative.vcxproj" />
 		<ProjectReference Include="..\..\External\lslib\LSLib\LSLib.csproj" />
 		<ProjectReference Include="..\..\External\CrossSpeak\CrossSpeak\CrossSpeak.csproj" />

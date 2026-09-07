@@ -128,11 +128,20 @@ existing Script Extender workflow. Mixed native-and-PAK packages send their comp
 the normal inactive-mod import path.
 
 Archives may be selected in the manager or dropped onto Redux. Installation is staged and bounded;
-paths, layouts, AMD64 DLL headers, prerequisites, the source archive, and destination files are
-rechecked before commit. Redux records only files it actually manages, keeps recoverable originals
-when replacing game files, and refuses removal if doing so would overwrite files changed outside
-Redux. User-editable `.toml` and `.ini` configuration is preserved and left in place during updates
-or removal.
+paths, layouts, reviewed DLL fingerprints, AMD64 DLL headers, prerequisites, the source archive, and
+destination files are rechecked before commit. Exact fingerprints distinguish related projects that
+share filenames and identify known versions; unknown or modified DLLs remain explicitly unverified.
+Reviewed add-only plugins installed elsewhere can be adopted without rewriting them, after which
+Redux removes only unchanged adopted DLLs. User-editable `.toml` and `.ini` configuration and
+companion PAKs remain user-owned.
+
+Replacer mods use stricter ownership. Redux never adopts an external replacer because it did not
+preserve the files that were already replaced. To bring one under management, remove the external
+replacer, verify BG3 through Steam or GOG, then install it through Redux. Before replacing anything,
+Redux verifies the current targets as known clean game files and stores those originals in protected
+backup storage. Unknown or already-modded targets are refused rather than backed up. Redux does not
+ship copies of BG3 files, and removal restores an original only while all managed files still match
+the ownership record.
 
 > [!CAUTION]
 > Layout validation is not a publisher signature or malware scan. Install native code only from a

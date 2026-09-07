@@ -1394,6 +1394,15 @@
 			resource lookup is unreliable for controls hosted inside popups.
 		-->
 		<Style.Triggers>
+			<Trigger Property="IconKey" Value="save"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Save}" /></Trigger>
+			<Trigger Property="IconKey" Value="undo"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Undo}" /></Trigger>
+			<Trigger Property="IconKey" Value="redo"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Redo}" /></Trigger>
+			<Trigger Property="IconKey" Value="copy"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Copy}" /></Trigger>
+			<Trigger Property="IconKey" Value="trash"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Trash}" /></Trigger>
+			<Trigger Property="IconKey" Value="reorder"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.ReorderStroke}" /></Trigger>
+			<Trigger Property="IconKey" Value="swap"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.SwapHorizontalStroke}" /></Trigger>
+			<Trigger Property="IconKey" Value="filter"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Funnel}" /></Trigger>
+			<Trigger Property="IconKey" Value="stop"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.StopCircle}" /></Trigger>
 			<Trigger Property="IconKey" Value="marker-diamond"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.MarkerDiamond}" /></Trigger>
 			<Trigger Property="IconKey" Value="list"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.ListStroke}" /></Trigger>
 			<Trigger Property="IconKey" Value="palette"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.ColorPalette}" /></Trigger>

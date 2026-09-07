@@ -10,6 +10,14 @@ using System.Windows.Input;
 
 namespace DivinityModManager.Views;
 
+public enum ReduxCommandPaletteTone
+{
+	Neutral,
+	Success,
+	Warning,
+	Error
+}
+
 public sealed class ReduxCommandPaletteItem
 {
 	public string Name { get; }
@@ -17,6 +25,7 @@ public sealed class ReduxCommandPaletteItem
 	public string Description { get; }
 	public string Gesture { get; }
 	public string IconKey { get; }
+	public ReduxCommandPaletteTone Tone { get; }
 	public string SearchTerms { get; }
 	public int MinimumQueryLength { get; }
 	public bool HasGesture => !String.IsNullOrWhiteSpace(Gesture);
@@ -34,13 +43,15 @@ public sealed class ReduxCommandPaletteItem
 		Action execute,
 		Func<bool> canExecute = null,
 		int minimumQueryLength = 0,
-		string searchTerms = null)
+		string searchTerms = null,
+		ReduxCommandPaletteTone tone = ReduxCommandPaletteTone.Neutral)
 	{
 		Name = name?.Trim() ?? String.Empty;
 		Category = category?.Trim() ?? String.Empty;
 		Description = description?.Trim() ?? String.Empty;
 		Gesture = gesture?.Trim() ?? String.Empty;
 		IconKey = iconKey?.Trim() ?? "terminal";
+		Tone = tone;
 		SearchTerms = searchTerms?.Trim() ?? String.Empty;
 		MinimumQueryLength = Math.Max(0, minimumQueryLength);
 		_execute = execute ?? (() => { });
@@ -150,10 +161,11 @@ public partial class ReduxCommandPaletteWindow : AdonisUI.Controls.AdonisWindow
 					item.Hotkey.Category,
 					item.Hotkey.Description,
 					item.Hotkey.Key == Key.None ? String.Empty : item.Hotkey.DisplayBindingText,
-					"terminal",
+					GetCommandIconKey(item.Property.Name),
 					() => command.Execute(null),
 					() => item.Hotkey.CanExecuteCommand,
-					searchTerms: GetCommandSearchTerms(item.Property.Name));
+					searchTerms: GetCommandSearchTerms(item.Property.Name),
+					tone: GetCommandTone(item.Property.Name));
 			})
 			.ToList();
 
@@ -245,6 +257,75 @@ public partial class ReduxCommandPaletteWindow : AdonisUI.Controls.AdonisWindow
 
 		return commands;
 	}
+
+	private static string GetCommandIconKey(string commandId) => commandId switch
+	{
+		nameof(AppKeys.ImportMod) => "package",
+		nameof(AppKeys.Save) => "save",
+		nameof(AppKeys.SaveAs) => "copy",
+		nameof(AppKeys.SaveNewOrder) => "copy",
+		nameof(AppKeys.NewOrder) => "list",
+		nameof(AppKeys.RenameOrder) => "tag",
+		nameof(AppKeys.CompareLoadOrders) => "swap",
+		nameof(AppKeys.OrganizeLoadOrder) => "wand-sparkles",
+		nameof(AppKeys.RestorePoints) => "scroll-text",
+		nameof(AppKeys.ImportOrderFromSave) => "book-open",
+		nameof(AppKeys.ImportOrderFromSaveAsNew) => "book-open",
+		nameof(AppKeys.ImportOrderFromFile) => "folder",
+		nameof(AppKeys.ImportReduxLoadOrder) => "download",
+		nameof(AppKeys.ImportOrderFromZipFile) => "archive",
+		nameof(AppKeys.ExportOrderToGame) => "gameplay",
+		nameof(AppKeys.ExportOrderToList) => "document",
+		nameof(AppKeys.ExportReduxLoadOrder) => "archive",
+		nameof(AppKeys.ExportOrderToZip) => "archive",
+		nameof(AppKeys.Refresh) => "refresh",
+		nameof(AppKeys.RefreshModUpdates) => "refresh",
+		nameof(AppKeys.UndoLoadOrderChange) => "undo",
+		nameof(AppKeys.RedoLoadOrderChange) => "redo",
+		nameof(AppKeys.Confirm) => "swap",
+		nameof(AppKeys.MoveFocusLeft) => "target",
+		nameof(AppKeys.MoveFocusRight) => "target",
+		nameof(AppKeys.SwapListFocus) => "swap",
+		nameof(AppKeys.MoveToTop) => "list",
+		nameof(AppKeys.MoveToBottom) => "list",
+		nameof(AppKeys.ToggleFilterFocus) => "filter",
+		nameof(AppKeys.DeleteSelectedMods) => "trash",
+		nameof(AppKeys.OpenPreferences) => "settings",
+		nameof(AppKeys.OpenThemeAppearance) => "paintbrush",
+		nameof(AppKeys.OpenKeybindings) => "key",
+		nameof(AppKeys.ToggleViewTheme) => "moon-star",
+		nameof(AppKeys.ToggleToolbar) => "tools",
+		nameof(AppKeys.ToggleUpdatesView) => "refresh",
+		nameof(AppKeys.OpenModsFolder) => "folder",
+		nameof(AppKeys.OpenGameFolder) => "folder",
+		nameof(AppKeys.OpenLogsFolder) => "folder",
+		nameof(AppKeys.LaunchGame) => "gameplay",
+		nameof(AppKeys.ExtractSelectedMods) => "archive",
+		nameof(AppKeys.ExtractSelectedAdventure) => "archive",
+		nameof(AppKeys.ToggleVersionGeneratorWindow) => "tools",
+		nameof(AppKeys.InspectFileOverlaps) => "blocks",
+		nameof(AppKeys.DownloadScriptExtender) => "puzzle",
+		nameof(AppKeys.SpeakActiveModOrder) => "audio",
+		nameof(AppKeys.StopSpeaking) => "stop",
+		nameof(AppKeys.CheckForUpdates) => "refresh",
+		nameof(AppKeys.OpenDonationLink) => "heart",
+		nameof(AppKeys.OpenAboutWindow) => "info",
+		nameof(AppKeys.OpenRepositoryPage) => "database",
+		_ => "terminal"
+	};
+
+	private static ReduxCommandPaletteTone GetCommandTone(string commandId) => commandId switch
+	{
+		nameof(AppKeys.Save)
+			or nameof(AppKeys.SaveAs)
+			or nameof(AppKeys.SaveNewOrder)
+			or nameof(AppKeys.ExportOrderToGame)
+			or nameof(AppKeys.ExportOrderToList)
+			or nameof(AppKeys.ExportReduxLoadOrder)
+			or nameof(AppKeys.ExportOrderToZip) => ReduxCommandPaletteTone.Success,
+		nameof(AppKeys.DeleteSelectedMods) => ReduxCommandPaletteTone.Error,
+		_ => ReduxCommandPaletteTone.Neutral
+	};
 
 	private static string GetCommandSearchTerms(string commandId) => commandId switch
 	{

@@ -4,6 +4,7 @@
 	xmlns:adonisUI="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
 	xmlns:controls="clr-namespace:DivinityModManager.Controls"
 	xmlns:dapp="clr-namespace:DivinityModManager;assembly=DivinityModManager.Core"
+	xmlns:local="clr-namespace:DivinityModManager.Views"
 	xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
 	Title="Quick Access"
 	Width="620" Height="530" MinWidth="520" MinHeight="420" MaxWidth="760" MaxHeight="760"
@@ -52,14 +53,69 @@
 										<ColumnDefinition Width="Auto" />
 									</Grid.ColumnDefinitions>
 									<Border Width="30" Height="30" Margin="0,0,10,0"
-										Background="{DynamicResource ReduxAccentSoftBrush}"
 										CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
 										Visibility="{Binding Path=(dapp:DivinityApp.ShowInterfaceIcons), Converter={StaticResource BoolToVisibilityConverter}}">
+										<Border.Style>
+											<Style TargetType="{x:Type Border}">
+												<Setter Property="Background" Value="{DynamicResource ReduxAccentSoftBrush}" />
+												<Style.Triggers>
+													<MultiDataTrigger>
+														<MultiDataTrigger.Conditions>
+															<Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Success}" />
+															<Condition Binding="{Binding Path=(dapp:DivinityApp.UseCategoryColorsForText)}" Value="True" />
+														</MultiDataTrigger.Conditions>
+														<Setter Property="Background" Value="{DynamicResource ReduxSuccessPillBackground}" />
+													</MultiDataTrigger>
+													<MultiDataTrigger>
+														<MultiDataTrigger.Conditions>
+															<Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Warning}" />
+															<Condition Binding="{Binding Path=(dapp:DivinityApp.UseCategoryColorsForText)}" Value="True" />
+														</MultiDataTrigger.Conditions>
+														<Setter Property="Background" Value="{DynamicResource ReduxWarningPillBackground}" />
+													</MultiDataTrigger>
+													<MultiDataTrigger>
+														<MultiDataTrigger.Conditions>
+															<Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Error}" />
+															<Condition Binding="{Binding Path=(dapp:DivinityApp.UseCategoryColorsForText)}" Value="True" />
+														</MultiDataTrigger.Conditions>
+														<Setter Property="Background" Value="{DynamicResource ReduxErrorPillBackground}" />
+													</MultiDataTrigger>
+												</Style.Triggers>
+											</Style>
+										</Border.Style>
 										<controls:ReduxIcon Width="15" Height="15"
 											HorizontalAlignment="Center"
 											VerticalAlignment="Center"
-											Foreground="{DynamicResource ReduxAccentBrush}"
-											IconKey="{Binding IconKey}" />
+											IconKey="{Binding IconKey}">
+											<controls:ReduxIcon.Style>
+												<Style BasedOn="{StaticResource {x:Type controls:ReduxIcon}}" TargetType="{x:Type controls:ReduxIcon}">
+													<Setter Property="Foreground" Value="{DynamicResource ReduxAccentBrush}" />
+													<Style.Triggers>
+														<MultiDataTrigger>
+															<MultiDataTrigger.Conditions>
+																<Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Success}" />
+																<Condition Binding="{Binding Path=(dapp:DivinityApp.UseCategoryColorsForText)}" Value="True" />
+															</MultiDataTrigger.Conditions>
+															<Setter Property="Foreground" Value="{DynamicResource ReduxSuccessBrush}" />
+														</MultiDataTrigger>
+														<MultiDataTrigger>
+															<MultiDataTrigger.Conditions>
+																<Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Warning}" />
+																<Condition Binding="{Binding Path=(dapp:DivinityApp.UseCategoryColorsForText)}" Value="True" />
+															</MultiDataTrigger.Conditions>
+															<Setter Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" />
+														</MultiDataTrigger>
+														<MultiDataTrigger>
+															<MultiDataTrigger.Conditions>
+																<Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Error}" />
+																<Condition Binding="{Binding Path=(dapp:DivinityApp.UseCategoryColorsForText)}" Value="True" />
+															</MultiDataTrigger.Conditions>
+															<Setter Property="Foreground" Value="{DynamicResource ReduxErrorBrush}" />
+														</MultiDataTrigger>
+													</Style.Triggers>
+												</Style>
+											</controls:ReduxIcon.Style>
+										</controls:ReduxIcon>
 									</Border>
 									<StackPanel Grid.Column="1" Margin="0,0,12,0" VerticalAlignment="Center">
 										<TextBlock Foreground="{DynamicResource ReduxTextPrimaryBrush}"

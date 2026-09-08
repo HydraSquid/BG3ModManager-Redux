@@ -1,5 +1,8 @@
 blank_issues_enabled: true
 contact_links:
+  - name: Read the Redux support guide
+    url: https://github.com/circleainn/BG3ModManager-Redux/blob/main/SUPPORT.md
+    about: Installation, troubleshooting, privacy, and where to report different problems.
   - name: Download Redux on Nexus Mods
     url: https://www.nexusmods.com/baldursgate3/mods/23799
     about: Get the latest public Redux build and read the user-facing description.

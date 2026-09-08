@@ -34,6 +34,8 @@ body:
       label: Related area
       options:
         - Mod installation or management
+        - Download Manager, NXM links, or retained archives
+        - Game-directory mods or Script Extender
         - Active or inactive mod lists
         - Load orders, categories, or separators
         - Saving or syncing the game load order

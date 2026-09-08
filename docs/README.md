@@ -9,6 +9,10 @@ quick picture of Redux.
 | I want to… | Start here |
 |:--|:--|
 | Understand Redux as a user | [Project README](../README.md) |
+| Install, update, move, roll back, or remove Redux | [Installation and updates](INSTALLATION.md) |
+| Fix a startup, path, download, or sync problem | [Troubleshooting](TROUBLESHOOTING.md) |
+| Understand what Redux stores or sends | [Privacy and local data](PRIVACY_AND_DATA.md) |
+| Ask for help or report a problem | [Support](../SUPPORT.md) |
 | See what Redux retains and changes from BG3MM | [Changes from upstream](CHANGES_FROM_UPSTREAM.md) |
 | Understand diagnostics, online information, or the Load Order Advisor | [Feature boundaries](REDUX_OPTIONAL_MODULES.md) |
 | Help improve offline mod recognition | [Redux mod database](REDUX_MOD_DATABASE.md) |
@@ -23,6 +27,9 @@ quick picture of Redux.
 - [Database maintenance CLI and desktop reviewer](../tools/ReduxModDatabaseTool/README.md)
 - [Windows build and regression workflow](../.github/workflows/windows-ci.yml)
 - [Third-party notices](../licenses/Third-Party-Notices.md)
+- [Contribution guide](../CONTRIBUTING.md)
+- [Security policy](../SECURITY.md)
+- [Changelog](../CHANGELOG.md)
 
 ## Terms used throughout the docs
 

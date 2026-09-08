@@ -140,7 +140,10 @@ or not Load Order Advisor is enabled.
 
 The first-run setup is also reachable from Help. Theme, motion, and background effects preview live
 and return to their previous values if setup is dismissed. API keys and persistent settings are
-stored only after **Save & Continue**. Setup never edits packages or load orders.
+stored only after **Save & Continue**. Online source information, NXM association, Load Order
+Advisor guidance, and retained package archives remain independent opt-in choices. Enabling NXM
+links does not enable archive retention, and enabling provider information does not authorize a
+download or installation. Setup never edits packages or load orders.
 
 ## Rules for new feature work
 

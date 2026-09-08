@@ -15,6 +15,7 @@
 [Download on Nexus Mods](https://www.nexusmods.com/baldursgate3/mods/23799) ·
 [Visit the website](https://bg3mm-redux.com) ·
 [Report a problem](https://github.com/circleainn/BG3ModManager-Redux/issues) ·
+[Read the changelog](CHANGELOG.md) ·
 [Browse the docs](docs/README.md) ·
 [See what differs from BG3MM](docs/CHANGES_FROM_UPSTREAM.md)
 
@@ -28,6 +29,28 @@ Redux is a Windows mod manager built on
 [LaughingLeader's BG3 Mod Manager](https://github.com/LaughingLeader/BG3ModManager). It preserves
 BG3MM's proven package, profile, and load-order foundation while adding a cohesive interface,
 stronger organization, safer review workflows, and optional offline-assisted guidance.
+
+## Install and update
+
+Redux is portable: it does not use a traditional installer.
+
+1. Install the [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
+2. Obtain the complete Redux archive from the
+   [official Nexus Mods page](https://www.nexusmods.com/baldursgate3/mods/23799) or an official
+   GitHub release when one is available.
+3. Extract the entire archive into its own writable folder. Do not run Redux from inside the ZIP,
+   the Baldur's Gate 3 installation directory, or a protected system folder.
+4. Run `BG3ModManager.exe`. On first launch, review the detected game and profile paths before
+   installing or syncing anything.
+
+Alpha.14 is updated manually. To replace a build, close Redux and BG3, back up the Redux folder,
+then extract the complete newer archive over the existing Redux folder. Release archives exclude
+runtime state such as `Data`, `_Logs`, caches, downloads, retained archives, and backups. Never
+delete those folders as part of a routine update. If Redux is moved to a different folder, open
+Download Manager and repair the NXM association if Redux previously handled `nxm://` links.
+
+See [Installation, updates, and removal](docs/INSTALLATION.md) for safe migration, rollback, and
+uninstall guidance.
 
 ## Redux at a glance
 
@@ -322,13 +345,17 @@ distributed as a self-contained build.
 Known private-alpha limits include personal Nexus API-key authentication instead of public SSO,
 incomplete provider/category/dependency coverage, imported-font variability, incomplete mod.io
 author links, and limited clean-machine testing. Uncommon scaling and extremely dense layouts may
-still expose visual issues. Imported fonts and PNG icons remain the user's responsibility to license.
+still expose visual issues. Application self-updating remains disabled in alpha.14. Imported fonts
+and PNG icons remain the user's responsibility to license.
 
 ## Documentation
 
 | Guide | Audience | Purpose |
 |:--|:--|:--|
 | [Documentation index](docs/README.md) | Everyone | Find the right user, author, or maintainer guide |
+| [Installation and updates](docs/INSTALLATION.md) | Users | Install, upgrade, move, roll back, or remove Redux safely |
+| [Troubleshooting](docs/TROUBLESHOOTING.md) | Users and testers | Recover from common startup, path, download, and sync problems |
+| [Privacy and local data](docs/PRIVACY_AND_DATA.md) | Everyone | Understand stored data, network requests, logs, and safe sharing |
 | [Changes from upstream](docs/CHANGES_FROM_UPSTREAM.md) | Users and contributors | Understand what Redux retains and changes |
 | [Optional features](docs/REDUX_OPTIONAL_MODULES.md) | Contributors | Understand feature boundaries and safety rules |
 | [Redux mod database](docs/REDUX_MOD_DATABASE.md) | Contributors and maintainers | Recognition, advisor knowledge, and reports |
@@ -340,6 +367,8 @@ still expose visual issues. Imported fonts and PNG icons remain the user's respo
 Use the [issue tracker](https://github.com/circleainn/BG3ModManager-Redux/issues) for reproducible
 bugs. Include the Redux version, the smallest reliable reproduction steps, relevant screenshots or
 logs, and affected mod names or UUIDs. Never post API keys or unreviewed private path information.
+Read [Support](SUPPORT.md) and [Troubleshooting](docs/TROUBLESHOOTING.md) before sharing logs or
+runtime data.
 
 ## Credits and license
 

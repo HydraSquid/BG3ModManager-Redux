@@ -15,7 +15,7 @@ body:
     attributes:
       label: Redux version
       description: Copy the version shown in the Redux window title bar.
-      placeholder: 0.1.0-alpha.13
+      placeholder: 0.1.0-alpha.14
     validations:
       required: true
 
@@ -25,7 +25,7 @@ body:
       label: Build type
       description: Which build were you using when the problem occurred?
       options:
-        - Packaged tester build
+        - Packaged alpha build
         - Local Debug build
         - Other or unknown
     validations:
@@ -58,6 +58,8 @@ body:
         - Active or inactive mod lists
         - Load-order saving or game sync
         - Mod installation, import, or deletion
+        - Download Manager, NXM links, or retained archives
+        - Game-directory mods or Script Extender
         - Categories or separators
         - Mod diagnostics
         - Redux Modlist import or export

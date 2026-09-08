@@ -72,6 +72,10 @@ Redux list surfaces retain virtualization and logical scrolling while applying b
 wheel motion. Reduce Motion removes scrolling, sliding, scaling, and transition animation without
 removing clear hover or selection feedback.
 
+Theme switching and live custom-color preview reuse unchanged semantic resources, coalesce related
+setting changes, and update the main visual tree once per rendered frame. Hidden secondary windows
+receive the current theme when opened instead of participating in every palette change.
+
 ### Categories
 
 Redux categories are a persistent presentation layer with automatic and user-created categories,
@@ -327,3 +331,6 @@ Redux currently does not provide:
 This document should change only when an enduring upstream/Redux boundary changes. Version notes,
 individual fixes, plans, and one-off implementation details belong in release notes, issues, or Git
 history.
+
+See [Installation and updates](INSTALLATION.md) and [Privacy and local data](PRIVACY_AND_DATA.md)
+for current distribution and data-handling guidance.

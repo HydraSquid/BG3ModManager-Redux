@@ -1266,7 +1266,7 @@
 								<ColumnDefinition Width="Auto" />
 							</Grid.ColumnDefinitions>
 
-							<!-- Setup: choose where the work applies, then install into it. -->
+							<!-- Mods & Campaign: choose where the work applies, then install into it. -->
 							<Grid Grid.Column="0" Margin="0,0,10,0">
 								<Grid.RowDefinitions>
 									<RowDefinition Height="Auto" />
@@ -1354,7 +1354,7 @@
 
 							<Rectangle Grid.Column="1" Width="1" Margin="0,8" Fill="{DynamicResource ReduxBorderBrush}" Opacity="0.7" />
 
-							<!-- Load Order & Sync: select, save, then apply the active load order. -->
+							<!-- Load Order: select, save, then apply the active load order. -->
 							<Grid Grid.Column="2" Margin="10,0" ClipToBounds="False">
 								<Grid.RowDefinitions>
 									<RowDefinition Height="Auto" />

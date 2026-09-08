@@ -2837,12 +2837,12 @@
 							<Trigger.EnterActions>
 								<BeginStoryboard>
 									<Storyboard>
-										<DoubleAnimation Storyboard.TargetName="RowHoverSurface"
+										<util:ReduxDoubleAnimation Storyboard.TargetName="RowHoverSurface"
 											Storyboard.TargetProperty="Opacity"
 											To="0.62"
 											Duration="{StaticResource Redux.Motion.Fast}"
 											EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
-										<DoubleAnimation Storyboard.TargetName="RowHoverRail"
+										<util:ReduxDoubleAnimation Storyboard.TargetName="RowHoverRail"
 											Storyboard.TargetProperty="Opacity"
 											To="1"
 											Duration="{StaticResource Redux.Motion.Fast}"
@@ -2853,11 +2853,11 @@
 							<Trigger.ExitActions>
 								<BeginStoryboard>
 									<Storyboard>
-										<DoubleAnimation Storyboard.TargetName="RowHoverSurface"
+										<util:ReduxDoubleAnimation Storyboard.TargetName="RowHoverSurface"
 											Storyboard.TargetProperty="Opacity"
 											To="0"
 											Duration="{StaticResource Redux.Motion.Standard}" />
-										<DoubleAnimation Storyboard.TargetName="RowHoverRail"
+										<util:ReduxDoubleAnimation Storyboard.TargetName="RowHoverRail"
 											Storyboard.TargetProperty="Opacity"
 											To="0"
 											Duration="{StaticResource Redux.Motion.Standard}" />
@@ -2881,14 +2881,9 @@
 						<EventTrigger RoutedEvent="PreviewMouseLeftButtonDown">
 							<BeginStoryboard>
 								<Storyboard>
-									<DoubleAnimationUsingKeyFrames Storyboard.TargetName="RowConfirmationFlash"
-										Storyboard.TargetProperty="Opacity">
-										<DiscreteDoubleKeyFrame KeyTime="0:0:0" Value="0" />
-										<EasingDoubleKeyFrame KeyTime="0:0:0.06" Value="0.52"
-											EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
-										<EasingDoubleKeyFrame KeyTime="0:0:0.22" Value="0"
-											EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
-									</DoubleAnimationUsingKeyFrames>
+									<util:ReduxSelectionFlashAnimation Storyboard.TargetName="RowConfirmationFlash"
+										Storyboard.TargetProperty="Opacity"
+										Duration="0:0:0.22" />
 								</Storyboard>
 							</BeginStoryboard>
 						</EventTrigger>

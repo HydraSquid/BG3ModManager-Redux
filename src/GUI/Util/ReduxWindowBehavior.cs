@@ -16,6 +16,62 @@ using WpfScreenHelper;
 namespace DivinityModManager.Util;
 
 /// <summary>
+/// Freeze-safe opacity animation that preserves existing visual-state triggers
+/// and snaps to their destination under Reduce Motion.
+/// </summary>
+public sealed class ReduxDoubleAnimation : DoubleAnimation
+{
+	protected override double GetCurrentValueCore(
+		double defaultOriginValue,
+		double defaultDestinationValue,
+		AnimationClock animationClock)
+	{
+		if (ReduxWindowBehavior.ReduceMotion)
+		{
+			return To ?? defaultDestinationValue;
+		}
+
+		return base.GetCurrentValueCore(defaultOriginValue, defaultDestinationValue, animationClock);
+	}
+
+	protected override Freezable CreateInstanceCore() => new ReduxDoubleAnimation();
+}
+
+/// <summary>
+/// The short row-selection confirmation flash, suppressed under Reduce Motion
+/// while leaving the persistent selected surface and rail untouched.
+/// </summary>
+public sealed class ReduxSelectionFlashAnimation : DoubleAnimationBase
+{
+	private const double PeakOpacity = 0.52;
+	private const double PeakProgress = 60d / 220d;
+
+	protected override double GetCurrentValueCore(
+		double defaultOriginValue,
+		double defaultDestinationValue,
+		AnimationClock animationClock)
+	{
+		if (ReduxWindowBehavior.ReduceMotion || animationClock.CurrentProgress is not double progress)
+		{
+			return 0;
+		}
+
+		if (progress <= PeakProgress)
+		{
+			var entering = progress / PeakProgress;
+			return PeakOpacity * EaseOut(entering);
+		}
+
+		var exiting = (progress - PeakProgress) / (1 - PeakProgress);
+		return PeakOpacity * (1 - EaseOut(exiting));
+	}
+
+	protected override Freezable CreateInstanceCore() => new ReduxSelectionFlashAnimation();
+
+	private static double EaseOut(double progress) => 1 - Math.Pow(1 - progress, 2);
+}
+
+/// <summary>
 /// Shared sizing and motion behavior for secondary Redux windows. Primary-window
 /// persistence remains owned by MainWindow.
 /// </summary>

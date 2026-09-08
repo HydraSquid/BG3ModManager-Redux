@@ -58,6 +58,7 @@ internal static class Program
 		{
 			(nameof(nxmManager.LocalPackageIsCopiedHashedAndDeduplicatedInTheSharedInbox), nxmManager.LocalPackageIsCopiedHashedAndDeduplicatedInTheSharedInbox),
 			(nameof(nxmManager.UnsafeLocalPackageRemainsVisibleButCannotEnterInstallState), nxmManager.UnsafeLocalPackageRemainsVisibleButCannotEnterInstallState),
+			(nameof(interactionBehavior.ReduceMotionKeepsPrimaryListStoryboardsFreezeSafeAndInstant), interactionBehavior.ReduceMotionKeepsPrimaryListStoryboardsFreezeSafeAndInstant),
 			(nameof(interactionBehavior.SaveCampaignAnimationReplacesFrozenTransforms), interactionBehavior.SaveCampaignAnimationReplacesFrozenTransforms),
 			(nameof(source.ReviewedModuleUuidResolvesItsProject), source.ReviewedModuleUuidResolvesItsProject),
 			(nameof(source.CommunityModuleUuidResolvesItsDependencySource), source.CommunityModuleUuidResolvesItsDependencySource),

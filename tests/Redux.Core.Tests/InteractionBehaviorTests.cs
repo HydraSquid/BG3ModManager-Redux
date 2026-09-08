@@ -14,11 +14,38 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 
 namespace Redux.Core.Tests;
 
 public sealed class InteractionBehaviorTests
 {
+	public void ReduceMotionKeepsPrimaryListStoryboardsFreezeSafeAndInstant()
+	{
+		ReduxWindowBehavior.ConfigureAccessibility(false, ReduxWindowBehavior.BackgroundEffectsDisabled);
+		var animation = new ReduxDoubleAnimation { From = 0, To = 0.62, Duration = TimeSpan.FromMilliseconds(120) };
+		var flash = new ReduxSelectionFlashAnimation { Duration = TimeSpan.FromMilliseconds(220) };
+		var storyboard = new Storyboard();
+		storyboard.Children.Add(animation);
+		storyboard.Children.Add(flash);
+		storyboard.Freeze();
+		RegressionAssert.True(storyboard.IsFrozen);
+
+		ReduxWindowBehavior.ConfigureAccessibility(true, ReduxWindowBehavior.BackgroundEffectsDisabled);
+		var opacityCore = typeof(ReduxDoubleAnimation).GetMethod(
+			"GetCurrentValueCore",
+			BindingFlags.Instance | BindingFlags.NonPublic)
+			?? throw new InvalidOperationException("Reduced-motion opacity animation core was not found.");
+		var flashCore = typeof(ReduxSelectionFlashAnimation).GetMethod(
+			"GetCurrentValueCore",
+			BindingFlags.Instance | BindingFlags.NonPublic)
+			?? throw new InvalidOperationException("Reduced-motion selection animation core was not found.");
+		RegressionAssert.Equal(0.62, (double)opacityCore.Invoke(animation, [0d, 0d, animation.CreateClock()])!);
+		RegressionAssert.Equal(0d, (double)flashCore.Invoke(flash, [0d, 0d, flash.CreateClock()])!);
+
+		ReduxWindowBehavior.ConfigureAccessibility(false, ReduxWindowBehavior.BackgroundEffectsDisabled);
+	}
+
 	public void SaveCampaignAnimationReplacesFrozenTransforms()
 	{
 		var content = new Border();

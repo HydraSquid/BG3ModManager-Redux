@@ -391,7 +391,7 @@
 									<MultiTrigger.EnterActions>
 										<BeginStoryboard>
 											<Storyboard>
-												<DoubleAnimation Storyboard.TargetName="CategoryHoverSurface"
+												<util:ReduxDoubleAnimation Storyboard.TargetName="CategoryHoverSurface"
 													Storyboard.TargetProperty="Opacity"
 													To="1"
 													Duration="{StaticResource Redux.Motion.Fast}"
@@ -402,7 +402,7 @@
 									<MultiTrigger.ExitActions>
 										<BeginStoryboard>
 											<Storyboard>
-												<DoubleAnimation Storyboard.TargetName="CategoryHoverSurface"
+												<util:ReduxDoubleAnimation Storyboard.TargetName="CategoryHoverSurface"
 													Storyboard.TargetProperty="Opacity"
 													To="0"
 													Duration="{StaticResource Redux.Motion.Standard}" />

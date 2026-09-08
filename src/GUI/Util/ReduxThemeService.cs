@@ -336,11 +336,12 @@ public static class ReduxThemeService
 		SetBrushResource(resources, "ReduxWarningPillBackground", CreatePillGradient(palette["ReduxWarningColor"]));
 		SetBrushResource(resources, "ReduxErrorPillBackground", CreatePillGradient(palette["ReduxErrorColor"]));
 		SetBrushResource(resources, "ReduxInfoPillBackground", CreatePillGradient(palette["ReduxInfoColor"]));
-		// Reapply the built-in art direction explicitly. This also prevents a generated
-		// custom-theme brush from surviving when the user switches back to the same base theme.
+		// Regenerate action brushes from the active palette. This also prevents a custom-theme
+		// brush from surviving when the user switches back to the same built-in theme.
 		var primaryActionOwner = FindResourceOwner(resources, "ReduxPrimaryActionBackgroundBrush") ?? resources;
 		primaryActionOwner["ReduxPrimaryActionBackgroundBrush"] = useGeneratedGradients
-			? CreatePrimaryActionGradient(palette["ReduxAccentColor"],
+			? CreatePrimaryActionGradient(
+				palette["ReduxAccentColor"],
 				restrainedHueShift: !isCustomTheme && baseTheme == ReduxThemeType.Parchment)
 			: CreateSolidBrush(palette["ReduxAccentColor"]);
 
@@ -452,16 +453,15 @@ public static class ReduxThemeService
 
 	private static LinearGradientBrush CreatePrimaryActionGradient(Color accent, bool restrainedHueShift)
 	{
-		// Keep the default Redux action treatment visibly purple-to-pink instead of
-		// drifting from purple into pale lavender. The stronger hue travel retains
-		// saturation at the trailing edge, while the darker leading stop gives the
-		// gradient enough contrast to remain legible on both dark and light surfaces.
+		// Preserve Redux's original violet-to-pink treatment: shift the hue around the
+		// chosen accent without mixing either endpoint toward white. Parchment uses a
+		// restrained value ramp only when a user explicitly enables gradients for it.
 		var leading = restrainedHueShift
 			? ScaleBrightness(accent, 0.82)
-			: ScaleBrightness(ShiftHue(accent, -8), 0.88);
+			: Mix(accent, ShiftHue(accent, -18), 0.48);
 		var trailing = restrainedHueShift
 			? ShiftHue(ScaleBrightness(accent, 1.25), 10)
-			: ShiftHue(accent, 48);
+			: Mix(accent, ShiftHue(accent, 18), 0.48);
 		var brush = new LinearGradientBrush
 		{
 			StartPoint = new Point(0, 0.5),
@@ -533,7 +533,11 @@ public static class ReduxThemeService
 
 	private static ResourceDictionary FindResourceOwner(ResourceDictionary resources, string key)
 	{
-		if (resources.Contains(key)) return resources;
+		// ResourceDictionary.Contains also searches merged dictionaries. Returning the
+		// outer dictionary in that case creates a shadow resource, but styles declared
+		// beside the original brush continue resolving their sibling resource instead.
+		// Inspect only locally declared keys before walking the merged dictionaries.
+		if (resources.Keys.Cast<object>().Any(candidate => Equals(candidate, key))) return resources;
 		for (var index = resources.MergedDictionaries.Count - 1; index >= 0; index--)
 		{
 			var owner = FindResourceOwner(resources.MergedDictionaries[index], key);

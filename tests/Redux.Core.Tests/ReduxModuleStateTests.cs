@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 
 using ResourceLocator = AdonisUI.ResourceLocator;
@@ -231,32 +232,76 @@ internal sealed class ReduxModuleStateTests
 		builtInSettings.UsesGeneratedGradients = true;
 		RegressionAssert.True(builtInSettings.UsesGeneratedGradients);
 
-		var resources = new ResourceDictionary
+		var actionResources = new ResourceDictionary
 		{
-			["ReduxPrimaryActionBackgroundBrush"] = Brushes.Transparent,
-			["ReduxDestructiveActionBackgroundBrush"] = Brushes.Transparent,
-			["ReduxDestructiveActionForegroundBrush"] = Brushes.Transparent
+			Source = new Uri(
+				"pack://application:,,,/BG3ModManager;component/Themes/MainResourceDictionary.xaml",
+				UriKind.Absolute)
 		};
+		var resources = new ResourceDictionary();
+		resources.MergedDictionaries.Add(actionResources);
+		ReduxThemeService.Apply(resources, ReduxThemeType.ReduxDark, useBuiltInGeneratedGradients: true);
+		var host = new Grid { Resources = resources };
+		var primaryButton = new Button
+		{
+			Style = (Style)actionResources["ReduxPrimaryActionButtonStyle"]
+		};
+		host.Children.Add(primaryButton);
 		dark.UsesGeneratedGradients = false;
 		ReduxThemeService.PreviewColors(resources, dark);
-		RegressionAssert.True(resources["ReduxPrimaryActionBackgroundBrush"] is SolidColorBrush);
+		RegressionAssert.True(FindResource(resources, "ReduxPrimaryActionBackgroundBrush") is SolidColorBrush);
+		RegressionAssert.True(primaryButton.Background is SolidColorBrush);
 		RegressionAssert.True(resources["ReduxDestructiveActionBackgroundBrush"] is SolidColorBrush);
+		RegressionAssert.False(actionResources.Keys.Cast<object>().Contains("ReduxPrimaryActionBackgroundBrush"));
 
 		dark.UsesGeneratedGradients = true;
 		ReduxThemeService.PreviewColors(resources, dark);
-		RegressionAssert.True(resources["ReduxPrimaryActionBackgroundBrush"] is LinearGradientBrush);
+		RegressionAssert.True(FindResource(resources, "ReduxPrimaryActionBackgroundBrush") is LinearGradientBrush);
+		RegressionAssert.True(primaryButton.Background is LinearGradientBrush);
 		RegressionAssert.True(resources["ReduxDestructiveActionBackgroundBrush"] is LinearGradientBrush);
-		var primary = (LinearGradientBrush)resources["ReduxPrimaryActionBackgroundBrush"];
+		var primary = (LinearGradientBrush)FindResource(resources, "ReduxPrimaryActionBackgroundBrush")!;
 		var leading = primary.GradientStops.First().Color;
+		var center = primary.GradientStops[1].Color;
 		var trailing = primary.GradientStops.Last().Color;
-		RegressionAssert.True(leading.B > leading.R);
-		RegressionAssert.True(trailing.R > trailing.B);
+		RegressionAssert.True(leading.R < center.R);
+		RegressionAssert.True(trailing.R > center.R);
+		RegressionAssert.Equal(center.B, leading.B);
+		RegressionAssert.Equal(center.B, trailing.B);
+
+		dark.AccentColor = "#287EDB";
+		ReduxThemeService.PreviewColors(resources, dark);
+		primary = (LinearGradientBrush)FindResource(resources, "ReduxPrimaryActionBackgroundBrush")!;
+		RegressionAssert.Equal(ColorConverter.ConvertFromString("#287EDB"), primary.GradientStops[1].Color);
+		RegressionAssert.Equal(
+			ColorConverter.ConvertFromString("#287EDB"),
+			((LinearGradientBrush)primaryButton.Background).GradientStops[1].Color);
+
+		ReduxThemeService.Apply(resources, ReduxThemeType.ReduxDark, useBuiltInGeneratedGradients: true);
+		primary = (LinearGradientBrush)FindResource(resources, "ReduxPrimaryActionBackgroundBrush")!;
+		RegressionAssert.Equal(ColorConverter.ConvertFromString("#877AFF"), primary.GradientStops[0].Color);
+		RegressionAssert.Equal(ColorConverter.ConvertFromString("#9676FF"), primary.GradientStops[1].Color);
+		RegressionAssert.Equal(ColorConverter.ConvertFromString("#AA76FF"), primary.GradientStops[2].Color);
+		RegressionAssert.Equal(0.52d, primary.GradientStops[1].Offset);
+
+		ReduxThemeService.Apply(resources, ReduxThemeType.Parchment, useBuiltInGeneratedGradients: false);
+		var parchmentAction = (SolidColorBrush)FindResource(resources, "ReduxPrimaryActionBackgroundBrush")!;
+		RegressionAssert.Equal(ColorConverter.ConvertFromString("#8B3034"), parchmentAction.Color);
+		RegressionAssert.Equal(
+			ColorConverter.ConvertFromString("#8B3034"),
+			((SolidColorBrush)primaryButton.Background).Color);
 	}
 
 	public void ParchmentBaseResourcesDefaultToSolidActions()
 	{
+		var sharedResources = new ResourceDictionary
+		{
+			Source = new Uri(
+				"pack://application:,,,/BG3ModManager;component/Themes/MainResourceDictionary.xaml",
+				UriKind.Absolute)
+		};
 		var resources = new ResourceDictionary();
-		ResourceLocator.SetColorScheme(resources, ReduxApp.GetThemeUri(ReduxThemeType.Parchment));
+		resources.MergedDictionaries.Add(sharedResources);
+		ReduxThemeService.Apply(resources, ReduxThemeType.Parchment, useBuiltInGeneratedGradients: false);
 
 		RegressionAssert.True(FindResource(resources, "ReduxPrimaryActionBackgroundBrush") is SolidColorBrush);
 		RegressionAssert.True(FindResource(resources, "ReduxDestructiveActionBackgroundBrush") is SolidColorBrush);

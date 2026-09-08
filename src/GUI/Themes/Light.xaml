@@ -45,6 +45,11 @@
 	<SolidColorBrush x:Key="ReduxAccentBrush" Color="{DynamicResource ReduxAccentColor}" />
 	<SolidColorBrush x:Key="ReduxAccentHoverBrush" Color="{DynamicResource ReduxAccentHoverColor}" />
 	<SolidColorBrush x:Key="ReduxAccentSoftBrush" Color="{DynamicResource ReduxAccentSoftColor}" />
+	<LinearGradientBrush x:Key="ReduxPrimaryActionBackgroundBrush" StartPoint="0,0.5" EndPoint="1,0.5">
+		<GradientStop Offset="0" Color="#5A4FD6" />
+		<GradientStop Offset="0.52" Color="#694AD6" />
+		<GradientStop Offset="1" Color="#7D4AD6" />
+	</LinearGradientBrush>
 	<!-- Same horizontal sheen as the Nexus/mod.io source pills, for semantic status chips (Active, force-loaded). -->
 	<LinearGradientBrush x:Key="ReduxAccentPillBackground" StartPoint="0,0" EndPoint="1,0">
 		<GradientStop Offset="0" Color="#3E694AD6" />

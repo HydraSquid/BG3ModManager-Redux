@@ -2017,14 +2017,14 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			.Throttle(TimeSpan.FromMilliseconds(1), RxApp.MainThreadScheduler)
 			.ObserveOn(RxApp.MainThreadScheduler)
 			.Subscribe((selection) =>
-		{
-			var theme = selection.Item1;
-			// Retain the original boolean for compatibility with older BG3MM/Redux settings.
-			Settings.DarkThemeEnabled = theme == ReduxThemeType.ReduxDark;
-			View.UpdateColorTheme(theme);
-			ScheduleRefreshModCategories();
-			if (IsInitialized) SaveSettings();
-		});
+			{
+				var theme = selection.Item1;
+				// Retain the original boolean for compatibility with older BG3MM/Redux settings.
+				Settings.DarkThemeEnabled = theme == ReduxThemeType.ReduxDark;
+				View.UpdateColorTheme(theme);
+				ScheduleRefreshModCategories();
+				if (IsInitialized) SaveSettings();
+			});
 
 		// Updating extender requirement display
 		Settings.WhenAnyValue(x => x.ExtenderSettings.EnableExtensions).ObserveOn(RxApp.MainThreadScheduler).Subscribe((b) =>
@@ -7576,6 +7576,11 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		}
 
 		var loaded = LoadSettings();
+		// Loading the default Dark theme may not raise any property changes because it
+		// matches the settings object's initial values. Apply the complete saved theme
+		// explicitly so startup never falls back to the structural XAML placeholder;
+		// this is also required to restore a saved custom theme reliably.
+		View.UpdateColorTheme(Settings.ColorTheme);
 		IsCategoriesExpanded = Settings.CategoriesPanelExpanded;
 		IsInactiveModsExpanded = Settings.InactiveModsPanelExpanded;
 		IsAlwaysLoadedExpanded = Settings.AlwaysLoadedPanelExpanded;

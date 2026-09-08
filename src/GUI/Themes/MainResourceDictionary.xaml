@@ -1752,11 +1752,6 @@
 		Variant styles below supply only semantic colors; sizing, focus, motion, and
 		pressed/disabled behavior stay centralized here.
 	-->
-	<LinearGradientBrush x:Key="ReduxPrimaryActionBackgroundBrush" StartPoint="0,0.5" EndPoint="1,0.5">
-		<GradientStop Offset="0" Color="{DynamicResource ReduxAccentColor}" />
-		<GradientStop Offset="0.72" Color="{DynamicResource ReduxAccentColor}" />
-		<GradientStop Offset="1" Color="{DynamicResource ReduxAccentHoverColor}" />
-	</LinearGradientBrush>
 	<ControlTemplate x:Key="ReduxActionButtonTemplate" TargetType="{x:Type Button}">
 		<Grid ClipToBounds="False">
 			<Border x:Name="ButtonChrome"

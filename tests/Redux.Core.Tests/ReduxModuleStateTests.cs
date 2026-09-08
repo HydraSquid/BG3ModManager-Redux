@@ -4,6 +4,9 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Media;
 
+using ResourceLocator = AdonisUI.ResourceLocator;
+using ReduxApp = DivinityModManager.DivinityApp;
+
 using DivinityModManager.AppServices;
 using DivinityModManager.Models;
 using DivinityModManager.Models.App;
@@ -243,6 +246,31 @@ internal sealed class ReduxModuleStateTests
 		ReduxThemeService.PreviewColors(resources, dark);
 		RegressionAssert.True(resources["ReduxPrimaryActionBackgroundBrush"] is LinearGradientBrush);
 		RegressionAssert.True(resources["ReduxDestructiveActionBackgroundBrush"] is LinearGradientBrush);
+		var primary = (LinearGradientBrush)resources["ReduxPrimaryActionBackgroundBrush"];
+		var leading = primary.GradientStops.First().Color;
+		var trailing = primary.GradientStops.Last().Color;
+		RegressionAssert.True(leading.B > leading.R);
+		RegressionAssert.True(trailing.R > trailing.B);
+	}
+
+	public void ParchmentBaseResourcesDefaultToSolidActions()
+	{
+		var resources = new ResourceDictionary();
+		ResourceLocator.SetColorScheme(resources, ReduxApp.GetThemeUri(ReduxThemeType.Parchment));
+
+		RegressionAssert.True(FindResource(resources, "ReduxPrimaryActionBackgroundBrush") is SolidColorBrush);
+		RegressionAssert.True(FindResource(resources, "ReduxDestructiveActionBackgroundBrush") is SolidColorBrush);
+	}
+
+	private static object? FindResource(ResourceDictionary resources, string key)
+	{
+		if (resources.Contains(key)) return resources[key];
+		for (var index = resources.MergedDictionaries.Count - 1; index >= 0; index--)
+		{
+			var value = FindResource(resources.MergedDictionaries[index], key);
+			if (value != null) return value;
+		}
+		return null;
 	}
 
 	private static void AssertPillColor(ResourceDictionary resources, string key, Color expected)

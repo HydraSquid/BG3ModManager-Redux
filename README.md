@@ -15,7 +15,7 @@
 [Download on Nexus Mods](https://www.nexusmods.com/baldursgate3/mods/23799) ·
 [Visit the website](https://bg3mm-redux.com) ·
 [Report a problem](https://github.com/circleainn/BG3ModManager-Redux/issues) ·
-[Read the changelog](CHANGELOG.md) ·
+[Read the changelog](docs/CHANGELOG.md) ·
 [Browse the docs](docs/README.md) ·
 [See what differs from BG3MM](docs/CHANGES_FROM_UPSTREAM.md)
 
@@ -367,7 +367,7 @@ and PNG icons remain the user's responsibility to license.
 Use the [issue tracker](https://github.com/circleainn/BG3ModManager-Redux/issues) for reproducible
 bugs. Include the Redux version, the smallest reliable reproduction steps, relevant screenshots or
 logs, and affected mod names or UUIDs. Never post API keys or unreviewed private path information.
-Read [Support](SUPPORT.md) and [Troubleshooting](docs/TROUBLESHOOTING.md) before sharing logs or
+Read [Support](docs/SUPPORT.md) and [Troubleshooting](docs/TROUBLESHOOTING.md) before sharing logs or
 runtime data.
 
 ## Credits and license

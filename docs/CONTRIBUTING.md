@@ -6,8 +6,8 @@ before investing in an implementation.
 
 ## Before changing code
 
-- Read the [documentation index](docs/README.md) and
-  [changes from upstream](docs/CHANGES_FROM_UPSTREAM.md).
+- Read the [documentation index](README.md) and
+  [changes from upstream](CHANGES_FROM_UPSTREAM.md).
 - Search existing issues and recent commits.
 - Preserve inherited BG3MM behavior unless the change explicitly replaces it.
 - Reuse Redux services, shared semantic resources, controls, and terminology.
@@ -39,12 +39,12 @@ support boundaries change. Keep chronological release details in [CHANGELOG.md](
 ## Mod database contributions
 
 Do not submit mod archives or PAKs. Generate a privacy-limited `.bg3redux-report`, independently
-verify its provider identity, and follow the [Redux mod database guide](docs/REDUX_MOD_DATABASE.md).
+verify its provider identity, and follow the [Redux mod database guide](REDUX_MOD_DATABASE.md).
 Reports are evidence for review; they are never merged automatically.
 
 ## Attribution
 
 Redux is a fork of LaughingLeader's BG3 Mod Manager and includes third-party components and assets.
 Preserve copyright, provenance, and required notices. Do not rename copied work to conceal its
-origin. Review [Third-Party Notices](licenses/Third-Party-Notices.md) before adding a dependency,
+origin. Review [Third-Party Notices](../licenses/Third-Party-Notices.md) before adding a dependency,
 font, icon set, dataset, or substantially adapted code.

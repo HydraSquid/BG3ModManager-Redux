@@ -340,7 +340,8 @@ public static class ReduxThemeService
 		// custom-theme brush from surviving when the user switches back to the same base theme.
 		var primaryActionOwner = FindResourceOwner(resources, "ReduxPrimaryActionBackgroundBrush") ?? resources;
 		primaryActionOwner["ReduxPrimaryActionBackgroundBrush"] = useGeneratedGradients
-			? CreatePrimaryActionGradient(palette["ReduxAccentColor"], restrainedHueShift: false)
+			? CreatePrimaryActionGradient(palette["ReduxAccentColor"],
+				restrainedHueShift: !isCustomTheme && baseTheme == ReduxThemeType.Parchment)
 			: CreateSolidBrush(palette["ReduxAccentColor"]);
 
 		var destructiveActionOwner = FindResourceOwner(resources, "ReduxDestructiveActionBackgroundBrush") ?? resources;
@@ -451,15 +452,16 @@ public static class ReduxThemeService
 
 	private static LinearGradientBrush CreatePrimaryActionGradient(Color accent, bool restrainedHueShift)
 	{
-		// Warm/light surfaces need stronger value separation while keeping every stop
-		// derived from the selected accent. Scaling RGB preserves saturation better than
-		// mixing toward the paper surface or white.
+		// Keep the default Redux action treatment visibly purple-to-pink instead of
+		// drifting from purple into pale lavender. The stronger hue travel retains
+		// saturation at the trailing edge, while the darker leading stop gives the
+		// gradient enough contrast to remain legible on both dark and light surfaces.
 		var leading = restrainedHueShift
 			? ScaleBrightness(accent, 0.82)
-			: Mix(accent, ShiftHue(accent, -18), 0.48);
+			: ScaleBrightness(ShiftHue(accent, -8), 0.88);
 		var trailing = restrainedHueShift
 			? ShiftHue(ScaleBrightness(accent, 1.25), 10)
-			: Mix(accent, ShiftHue(accent, 18), 0.48);
+			: ShiftHue(accent, 48);
 		var brush = new LinearGradientBrush
 		{
 			StartPoint = new Point(0, 0.5),

@@ -75,6 +75,14 @@
 					</Setter.Value>
 				</Setter>
 				<Style.Triggers>
+					<!-- An empty selection can briefly occur while profiles/categories refresh.
+					     Do not expose an incomplete notice or fall back to WPF's black text. -->
+					<DataTrigger Binding="{Binding SelectedModCategory}" Value="">
+						<Setter Property="Visibility" Value="Collapsed" />
+					</DataTrigger>
+					<DataTrigger Binding="{Binding SelectedModCategory}" Value="{x:Null}">
+						<Setter Property="Visibility" Value="Collapsed" />
+					</DataTrigger>
 					<DataTrigger Binding="{Binding SelectedModCategory}" Value="All Mods">
 						<Setter Property="Visibility" Value="Collapsed" />
 					</DataTrigger>

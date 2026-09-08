@@ -34,4 +34,4 @@ must still pass its destination-specific inspection and the user must authorize 
 
 The project prioritizes path containment, staged writes, atomic replacement, verified downloads,
 credential redaction, conservative native-file ownership, and recoverable deletion. See
-[Privacy and local data](docs/PRIVACY_AND_DATA.md) for the intended data boundary.
+[Privacy and local data](PRIVACY_AND_DATA.md) for the intended data boundary.

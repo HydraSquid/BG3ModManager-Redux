@@ -59,17 +59,11 @@
 		<GradientStop Offset="0" Color="#3E8B3034" />
 		<GradientStop Offset="1" Color="#1E8B3034" />
 	</LinearGradientBrush>
-	<!-- Primary actions stay saturated across the full button instead of fading into the paper surface. -->
-	<LinearGradientBrush x:Key="ReduxPrimaryActionBackgroundBrush" StartPoint="0,0.5" EndPoint="1,0.5">
-		<GradientStop Offset="0" Color="#681D2B" />
-		<GradientStop Offset="0.48" Color="#962735" />
-		<GradientStop Offset="1" Color="#B7383D" />
-	</LinearGradientBrush>
-	<LinearGradientBrush x:Key="ReduxDestructiveActionBackgroundBrush" StartPoint="0,0.5" EndPoint="1,0.5">
-		<GradientStop Offset="0" Color="#74122E" />
-		<GradientStop Offset="0.48" Color="#A91D39" />
-		<GradientStop Offset="1" Color="#CC3340" />
-	</LinearGradientBrush>
+	<!-- Parchment defaults to solid action colors. ReduxThemeService replaces these
+	     only when the user explicitly enables generated gradients. Keeping the base
+	     resources solid also covers popups and design surfaces before settings load. -->
+	<SolidColorBrush x:Key="ReduxPrimaryActionBackgroundBrush" Color="{DynamicResource ReduxAccentColor}" />
+	<SolidColorBrush x:Key="ReduxDestructiveActionBackgroundBrush" Color="{DynamicResource ReduxErrorColor}" />
 	<SolidColorBrush x:Key="ReduxDestructiveActionForegroundBrush" Color="#FFF8EB" />
 	<LinearGradientBrush x:Key="ReduxSuccessPillBackground" StartPoint="0,0" EndPoint="1,0">
 		<GradientStop Offset="0" Color="#3E3F6B35" />

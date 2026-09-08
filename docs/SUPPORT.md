@@ -6,8 +6,8 @@ guaranteed.
 
 ## Before asking for help
 
-1. Read [Installation and updates](docs/INSTALLATION.md) and
-   [Troubleshooting](docs/TROUBLESHOOTING.md).
+1. Read [Installation and updates](INSTALLATION.md) and
+   [Troubleshooting](TROUBLESHOOTING.md).
 2. Confirm you are using an official, complete Redux archive.
 3. Search existing GitHub issues for the same behavior.
 4. Reproduce the problem with the smallest safe sequence you can.
@@ -19,7 +19,7 @@ Include the Redux version, Windows version, relevant BG3 patch, expected behavio
 and concise reproduction steps.
 
 Do not use a public issue to post API keys, signed URLs, saves, complete PAKs, or unreviewed logs.
-See [Privacy and local data](docs/PRIVACY_AND_DATA.md).
+See [Privacy and local data](PRIVACY_AND_DATA.md).
 
 ## Feature requests
 

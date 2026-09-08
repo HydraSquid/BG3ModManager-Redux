@@ -2010,9 +2010,10 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				if (IsInitialized) SaveSettings();
 			});
 
-		Settings.WhenAnyValue(x => x.ColorTheme, x => x.ActiveCustomThemeId)
-			// Theme selection updates these two values as one logical operation. Coalesce
-			// their back-to-back notifications into one resource-tree refresh.
+		Settings.WhenAnyValue(x => x.ColorTheme, x => x.ActiveCustomThemeId, x => x.UsesGeneratedGradients)
+			// Theme selection updates these values as one logical operation. Coalesce their
+			// back-to-back notifications into one resource-tree refresh. Observing the
+			// gradient preference here also keeps resets and non-click changes in sync.
 			.Throttle(TimeSpan.FromMilliseconds(1), RxApp.MainThreadScheduler)
 			.ObserveOn(RxApp.MainThreadScheduler)
 			.Subscribe((selection) =>

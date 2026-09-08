@@ -135,6 +135,7 @@ internal static class Program
 			(nameof(modules.RepeatedThemeApplicationReusesTheLoadedColorScheme), modules.RepeatedThemeApplicationReusesTheLoadedColorScheme),
 			(nameof(modules.CustomThemeBackgroundEditsPreserveUntouchedBaseRoles), modules.CustomThemeBackgroundEditsPreserveUntouchedBaseRoles),
 			(nameof(modules.GeneratedActionGradientsFollowThemeDefaultsAndCustomChoice), modules.GeneratedActionGradientsFollowThemeDefaultsAndCustomChoice),
+			(nameof(modules.ParchmentBaseResourcesDefaultToSolidActions), modules.ParchmentBaseResourcesDefaultToSolidActions),
 			(nameof(modules.LocalOnlyModeChangesOnlySourceIntegrations), modules.LocalOnlyModeChangesOnlySourceIntegrations),
 			(nameof(modules.LoadOrderGuidanceFollowsItsOwnPreference), modules.LoadOrderGuidanceFollowsItsOwnPreference),
 			(nameof(modules.DisposedModuleStateStopsTrackingSettings), modules.DisposedModuleStateStopsTrackingSettings),

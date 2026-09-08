@@ -237,13 +237,15 @@ public partial class SettingsWindow : SettingsWindowBase
 		if (activeTheme != null)
 		{
 			activeTheme.UsesGeneratedGradients = useGradients;
+			// Custom-theme presentation lives on the theme object rather than Settings,
+			// so it does not flow through MainWindowViewModel's settings subscription.
+			MainWindow.Self.MainView.UpdateColorTheme(ViewModel.Settings.ColorTheme);
+			ViewModel.Main.SaveSettings();
 		}
 		else
 		{
 			ViewModel.Settings.UsesGeneratedGradients = useGradients;
 		}
-		MainWindow.Self.MainView.UpdateColorTheme(ViewModel.Settings.ColorTheme);
-		ViewModel.Main.SaveSettings();
 	}
 
 	private void ThemeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)

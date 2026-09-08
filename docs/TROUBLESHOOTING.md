@@ -77,5 +77,5 @@ Include:
 - a screenshot or the narrow relevant log excerpt.
 
 Do not attach PAKs, saves, API keys, signed URLs, complete user directories, or somebody else's mod
-archive unless its author and the support channel explicitly permit it. See [Support](../SUPPORT.md)
+archive unless its author and the support channel explicitly permit it. See [Support](SUPPORT.md)
 and [Privacy and local data](PRIVACY_AND_DATA.md).

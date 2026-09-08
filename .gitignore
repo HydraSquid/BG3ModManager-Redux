@@ -345,4 +345,5 @@ ASALocalRun/
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
 *.zip
+/Redux-Update-Public-Alpha.json
 *.psd

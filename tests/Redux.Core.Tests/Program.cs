@@ -54,8 +54,19 @@ internal static class Program
 		var nxmTransfer = new NxmTransferTests();
 		var packageArchives = new RetainedPackageArchiveServiceTests();
 		var downloadBatch = new DownloadBatchSafetyPlannerTests();
+		var applicationUpdates = new ReduxUpdateManifestTests();
+		var releaseVersions = new ReleaseVersionContractTests();
 		var tests = new (string Name, Action Run)[]
 		{
+			(nameof(releaseVersions.ApplicationAndBinaryVersionsIdentifyTheSameAlphaRelease), releaseVersions.ApplicationAndBinaryVersionsIdentifyTheSameAlphaRelease),
+			(nameof(applicationUpdates.ValidPublicAlphaManifestSelectsArtifactForDeploymentType), applicationUpdates.ValidPublicAlphaManifestSelectsArtifactForDeploymentType),
+			(nameof(applicationUpdates.SameAndNewerInstalledVersionsAreNeverOfferedAsUpdates), applicationUpdates.SameAndNewerInstalledVersionsAreNeverOfferedAsUpdates),
+			(nameof(applicationUpdates.PortableReleaseCanBootstrapBeforeInstallerArtifactExists), applicationUpdates.PortableReleaseCanBootstrapBeforeInstallerArtifactExists),
+			(nameof(applicationUpdates.ManifestRejectsDuplicateAndUnknownProperties), applicationUpdates.ManifestRejectsDuplicateAndUnknownProperties),
+			(nameof(applicationUpdates.ManifestRejectsTrailingContentAndWrongChannel), applicationUpdates.ManifestRejectsTrailingContentAndWrongChannel),
+			(nameof(applicationUpdates.ManifestRejectsMismatchedDisplayAndInternalVersions), applicationUpdates.ManifestRejectsMismatchedDisplayAndInternalVersions),
+			(nameof(applicationUpdates.ManifestRejectsUntrustedArtifactAndReleaseNotesUrls), applicationUpdates.ManifestRejectsUntrustedArtifactAndReleaseNotesUrls),
+			(nameof(applicationUpdates.ArtifactVerificationRequiresMatchingLengthAndSha256), applicationUpdates.ArtifactVerificationRequiresMatchingLengthAndSha256),
 			(nameof(nxmManager.LocalPackageIsCopiedHashedAndDeduplicatedInTheSharedInbox), nxmManager.LocalPackageIsCopiedHashedAndDeduplicatedInTheSharedInbox),
 			(nameof(nxmManager.UnsafeLocalPackageRemainsVisibleButCannotEnterInstallState), nxmManager.UnsafeLocalPackageRemainsVisibleButCannotEnterInstallState),
 			(nameof(interactionBehavior.ReduceMotionKeepsPrimaryListStoryboardsFreezeSafeAndInstant), interactionBehavior.ReduceMotionKeepsPrimaryListStoryboardsFreezeSafeAndInstant),

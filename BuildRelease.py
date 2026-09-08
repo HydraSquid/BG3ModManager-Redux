@@ -1,7 +1,10 @@
+import hashlib
+import json
 import re
 import shutil
 import sys
 import zipfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -14,6 +17,7 @@ if not version:
 
 archive_path = ROOT / f"BG3ModManager-Redux_v{version}.zip"
 latest_path = ROOT / "BG3ModManager-Redux-Latest.zip"
+update_manifest_path = ROOT / "Redux-Update-Public-Alpha.json"
 
 THIRD_PARTY_LICENSE_FILES = (
 	Path("CrossSpeak-LGPL-2.1.txt"),
@@ -251,11 +255,56 @@ def write_archive(files: list[Path]) -> None:
 	shutil.copy2(archive_path, latest_path)
 
 
+def internal_version(display_version: str) -> str:
+	match = re.fullmatch(r"0\.1\.0-alpha\.([1-9][0-9]*)", display_version)
+	if not match:
+		raise SystemExit("Publish versions must use the 0.1.0-alpha.N format.")
+	return f"0.1.0.{match.group(1)}"
+
+
+def sha256(path: Path) -> str:
+	digest = hashlib.sha256()
+	with path.open("rb") as stream:
+		for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+			digest.update(chunk)
+	return digest.hexdigest()
+
+
+def write_update_manifest() -> None:
+	"""Create release metadata consumed by Redux's strict public-alpha channel parser."""
+	artifact_name = archive_path.name
+	manifest = {
+		"schemaVersion": 1,
+		"channel": "public-alpha",
+		"displayVersion": version,
+		"internalVersion": internal_version(version),
+		"publishedAtUtc": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
+		"releaseNotesUrl": (
+			"https://github.com/circleainn/BG3ModManager-Redux/releases/tag/"
+			f"v{version}"
+		),
+		"artifacts": [
+			{
+				"kind": "portable",
+				"url": (
+					"https://github.com/circleainn/BG3ModManager-Redux/releases/download/"
+					f"v{version}/{artifact_name}"
+				),
+				"sizeBytes": archive_path.stat().st_size,
+				"sha256": sha256(archive_path),
+			}
+		],
+	}
+	update_manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+
+
 prepare_publish_directory()
 sanitize_binary_build_metadata()
 package_files = collect_package_files()
 validate_package_privacy(package_files)
 write_archive(package_files)
+write_update_manifest()
 
 print(f"Created {archive_path.name} with {len(package_files)} files.")
 print(f"Updated {latest_path.name}.")
+print(f"Created {update_manifest_path.name} with SHA-256 and byte-length verification metadata.")

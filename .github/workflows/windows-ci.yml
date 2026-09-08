@@ -77,6 +77,27 @@ jobs:
           if (-not (Test-Path -LiteralPath '.\BG3ModManager-Redux-Latest.zip')) {
             throw 'The latest Publish archive was not created.'
           }
+          $updateManifestPath = '.\Redux-Update-Public-Alpha.json'
+          if (-not (Test-Path -LiteralPath $updateManifestPath)) {
+            throw 'The public-alpha update manifest was not created.'
+          }
+          $updateManifest = Get-Content -LiteralPath $updateManifestPath -Raw | ConvertFrom-Json
+          if ($updateManifest.schemaVersion -ne 1 -or $updateManifest.channel -ne 'public-alpha') {
+            throw 'The public-alpha update manifest has an unsupported contract.'
+          }
+          $portableArtifact = @($updateManifest.artifacts) |
+            Where-Object { $_.kind -eq 'portable' } |
+            Select-Object -First 1
+          if (-not $portableArtifact) {
+            throw 'The public-alpha update manifest is missing its portable artifact.'
+          }
+          if ($portableArtifact.sizeBytes -ne $versionedArchive.Length) {
+            throw 'The public-alpha update manifest contains the wrong archive length.'
+          }
+          $archiveHash = (Get-FileHash -LiteralPath $versionedArchive.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($portableArtifact.sha256 -ne $archiveHash) {
+            throw 'The public-alpha update manifest contains the wrong archive SHA-256.'
+          }
           Add-Type -AssemblyName System.IO.Compression.FileSystem
           $archive = [System.IO.Compression.ZipFile]::OpenRead($versionedArchive.FullName)
           try {

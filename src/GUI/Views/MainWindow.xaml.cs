@@ -535,6 +535,7 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 
 		if (!SettingsWindow.IsVisible)
 		{
+			ApplyCurrentTheme(SettingsWindow);
 			SettingsWindow.Owner = this;
 			SettingsWindow.ApplyAdaptiveDefaultSize(this);
 			SettingsWindow.ShowWithTransition();
@@ -552,6 +553,7 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 		SettingsWindow.ViewModel.SelectedTabIndex = targetTab;
 		if (!SettingsWindow.IsVisible)
 		{
+			ApplyCurrentTheme(SettingsWindow);
 			SettingsWindow.Owner = this;
 			SettingsWindow.ApplyAdaptiveDefaultSize(this);
 			SettingsWindow.ShowWithTransition();
@@ -573,6 +575,7 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 
 		if (!AboutWindow.IsVisible)
 		{
+			ApplyCurrentTheme(AboutWindow);
 			AboutWindow.DataContext = ViewModel;
 			AboutWindow.Owner = this;
 			AboutWindow.ShowWithTransition();
@@ -596,6 +599,7 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 
 		if (!HelpWindow.IsVisible)
 		{
+			ApplyCurrentTheme(HelpWindow);
 			HelpWindow.Owner = this;
 			HelpWindow.ShowWithTransition();
 		}
@@ -631,20 +635,23 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 				: theme != ReduxThemeType.Parchment
 			: null;
 		ReduxThemeService.Apply(this.Resources, theme, customTheme, useBuiltInGradients);
-		ReduxThemeService.Apply(SettingsWindow.Resources, theme, customTheme, useBuiltInGradients);
-		if (AboutWindow != null)
+		if (SettingsWindow.IsVisible)
+		{
+			ReduxThemeService.Apply(SettingsWindow.Resources, theme, customTheme, useBuiltInGradients);
+		}
+		if (AboutWindow?.IsVisible == true)
 		{
 			ReduxThemeService.Apply(AboutWindow.Resources, theme, customTheme, useBuiltInGradients);
 		}
-		if (VersionGeneratorWindow != null)
+		if (VersionGeneratorWindow?.IsVisible == true)
 		{
 			ReduxThemeService.Apply(VersionGeneratorWindow.Resources, theme, customTheme, useBuiltInGradients);
 		}
-		if (UpdateWindow != null)
+		if (UpdateWindow?.IsVisible == true)
 		{
 			ReduxThemeService.Apply(UpdateWindow.Resources, theme, customTheme, useBuiltInGradients);
 		}
-		if (HelpWindow != null)
+		if (HelpWindow?.IsVisible == true)
 		{
 			ReduxThemeService.Apply(HelpWindow.Resources, theme, customTheme, useBuiltInGradients);
 		}
@@ -652,15 +659,8 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 
 	public void PreviewColorTheme(ReduxThemeType theme, ReduxCustomTheme customTheme = null)
 	{
-		if (MainView != null)
-		{
-			bool? useBuiltInGradients = customTheme == null && ViewModel?.Settings != null
-				? theme == ViewModel.Settings.ColorTheme
-					? ViewModel.Settings.UsesGeneratedGradients
-					: theme != ReduxThemeType.Parchment
-				: null;
-			ReduxThemeService.Apply(MainView.Resources, theme, customTheme, useBuiltInGradients);
-		}
+		// MainView inherits semantic palette resources from this window. Keeping one
+		// owner avoids applying every theme change twice to the same visible tree.
 		UpdateColorTheme(theme, customTheme);
 	}
 
@@ -802,6 +802,7 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 			{
 				if (!UpdateWindow.IsVisible)
 				{
+					ApplyCurrentTheme(UpdateWindow);
 					UpdateWindow.Owner = this;
 					UpdateWindow.ShowWithTransition();
 				}
@@ -863,6 +864,7 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 
 				if (!VersionGeneratorWindow.IsVisible)
 				{
+					ApplyCurrentTheme(VersionGeneratorWindow);
 					VersionGeneratorWindow.Owner = this;
 					VersionGeneratorWindow.ShowWithTransition();
 				}

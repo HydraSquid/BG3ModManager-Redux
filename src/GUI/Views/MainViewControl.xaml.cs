@@ -664,7 +664,6 @@ public partial class MainViewControl : MainViewControlViewBase
 	public void UpdateColorTheme(ReduxThemeType theme)
 	{
 		var customTheme = ReduxThemeService.GetActiveTheme(ViewModel.Settings);
-		ReduxThemeService.Apply(this.Resources, theme, customTheme, ViewModel.Settings.UsesGeneratedGradients);
 		ViewModel.PreviewModPresentation(null);
 		main.UpdateColorTheme(theme, customTheme);
 	}
@@ -672,14 +671,12 @@ public partial class MainViewControl : MainViewControlViewBase
 	public void PreviewCustomTheme(ReduxCustomTheme theme)
 	{
 		var baseTheme = theme?.BaseTheme ?? ViewModel.Settings.ColorTheme;
-		ReduxThemeService.Apply(this.Resources, baseTheme, theme);
 		ViewModel.PreviewModPresentation(theme);
 		main.UpdateColorTheme(baseTheme, theme);
 	}
 
 	public void PreviewCustomThemeColors(ReduxCustomTheme theme)
 	{
-		ReduxThemeService.PreviewColors(this.Resources, theme);
 		main.PreviewCustomThemeColors(theme);
 	}
 

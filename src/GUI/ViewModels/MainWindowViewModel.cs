@@ -2010,7 +2010,12 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				if (IsInitialized) SaveSettings();
 			});
 
-		Settings.WhenAnyValue(x => x.ColorTheme, x => x.ActiveCustomThemeId).ObserveOn(RxApp.MainThreadScheduler).Subscribe((selection) =>
+		Settings.WhenAnyValue(x => x.ColorTheme, x => x.ActiveCustomThemeId)
+			// Theme selection updates these two values as one logical operation. Coalesce
+			// their back-to-back notifications into one resource-tree refresh.
+			.Throttle(TimeSpan.FromMilliseconds(1), RxApp.MainThreadScheduler)
+			.ObserveOn(RxApp.MainThreadScheduler)
+			.Subscribe((selection) =>
 		{
 			var theme = selection.Item1;
 			// Retain the original boolean for compatibility with older BG3MM/Redux settings.

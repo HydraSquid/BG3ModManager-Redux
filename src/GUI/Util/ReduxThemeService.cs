@@ -4,6 +4,7 @@ using DivinityModManager.Models;
 
 using Newtonsoft.Json;
 
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Media;
 
@@ -15,6 +16,13 @@ namespace DivinityModManager.Util;
 /// </summary>
 public static class ReduxThemeService
 {
+	private sealed class ThemeResourceState
+	{
+		public Uri BaseThemeUri { get; set; }
+	}
+
+	private static readonly ConditionalWeakTable<ResourceDictionary, ThemeResourceState> ResourceStates = new();
+
 	private static readonly string[] OverrideKeys =
 	[
 		"ReduxWindowColor", "ReduxListInteriorColor", "ReduxSurfaceColor", "ReduxSurfaceElevatedColor",
@@ -51,6 +59,10 @@ public static class ReduxThemeService
 	public static void CycleTheme(DivinityModManagerSettings settings)
 	{
 		if (settings == null) return;
+		// A cycle changes several related presentation properties. Publish their final
+		// values together so observers do not rebuild the same resource scopes for
+		// transient theme/custom-theme combinations.
+		using var delayedNotifications = settings.DelayChangeNotifications();
 
 		var customThemes = (settings.CustomThemes ?? [])
 			.Where(theme => theme != null
@@ -286,7 +298,7 @@ public static class ReduxThemeService
 		foreach (var key in OverrideKeys) resources.Remove(key);
 		var hasValidCustomTheme = customTheme != null && TryValidate(customTheme, out _);
 		var baseTheme = hasValidCustomTheme ? customTheme.BaseTheme : builtInTheme;
-		ResourceLocator.SetColorScheme(resources, DivinityApp.GetThemeUri(baseTheme));
+		SetBaseThemeIfChanged(resources, DivinityApp.GetThemeUri(baseTheme));
 		var palette = hasValidCustomTheme
 			? CreateResourceColors(customTheme)
 			: CreateBuiltInResourceColors(baseTheme);
@@ -309,6 +321,10 @@ public static class ReduxThemeService
 		foreach (var entry in palette)
 		{
 			var owner = FindResourceOwner(resources, entry.Key) ?? resources;
+			if (owner.Contains(entry.Key) && owner[entry.Key] is Color current && current == entry.Value)
+			{
+				continue;
+			}
 			owner[entry.Key] = entry.Value;
 		}
 		// Pill gradients contain alpha-bearing color stops, so WPF cannot express them as
@@ -352,7 +368,55 @@ public static class ReduxThemeService
 	private static void SetBrushResource(ResourceDictionary resources, string key, Brush brush)
 	{
 		var owner = FindResourceOwner(resources, key) ?? resources;
+		if (owner.Contains(key) && owner[key] is Brush current && BrushesMatch(current, brush)) return;
 		owner[key] = brush;
+	}
+
+	private static void SetBaseThemeIfChanged(ResourceDictionary resources, Uri themeUri)
+	{
+		var state = ResourceStates.GetOrCreateValue(resources);
+		if (Equals(state.BaseThemeUri, themeUri)) return;
+		ResourceLocator.SetColorScheme(resources, themeUri);
+		state.BaseThemeUri = themeUri;
+	}
+
+	private static bool BrushesMatch(Brush current, Brush replacement)
+	{
+		if (ReferenceEquals(current, replacement)) return true;
+		if (current.GetType() != replacement.GetType()
+			|| current.Opacity != replacement.Opacity)
+		{
+			return false;
+		}
+
+		if (current is SolidColorBrush currentSolid && replacement is SolidColorBrush replacementSolid)
+		{
+			return currentSolid.Color == replacementSolid.Color;
+		}
+
+		if (current is not LinearGradientBrush currentGradient
+			|| replacement is not LinearGradientBrush replacementGradient
+			|| currentGradient.StartPoint != replacementGradient.StartPoint
+			|| currentGradient.EndPoint != replacementGradient.EndPoint
+			|| currentGradient.ColorInterpolationMode != replacementGradient.ColorInterpolationMode
+			|| currentGradient.MappingMode != replacementGradient.MappingMode
+			|| currentGradient.SpreadMethod != replacementGradient.SpreadMethod
+			|| currentGradient.GradientStops.Count != replacementGradient.GradientStops.Count)
+		{
+			return false;
+		}
+
+		for (var index = 0; index < currentGradient.GradientStops.Count; index++)
+		{
+			var currentStop = currentGradient.GradientStops[index];
+			var replacementStop = replacementGradient.GradientStops[index];
+			if (currentStop.Color != replacementStop.Color || currentStop.Offset != replacementStop.Offset)
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	private static LinearGradientBrush CreatePillGradient(Color color)

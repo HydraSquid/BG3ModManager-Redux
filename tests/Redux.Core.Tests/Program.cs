@@ -131,6 +131,8 @@ internal static class Program
 			(nameof(modules.IconsOnlySettingSynchronizesLegacySourceFlag), modules.IconsOnlySettingSynchronizesLegacySourceFlag),
 			(nameof(modules.CustomThemeClonePreservesUnifiedPresentationSettings), modules.CustomThemeClonePreservesUnifiedPresentationSettings),
 			(nameof(modules.CustomThemePreviewRegeneratesEverySemanticPillGradient), modules.CustomThemePreviewRegeneratesEverySemanticPillGradient),
+			(nameof(modules.CustomThemePreviewReusesUnchangedSemanticBrushes), modules.CustomThemePreviewReusesUnchangedSemanticBrushes),
+			(nameof(modules.RepeatedThemeApplicationReusesTheLoadedColorScheme), modules.RepeatedThemeApplicationReusesTheLoadedColorScheme),
 			(nameof(modules.CustomThemeBackgroundEditsPreserveUntouchedBaseRoles), modules.CustomThemeBackgroundEditsPreserveUntouchedBaseRoles),
 			(nameof(modules.GeneratedActionGradientsFollowThemeDefaultsAndCustomChoice), modules.GeneratedActionGradientsFollowThemeDefaultsAndCustomChoice),
 			(nameof(modules.LocalOnlyModeChangesOnlySourceIntegrations), modules.LocalOnlyModeChangesOnlySourceIntegrations),

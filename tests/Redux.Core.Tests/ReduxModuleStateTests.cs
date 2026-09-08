@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Windows;
 using System.Windows.Media;
@@ -158,6 +159,41 @@ internal sealed class ReduxModuleStateTests
 		AssertPillColor(resources, "ReduxWarningPillBackground", Color.FromRgb(0xC0, 0x78, 0x19));
 		AssertPillColor(resources, "ReduxErrorPillBackground", Color.FromRgb(0xD2, 0x3A, 0x4E));
 		AssertPillColor(resources, "ReduxInfoPillBackground", Color.FromRgb(0x36, 0x7B, 0xC0));
+	}
+
+	public void CustomThemePreviewReusesUnchangedSemanticBrushes()
+	{
+		var theme = ReduxThemeService.CreateFromBase("Incremental preview", ReduxThemeType.ReduxDark);
+		var resources = new ResourceDictionary();
+		ReduxThemeService.PreviewColors(resources, theme);
+
+		var success = resources["ReduxSuccessPillBackground"];
+		var warning = resources["ReduxWarningPillBackground"];
+		var error = resources["ReduxErrorPillBackground"];
+		var info = resources["ReduxInfoPillBackground"];
+		var accent = resources["ReduxAccentPillBackground"];
+
+		theme.AccentColor = "#7654D8";
+		ReduxThemeService.PreviewColors(resources, theme);
+
+		RegressionAssert.True(ReferenceEquals(success, resources["ReduxSuccessPillBackground"]));
+		RegressionAssert.True(ReferenceEquals(warning, resources["ReduxWarningPillBackground"]));
+		RegressionAssert.True(ReferenceEquals(error, resources["ReduxErrorPillBackground"]));
+		RegressionAssert.True(ReferenceEquals(info, resources["ReduxInfoPillBackground"]));
+		RegressionAssert.False(ReferenceEquals(accent, resources["ReduxAccentPillBackground"]));
+	}
+
+	public void RepeatedThemeApplicationReusesTheLoadedColorScheme()
+	{
+		var resources = new ResourceDictionary();
+		ReduxThemeService.Apply(resources, ReduxThemeType.ReduxDark);
+		var merged = resources.MergedDictionaries.ToArray();
+
+		ReduxThemeService.Apply(resources, ReduxThemeType.ReduxDark);
+
+		RegressionAssert.Equal(merged.Length, resources.MergedDictionaries.Count);
+		if (!merged.Zip(resources.MergedDictionaries).All(pair => ReferenceEquals(pair.First, pair.Second)))
+			throw new InvalidOperationException("A repeated theme application reloaded the color-scheme dictionary.");
 	}
 
 	public void CustomThemeBackgroundEditsPreserveUntouchedBaseRoles()

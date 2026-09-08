@@ -125,27 +125,25 @@ public partial class CustomThemeEditorWindow : AdonisWindow
 			"Changes preview live. Cancel restores the previous color.",
 			"Theme color");
 		ReduxThemeService.Apply(dialog.Resources, Theme.BaseTheme, Theme);
-		// Keep whole-app preview work below input/render priority so dragging the
-		// picker remains fluid even while the main Redux surface updates behind it.
-		var previewTimer = new DispatcherTimer(DispatcherPriority.Background, Dispatcher)
+		// Coalesce rapid picker events into the next render pass. The incremental
+		// palette path is now cheap enough to preview at render cadence without the
+		// old 75 ms stepping or more than one whole-app update per frame.
+		DispatcherOperation previewOperation = null;
+		void ApplyQueuedPreview()
 		{
-			Interval = TimeSpan.FromMilliseconds(75)
-		};
-		previewTimer.Tick += (_, _) =>
-		{
-			previewTimer.Stop();
+			previewOperation = null;
 			ReduxThemeService.PreviewColors(dialog.Resources, Theme);
 			ColorPreviewChanged?.Invoke(Theme);
-		};
+		}
 		dialog.ColorPreviewChanged += color =>
 		{
 			property.SetValue(Theme, color);
-			if (!previewTimer.IsEnabled)
-				previewTimer.Start();
+			if (previewOperation?.Status != DispatcherOperationStatus.Pending)
+				previewOperation = Dispatcher.BeginInvoke(DispatcherPriority.Render, ApplyQueuedPreview);
 		};
 
 		var accepted = dialog.ShowDialog() == true;
-		previewTimer.Stop();
+		if (previewOperation?.Status == DispatcherOperationStatus.Pending) previewOperation.Abort();
 		property.SetValue(Theme, accepted ? dialog.CategoryColor : currentColor);
 		PreviewTheme();
 	}

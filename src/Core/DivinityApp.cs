@@ -15,8 +15,8 @@ namespace DivinityModManager;
 
 public static class DivinityApp
 {
-	public const string REDUX_DISPLAY_VERSION = "0.1.0-alpha.14";
-	public const string REDUX_INTERNAL_VERSION = "0.1.0.14";
+	public const string REDUX_DISPLAY_VERSION = "0.1.0-alpha.15";
+	public const string REDUX_INTERNAL_VERSION = "0.1.0.15";
 	// Flip only when the moving public-alpha manifest has been published and smoke-tested.
 	public static readonly bool REDUX_UPDATE_CHECKS_ENABLED = false;
 

@@ -37,3 +37,7 @@ commitments.
 
 Redux preserves substantial BG3MM behavior, but Redux-specific reports belong in the Redux tracker
 rather than LaughingLeader's upstream tracker.
+
+For general discussion and community help, join the
+[Redux Discord](https://discord.gg/rJJF89vqFZ). Reproducible bugs and security-sensitive reports
+should still use the reporting routes above so they can be tracked and handled appropriately.

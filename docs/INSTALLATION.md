@@ -47,9 +47,9 @@ Windows may warn about an unsigned or unfamiliar alpha executable. Verify that t
 from an official Redux channel before continuing. Never download a repackaged build from an
 untrusted mirror.
 
-## Update a private-alpha build
+## Move from a private-alpha build
 
-Application self-updating is disabled in alpha.14. Update manually:
+Private-alpha builds are updated manually when moving to alpha.15:
 
 1. Close BG3 and Redux. Wait for active downloads or file operations to finish.
 2. Back up the entire Redux folder, especially its runtime-state directories.

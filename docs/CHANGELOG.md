@@ -3,7 +3,7 @@
 This file summarizes user-visible Redux releases. The issue tracker and Git history remain the
 source for individual implementation details.
 
-## Unreleased — public-alpha preparation
+## 0.1.0-alpha.15 — public-alpha candidate
 
 - Public installation, migration, rollback, removal, privacy, support, contribution, security, and
   release-maintenance documentation.
@@ -13,8 +13,9 @@ source for individual implementation details.
   transaction rollback, and post-update status reporting.
 - Separate lightweight web Setup for verified fresh installation, .NET 8 prerequisite handling,
   per-user shortcuts, and inventory-scoped removal that preserves unlisted content.
-- Clean-machine, public update-channel, and distribution validation remain required before Redux
-  leaves private alpha.
+
+Alpha.15 has not been published yet. Its update channel remains disabled until the exact candidate
+artifacts and channel manifest are available and verified.
 
 ## 0.1.0-alpha.14 — private alpha
 

@@ -321,7 +321,6 @@ The upstream tracking discussion is
 Redux currently does not provide:
 
 - public Nexus SSO authentication;
-- automatic Redux self-updating during the private alpha;
 - automatic downloading, compatibility repair, or conflict resolution;
 - silent load-order sorting or automatic game-file export;
 - application localization;

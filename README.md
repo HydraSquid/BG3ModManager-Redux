@@ -6,11 +6,11 @@
 
 **A more visual, deliberate way to organize Baldur's Gate 3 mods.**
 
-[![Current build](https://img.shields.io/badge/build-0.1.0--alpha.14-9A7BFF?style=flat-square)](https://github.com/circleainn/BG3ModManager-Redux/releases)
+[![Current build](https://img.shields.io/badge/build-0.1.0--alpha.15-9A7BFF?style=flat-square)](https://github.com/circleainn/BG3ModManager-Redux/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-4F86F7?style=flat-square)](#requirements-and-alpha-status)
 [![License](https://img.shields.io/badge/license-MIT-42A66F?style=flat-square)](LICENSE)
 [![Support on Ko-fi](https://img.shields.io/badge/Support-Ko--fi-FF5E5B?style=flat-square&logo=ko-fi&logoColor=white)](https://ko-fi.com/circleain)
-![Discord — Coming Soon](https://img.shields.io/badge/Discord-Coming_Soon-5865F2?style=flat-square&logo=discord&logoColor=white)
+[![Join Discord](https://img.shields.io/badge/Discord-Join-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/rJJF89vqFZ)
 
 [Download on Nexus Mods](https://www.nexusmods.com/baldursgate3/mods/23799) ·
 [Visit the website](https://bg3mm-redux.com) ·
@@ -47,11 +47,12 @@ the application.
 4. Run `BG3ModManager.exe`. On first launch, review the detected game and profile paths before
    installing or syncing anything.
 
-Alpha.14 is updated manually. To replace a build, close Redux and BG3, back up the Redux folder,
-then extract the complete newer archive over the existing Redux folder. Release archives exclude
-runtime state such as `Data`, `_Logs`, caches, downloads, retained archives, and backups. Never
-delete those folders as part of a routine update. If Redux is moved to a different folder, open
-Download Manager and repair the NXM association if Redux previously handled `nxm://` links.
+Alpha.15 contains Redux's verified update workflow and separate lightweight web Setup. Until the
+first public-alpha channel manifest is published, replace candidate builds manually: close Redux
+and BG3, back up the Redux folder, then extract the complete newer archive over it. Release archives
+exclude runtime state such as `Data`, `_Logs`, caches, downloads, retained archives, and backups.
+Never delete those folders as part of a routine update. If Redux is moved, open Download Manager
+and repair the NXM association if Redux previously handled `nxm://` links.
 
 See [Installation, updates, and removal](docs/INSTALLATION.md) for safe migration, rollback, and
 uninstall guidance.
@@ -346,11 +347,11 @@ claims are ignored and reported without changing packages or load orders.
 Linux, macOS, Wine, and Proton are not supported. Redux is framework-dependent and is not
 distributed as a self-contained build.
 
-Known private-alpha limits include personal Nexus API-key authentication instead of public SSO,
+Known public-alpha limits include personal Nexus API-key authentication instead of public SSO,
 incomplete provider/category/dependency coverage, imported-font variability, incomplete mod.io
 author links, and limited clean-machine testing. Uncommon scaling and extremely dense layouts may
-still expose visual issues. Application self-updating remains disabled in alpha.14. Imported fonts
-and PNG icons remain the user's responsibility to license.
+still expose visual issues. The updater remains dormant until the official public-alpha channel is
+published and verified. Imported fonts and PNG icons remain the user's responsibility to license.
 
 ## Documentation
 

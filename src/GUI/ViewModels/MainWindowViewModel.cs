@@ -10525,7 +10525,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		var productName = ((AssemblyProductAttribute)Attribute.GetCustomAttribute(assembly, typeof(AssemblyProductAttribute), false)).Product;
 		AppTitle = productName;
 		Version = assembly.GetName().Version;
-		Title = $"{productName} v{DivinityApp.REDUX_DISPLAY_VERSION}";
+		Title = $"Redux v{DivinityApp.REDUX_DISPLAY_VERSION}";
 		DivinityApp.Log($"{Title} initializing...");
 
 		this.DropHandler = new ModListDropHandler(this);

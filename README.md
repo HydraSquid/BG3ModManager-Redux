@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://bg3mm-redux.com/assets/redux-square.png" alt="BG3 Mod Manager Redux" width="92">
+<img src="assets/brand/redux-star.svg" alt="BG3 Mod Manager Redux" width="128">
 
 # Baldur's Gate 3 Mod Manager Redux
 

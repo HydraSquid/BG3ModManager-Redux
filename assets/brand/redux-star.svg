@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Redux standalone star logo</title>
+  <desc id="desc">A violet and magenta four-point flare on a transparent background.</desc>
+  <defs>
+    <linearGradient id="flare" x1="0.28" y1="0.08" x2="0.74" y2="0.92">
+      <stop offset="0" stop-color="#4f19ff"/>
+      <stop offset="0.48" stop-color="#8b2df1"/>
+      <stop offset="1" stop-color="#f02fc4"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0.2" y1="0.1" x2="0.84" y2="0.9">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".24"/>
+      <stop offset=".48" stop-color="#ffffff" stop-opacity=".04"/>
+      <stop offset="1" stop-color="#13001d" stop-opacity=".25"/>
+    </linearGradient>
+  </defs>
+  <path d="M512 54C527 277 593 444 952 512C593 580 527 747 512 970C497 747 431 580 72 512C431 444 497 277 512 54Z" fill="url(#flare)"/>
+  <path d="M512 79C529 290 601 452 913 512C601 572 529 734 512 945C495 734 423 572 111 512C423 452 495 290 512 79Z" fill="none" stroke="url(#sheen)" stroke-width="10" stroke-linejoin="round"/>
+</svg>

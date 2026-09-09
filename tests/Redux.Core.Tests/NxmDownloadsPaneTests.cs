@@ -8,6 +8,8 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Threading;
 
 using DivinityModManager.Models.NexusMods;
+using DivinityModManager.Controls;
+using DivinityModManager.AppServices;
 using DivinityModManager.ViewModels;
 using DivinityModManager.Views;
 
@@ -54,6 +56,21 @@ internal sealed class NxmDownloadsPaneTests
 			Settle(window);
 			var inbox = (ListBox)pane.FindName("InboxDownloadsList");
 			var selectAll = (CheckBox)pane.FindName("SelectAllDownloadsCheckBox");
+			var collapse = (Button)pane.FindName("CollapseDownloadsButton");
+			var title = (TextBlock)pane.FindName("DownloadsTitle");
+			RegressionAssert.True(collapse.TransformToAncestor(pane).Transform(new Point()).X + collapse.ActualWidth
+				< title.TransformToAncestor(pane).Transform(new Point()).X);
+			var association = (Button)pane.FindName("AssociationButton");
+			WpfRenderCapture.AssertFullyWithin(association, pane);
+			var status = viewModel.GetNxmAssociationStatus();
+			RegressionAssert.Equal(status.Success && status.Status != NxmAssociationStatus.OwnedByAnotherHandler, association.IsEnabled);
+			RegressionAssert.Equal(status.Status switch
+			{
+				NxmAssociationStatus.Owned => "Disable NXM Links...",
+				NxmAssociationStatus.NeedsRepair => "Repair NXM Links...",
+				NxmAssociationStatus.OwnedByAnotherHandler => "NXM Links Managed Elsewhere",
+				_ => "Enable NXM Links..."
+			}, ((TextBlock)pane.FindName("AssociationText")).Text);
 
 			inbox.SelectedItems.Add(downloads[0]);
 			inbox.SelectedItems.Add(downloads[100]);
@@ -86,7 +103,12 @@ internal sealed class NxmDownloadsPaneTests
 			var reviewAction = WpfRenderCapture.Descendants<Button>(firstRow).Single(button => ReferenceEquals(button.Style, reviewStyle));
 			RegressionAssert.True(reviewAction.IsVisible && reviewAction.IsEnabled);
 			foreach (var action in WpfRenderCapture.Descendants<Button>(firstRow).Where(button => button.IsVisible))
+			{
 				WpfRenderCapture.AssertFullyWithin(action, pane);
+				var icon = WpfRenderCapture.Descendants<ReduxIcon>(action).Single();
+				RegressionAssert.True(icon.StrokeData != null && ReferenceEquals(icon.Foreground, action.Foreground));
+			}
+			RegressionAssert.True(ReferenceEquals(reviewAction.Background, pane.FindResource("ReduxSuccessPillBackground")));
 			WpfRenderCapture.CaptureIfRequested(pane, "nxm-downloads-pane-narrow");
 
 			pane.FocusDownload(downloads[^1]);

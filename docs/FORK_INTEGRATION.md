@@ -10,7 +10,7 @@ plus the differences below.
 
 | Area | Integration |
 | --- | --- |
-| Downloads workspace | Embedded Inbox, History, and Archives pane using upstream's current download services; standalone window remains the fallback. |
+| Downloads workspace | Embedded Inbox, History, and Archives pane using upstream's current download services, with action icons, semantic button colors, and the existing Enable/Disable/Repair NXM Links control; standalone window remains the fallback. |
 | Selection | Explicit selected-only install/removal, Select All, and virtualized selection synchronization. |
 | Dependency batches | Selected prerequisites are ordered before dependents; missing/old requirements and cycles block affected packages. Failed prerequisites suppress their dependents. |
 | Dependency assistance | UUID-based installed/bundled/download matches, reviewed source links, and Copy UUID without name-based guessing. |

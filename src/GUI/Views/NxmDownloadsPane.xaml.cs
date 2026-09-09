@@ -29,6 +29,7 @@ public partial class NxmDownloadsPane : UserControl
 		InitializeComponent();
 		DataContextChanged += NxmDownloadsPane_DataContextChanged;
 		Loaded += (_, _) => UpdateEmptyState();
+		IsVisibleChanged += (_, _) => { if (IsVisible) UpdateAssociationButton(); };
 	}
 
 	public void FocusDownload(NxmDownloadItem item)
@@ -53,6 +54,7 @@ public partial class NxmDownloadsPane : UserControl
 		_viewModel.PropertyChanged += ViewModel_PropertyChanged;
 		AttachCollections();
 		UpdateEmptyState();
+		UpdateAssociationButton();
 	}
 
 	private void AttachCollections()
@@ -152,6 +154,35 @@ public partial class NxmDownloadsPane : UserControl
 	}
 
 	private static NxmDownloadItem Item(object sender) => (sender as FrameworkElement)?.Tag as NxmDownloadItem;
+
+	private void UpdateAssociationButton()
+	{
+		if (_viewModel == null) return;
+		var status = _viewModel.GetNxmAssociationStatus();
+		AssociationText.Text = status.Status switch
+		{
+			NxmAssociationStatus.Owned => "Disable NXM Links...",
+			NxmAssociationStatus.NeedsRepair => "Repair NXM Links...",
+			NxmAssociationStatus.OwnedByAnotherHandler => "NXM Links Managed Elsewhere",
+			_ => "Enable NXM Links..."
+		};
+		AssociationIcon.SetResourceReference(Controls.ReduxIcon.StrokeDataProperty,
+			status.Status == NxmAssociationStatus.Owned ? "Redux.Icon.UnlinkStroke" : "Redux.Icon.LinkStroke");
+		AssociationButton.SetResourceReference(StyleProperty, status.Status switch
+		{
+			NxmAssociationStatus.Owned => "DownloadDestructiveActionButton",
+			NxmAssociationStatus.NeedsRepair => "DownloadWarningActionButton",
+			_ => "DownloadNexusActionButton"
+		});
+		AssociationButton.IsEnabled = status.Success && status.Status != NxmAssociationStatus.OwnedByAnotherHandler;
+		AssociationButton.ToolTip = status.Message;
+	}
+
+	private void AssociationButton_Click(object sender, RoutedEventArgs e)
+	{
+		_viewModel?.ConfigureNxmAssociation();
+		UpdateAssociationButton();
+	}
 
 	private IReadOnlyList<NxmDownloadItem> SelectedDownloads() => InboxDownloadsList.SelectedItems
 		.OfType<NxmDownloadItem>()

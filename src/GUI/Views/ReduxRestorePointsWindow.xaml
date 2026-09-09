@@ -3,6 +3,7 @@
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:adonisUI="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
 	xmlns:controls="clr-namespace:DivinityModManager.Controls"
+	xmlns:dapp="clr-namespace:DivinityModManager;assembly=DivinityModManagerCore"
 	xmlns:models="clr-namespace:DivinityModManager.Models;assembly=DivinityModManagerCore"
 	xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
 	Title="Load Order History"
@@ -15,7 +16,9 @@
 	WindowStartupLocation="CenterOwner"
 	WindowStyle="SingleBorderWindow"
 	Template="{DynamicResource ReduxWindowTemplate}"
-	Background="{DynamicResource ReduxWindowBrush}">
+	Background="{DynamicResource ReduxWindowBrush}"
+	UseLayoutRounding="True"
+	SnapsToDevicePixels="True">
 	<shell:WindowChrome.WindowChrome>
 		<shell:WindowChrome
 			CaptionHeight="0"
@@ -42,20 +45,29 @@
 					<Setter.Value>
 						<ControlTemplate TargetType="{x:Type ListBoxItem}">
 							<Border x:Name="ItemChrome"
-								Padding="13,11"
 								Background="{DynamicResource ReduxSurfaceElevatedBrush}"
 								BorderBrush="{TemplateBinding BorderBrush}"
 								BorderThickness="{TemplateBinding BorderThickness}"
-								CornerRadius="{DynamicResource Redux.CornerRadius.Control}">
-								<ContentPresenter />
+								CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
+								ClipToBounds="True">
+								<Grid>
+									<Grid.ColumnDefinitions>
+										<ColumnDefinition Width="4" />
+										<ColumnDefinition Width="*" />
+									</Grid.ColumnDefinitions>
+									<Border x:Name="ItemRail" Background="Transparent" />
+									<ContentPresenter Grid.Column="1" Margin="12,10" />
+								</Grid>
 							</Border>
 							<ControlTemplate.Triggers>
 								<Trigger Property="IsMouseOver" Value="True">
 									<Setter TargetName="ItemChrome" Property="Background" Value="{DynamicResource ReduxAccentSoftBrush}" />
+									<Setter TargetName="ItemRail" Property="Background" Value="{DynamicResource ReduxAccentHoverBrush}" />
 								</Trigger>
 								<Trigger Property="IsSelected" Value="True">
 									<Setter TargetName="ItemChrome" Property="Background" Value="{DynamicResource ReduxSelectionBrush}" />
 									<Setter TargetName="ItemChrome" Property="BorderBrush" Value="{DynamicResource ReduxAccentBrush}" />
+									<Setter TargetName="ItemRail" Property="Background" Value="{DynamicResource ReduxAccentBrush}" />
 								</Trigger>
 							</ControlTemplate.Triggers>
 						</ControlTemplate>
@@ -70,10 +82,11 @@
 						<ColumnDefinition Width="*" />
 						<ColumnDefinition Width="Auto" />
 					</Grid.ColumnDefinitions>
-					<Border Width="34" Height="34" Margin="0,0,11,0"
+					<Border Width="36" Height="36" Margin="0,0,11,0"
 						VerticalAlignment="Center"
-						Background="{DynamicResource ReduxAccentSoftBrush}"
-						CornerRadius="{DynamicResource Redux.CornerRadius.Control}">
+						Background="{DynamicResource ReduxAccentPillBackground}"
+						CornerRadius="8"
+						Visibility="{Binding Path=(dapp:DivinityApp.ShowInterfaceIcons), Converter={StaticResource BoolToVisibilityConverter}}">
 						<controls:ReduxIcon Width="17" Height="17"
 							HorizontalAlignment="Center" VerticalAlignment="Center"
 							Foreground="{DynamicResource ReduxAccentHoverBrush}"
@@ -162,7 +175,7 @@
 		</Grid.RowDefinitions>
 		<controls:ReduxWindowTitleBar IconData="{DynamicResource Redux.Icon.ScrollText}" />
 		<Border Grid.Row="1"
-			Padding="22,19"
+			Padding="18,14"
 			Background="{DynamicResource ReduxAppBackgroundBrush}"
 			BorderBrush="{DynamicResource ReduxBorderBrush}"
 			BorderThickness="1">
@@ -182,7 +195,7 @@
 						<TextBlock FontSize="{DynamicResource Redux.FontSize.20}"
 							FontWeight="{DynamicResource Redux.FontWeight.Title}"
 							Foreground="{DynamicResource ReduxTextPrimaryBrush}"
-							Text="Load Order History" />
+							Text="Load order history" />
 						<TextBlock Margin="0,5,0,0"
 							Foreground="{DynamicResource ReduxTextSecondaryBrush}"
 							Text="Review snapshots, see what changed, and safely load an earlier order without changing the game load order until you sync it."
@@ -197,10 +210,10 @@
 						Click="CompareOrdersButton_Click" />
 				</Grid>
 
-				<Grid Grid.Row="1" Margin="0,17,0,15">
+				<Grid Grid.Row="1" Margin="0,12,0,10">
 					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="330" />
-						<ColumnDefinition Width="14" />
+						<ColumnDefinition Width="320" />
+						<ColumnDefinition Width="12" />
 						<ColumnDefinition Width="*" />
 					</Grid.ColumnDefinitions>
 
@@ -214,7 +227,7 @@
 								<RowDefinition Height="Auto" />
 								<RowDefinition Height="*" />
 							</Grid.RowDefinitions>
-							<Grid Margin="14,10,10,6">
+							<Grid Margin="12,9,9,5">
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition Width="*" />
 									<ColumnDefinition Width="Auto" />
@@ -236,7 +249,7 @@
 							</Grid>
 							<ListBox x:Name="RestorePointList"
 								Grid.Row="1"
-								Margin="7"
+								Margin="6"
 								Padding="0"
 								Background="Transparent"
 								BorderThickness="0"
@@ -277,7 +290,7 @@
 						BorderThickness="1"
 						CornerRadius="{DynamicResource Redux.CornerRadius.Card}"
 						ClipToBounds="True">
-						<Grid Margin="16,14">
+						<Grid Margin="14,12">
 							<Grid.RowDefinitions>
 								<RowDefinition Height="Auto" />
 								<RowDefinition Height="Auto" />
@@ -323,9 +336,15 @@
 								Text="Source order"
 								TextTrimming="CharacterEllipsis" />
 
-							<UniformGrid Grid.Row="2" Margin="0,14,0,13" Columns="3">
+							<UniformGrid Grid.Row="2" Margin="0,10,0,9" Columns="3">
 								<Border Style="{StaticResource ReduxDialogSummaryCardStyle}">
-									<StackPanel>
+									<Grid>
+										<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+										<Border Width="38" Height="38" Margin="0,0,11,0" Background="{DynamicResource ReduxSuccessPillBackground}" CornerRadius="8"
+											Visibility="{Binding Path=(dapp:DivinityApp.ShowInterfaceIcons), Converter={StaticResource BoolToVisibilityConverter}}">
+											<controls:ReduxIcon Width="17" Height="17" Foreground="{DynamicResource ReduxSuccessBrush}" StrokeData="{StaticResource Redux.Icon.AddStroke}" />
+										</Border>
+										<StackPanel Grid.Column="1" VerticalAlignment="Center">
 										<TextBlock x:Name="AddedCountText"
 											FontSize="{DynamicResource Redux.FontSize.20}"
 											FontWeight="{DynamicResource Redux.FontWeight.Title}"
@@ -334,10 +353,17 @@
 										<TextBlock Margin="0,2,0,0"
 											Foreground="{DynamicResource ReduxTextSecondaryBrush}"
 											Text="Added since" />
-									</StackPanel>
+										</StackPanel>
+									</Grid>
 								</Border>
 								<Border Style="{StaticResource ReduxDialogSummaryCardStyle}">
-									<StackPanel>
+									<Grid>
+										<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+										<Border Width="38" Height="38" Margin="0,0,11,0" Background="{DynamicResource ReduxErrorPillBackground}" CornerRadius="8"
+											Visibility="{Binding Path=(dapp:DivinityApp.ShowInterfaceIcons), Converter={StaticResource BoolToVisibilityConverter}}">
+											<controls:ReduxIcon Width="17" Height="17" Foreground="{DynamicResource ReduxErrorBrush}" StrokeData="{StaticResource Redux.Icon.RemoveCircle}" />
+										</Border>
+										<StackPanel Grid.Column="1" VerticalAlignment="Center">
 										<TextBlock x:Name="RemovedCountText"
 											FontSize="{DynamicResource Redux.FontSize.20}"
 											FontWeight="{DynamicResource Redux.FontWeight.Title}"
@@ -346,10 +372,17 @@
 										<TextBlock Margin="0,2,0,0"
 											Foreground="{DynamicResource ReduxTextSecondaryBrush}"
 											Text="Removed since" />
-									</StackPanel>
+										</StackPanel>
+									</Grid>
 								</Border>
 								<Border Margin="0" Style="{StaticResource ReduxDialogSummaryCardStyle}">
-									<StackPanel>
+									<Grid>
+										<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+										<Border Width="38" Height="38" Margin="0,0,11,0" Background="{DynamicResource ReduxInfoPillBackground}" CornerRadius="8"
+											Visibility="{Binding Path=(dapp:DivinityApp.ShowInterfaceIcons), Converter={StaticResource BoolToVisibilityConverter}}">
+											<controls:ReduxIcon Width="17" Height="17" Foreground="{DynamicResource ReduxInfoBrush}" StrokeData="{StaticResource Redux.Icon.ReorderStroke}" />
+										</Border>
+										<StackPanel Grid.Column="1" VerticalAlignment="Center">
 										<TextBlock x:Name="MovedCountText"
 											FontSize="{DynamicResource Redux.FontSize.20}"
 											FontWeight="{DynamicResource Redux.FontWeight.Title}"
@@ -358,7 +391,8 @@
 										<TextBlock Margin="0,2,0,0"
 											Foreground="{DynamicResource ReduxTextSecondaryBrush}"
 											Text="Repositioned" />
-									</StackPanel>
+										</StackPanel>
+									</Grid>
 								</Border>
 							</UniformGrid>
 
@@ -416,11 +450,17 @@
 						<ColumnDefinition Width="Auto" />
 						<ColumnDefinition Width="Auto" />
 					</Grid.ColumnDefinitions>
-					<TextBlock x:Name="StatusText"
-						VerticalAlignment="Center"
-						Foreground="{DynamicResource ReduxTextMutedBrush}"
-						TextTrimming="CharacterEllipsis"
+					<Grid VerticalAlignment="Center">
+						<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+						<controls:ReduxIcon Width="14" Height="14" Margin="0,0,7,0"
+							Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
+							Foreground="{DynamicResource ReduxTextMutedBrush}" IconKey="info" />
+						<TextBlock x:Name="StatusText" Grid.Column="1"
+							VerticalAlignment="Center"
+							Foreground="{DynamicResource ReduxTextSecondaryBrush}"
+							TextTrimming="CharacterEllipsis" TextWrapping="Wrap"
 							Text="The 20 newest snapshots are kept for each profile." />
+					</Grid>
 					<Button x:Name="DeleteButton"
 						Grid.Column="1"
 						MinWidth="74"

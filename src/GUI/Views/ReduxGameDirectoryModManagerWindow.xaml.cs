@@ -172,13 +172,16 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 		if (!File.Exists(executable))
 			throw new FileNotFoundException("Configure a valid Baldur's Gate 3 executable before managing game-directory mods.", executable);
 		var versionInfo = FileVersionInfo.GetVersionInfo(executable);
-		var version = new Version(versionInfo.FileMajorPart, versionInfo.FileMinorPart,
-			versionInfo.FileBuildPart, versionInfo.FilePrivatePart);
+		// BG3's full build is in ProductVersion; FileVersion can be 1.0.0.0.
+		var version = ParseNativeGameVersion(versionInfo.ProductVersion);
 		return new ReduxGameDirectoryInstallService(
 			Path.GetDirectoryName(Path.GetFullPath(executable))!,
-			DivinityApp.GetAppDirectory("Data", "GameDirectoryInstalls"),
+			DivinityApp.GetAppDirectory("Data", "NativeInstalls"),
 			version);
 	}
+
+	internal static Version ParseNativeGameVersion(string productVersion) =>
+		Version.TryParse(productVersion?.Trim(), out var version) ? version : null;
 
 	private void RefreshList()
 	{

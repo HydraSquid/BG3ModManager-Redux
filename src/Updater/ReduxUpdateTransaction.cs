@@ -11,7 +11,7 @@ public static class ReduxUpdateTransaction
 	private static readonly HashSet<string> ProtectedRootDirectories = new(StringComparer.OrdinalIgnoreCase)
 	{
 		"Data", "Orders", "CurrentOrders", "_Logs", "Logs", "Cache", "_Cache", "Backup", "_Backup",
-		"GameDirectoryInstalls", "RestorePoints", "Temp"
+		"GameDirectoryInstalls", "NativeInstalls", "RestorePoints", "Temp"
 	};
 	private static readonly HashSet<string> ProtectedFileNames = new(StringComparer.OrdinalIgnoreCase)
 	{

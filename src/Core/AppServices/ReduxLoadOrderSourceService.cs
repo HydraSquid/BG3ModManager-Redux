@@ -1,6 +1,7 @@
 using DivinityModManager.Models;
 using DivinityModManager.Models.Modio;
 using DivinityModManager.Models.NexusMods;
+using DivinityModManager.Util;
 
 namespace DivinityModManager.AppServices;
 
@@ -49,6 +50,43 @@ public static class ReduxLoadOrderSourceService
 			mod.ModioData = CreateModioMetadata(link);
 		}
 	}
+
+	public static void ApplyManualPageLink(DivinityModData mod, ModPageLinkTarget link)
+	{
+		ArgumentNullException.ThrowIfNull(mod);
+		ArgumentNullException.ThrowIfNull(link);
+
+		if (link.SourceType == ModSourceType.NEXUSMODS)
+		{
+			mod.ModioData = new ModioModData { UUID = mod.UUID };
+			mod.NexusModsData.ResetSourceAssociation();
+			mod.NexusModsData.Update(new NexusModsModData
+			{
+				UUID = mod.UUID,
+				ModId = link.ProjectId,
+				LastFileId = -1,
+				Name = mod.DisplayName,
+				Available = true,
+				MetadataOrigin = NexusMetadataOrigin.Manual
+			});
+			return;
+		}
+
+		if (link.SourceType != ModSourceType.MODIO) throw new ArgumentException("Unsupported mod-page provider.", nameof(link));
+		mod.NexusModsData.ResetSourceAssociation();
+		mod.NexusModsData.MetadataOrigin = NexusMetadataOrigin.ManualUnlinked;
+		mod.ModioData = new ModioModData
+		{
+			UUID = mod.UUID,
+			NameId = link.ModioNameId,
+			ProfileUrl = link.PageUrl,
+			MetadataOrigin = ModioMetadataOrigin.Manual
+		};
+	}
+
+	public static bool ShouldApplyImportedNexusAssociation(DivinityModData mod, bool hasExplicitNexusFilename) =>
+		mod != null && (hasExplicitNexusFilename
+			|| mod.PublishHandle == 0 && mod.ModioData?.HasAssociation != true);
 
 	public static NexusModsModData CreateNexusMetadata(ReduxLoadOrderSourceLink link) => new()
 	{

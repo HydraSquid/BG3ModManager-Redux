@@ -61,8 +61,47 @@ internal static class Program
 		var updateLauncher = new ReduxUpdateLaunchServiceTests();
 		var updateTransaction = new ReduxUpdateTransactionTests();
 		var releaseVersions = new ReleaseVersionContractTests();
+		var dependencyAssistance = new DependencyAssistanceTests();
+		var nxmImporter = new NexusDownloadedModImporterTests();
+		var paneSplitters = new PaneSplitterTests();
+		var forkTableStriping = new ForkTableStripingTests();
+		var downloadsPane = new NxmDownloadsPaneTests();
+		var gameDirectoryManager = new ReduxGameDirectoryModManagerWindowTests();
 		var tests = new (string Name, Action Run)[]
 		{
+			(nameof(nxmImporter.RegisteredModelFailureRestoresLibraryPlacementOrdersAndSourceCaches), nxmImporter.RegisteredModelFailureRestoresLibraryPlacementOrdersAndSourceCaches),
+			(nameof(nxmImporter.CleanupFailureDoesNotRollbackCommittedFiles), nxmImporter.CleanupFailureDoesNotRollbackCommittedFiles),
+			(nameof(source.NexusImportPersistsManualModioRemovalBeforeReload), source.NexusImportPersistsManualModioRemovalBeforeReload),
+			(nameof(nativeMods.GameRunningGuardStopsStageCommitAndRestoreBeforeWrites), nativeMods.GameRunningGuardStopsStageCommitAndRestoreBeforeWrites),
+			(nameof(gameDirectoryManager.NativeGameVersionParsesTheBg3ProductBuildAndRejectsInvalidText), gameDirectoryManager.NativeGameVersionParsesTheBg3ProductBuildAndRejectsInvalidText),
+			(nameof(downloadsPane.EmbeddedPaneKeepsSelectionStateAndFocusesRequestedInboxDownload), downloadsPane.EmbeddedPaneKeepsSelectionStateAndFocusesRequestedInboxDownload),
+			(nameof(paneSplitters.PaneDividersResizeOnlyTheirNeighborsAndRestoreResponsiveSizing), paneSplitters.PaneDividersResizeOnlyTheirNeighborsAndRestoreResponsiveSizing),
+			(nameof(paneSplitters.HorizontalLayoutRendersEmbeddedDownloadsWithinWideAndCompactBounds), paneSplitters.HorizontalLayoutRendersEmbeddedDownloadsWithinWideAndCompactBounds),
+			(nameof(forkTableStriping.TableRowsAlternateAcrossBuiltInAndLiveCustomThemes), forkTableStriping.TableRowsAlternateAcrossBuiltInAndLiveCustomThemes),
+			(nameof(nxmStore.ReconcileHydratesLegacyCompletedArchiveHash), nxmStore.ReconcileHydratesLegacyCompletedArchiveHash),
+			(nameof(nxmStore.ReconcileHydratesLegacyArchiveRecoveredFromInstallFailure), nxmStore.ReconcileHydratesLegacyArchiveRecoveredFromInstallFailure),
+			(nameof(downloadBatch.DependenciesAreOrderedBeforeTheirDependents), downloadBatch.DependenciesAreOrderedBeforeTheirDependents),
+			(nameof(downloadBatch.ProviderOlderThanDeclaredRequirementSkipsItsDependent), downloadBatch.ProviderOlderThanDeclaredRequirementSkipsItsDependent),
+			(nameof(downloadBatch.DependencyCyclesAndTheirDependentsAreSkipped), downloadBatch.DependencyCyclesAndTheirDependentsAreSkipped),
+			(nameof(dependencyAssistance.InstalledAndBundledDependenciesReportTheirAvailableVersion), dependencyAssistance.InstalledAndBundledDependenciesReportTheirAvailableVersion),
+			(nameof(dependencyAssistance.InspectedQueueMatchIsInvalidatedWhenTheArchiveChanges), dependencyAssistance.InspectedQueueMatchIsInvalidatedWhenTheArchiveChanges),
+			(nameof(dependencyAssistance.UnreviewedNamesDoNotCreateDependencyMatches), dependencyAssistance.UnreviewedNamesDoNotCreateDependencyMatches),
+			(nameof(nxmImporter.ValidationFailureLeavesInstalledFilesUntouched), nxmImporter.ValidationFailureLeavesInstalledFilesUntouched),
+			(nameof(nxmImporter.DuplicateFlattenedPakNamesAreRejectedBeforeCommit), nxmImporter.DuplicateFlattenedPakNamesAreRejectedBeforeCommit),
+			(nameof(nxmImporter.CommitFailureRestoresEveryDestination), nxmImporter.CommitFailureRestoresEveryDestination),
+			(nameof(nxmImporter.StagingPreflightsSiblingPackagesBeforeExternalDependencies), nxmImporter.StagingPreflightsSiblingPackagesBeforeExternalDependencies),
+			(nameof(nativeMods.LegacyManifestKeepsReduxOwnedLoaderManagedAndRestorable), nativeMods.LegacyManifestKeepsReduxOwnedLoaderManagedAndRestorable),
+			(nameof(nativeMods.LegacyJournalRequiresRecoveryInsteadOfPermittingMutation), nativeMods.LegacyJournalRequiresRecoveryInsteadOfPermittingMutation),
+			(nameof(nativeMods.LegacyManifestRejectsUnknownProjectWithoutClaimingItsFiles), nativeMods.LegacyManifestRejectsUnknownProjectWithoutClaimingItsFiles),
+			(nameof(source.ModioPageLinkCannotBeMisreadAsNexusProjectThree), source.ModioPageLinkCannotBeMisreadAsNexusProjectThree),
+			(nameof(source.ManualModioLinkShowsItsProviderWithoutApiMetadata), source.ManualModioLinkShowsItsProviderWithoutApiMetadata),
+			(nameof(source.NativePublishHandleWinsOverAutomaticNexusMetadataWithoutAnApiKey), source.NativePublishHandleWinsOverAutomaticNexusMetadataWithoutAnApiKey),
+			(nameof(source.NativeModioPackageRejectsOnlyAutomaticNexusImportMatches), source.NativeModioPackageRejectsOnlyAutomaticNexusImportMatches),
+			(nameof(source.FreshNexusInstallWinsBeforeMetadataFetch), source.FreshNexusInstallWinsBeforeMetadataFetch),
+			(nameof(source.ExplicitNexusOriginWithoutAProjectCannotOverrideModio), source.ExplicitNexusOriginWithoutAProjectCannotOverrideModio),
+			(nameof(source.InvalidManualModioCacheEntryIsRejected), source.InvalidManualModioCacheEntryIsRejected),
+			(nameof(source.NativePublishHandleRejectsAnInferredNexusCacheEntry), source.NativePublishHandleRejectsAnInferredNexusCacheEntry),
+			(nameof(source.ManualModioAssociationRejectsAStaleManualNexusCacheEntry), source.ManualModioAssociationRejectsAStaleManualNexusCacheEntry),
 			(nameof(releaseVersions.ApplicationAndBinaryVersionsIdentifyTheSameAlphaRelease), releaseVersions.ApplicationAndBinaryVersionsIdentifyTheSameAlphaRelease),
 			(nameof(updateTransaction.TransactionReplacesOwnedFilesAndPreservesUserFiles), updateTransaction.TransactionReplacesOwnedFilesAndPreservesUserFiles),
 			(nameof(updateTransaction.FailedReplacementRollsBackFilesChangedEarlierInTheTransaction), updateTransaction.FailedReplacementRollsBackFilesChangedEarlierInTheTransaction),
@@ -463,7 +502,7 @@ internal static class Program
 			catch (Exception ex)
 			{
 				failures++;
-				Console.Error.WriteLine($"FAIL {test.Name}: {ex.Message}");
+				Console.Error.WriteLine($"FAIL {test.Name}: {ex}");
 			}
 		}
 

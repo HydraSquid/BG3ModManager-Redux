@@ -10,7 +10,8 @@ namespace DivinityModManager.Util;
 
 /// <summary>
 /// Minimal read-only mod.io metadata client. It never downloads or modifies
-/// installed mods and only accepts records validated against PublishHandle.
+/// installed mods and only accepts records validated against PublishHandle
+/// or a manually linked public page identity.
 /// </summary>
 public static class ModioDataLoader
 {
@@ -123,6 +124,46 @@ public static class ModioDataLoader
 
 		result.UUID = mod.UUID;
 		return result;
+	}
+
+	public static async Task<ModioModData> LoadModDataByNameIdAsync(
+		DivinityModData mod,
+		string nameId,
+		string apiKey,
+		CancellationToken cancellationToken)
+	{
+		if (mod == null
+			|| !Regex.IsMatch(nameId ?? String.Empty, @"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$", RegexOptions.IgnoreCase)
+			|| String.IsNullOrWhiteSpace(apiKey))
+		{
+			return null;
+		}
+
+		var gameId = await GetBg3GameIdAsync(apiKey, cancellationToken);
+		if (gameId <= 0) return null;
+
+		var gameApiBaseUrl = $"https://g-{gameId}.modapi.io/v1";
+		var lookupUrl = $"{gameApiBaseUrl}/games/{gameId}/mods?api_key={Uri.EscapeDataString(apiKey)}&name_id={Uri.EscapeDataString(nameId)}&_limit=2";
+		using var response = await Client.GetAsync(lookupUrl, cancellationToken);
+		if (!response.IsSuccessStatusCode)
+		{
+			DivinityApp.Log($"mod.io manual page lookup failed: HTTP {(int)response.StatusCode}");
+			return null;
+		}
+
+		var json = await response.Content.ReadAsStringAsync(cancellationToken);
+		var matches = JsonConvert.DeserializeObject<ModioListResponse<ModioModData>>(json)?.Data
+			.Where(candidate => candidate.GameId == 0 || candidate.GameId == gameId)
+			.Where(candidate => String.Equals(candidate.NameId, nameId, StringComparison.OrdinalIgnoreCase))
+			.ToList() ?? new List<ModioModData>();
+		if (matches.Count != 1)
+		{
+			DivinityApp.Log($"Rejected ambiguous or missing mod.io manual page match for '{mod.DisplayName}'.");
+			return null;
+		}
+
+		matches[0].UUID = mod.UUID;
+		return matches[0];
 	}
 
 	private static async Task<long> GetBg3GameIdAsync(string apiKey, CancellationToken cancellationToken)

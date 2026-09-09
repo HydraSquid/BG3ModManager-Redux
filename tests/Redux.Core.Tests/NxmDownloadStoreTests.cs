@@ -159,6 +159,40 @@ internal sealed class NxmDownloadStoreTests
 		RegressionAssert.Equal("archive-changed", restored.ErrorCode);
 	}
 
+	public void ReconcileHydratesLegacyCompletedArchiveHash()
+	{
+		using var fixture = new StoreFixture();
+		var item = fixture.Item(NxmDownloadState.Downloaded);
+		item.CompletedFileName = "legacy.zip";
+		item.SizeBytes = 4;
+		File.WriteAllBytes(Path.Combine(fixture.Directory, item.CompletedFileName), [1, 2, 3, 4]);
+		File.WriteAllText(Path.Combine(fixture.Directory, "downloads.json"),
+			$"{{\"Version\":1,\"Items\":[{{\"Id\":\"{item.Id}\",\"QueuePosition\":1,\"ModId\":10,\"FileId\":20,\"ProjectName\":\"Project\",\"FileDisplayName\":\"File\",\"SizeBytes\":4,\"BytesReceived\":4,\"CompletedFileName\":\"legacy.zip\",\"State\":{(int)NxmDownloadState.Downloaded}}}]}}");
+
+		var restored = fixture.Store.ReconcileAsync().GetAwaiter().GetResult().Single();
+
+		RegressionAssert.Equal(NxmDownloadState.Downloaded, restored.State);
+		RegressionAssert.Equal("9f64a747e1b97f131fabb6b447296c9b6f0201e79fb3c5356e6c77e89b6a806a", restored.ArchiveSha256);
+		RegressionAssert.Equal(restored.ArchiveSha256,
+			fixture.Store.LoadAsync().GetAwaiter().GetResult().Single().ArchiveSha256);
+	}
+
+	public void ReconcileHydratesLegacyArchiveRecoveredFromInstallFailure()
+	{
+		using var fixture = new StoreFixture();
+		var item = fixture.Item(NxmDownloadState.Failed);
+		item.CompletedFileName = "legacy-install-failure.zip";
+		item.SizeBytes = 4;
+		item.ErrorCode = "install-failed";
+		File.WriteAllBytes(Path.Combine(fixture.Directory, item.CompletedFileName), [1, 2, 3, 4]);
+		fixture.Store.SaveAsync([item]).GetAwaiter().GetResult();
+
+		var restored = fixture.Store.ReconcileAsync().GetAwaiter().GetResult().Single();
+
+		RegressionAssert.Equal(NxmDownloadState.InstallFailed, restored.State);
+		RegressionAssert.Equal("9f64a747e1b97f131fabb6b447296c9b6f0201e79fb3c5356e6c77e89b6a806a", restored.ArchiveSha256);
+	}
+
 	public void ReconcileRecoversInterruptedResolvingAndInstallingStates()
 	{
 		using var fixture = new StoreFixture();

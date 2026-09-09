@@ -282,6 +282,7 @@ public sealed class ReduxUnsupportedGameDirectoryArchiveException(string message
 public sealed class ReduxGameDirectoryInstallService
 {
 	private const int ManifestVersion = 2;
+	private const int LegacyManifestVersion = 1;
 	private const long MaximumArchiveBytes = 128L * 1024 * 1024;
 	private const long MaximumEntryBytes = 32L * 1024 * 1024;
 	private const long MaximumExpandedBytes = 64L * 1024 * 1024;
@@ -293,6 +294,7 @@ public sealed class ReduxGameDirectoryInstallService
 	{
 		".7z", ".7zip", ".rar", ".zip"
 	};
+	private static readonly HashSet<long> LegacyProjectIds = new() { 944, 781, 945 };
 	private static readonly Version MinimumPluginGameVersion = new(4, 1, 1, 6931813);
 	private static readonly JsonSerializerOptions JsonOptions = new()
 	{
@@ -311,20 +313,22 @@ public sealed class ReduxGameDirectoryInstallService
 	private readonly string _gameBinIdentity;
 	private readonly Version? _gameVersion;
 	private readonly bool _enforceReviewedReplacementOriginals;
+	private readonly Action _ensureGameStopped;
 	private readonly SemaphoreSlim _operationGate = new(1, 1);
 	public string GameBin => _gameBin;
 	public string RecoveryDirectory => _stateRoot;
 
 	public ReduxGameDirectoryInstallService(string gameBin, string stateDirectory, Version gameVersion)
-		: this(gameBin, stateDirectory, gameVersion, true) { }
+		: this(gameBin, stateDirectory, gameVersion, true, ThrowIfGameRunning) { }
 
 	internal ReduxGameDirectoryInstallService(string gameBin, string stateDirectory, Version gameVersion,
-		bool enforceReviewedReplacementOriginals)
+		bool enforceReviewedReplacementOriginals, Action? ensureGameStopped = null)
 	{
 		_gameBin = NormalizeExistingDirectory(gameBin, nameof(gameBin));
 		ValidateGameBin();
 		_gameVersion = gameVersion;
 		_enforceReviewedReplacementOriginals = enforceReviewedReplacementOriginals;
+		_ensureGameStopped = ensureGameStopped ?? ThrowIfGameRunning;
 		_gameBinIdentity = HashText(_gameBin.ToUpperInvariant());
 
 		var root = NormalizeOrCreateDirectory(stateDirectory, nameof(stateDirectory));
@@ -481,7 +485,7 @@ public sealed class ReduxGameDirectoryInstallService
 			using var stateLock = AcquireStateLock();
 			cancellationToken.ThrowIfCancellationRequested();
 			ValidateGameBin();
-			ThrowIfGameRunning();
+			_ensureGameStopped();
 			EnsureNoPendingJournals();
 			var manifest = ReadManifest();
 			if (manifest != null && FindInstallation(manifest, definition.PackageId) != null)
@@ -522,7 +526,7 @@ public sealed class ReduxGameDirectoryInstallService
 			};
 
 			cancellationToken.ThrowIfCancellationRequested();
-			ThrowIfGameRunning();
+			_ensureGameStopped();
 			foreach (var snapshot in snapshots)
 			{
 				if (!SameSnapshot(snapshot, CaptureDestination(snapshot.RelativePath)))
@@ -647,7 +651,7 @@ public sealed class ReduxGameDirectoryInstallService
 			using var stateLock = AcquireStateLock();
 			cancellationToken.ThrowIfCancellationRequested();
 			ValidateGameBin();
-			ThrowIfGameRunning();
+			_ensureGameStopped();
 			EnsureNoPendingJournals();
 			EnsurePluginVersion(definition);
 
@@ -692,7 +696,7 @@ public sealed class ReduxGameDirectoryInstallService
 		{
 			using var stateLock = AcquireStateLock();
 			ValidateGameBin();
-			ThrowIfGameRunning();
+			_ensureGameStopped();
 			EnsureNoPendingJournals();
 			var manifest = ReadManifest() ?? throw new InvalidOperationException("Redux has no native installation record for this game.");
 			var installation = FindInstallation(manifest, definition.PackageId)
@@ -729,7 +733,7 @@ public sealed class ReduxGameDirectoryInstallService
 				foreach (var write in writes)
 				{
 					cancellationToken.ThrowIfCancellationRequested();
-					ThrowIfGameRunning();
+					_ensureGameStopped();
 					var current = CaptureDestination(write.RelativePath);
 					if (!SameSnapshot(write.Before, current))
 						throw new InvalidOperationException("A native destination changed after restore review.");
@@ -773,7 +777,7 @@ public sealed class ReduxGameDirectoryInstallService
 		{
 			using var stateLock = AcquireStateLock();
 			ValidateGameBin();
-			ThrowIfGameRunning();
+			_ensureGameStopped();
 			EnsureNoPendingJournals();
 			var currentManifest = ReadMatchingManifest(plan);
 			EnsureCommitPrerequisites(plan.Definition, currentManifest);
@@ -822,7 +826,7 @@ public sealed class ReduxGameDirectoryInstallService
 				foreach (var write in plan.Writes)
 				{
 					cancellationToken.ThrowIfCancellationRequested();
-					ThrowIfGameRunning();
+					_ensureGameStopped();
 					var current = CaptureDestination(write.RelativePath);
 					if (!SameSnapshot(write.Before, current))
 						throw new InvalidOperationException("A native destination changed after the installation review.");
@@ -1365,10 +1369,42 @@ public sealed class ReduxGameDirectoryInstallService
 		var json = File.ReadAllText(_manifestPath, Encoding.UTF8);
 		using var document = JsonDocument.Parse(json);
 		EnsureNoDuplicateJsonProperties(document.RootElement);
+		if (HasLegacyVersion(document.RootElement)) return ReadLegacyManifest(json);
 		var manifest = JsonSerializer.Deserialize<NativeInstallManifest>(json, JsonOptions)
 			?? throw new InvalidDataException("Redux's native ownership manifest is empty.");
 		ValidateManifest(manifest);
 		return manifest;
+	}
+
+	private NativeInstallManifest ReadLegacyManifest(string json)
+	{
+		var legacy = JsonSerializer.Deserialize<LegacyNativeInstallManifest>(json, JsonOptions)
+			?? throw new InvalidDataException("Redux's legacy native ownership manifest is empty.");
+		ValidateLegacyManifest(legacy);
+		var recordedAt = new DateTimeOffset(File.GetLastWriteTimeUtc(_manifestPath));
+		return new NativeInstallManifest
+		{
+			Version = ManifestVersion,
+			GameBinIdentity = legacy.GameBinIdentity,
+			Installations = legacy.Installations.Select(installation =>
+			{
+				var definition = ReduxGameDirectoryModCatalog.Find(installation.ProjectId)!;
+				return new NativeOwnedInstallation
+				{
+					PackageId = definition.PackageId,
+					NexusModId = definition.NexusModId,
+					Name = definition.Name,
+					SourceUrl = definition.SourceUrl,
+					// V1 retained no archive provenance. This fingerprint identifies its ownership
+					// record only; it is never used to assert archive trust.
+					ArchiveName = "Legacy Redux ownership record",
+					ArchiveHash = HashLegacyOwnershipRecord(installation),
+					DetectedVersion = String.Empty,
+					InstalledAtUtc = recordedAt,
+					Files = installation.Files.Select(CloneOwnedFile).ToList()
+				};
+			}).ToList()
+		};
 	}
 
 	private void EnsureNoPendingJournals()
@@ -1385,7 +1421,8 @@ public sealed class ReduxGameDirectoryInstallService
 			EnsureNoDuplicateJsonProperties(document.RootElement);
 			var journal = JsonSerializer.Deserialize<NativeJournal>(json, JsonOptions)
 				?? throw new InvalidDataException("A native installer journal is empty.");
-			ValidateJournal(journal);
+			if (HasLegacyVersion(document.RootElement)) ValidateLegacyJournal(journal);
+			else ValidateJournal(journal);
 		}
 		throw new ReduxGameDirectoryRecoveryException("A previous game-directory installation did not finish. Do not launch the game; inspect the recovery journal and immutable backups before continuing.");
 	}
@@ -1755,46 +1792,92 @@ public sealed class ReduxGameDirectoryInstallService
 				|| sourceUri.Scheme != Uri.UriSchemeHttps || !IsHash(installation.ArchiveHash)
 				|| String.IsNullOrWhiteSpace(installation.ArchiveName) || installation.ArchiveName.Length > 260
 				|| !String.Equals(installation.ArchiveName, Path.GetFileName(installation.ArchiveName), StringComparison.Ordinal)
-				|| installation.DetectedVersion == null || installation.DetectedVersion.Length > 64
-				|| installation.InstalledAtUtc == default || installation.Files == null || installation.Files.Count == 0)
+				|| installation.DetectedVersion == null || installation.DetectedVersion.Length > 64 || installation.InstalledAtUtc == default)
 				throw new InvalidDataException("Redux's native ownership manifest has an invalid installation entry.");
-			var allowed = definition.RelativeFiles.Select(ToTargetRelative).ToHashSet(StringComparer.Ordinal);
-			var paths = new HashSet<string>(StringComparer.Ordinal);
-			foreach (var file in installation.Files)
-			{
-				if (file == null || !allowed.Contains(file.RelativePath) || !paths.Add(file.RelativePath)
-					|| !IsHash(file.InstalledHash) || (file.Created && (!String.IsNullOrEmpty(file.OriginalHash) || !String.IsNullOrEmpty(file.OriginalBackupId)))
-					|| (!file.Created && (!IsHash(file.OriginalHash) || !IsIdentifier(file.OriginalBackupId))))
-				{
-					throw new InvalidDataException("Redux's native ownership manifest has an unsafe file record.");
-				}
-			}
-			var dlls = definition.RelativeFiles.Where(path => path.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)).Select(ToTargetRelative);
-			if (dlls.Any(path => !paths.Contains(path)))
-				throw new InvalidDataException("Redux's native ownership manifest is missing a managed native DLL.");
-			if (definition.Kind == ReduxGameDirectoryModKind.NativeLoader && paths.Count != allowed.Count)
-				throw new InvalidDataException("Redux's Native Mod Loader ownership record is incomplete.");
+			ValidateOwnedFiles(definition, installation.Files, "Redux's native ownership manifest");
 		}
+	}
+
+	private void ValidateLegacyManifest(LegacyNativeInstallManifest manifest)
+	{
+		if (manifest.Version != LegacyManifestVersion
+			|| !String.Equals(manifest.GameBinIdentity, _gameBinIdentity, StringComparison.Ordinal)
+			|| manifest.Installations == null || manifest.Installations.Count > LegacyProjectIds.Count)
+		{
+			throw new InvalidDataException("Redux's legacy native ownership manifest is foreign or invalid.");
+		}
+		var projectIds = new HashSet<long>();
+		foreach (var installation in manifest.Installations)
+		{
+			if (installation == null) throw new InvalidDataException("Redux's legacy native ownership manifest has a null installation entry.");
+			var definition = ReduxGameDirectoryModCatalog.Find(installation.ProjectId);
+			if (definition == null || !LegacyProjectIds.Contains(installation.ProjectId) || !projectIds.Add(installation.ProjectId))
+				throw new InvalidDataException("Redux's legacy native ownership manifest has an invalid installation entry.");
+			ValidateOwnedFiles(definition, installation.Files, "Redux's legacy native ownership manifest");
+		}
+	}
+
+	private static void ValidateOwnedFiles(ReduxGameDirectoryModDefinition definition,
+		IReadOnlyCollection<NativeOwnedFile>? files, string stateName)
+	{
+		if (files == null || files.Count == 0)
+			throw new InvalidDataException($"{stateName} has an invalid installation entry.");
+		var allowed = definition.RelativeFiles.Select(ToTargetRelative).ToHashSet(StringComparer.Ordinal);
+		var paths = new HashSet<string>(StringComparer.Ordinal);
+		foreach (var file in files)
+		{
+			if (file == null || !allowed.Contains(file.RelativePath) || !paths.Add(file.RelativePath)
+				|| !IsHash(file.InstalledHash) || (file.Created && (!String.IsNullOrEmpty(file.OriginalHash) || !String.IsNullOrEmpty(file.OriginalBackupId)))
+				|| (!file.Created && (!IsHash(file.OriginalHash) || !IsIdentifier(file.OriginalBackupId))))
+			{
+				throw new InvalidDataException($"{stateName} has an unsafe file record.");
+			}
+		}
+		var dlls = definition.RelativeFiles.Where(path => path.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)).Select(ToTargetRelative);
+		if (dlls.Any(path => !paths.Contains(path)))
+			throw new InvalidDataException($"{stateName} is missing a managed native DLL.");
+		if (definition.Kind == ReduxGameDirectoryModKind.NativeLoader && paths.Count != allowed.Count)
+			throw new InvalidDataException("Redux's Native Mod Loader ownership record is incomplete.");
 	}
 
 	private void ValidateJournal(NativeJournal journal)
 	{
 		if (journal.Version != ManifestVersion || !String.Equals(journal.GameBinIdentity, _gameBinIdentity, StringComparison.Ordinal)
 			|| journal.Operation is not ("install" or "restore") || ReduxGameDirectoryModCatalog.Find(journal.ProjectId) == null
-			|| !IsIdentifier(journal.TransactionId) || journal.Files == null || journal.Files.Count == 0)
+			|| !IsIdentifier(journal.TransactionId))
 		{
 			throw new InvalidDataException("A native installer journal is foreign or invalid.");
 		}
 		var definition = ReduxGameDirectoryModCatalog.Find(journal.ProjectId)!;
+		ValidateJournalFiles(definition, journal.Files, "A native installer journal");
+	}
+
+	private void ValidateLegacyJournal(NativeJournal journal)
+	{
+		if (journal.Version != LegacyManifestVersion || !String.Equals(journal.GameBinIdentity, _gameBinIdentity, StringComparison.Ordinal)
+			|| journal.Operation is not ("install" or "restore") || !LegacyProjectIds.Contains(journal.ProjectId)
+			|| ReduxGameDirectoryModCatalog.Find(journal.ProjectId) == null || !IsIdentifier(journal.TransactionId))
+		{
+			throw new InvalidDataException("A legacy native installer journal is foreign or invalid.");
+		}
+		ValidateJournalFiles(ReduxGameDirectoryModCatalog.Find(journal.ProjectId)!, journal.Files,
+			"A legacy native installer journal");
+	}
+
+	private static void ValidateJournalFiles(ReduxGameDirectoryModDefinition definition,
+		IReadOnlyCollection<NativeJournalFile>? files, string stateName)
+	{
+		if (files == null || files.Count == 0)
+			throw new InvalidDataException($"{stateName} is foreign or invalid.");
 		var allowed = definition.RelativeFiles.Select(ToTargetRelative).ToHashSet(StringComparer.Ordinal);
 		var paths = new HashSet<string>(StringComparer.Ordinal);
-		foreach (var file in journal.Files)
+		foreach (var file in files)
 		{
 			if (file == null || !allowed.Contains(file.RelativePath) || !paths.Add(file.RelativePath) || !IsHash(file.StagedHash)
 				|| (file.BeforeExists && (!IsHash(file.BeforeHash) || !IsIdentifier(file.BackupId)))
 				|| (!file.BeforeExists && (!String.IsNullOrEmpty(file.BeforeHash) || !String.IsNullOrEmpty(file.BackupId))))
 			{
-				throw new InvalidDataException("A native installer journal contains an unsafe file record.");
+				throw new InvalidDataException($"{stateName} contains an unsafe file record.");
 			}
 		}
 	}
@@ -1842,6 +1925,16 @@ public sealed class ReduxGameDirectoryInstallService
 	}
 
 	private static bool IsIdentifier(string? value) => value != null && Guid.TryParseExact(value, "N", out _);
+
+	private static bool HasLegacyVersion(JsonElement root) => root.ValueKind == JsonValueKind.Object
+		&& root.TryGetProperty("Version", out var version)
+		&& version.ValueKind == JsonValueKind.Number
+		&& version.TryGetInt32(out var number)
+		&& number == LegacyManifestVersion;
+
+	private static string HashLegacyOwnershipRecord(LegacyNativeOwnedInstallation installation) => HashText(
+		$"{installation.ProjectId}\n{String.Join("\n", installation.Files.OrderBy(file => file.RelativePath, StringComparer.Ordinal)
+			.Select(file => $"{file.RelativePath}|{file.InstalledHash}|{file.Created}|{file.OriginalHash}|{file.OriginalBackupId}"))}");
 
 	private static void EnsureNoDuplicateJsonProperties(JsonElement element)
 	{
@@ -2013,6 +2106,19 @@ public sealed class ReduxGameDirectoryInstallService
 		public int Version { get; set; }
 		public string GameBinIdentity { get; set; } = String.Empty;
 		public List<NativeOwnedInstallation> Installations { get; set; } = new();
+	}
+
+	private sealed class LegacyNativeInstallManifest
+	{
+		public int Version { get; set; }
+		public string GameBinIdentity { get; set; } = String.Empty;
+		public List<LegacyNativeOwnedInstallation> Installations { get; set; } = new();
+	}
+
+	private sealed class LegacyNativeOwnedInstallation
+	{
+		public long ProjectId { get; set; }
+		public List<NativeOwnedFile> Files { get; set; } = new();
 	}
 
 	internal sealed class NativeOwnedInstallation

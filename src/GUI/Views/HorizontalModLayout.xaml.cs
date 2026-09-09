@@ -250,6 +250,9 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 	private const double CollapsedModDetailsRowHeight = 58;
 	private const double ModDetailsSplitterHeight = 6;
 	private const double CollapsedCategoriesWidth = 52;
+	private const double DefaultDownloadsPaneWidth = 460;
+	private const double MinimumDownloadsPaneWidth = 280;
+	private const double MinimumExpandedModListWidth = 180;
 	// Fallback seed only, used before the panel has real category data to measure against.
 	private const double MinimumExpandedCategoriesWidth = 180;
 	private const double DefaultExpandedCategoriesWidth = 220;
@@ -1062,45 +1065,44 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 				Tag = SourceLinkMenuTag,
 				Icon = ReduxIcon.FromResource("Redux.Icon.LinkStroke", true)
 			};
-			if (mod.Metadata.SourceType == ModSourceType.MODIO)
+			var currentSource = mod.Metadata.SourceType;
+			var currentLink = mod.Metadata.SourcePageUrl;
+			var hasLinkedPage = !String.IsNullOrWhiteSpace(currentLink);
+			var sourceBorderBrush = currentSource == ModSourceType.MODIO
+				? "Redux.Pill.Modio.Border"
+				: "Redux.Pill.Nexus.Border";
+			var sourceBackgroundBrush = currentSource == ModSourceType.MODIO
+				? "Redux.Pill.Modio.Background"
+				: "Redux.Pill.Nexus.Background";
+			var linkItem = new MenuItem
 			{
-				sourceMenu.Items.Add(new MenuItem
-				{
-					Header = "Linked to mod.io",
-					IsEnabled = false,
-					ToolTip = "This package identifies itself as a mod.io mod.",
-					Icon = ReduxIcon.FromResource("Redux.Icon.Information", true, "ReduxInfoBrush")
-				});
-			}
-			else
+				Header = hasLinkedPage ? "Change Linked Mod Page..." : "Link Mod Page...",
+				Icon = ReduxIcon.FromResource("Redux.Icon.LinkStroke", true, sourceBorderBrush)
+			};
+			ApplySemanticMenuHover(linkItem, sourceBackgroundBrush, sourceBorderBrush);
+			linkItem.Click += async (_, _) => await ShowManualModPageDialogAsync(mod);
+			sourceMenu.Items.Add(linkItem);
+			if (hasLinkedPage)
 			{
-				var hasNexusLink = mod.NexusModsData?.ModId >= DivinityApp.NEXUSMODS_MOD_ID_START;
-				var linkItem = new MenuItem
+				sourceMenu.Items.Add(new Separator());
+				var unlinkItem = new MenuItem
 				{
-					Header = hasNexusLink ? "Change Linked Mod Page..." : "Link Mod Page...",
-					Icon = ReduxIcon.FromResource("Redux.Icon.LinkStroke", true, "Redux.Pill.Nexus.Border")
+					Header = "Unlink Mod Page",
+					Icon = ReduxIcon.FromResource("Redux.Icon.UnlinkStroke", true, "ReduxErrorBrush")
 				};
-				ApplySemanticMenuHover(linkItem, "Redux.Pill.Nexus.Background", "Redux.Pill.Nexus.Border");
-				linkItem.Click += (_, _) => ShowManualNexusLinkDialog(mod);
-				sourceMenu.Items.Add(linkItem);
-				if (hasNexusLink)
+				ApplySemanticMenuHover(unlinkItem, "ReduxErrorPillBackground", "ReduxErrorBrush");
+				unlinkItem.Click += async (_, _) =>
 				{
-					sourceMenu.Items.Add(new Separator());
-					var unlinkItem = new MenuItem
+					var result = ShowCategoryMessage(
+						$"Remove the {mod.Metadata.SourceLabel} source link from '{mod.DisplayName}'?\n\nThe installed package and its load-order position will not be changed.",
+						"Unlink Mod Page", MessageBoxButton.YesNo, MessageBoxImage.Question);
+					if (result == MessageBoxResult.Yes && !await ViewModel.UnlinkModPageAsync(mod))
 					{
-						Header = "Unlink Mod Page",
-						Icon = ReduxIcon.FromResource("Redux.Icon.UnlinkStroke", true, "ReduxErrorBrush")
-					};
-					ApplySemanticMenuHover(unlinkItem, "ReduxErrorPillBackground", "ReduxErrorBrush");
-					unlinkItem.Click += (_, _) =>
-					{
-						var result = ShowCategoryMessage(
-							$"Remove the Nexus Mods source link from '{mod.DisplayName}'?\n\nThe installed package and its load-order position will not be changed.",
-							"Unlink Mod Page", MessageBoxButton.YesNo, MessageBoxImage.Question);
-						if (result == MessageBoxResult.Yes) ViewModel.UnlinkNexusMod(mod);
-					};
-					sourceMenu.Items.Add(unlinkItem);
-				}
+						ShowCategoryMessage("Redux could not save the source-link removal. Check the log and try again.",
+							"Unlink Mod Page", MessageBoxButton.OK, MessageBoxImage.Error);
+					}
+				};
+				sourceMenu.Items.Add(unlinkItem);
 			}
 			menu.Items.Insert(Math.Min(3, menu.Items.Count), sourceMenu);
 		}
@@ -1261,18 +1263,17 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		};
 	}
 
-	private void ShowManualNexusLinkDialog(DivinityModData mod)
+	private async Task ShowManualModPageDialogAsync(DivinityModData mod)
 	{
-		var currentLink = mod.NexusModsData?.ModId >= DivinityApp.NEXUSMODS_MOD_ID_START
-			? mod.NexusModsData.SourcePageUrl
-			: null;
+		var currentLink = mod.Metadata.SourcePageUrl;
 		var dialog = new NexusManualLinkDialog(currentLink) { Owner = Window.GetWindow(this) };
 		ReduxThemeService.Apply(dialog.Resources, ViewModel.Settings.ColorTheme,
 			ReduxThemeService.GetActiveTheme(ViewModel.Settings), ViewModel.Settings.UsesGeneratedGradients);
 		if (dialog.ShowDialog() != true) return;
-		if (!ViewModel.TryManuallyLinkNexusMod(mod, dialog.NexusLink, out var error))
+		var error = await ViewModel.TryManuallyLinkModPageAsync(mod, dialog.ModPageLink);
+		if (!String.IsNullOrWhiteSpace(error))
 		{
-			ShowCategoryMessage(error, "Link Nexus Mods Project", MessageBoxButton.OK, MessageBoxImage.Information);
+			ShowCategoryMessage(error, "Link Mod Page", MessageBoxButton.OK, MessageBoxImage.Information);
 		}
 	}
 
@@ -2617,6 +2618,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			InactiveModsColumn.MaxWidth = CollapsedCategoriesWidth;
 			InactiveModsColumn.Width = new GridLength(CollapsedCategoriesWidth);
 			ActiveModsColumn.Width = new GridLength(1, GridUnitType.Star);
+			RefreshDownloadsLayout();
 			return;
 		}
 
@@ -2625,6 +2627,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		// Preserve the user's splitter ratio while retaining responsive star sizing.
 		ActiveModsColumn.Width = new GridLength(Math.Max(1, activeWeight), GridUnitType.Star);
 		InactiveModsColumn.Width = new GridLength(Math.Max(1, inactiveWeight), GridUnitType.Star);
+		RefreshDownloadsLayout();
 	}
 
 	private async void UpdateCategoriesLayout(bool isExpanded)
@@ -2665,6 +2668,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			CategoriesColumn.MinWidth = CollapsedCategoriesWidth;
 			CategoriesColumn.MaxWidth = CollapsedCategoriesWidth;
 			CategoriesColumn.Width = new GridLength(CollapsedCategoriesWidth);
+			RefreshDownloadsLayout();
 			return;
 		}
 
@@ -2672,6 +2676,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		CategoriesColumn.MinWidth = _minimumExpandedCategoriesWidth;
 		CategoriesColumn.Width = new GridLength(Math.Max(_minimumExpandedCategoriesWidth, _lastExpandedCategoriesWidth));
 		CategoriesGridSplitter.IsEnabled = true;
+		RefreshDownloadsLayout();
 	}
 
 	/// <summary>
@@ -2724,6 +2729,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 				CategoriesColumn.Width = new GridLength(_minimumExpandedCategoriesWidth);
 			}
 		}
+		RefreshDownloadsLayout();
 	}
 
 	private void ForceLoadedModsListView_ItemContainerStatusChanged(EventArgs e)
@@ -2918,6 +2924,142 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		}
 	}
 
+	public bool TryShowNxmDownloadsPane()
+	{
+		if (!IsLoaded || ViewModel == null) return false;
+		if (!ViewModel.Settings.NxmDownloadsPaneVisible)
+		{
+			ViewModel.Settings.NxmDownloadsPaneVisible = true;
+			ViewModel.SaveSettings();
+		}
+		return true;
+	}
+
+	internal void FocusNxmDownload(Models.NexusMods.NxmDownloadItem item)
+	{
+		if (!TryShowNxmDownloadsPane()) return;
+		DownloadsPane.FocusDownload(item);
+	}
+
+	private void UpdateDownloadsLayout(bool visible)
+	{
+		if (DownloadsColumn == null || DownloadsSplitterColumn == null) return;
+		DownloadsSplitterColumn.Width = new GridLength(visible ? 4 : 0);
+		DownloadsColumn.MinWidth = 0;
+		DownloadsColumn.MaxWidth = Double.PositiveInfinity;
+		if (!visible)
+		{
+			DownloadsColumn.Width = new GridLength(0);
+			ApplyModListMinimumWidths(0);
+			return;
+		}
+
+		var width = ClampDownloadsWidth(ViewModel.Settings.NxmDownloadsPaneWidth);
+		DownloadsColumn.MinWidth = Math.Min(MinimumDownloadsPaneWidth, GetDownloadsMaximumWidth());
+		DownloadsColumn.Width = new GridLength(width);
+		ApplyModListMinimumWidths(width);
+	}
+
+	private void ModLayout_SizeChanged(object sender, SizeChangedEventArgs e)
+	{
+		if (!e.WidthChanged) return;
+		WorkspaceGrid.MaxWidth = Math.Max(0, e.NewSize.Width);
+		RestoreResponsiveModListWidths();
+		if (ViewModel?.Settings.NxmDownloadsPaneVisible == true) UpdateDownloadsLayout(true);
+	}
+
+	private void RestoreResponsiveModListWidths()
+	{
+		if (ViewModel == null) return;
+		// Transitions animate with pixel widths. Reapply their current ratio as stars before
+		// the resized grid measures, otherwise the old wide-window pixels can overflow it.
+		_inactiveModsTransition?.Cancel();
+		if (!ViewModel.IsInactiveModsExpanded)
+		{
+			InactiveModsColumn.MinWidth = CollapsedCategoriesWidth;
+			InactiveModsColumn.MaxWidth = CollapsedCategoriesWidth;
+			InactiveModsColumn.Width = new GridLength(CollapsedCategoriesWidth);
+			ActiveModsColumn.Width = new GridLength(1, GridUnitType.Star);
+			return;
+		}
+
+		InactiveModsColumn.MaxWidth = Double.PositiveInfinity;
+		if (ActiveModsColumn.ActualWidth <= 0 || InactiveModsColumn.ActualWidth <= 0)
+		{
+			ActiveModsColumn.Width = new GridLength(1, GridUnitType.Star);
+			InactiveModsColumn.Width = new GridLength(1, GridUnitType.Star);
+			return;
+		}
+
+		ActiveModsColumn.Width = new GridLength(ActiveModsColumn.ActualWidth, GridUnitType.Star);
+		InactiveModsColumn.Width = new GridLength(InactiveModsColumn.ActualWidth, GridUnitType.Star);
+	}
+
+	private void DownloadsGridSplitter_DragCompleted(object sender, DragCompletedEventArgs e)
+	{
+		if (!e.Canceled) Dispatcher.BeginInvoke(new Action(() => PersistDownloadsPaneWidth(DownloadsColumn.ActualWidth)));
+	}
+
+	private double GetDownloadsMaximumWidth()
+	{
+		var available = GetModPanesAvailableWidth();
+		if (ViewModel?.IsInactiveModsExpanded == false)
+		{
+			var activeMinimum = Math.Min(MinimumExpandedModListWidth,
+				Math.Max(0, available - CollapsedCategoriesWidth));
+			return Math.Max(0, available - activeMinimum - CollapsedCategoriesWidth);
+		}
+
+		var expandedMinimum = Math.Min(MinimumExpandedModListWidth, available / 2);
+		return Math.Max(0, available - (expandedMinimum * 2));
+	}
+
+	private double GetModPanesAvailableWidth()
+	{
+		if (ActualWidth <= 0) return DefaultDownloadsPaneWidth + (MinimumExpandedModListWidth * 2);
+		var categoriesWidth = Math.Max(CategoriesColumn.MinWidth, CategoriesColumn.ActualWidth);
+		var splitterWidth = 8 + (ViewModel?.Settings.NxmDownloadsPaneVisible == true ? 4 : 0);
+		return Math.Max(0, ActualWidth - categoriesWidth - splitterWidth);
+	}
+
+	private void ApplyModListMinimumWidths(double downloadsWidth)
+	{
+		var available = Math.Max(0, GetModPanesAvailableWidth() - downloadsWidth);
+		if (ViewModel?.IsInactiveModsExpanded == false)
+		{
+			ActiveModsColumn.MinWidth = Math.Min(MinimumExpandedModListWidth,
+				Math.Max(0, available - CollapsedCategoriesWidth));
+			InactiveModsColumn.MinWidth = CollapsedCategoriesWidth;
+			return;
+		}
+
+		var expandedMinimum = Math.Min(MinimumExpandedModListWidth, available / 2);
+		ActiveModsColumn.MinWidth = expandedMinimum;
+		InactiveModsColumn.MinWidth = expandedMinimum;
+	}
+
+	private double ClampDownloadsWidth(double width)
+	{
+		var maximum = GetDownloadsMaximumWidth();
+		var minimum = Math.Min(MinimumDownloadsPaneWidth, maximum);
+		if (Double.IsNaN(width) || Double.IsInfinity(width) || width <= 0) width = DefaultDownloadsPaneWidth;
+		return Math.Clamp(width, minimum, Math.Max(minimum, maximum));
+	}
+
+	private void PersistDownloadsPaneWidth(double width)
+	{
+		if (ViewModel == null || width < MinimumDownloadsPaneWidth) return;
+		var clamped = ClampDownloadsWidth(width);
+		if (Math.Abs(ViewModel.Settings.NxmDownloadsPaneWidth - clamped) < 0.5) return;
+		ViewModel.Settings.NxmDownloadsPaneWidth = clamped;
+		ViewModel.SaveSettings();
+	}
+
+	private void RefreshDownloadsLayout()
+	{
+		if (ViewModel?.Settings.NxmDownloadsPaneVisible == true) UpdateDownloadsLayout(true);
+	}
+
 	public HorizontalModLayout()
 	{
 		InitializeComponent();
@@ -2948,6 +3090,9 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 					.ObserveOn(RxApp.MainThreadScheduler)
 					.Subscribe(_ => UpdateMinimumExpandedCategoriesWidth()));
 				UpdateMinimumExpandedCategoriesWidth();
+				d(ViewModel.Settings.WhenAnyValue(x => x.NxmDownloadsPaneVisible)
+					.ObserveOn(RxApp.MainThreadScheduler)
+					.Subscribe(UpdateDownloadsLayout));
 				d(this.Events().KeyUp.Select(e => e.Key != Key.System ? e.Key : e.SystemKey).Subscribe(ViewModel.OnKeyUp));
 				d(this.Events().KeyDown.Select(e => e.Key != Key.System ? e.Key : e.SystemKey).Subscribe(key =>
 				{

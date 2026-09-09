@@ -29,7 +29,9 @@ public class ModioCacheHandler : IExternalModCacheHandler<ModioCachedData>
 		var candidates = mods
 			.Where(mod => !mod.ModioData.HasMetadata
 				&& !HasAuthoritativeNexusAssociation(mod)
-				&& (mod.PublishHandle > 0
+				&& (mod.ModioData.MetadataOrigin == ModioMetadataOrigin.Manual
+						&& !String.IsNullOrWhiteSpace(mod.ModioData.NameId)
+					|| mod.PublishHandle > 0
 					|| mod.NexusModsData.MetadataOrigin != NexusMetadataOrigin.ManualUnlinked
 					&& mod.CreatorManifest?.IsValid == true
 						&& mod.CreatorManifest.Sources.Any(source =>
@@ -43,12 +45,24 @@ public class ModioCacheHandler : IExternalModCacheHandler<ModioCachedData>
 			cancellationToken.ThrowIfCancellationRequested();
 			try
 			{
+				var isManual = mod.ModioData.MetadataOrigin == ModioMetadataOrigin.Manual;
+				var manualNameId = mod.ModioData.NameId;
+				var manualPageUrl = mod.ModioData.ProfileUrl;
 				var creatorSource = mod.CreatorManifest?.IsValid == true
 					? mod.CreatorManifest.Sources.FirstOrDefault(source =>
 						source.Service == ReduxCreatorManifestService.ModioSourceService)
 					: null;
 				ModioModData data;
-				if (mod.PublishHandle > 0)
+				if (isManual && !String.IsNullOrWhiteSpace(manualNameId))
+				{
+					DivinityApp.Log($"Requesting manually linked mod.io metadata for '{mod.DisplayName}'.");
+					data = await ModioDataLoader.LoadModDataByNameIdAsync(
+						mod,
+						manualNameId,
+						APIKey,
+						cancellationToken);
+				}
+				else if (mod.PublishHandle > 0)
 				{
 					DivinityApp.Log($"Requesting mod.io metadata for '{mod.DisplayName}' using PublishHandle {mod.PublishHandle}.");
 					data = await ModioDataLoader.LoadModDataAsync(mod, APIKey, cancellationToken);
@@ -65,9 +79,16 @@ public class ModioCacheHandler : IExternalModCacheHandler<ModioCachedData>
 				else continue;
 				if (data != null)
 				{
-					data.MetadataOrigin = mod.PublishHandle > 0
-						? ModioMetadataOrigin.NativePackage
-						: ModioMetadataOrigin.CreatorManifest;
+					data.MetadataOrigin = isManual
+						? ModioMetadataOrigin.Manual
+						: mod.PublishHandle > 0
+							? ModioMetadataOrigin.NativePackage
+							: ModioMetadataOrigin.CreatorManifest;
+					if (isManual)
+					{
+						data.NameId = manualNameId;
+						data.ProfileUrl = manualPageUrl;
+					}
 					mod.ModioData.Update(data);
 					CacheData.Mods[mod.UUID] = data;
 					changed = true;
@@ -88,6 +109,11 @@ public class ModioCacheHandler : IExternalModCacheHandler<ModioCachedData>
 		if (mod == null || data == null || HasAuthoritativeNexusAssociation(mod))
 		{
 			return false;
+		}
+
+		if (data.MetadataOrigin == ModioMetadataOrigin.Manual)
+		{
+			return data.HasAssociation;
 		}
 
 		if (data.MetadataOrigin != ModioMetadataOrigin.CreatorManifest)

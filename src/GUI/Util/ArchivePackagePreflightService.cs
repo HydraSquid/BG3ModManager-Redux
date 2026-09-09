@@ -236,6 +236,18 @@ public static class ArchivePackagePreflightService
 						"Redux could not extract this PAK from the selected archive."));
 				}
 			}
+			// Every staged PAK is available to its siblings in one archive. Re-run the
+			// pure health analysis after all metadata is loaded so a bundled library is
+			// not incorrectly presented as an external missing dependency.
+			if (packages.Count > 1)
+			{
+				var loadedPackages = packages.Select(package => package.Mod).Where(mod => mod != null).ToArray();
+				packages = packages.Select(package => PackagePreflightService.AnalyzeLoadedPackage(
+					package.PackagePath,
+					package.Mod,
+					(installedMods ?? Enumerable.Empty<DivinityModData>()).Concat(loadedPackages.Where(mod => mod != package.Mod)))
+					.WithSource(package.PackagePath, package.PackageSize)).ToList();
+			}
 
 			return new ArchivePackagePreflightResult(
 				normalizedPath,

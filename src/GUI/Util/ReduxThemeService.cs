@@ -336,6 +336,8 @@ public static class ReduxThemeService
 		SetBrushResource(resources, "ReduxWarningPillBackground", CreatePillGradient(palette["ReduxWarningColor"]));
 		SetBrushResource(resources, "ReduxErrorPillBackground", CreatePillGradient(palette["ReduxErrorColor"]));
 		SetBrushResource(resources, "ReduxInfoPillBackground", CreatePillGradient(palette["ReduxInfoColor"]));
+		SetBrushResource(resources, "ReduxTableAlternateRowBrush",
+			new SolidColorBrush(palette["ReduxTextPrimaryColor"]) { Opacity = 0.06 });
 		// Regenerate action brushes from the active palette. This also prevents a custom-theme
 		// brush from surviving when the user switches back to the same built-in theme.
 		var primaryActionOwner = FindResourceOwner(resources, "ReduxPrimaryActionBackgroundBrush") ?? resources;

@@ -722,10 +722,13 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 		try
 		{
 			await ViewModel.ShutdownNxmDownloadsAsync();
+			if (ViewModel.Settings.SaveWindowLocation) UpdateWindowSettings();
+			if (!ViewModel.SaveSettings()) throw new IOException("Settings could not be saved during shutdown.");
 			_nxmShutdownReady = true;
 		}
 		catch (Exception ex)
 		{
+			_closeConfirmed = false;
 			if (_updateRestartRequested)
 			{
 				Services.Get<ReduxUpdateLaunchService>()?.CancelPending();
@@ -733,9 +736,9 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 					"The update was not applied because Redux could not safely finish closing. Try again after the download queue is saved.");
 				_updateRestartRequested = false;
 			}
-			DivinityApp.Log($"Could not stop Nexus downloads during shutdown:\n{ex}");
+			DivinityApp.Log($"Could not finish shutdown: {ex.GetType().Name}");
 			ReduxMessageBox.Show(this,
-				"Redux could not safely pause and save the download queue. The window will remain open so you can try again.",
+				"Redux could not safely save settings or pause the download queue. The window will remain open so you can try again.",
 				"Shutdown Paused", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning, System.Windows.MessageBoxResult.OK);
 		}
 		finally
@@ -747,8 +750,6 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 
 	private void OnClosed()
 	{
-		if (ViewModel.Settings.SaveWindowLocation) UpdateWindowSettings();
-		ViewModel.SaveSettings();
 		if (_updateRestartRequested)
 		{
 			var launcher = Services.Get<ReduxUpdateLaunchService>();
@@ -923,6 +924,11 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 		try
 		{
 			await ViewModel.EnsureNxmDownloadsInitializedAsync();
+			if (MainView?.ModLayout?.TryShowNxmDownloadsPane() == true)
+			{
+				if (bringToFront) BringMainWindowToFront();
+				return;
+			}
 			if (_nexusDownloadsWindow?.IsVisible == true)
 			{
 				if (bringToFront) BringNexusDownloadsToFront();
@@ -939,6 +945,13 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 			ReduxMessageBox.Show(this, ex.Message, "Could Not Open Download Manager",
 				System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error, System.Windows.MessageBoxResult.OK);
 		}
+	}
+
+	private void BringMainWindowToFront()
+	{
+		if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
+		Show();
+		Activate();
 	}
 
 	private void BringNexusDownloadsToFront()
@@ -1131,6 +1144,8 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 	public void RevealAfterStartup()
 	{
 		_isPreparingStartup = false;
+		// Offscreen preparation must not prevent subsequent maximized NXM activation.
+		ShowActivated = true;
 		if (_deferredStartupWindowSettings != null)
 		{
 			var settings = _deferredStartupWindowSettings;

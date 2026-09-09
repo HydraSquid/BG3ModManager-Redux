@@ -1,6 +1,7 @@
 using DivinityModManager.AppServices;
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -307,6 +308,109 @@ public sealed class ReduxGameDirectoryInstallServiceTests
 		RegressionAssert.True(status.IsPresent);
 		RegressionAssert.True(status.IsVerified);
 		RegressionAssert.Contains(status.Description, "verified");
+	}
+
+	public void GameRunningGuardStopsStageCommitAndRestoreBeforeWrites()
+	{
+		using var fixture = new NativeFixture();
+		var vanilla = fixture.Pe("guarded vanilla");
+		var loader = fixture.Pe("guarded loader");
+		fixture.WriteVanillaLoader(vanilla);
+		fixture.CreateLoaderArchive(loader, vanilla);
+
+		RegressionAssert.Throws<InvalidOperationException>(() => fixture.Installer(ensureGameStopped: ThrowSyntheticGameRunning)
+			.StageAsync(944, fixture.LoaderArchivePath, CancellationToken.None).GetAwaiter().GetResult());
+		RegressionAssert.SequenceEqual(vanilla, File.ReadAllBytes(fixture.LoaderPath));
+		RegressionAssert.False(File.Exists(fixture.LoaderOriginalPath));
+		RegressionAssert.Equal(0, fixture.StagingDirectoryCount());
+
+		var guardCalls = 0;
+		Action throwOnCommit = () =>
+		{
+			if (++guardCalls == 2) ThrowSyntheticGameRunning();
+		};
+		var transaction = fixture.Installer(ensureGameStopped: throwOnCommit)
+			.StageAsync(944, fixture.LoaderArchivePath, CancellationToken.None).GetAwaiter().GetResult();
+		try
+		{
+			RegressionAssert.Throws<InvalidOperationException>(() => transaction.CommitAsync(CancellationToken.None)
+				.GetAwaiter().GetResult());
+		}
+		finally
+		{
+			transaction.DisposeAsync().AsTask().GetAwaiter().GetResult();
+		}
+		RegressionAssert.SequenceEqual(vanilla, File.ReadAllBytes(fixture.LoaderPath));
+		RegressionAssert.False(File.Exists(fixture.LoaderOriginalPath));
+		RegressionAssert.False(File.Exists(fixture.ManifestPath));
+		RegressionAssert.Equal(0, fixture.BackupFileCount());
+
+		fixture.InstallLoader();
+		var installedLoader = File.ReadAllBytes(fixture.LoaderPath);
+		var installedOriginal = File.ReadAllBytes(fixture.LoaderOriginalPath);
+		var backupCount = fixture.BackupFileCount();
+		RegressionAssert.Throws<InvalidOperationException>(() => fixture.Installer(ensureGameStopped: ThrowSyntheticGameRunning)
+			.RestoreAsync(944, CancellationToken.None).GetAwaiter().GetResult());
+		RegressionAssert.SequenceEqual(installedLoader, File.ReadAllBytes(fixture.LoaderPath));
+		RegressionAssert.SequenceEqual(installedOriginal, File.ReadAllBytes(fixture.LoaderOriginalPath));
+		RegressionAssert.Equal(backupCount, fixture.BackupFileCount());
+	}
+
+	private static void ThrowSyntheticGameRunning() => throw new InvalidOperationException("Synthetic game is running.");
+
+	public void LegacyManifestKeepsReduxOwnedLoaderManagedAndRestorable()
+	{
+		using var fixture = new NativeFixture();
+		var vanilla = fixture.Pe("legacy vanilla loader");
+		var loader = fixture.Pe("legacy Redux loader");
+		fixture.WriteVanillaLoader(loader);
+		File.WriteAllBytes(fixture.LoaderOriginalPath, vanilla);
+		fixture.WriteLegacyManifest(944,
+			("bink2w64.dll", loader, false, vanilla),
+			("bink2w64_original.dll", vanilla, true, null));
+
+		var installer = fixture.Installer();
+		var entry = installer.GetInstalledMods().Single();
+		var status = installer.DetectLoader();
+
+		RegressionAssert.Equal(ReduxGameDirectoryModStatus.Managed, entry.Status);
+		RegressionAssert.Equal("native-mod-loader", entry.PackageId);
+		RegressionAssert.True(status.IsPresent);
+		RegressionAssert.True(status.IsVerified);
+		RegressionAssert.Contains(File.ReadAllText(fixture.LegacyManifestPath), "\"Version\":1");
+
+		installer.RestoreAsync(944, CancellationToken.None).GetAwaiter().GetResult();
+
+		RegressionAssert.SequenceEqual(vanilla, File.ReadAllBytes(fixture.LoaderPath));
+		RegressionAssert.False(File.Exists(fixture.LoaderOriginalPath));
+		using var migrated = System.Text.Json.JsonDocument.Parse(File.ReadAllText(fixture.LegacyManifestPath));
+		RegressionAssert.Equal(2, migrated.RootElement.GetProperty("Version").GetInt32());
+	}
+
+	public void LegacyJournalRequiresRecoveryInsteadOfPermittingMutation()
+	{
+		using var fixture = new NativeFixture();
+		fixture.WriteVanillaLoader(fixture.Pe("legacy journal loader"));
+		var journalPath = fixture.WriteLegacyJournal(944);
+
+		var recovery = fixture.Installer().GetInstalledMods()
+			.Single(entry => entry.Status == ReduxGameDirectoryModStatus.RecoveryRequired);
+		RegressionAssert.Equal("redux-recovery", recovery.PackageId);
+		RegressionAssert.Throws<ReduxGameDirectoryRecoveryException>(() => fixture.Installer().StageAsync(
+			944, fixture.LoaderArchivePath, CancellationToken.None).GetAwaiter().GetResult());
+		RegressionAssert.True(File.Exists(journalPath));
+	}
+
+	public void LegacyManifestRejectsUnknownProjectWithoutClaimingItsFiles()
+	{
+		using var fixture = new NativeFixture();
+		var external = fixture.Pe("external script extender");
+		var externalPath = Path.Combine(fixture.GameBin, "DWrite.dll");
+		File.WriteAllBytes(externalPath, external);
+		fixture.WriteLegacyManifest(2172, ("DWrite.dll", external, true, null));
+
+		RegressionAssert.Throws<InvalidDataException>(() => fixture.Installer().GetInstalledMods());
+		RegressionAssert.SequenceEqual(external, File.ReadAllBytes(externalPath));
 	}
 
 	public void ReduxInstalledLoaderKeepsAProtectedCopyOfTheUsersOriginalDll()
@@ -719,6 +823,9 @@ public sealed class ReduxGameDirectoryInstallServiceTests
 		public string WasdArchivePath { get; }
 		public string CameraArchivePath { get; }
 		public string OtherArchivePath { get; }
+		public string GameBinIdentity => Hash(Encoding.UTF8.GetBytes(GameBin.ToUpperInvariant()));
+		public string LegacyStateRoot => Path.Combine(StateDirectory, "native-mods", GameBinIdentity);
+		public string LegacyManifestPath => Path.Combine(LegacyStateRoot, "manifest.json");
 		public string ManifestPath => Path.Combine(Directory.GetDirectories(Path.Combine(StateDirectory, "native-mods")).Single(), "manifest.json");
 		public string LoaderPath => Path.Combine(GameBin, "bink2w64.dll");
 		public string LoaderOriginalPath => Path.Combine(GameBin, "bink2w64_original.dll");
@@ -737,11 +844,11 @@ public sealed class ReduxGameDirectoryInstallServiceTests
 			File.WriteAllBytes(Path.Combine(GameBin, "bg3.exe"), new byte[] { 1 });
 		}
 
-		public ReduxGameDirectoryInstallService Installer(Version? version = null) =>
-			new(GameBin, StateDirectory, version!, false);
+		public ReduxGameDirectoryInstallService Installer(Version? version = null, Action? ensureGameStopped = null) =>
+			new(GameBin, StateDirectory, version!, false, ensureGameStopped ?? (static () => { }));
 
 		public ReduxGameDirectoryInstallService StrictInstaller(Version? version = null) =>
-			new(GameBin, StateDirectory, version!);
+			new(GameBin, StateDirectory, version!, true, static () => { });
 
 		public byte[] InstallLoader()
 		{
@@ -762,6 +869,56 @@ public sealed class ReduxGameDirectoryInstallServiceTests
 
 		public void WriteVanillaLoader(byte[] vanilla) => File.WriteAllBytes(LoaderPath, vanilla);
 
+		public void WriteLegacyManifest(long projectId,
+			params (string RelativePath, byte[] Installed, bool Created, byte[]? Original)[] files)
+		{
+			Directory.CreateDirectory(Path.Combine(LegacyStateRoot, "backups"));
+			var owned = files.Select(file => new LegacyOwnedFile
+			{
+				RelativePath = file.RelativePath,
+				InstalledHash = Hash(file.Installed),
+				Created = file.Created,
+				OriginalHash = file.Created ? null : Hash(file.Original!),
+				OriginalBackupId = file.Created ? null : Guid.NewGuid().ToString("N")
+			}).ToArray();
+			for (var index = 0; index < files.Length; index++)
+			{
+				if (!files[index].Created)
+					File.WriteAllBytes(Path.Combine(LegacyStateRoot, "backups", owned[index].OriginalBackupId + ".bin"), files[index].Original!);
+			}
+			var manifest = new LegacyManifest
+			{
+				Version = 1,
+				GameBinIdentity = GameBinIdentity,
+				Installations = [new LegacyInstallation { ProjectId = projectId, Files = owned.ToList() }]
+			};
+			File.WriteAllText(LegacyManifestPath, System.Text.Json.JsonSerializer.Serialize(manifest));
+		}
+
+		public string WriteLegacyJournal(long projectId)
+		{
+			var journalDirectory = Path.Combine(LegacyStateRoot, "journals");
+			Directory.CreateDirectory(journalDirectory);
+			var transactionId = Guid.NewGuid().ToString("N");
+			var journal = new LegacyJournal
+			{
+				Version = 1,
+				GameBinIdentity = GameBinIdentity,
+				Operation = "install",
+				ProjectId = projectId,
+				TransactionId = transactionId,
+				Files = [new LegacyJournalFile
+				{
+					RelativePath = "bink2w64.dll",
+					BeforeExists = false,
+					StagedHash = Hash(Pe("legacy staged loader"))
+				}]
+			};
+			var path = Path.Combine(journalDirectory, transactionId + ".json");
+			File.WriteAllText(path, System.Text.Json.JsonSerializer.Serialize(journal));
+			return path;
+		}
+
 		public void CreateLoaderArchive(byte[] loader, byte[] original) => CreateArchive(LoaderArchivePath,
 			("bin/bink2w64.dll", loader),
 			("bin/bink2w64_original.dll", original));
@@ -776,6 +933,8 @@ public sealed class ReduxGameDirectoryInstallServiceTests
 
 		public int StagingDirectoryCount() => Directory.GetDirectories(Path.Combine(
 			Directory.GetDirectories(Path.Combine(StateDirectory, "native-mods")).Single(), "staging")).Length;
+		public int BackupFileCount() => Directory.EnumerateFiles(Path.Combine(LegacyStateRoot, "backups"), "*.bin",
+			SearchOption.TopDirectoryOnly).Count();
 
 		public void CreateArchive(string path, params (string Name, byte[] Bytes)[] files)
 		{
@@ -826,6 +985,50 @@ public sealed class ReduxGameDirectoryInstallServiceTests
 		public void Dispose()
 		{
 			if (Directory.Exists(_root)) Directory.Delete(_root, true);
+		}
+
+		private static string Hash(byte[] bytes) => Convert.ToHexString(
+			System.Security.Cryptography.SHA256.HashData(bytes)).ToLowerInvariant();
+
+		private sealed class LegacyManifest
+		{
+			public int Version { get; set; }
+			public string GameBinIdentity { get; set; } = String.Empty;
+			public List<LegacyInstallation> Installations { get; set; } = new();
+		}
+
+		private sealed class LegacyInstallation
+		{
+			public long ProjectId { get; set; }
+			public List<LegacyOwnedFile> Files { get; set; } = new();
+		}
+
+		private sealed class LegacyOwnedFile
+		{
+			public string RelativePath { get; set; } = String.Empty;
+			public string InstalledHash { get; set; } = String.Empty;
+			public bool Created { get; set; }
+			public string? OriginalHash { get; set; }
+			public string? OriginalBackupId { get; set; }
+		}
+
+		private sealed class LegacyJournal
+		{
+			public int Version { get; set; }
+			public string GameBinIdentity { get; set; } = String.Empty;
+			public string Operation { get; set; } = String.Empty;
+			public long ProjectId { get; set; }
+			public string TransactionId { get; set; } = String.Empty;
+			public List<LegacyJournalFile> Files { get; set; } = new();
+		}
+
+		private sealed class LegacyJournalFile
+		{
+			public string RelativePath { get; set; } = String.Empty;
+			public bool BeforeExists { get; set; }
+			public string? BeforeHash { get; set; }
+			public string? StagedHash { get; set; }
+			public string? BackupId { get; set; }
 		}
 	}
 }

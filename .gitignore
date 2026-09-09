@@ -347,3 +347,5 @@ ASALocalRun/
 *.zip
 /Redux-Update-Public-Alpha.json
 *.psd
+# Local state notes are never published with the fork.
+HANDOFF.md

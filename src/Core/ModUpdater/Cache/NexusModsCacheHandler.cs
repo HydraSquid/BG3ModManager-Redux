@@ -1,6 +1,7 @@
 ﻿using DivinityModManager.AppServices;
 using DivinityModManager.Models;
 using DivinityModManager.Models.Cache;
+using DivinityModManager.Models.Modio;
 using DivinityModManager.Models.NexusMods;
 using DivinityModManager.Util;
 
@@ -29,16 +30,29 @@ public class NexusModsCacheHandler : IExternalModCacheHandler<NexusModsCachedDat
 		DivinityModData mod,
 		NexusModsModData data)
 	{
-		if (mod == null
-			|| data == null
-			|| data.MetadataOrigin != NexusMetadataOrigin.CreatorManifest)
+		if (mod == null || data == null)
 		{
 			return true;
 		}
+		if (mod.ModioData?.MetadataOrigin == ModioMetadataOrigin.Manual
+			&& mod.ModioData.HasAssociation)
+		{
+			return false;
+		}
+
+		var nexusIsExplicit = data.MetadataOrigin is NexusMetadataOrigin.Manual
+			or NexusMetadataOrigin.NexusArchiveImport
+			or NexusMetadataOrigin.ReduxBundleImport;
+		if (mod.PublishHandle > 0 && !nexusIsExplicit)
+		{
+			return false;
+		}
+
+		if (data.MetadataOrigin != NexusMetadataOrigin.CreatorManifest) return true;
 
 		if (mod.NexusModsData.MetadataOrigin is NexusMetadataOrigin.Manual
 			or NexusMetadataOrigin.ManualUnlinked
-			|| mod.ModioData?.HasMetadata == true)
+			|| mod.ModioData?.HasAssociation == true)
 		{
 			return false;
 		}

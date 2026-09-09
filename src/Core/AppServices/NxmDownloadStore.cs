@@ -136,6 +136,15 @@ public sealed class NxmDownloadStore : INxmDownloadStore
 					stalePartialPaths.Add(partialPath);
 				}
 			}
+			if (String.IsNullOrWhiteSpace(item.ArchiveSha256)
+				&& item.State is NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview or NxmDownloadState.InstallFailed
+				&& completedPath != null && File.Exists(completedPath)
+				&& (item.SizeBytes <= 0 || new FileInfo(completedPath).Length == item.SizeBytes))
+			{
+				// Version 1 manifests created before archive identities were retained can
+				// be safely upgraded only after the completed file passes root and size checks.
+				item.ArchiveSha256 = await ComputeSha256Async(completedPath, cancellationToken);
+			}
 			item.Progress = item.SizeBytes > 0 ? Math.Clamp((double)item.BytesReceived / item.SizeBytes, 0, 1) : 0;
 		}
 		await SaveAsync(items, cancellationToken);

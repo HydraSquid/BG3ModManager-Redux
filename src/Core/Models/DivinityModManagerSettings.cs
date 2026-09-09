@@ -206,6 +206,12 @@ public class DivinityModManagerSettings : ReactiveObject
 	[DataMember, Reactive] public bool BringNxmDownloadsToFront { get; set; } = true;
 
 	[DefaultValue(false)]
+	[DataMember, Reactive] public bool NxmDownloadsPaneVisible { get; set; }
+
+	[DefaultValue(460d)]
+	[DataMember, Reactive] public double NxmDownloadsPaneWidth { get; set; } = 460d;
+
+	[DefaultValue(false)]
 	[SettingsEntry("Retain installed package archives", "Keep a deduplicated copy of successfully installed packages for later reinstall. Disabled by default and may use significant disk space.")]
 	[DataMember, Reactive] public bool RetainInstalledPackageArchives { get; set; }
 
@@ -483,6 +489,10 @@ public class DivinityModManagerSettings : ReactiveObject
 		if (!Enum.IsDefined(TextSize) || TextSize == 0)
 		{
 			TextSize = ReduxTextSize.Default;
+		}
+		if (Double.IsNaN(NxmDownloadsPaneWidth) || Double.IsInfinity(NxmDownloadsPaneWidth) || NxmDownloadsPaneWidth < 280d)
+		{
+			NxmDownloadsPaneWidth = 460d;
 		}
 		CustomThemes ??= new ObservableCollection<ReduxCustomTheme>();
 		foreach (var theme in CustomThemes)

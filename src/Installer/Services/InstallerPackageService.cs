@@ -28,7 +28,7 @@ internal sealed class InstallerPackageService : IDisposable
 	private static readonly HashSet<string> ProtectedRoots = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 	{
 		"Data", "Orders", "CurrentOrders", "_Logs", "Logs", "Cache", "_Cache", "Backup", "_Backup",
-		"GameDirectoryInstalls", "RestorePoints", "Temp"
+		"GameDirectoryInstalls", "NativeInstalls", "RestorePoints", "Temp"
 	};
 	private static readonly HashSet<string> ProtectedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 	{

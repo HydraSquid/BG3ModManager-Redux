@@ -22,7 +22,10 @@ internal sealed class PaneSplitterTests
 		var app = Application.Current;
 		var shutdown = app.ShutdownMode;
 		app.ShutdownMode = ShutdownMode.OnExplicitShutdown;
-		var grid = new Grid();
+		// Hosted Windows runners can clamp top-level windows to their virtual desktop.
+		// Give this splitter fixture its own deterministic layout space so a 40px drag
+		// tests neighbor isolation rather than accidentally hitting a pane minimum.
+		var grid = new Grid { Width = 1400 };
 		foreach (var width in new[]
 		{
 			new GridLength(220), new GridLength(4), new GridLength(1, GridUnitType.Star),
@@ -77,6 +80,7 @@ internal sealed class PaneSplitterTests
 			}
 
 			var widths = Sizes();
+			grid.Width += 200;
 			window.Width += 200;
 			Settle();
 			Near(widths[0], Sizes()[0]);

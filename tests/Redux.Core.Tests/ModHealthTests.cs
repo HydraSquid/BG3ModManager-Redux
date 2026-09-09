@@ -279,6 +279,36 @@ internal sealed class ModHealthTests
 		RegressionAssert.Equal(ModHealthSeverity.Warning, mismatchFinding.Severity);
 	}
 
+	public void ScriptExtenderFindingsUseOnlyTheDedicatedRowIndicator()
+	{
+		var mod = CreateMod("extender", "Extender Mod", isActive: true);
+		var extenderFinding = new ModHealthFinding(
+			ModHealthFindingCode.ScriptExtenderUnavailable,
+			ModHealthSeverity.Error,
+			"Script Extender unavailable",
+			"Script Extender is required.");
+		var dependencyFinding = new ModHealthFinding(
+			ModHealthFindingCode.InactiveDependency,
+			ModHealthSeverity.Warning,
+			"Dependency inactive",
+			"Enable the dependency.");
+
+		var extenderOnly = new ModHealthSnapshot(mod, new[] { extenderFinding });
+		RegressionAssert.True(extenderOnly.NeedsAttention);
+		RegressionAssert.True(extenderOnly.HasErrors);
+		RegressionAssert.False(extenderOnly.NeedsNonExtenderAttention);
+		RegressionAssert.False(extenderOnly.HasNonExtenderErrors);
+		RegressionAssert.Equal(0, extenderOnly.NonExtenderAttentionFindings.Count);
+
+		var mixed = new ModHealthSnapshot(mod, new[] { extenderFinding, dependencyFinding });
+		RegressionAssert.True(mixed.NeedsNonExtenderAttention);
+		RegressionAssert.False(mixed.HasNonExtenderErrors);
+		RegressionAssert.Equal(1, mixed.NonExtenderAttentionFindings.Count);
+		RegressionAssert.Equal(
+			ModHealthFindingCode.InactiveDependency,
+			mixed.NonExtenderAttentionFindings[0].Code);
+	}
+
 	public void ForceLoadedVariantsRemainInformationalAndReadOnly()
 	{
 		var alwaysLoaded = CreateMod("always", "Always Loaded", isActive: true);

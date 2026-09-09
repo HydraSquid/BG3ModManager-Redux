@@ -3895,13 +3895,13 @@
 				<Style TargetType="{x:Type Border}">
 					<Setter Property="BorderBrush" Value="{DynamicResource ReduxWarningBrush}" />
 					<Style.Triggers>
-						<DataTrigger Binding="{Binding HealthSnapshot.HasErrors}" Value="True">
+						<DataTrigger Binding="{Binding HealthSnapshot.HasNonExtenderErrors}" Value="True">
 							<Setter Property="BorderBrush" Value="{DynamicResource ReduxErrorBrush}" />
 						</DataTrigger>
 					</Style.Triggers>
 				</Style>
 			</Border.Style>
-			<ItemsControl ItemsSource="{Binding HealthSnapshot.AttentionFindings}"
+			<ItemsControl ItemsSource="{Binding HealthSnapshot.NonExtenderAttentionFindings}"
 				ItemTemplate="{StaticResource ReduxStatusFindingTemplate}" />
 		</Border>
 	</DataTemplate>
@@ -4034,7 +4034,7 @@
 							<DataTrigger Binding="{Binding HasInvalidUUIDVisibility}" Value="Visible">
 								<Setter Property="Visibility" Value="Visible" />
 							</DataTrigger>
-							<DataTrigger Binding="{Binding HealthSnapshot.NeedsAttention}" Value="True">
+							<DataTrigger Binding="{Binding HealthSnapshot.NeedsNonExtenderAttention}" Value="True">
 								<Setter Property="Visibility" Value="Visible" />
 							</DataTrigger>
 							<DataTrigger Binding="{Binding ToolkitIconVisibility}" Value="Visible">
@@ -4174,10 +4174,10 @@
 								<Setter Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" />
 								<Setter Property="Visibility" Value="Collapsed" />
 								<Style.Triggers>
-									<DataTrigger Binding="{Binding HealthSnapshot.NeedsAttention}" Value="True">
+									<DataTrigger Binding="{Binding HealthSnapshot.NeedsNonExtenderAttention}" Value="True">
 										<Setter Property="Visibility" Value="Visible" />
 									</DataTrigger>
-									<DataTrigger Binding="{Binding HealthSnapshot.HasErrors}" Value="True">
+									<DataTrigger Binding="{Binding HealthSnapshot.HasNonExtenderErrors}" Value="True">
 										<Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Warning}" />
 										<Setter Property="Foreground" Value="{DynamicResource ReduxErrorBrush}" />
 									</DataTrigger>

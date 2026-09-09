@@ -12,6 +12,7 @@ public sealed class ModHealthSnapshot
 	public IReadOnlyList<ModHealthFinding> HealthAttentionFindings { get; }
 	public IReadOnlyList<ModHealthFinding> LoadOrderAdviceFindings { get; }
 	public IReadOnlyList<ModHealthFinding> AttentionFindings { get; }
+	public IReadOnlyList<ModHealthFinding> NonExtenderAttentionFindings { get; }
 	public IReadOnlyList<ModHealthFinding> PackageBehaviorFindings { get; }
 	public bool HasFindings => Findings.Count > 0;
 	public int ErrorCount => Findings.Count(finding => finding.Severity == ModHealthSeverity.Error);
@@ -25,6 +26,9 @@ public sealed class ModHealthSnapshot
 	public bool HasInfo => InfoCount > 0;
 	public bool HasHealthErrors => HealthErrorCount > 0;
 	public bool HasHealthWarnings => HealthWarningCount > 0;
+	public bool HasNonExtenderErrors => NonExtenderAttentionFindings.Any(
+		finding => finding.Severity == ModHealthSeverity.Error);
+	public bool NeedsNonExtenderAttention => NonExtenderAttentionFindings.Count > 0;
 	public bool HasOnlyLoadOrderAdvice =>
 		LoadOrderAdviceCount > 0
 		&& HealthErrorCount == 0
@@ -111,6 +115,11 @@ public sealed class ModHealthSnapshot
 			.Where(finding =>
 				IsLoadOrderAdvice(finding)
 				|| finding.Severity is ModHealthSeverity.Error or ModHealthSeverity.Warning)
+			.ToArray();
+		NonExtenderAttentionFindings = AttentionFindings
+			.Where(finding => finding.Code is not (
+				ModHealthFindingCode.ScriptExtenderUnavailable or
+				ModHealthFindingCode.ScriptExtenderVersionMismatch))
 			.ToArray();
 		HealthAttentionFindings = Findings
 			.Where(finding =>

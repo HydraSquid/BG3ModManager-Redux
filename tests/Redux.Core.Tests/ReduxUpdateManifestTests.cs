@@ -11,16 +11,13 @@ namespace Redux.Core.Tests;
 
 public sealed class ReduxUpdateManifestTests
 {
-	public void ValidPublicAlphaManifestSelectsArtifactForDeploymentType()
+	public void ValidPublicAlphaManifestSelectsPortableArtifact()
 	{
 		var manifest = ReduxUpdateManifestService.ParseAndValidate(CreateManifest().ToString());
+		var decision = ReduxUpdateManifestService.Evaluate(manifest, "0.1.0.14");
 
-		var installed = ReduxUpdateManifestService.Evaluate(manifest, "0.1.0.14", installerManaged: true);
-		var portable = ReduxUpdateManifestService.Evaluate(manifest, "0.1.0.14", installerManaged: false);
-
-		RegressionAssert.Equal(ReduxUpdateAvailability.UpdateAvailable, installed.Availability);
-		RegressionAssert.Equal(ReduxUpdateArtifactKinds.Installer, installed.PreferredArtifact.Kind);
-		RegressionAssert.Equal(ReduxUpdateArtifactKinds.Portable, portable.PreferredArtifact.Kind);
+		RegressionAssert.Equal(ReduxUpdateAvailability.UpdateAvailable, decision.Availability);
+		RegressionAssert.Equal(ReduxUpdateArtifactKinds.Portable, decision.Artifact.Kind);
 	}
 
 	public void SameAndNewerInstalledVersionsAreNeverOfferedAsUpdates()
@@ -29,23 +26,27 @@ public sealed class ReduxUpdateManifestTests
 
 		RegressionAssert.Equal(
 			ReduxUpdateAvailability.UpToDate,
-			ReduxUpdateManifestService.Evaluate(manifest, "0.1.0.15", installerManaged: true).Availability);
+			ReduxUpdateManifestService.Evaluate(manifest, "0.1.0.15").Availability);
 		RegressionAssert.Equal(
 			ReduxUpdateAvailability.InstalledVersionIsNewer,
-			ReduxUpdateManifestService.Evaluate(manifest, "0.1.0.16", installerManaged: true).Availability);
+			ReduxUpdateManifestService.Evaluate(manifest, "0.1.0.16").Availability);
 	}
 
-	public void PortableReleaseCanBootstrapBeforeInstallerArtifactExists()
+	public void ManifestRequiresExactlyOnePortableArtifact()
 	{
-		var json = CreateManifest();
-		((JArray)json["artifacts"]!).RemoveAt(0);
+		var missing = CreateManifest();
+		((JArray)missing["artifacts"]!).Clear();
+		var extra = CreateManifest();
+		((JArray)extra["artifacts"]!).Add(((JArray)extra["artifacts"]!)[0]!.DeepClone());
+		var installer = CreateManifest();
+		installer["artifacts"]![0]!["kind"] = "installer";
 
-		var manifest = ReduxUpdateManifestService.ParseAndValidate(json.ToString());
-		var decision = ReduxUpdateManifestService.Evaluate(manifest, "0.1.0.14", installerManaged: false);
-
-		RegressionAssert.Equal(ReduxUpdateArtifactKinds.Portable, decision.PreferredArtifact.Kind);
 		RegressionAssert.Throws<InvalidDataException>(() =>
-			ReduxUpdateManifestService.Evaluate(manifest, "0.1.0.14", installerManaged: true));
+			ReduxUpdateManifestService.ParseAndValidate(missing.ToString()));
+		RegressionAssert.Throws<InvalidDataException>(() =>
+			ReduxUpdateManifestService.ParseAndValidate(extra.ToString()));
+		RegressionAssert.Throws<InvalidDataException>(() =>
+			ReduxUpdateManifestService.ParseAndValidate(installer.ToString()));
 	}
 
 	public void ManifestRejectsDuplicateAndUnknownProperties()
@@ -139,13 +140,6 @@ public sealed class ReduxUpdateManifestTests
 		["releaseNotesUrl"] = "https://github.com/circleainn/BG3ModManager-Redux/releases/tag/v0.1.0-alpha.15",
 		["artifacts"] = new JArray
 		{
-			new JObject
-			{
-				["kind"] = ReduxUpdateArtifactKinds.Installer,
-				["url"] = "https://github.com/circleainn/BG3ModManager-Redux/releases/download/v0.1.0-alpha.15/ReduxSetup.exe",
-				["sizeBytes"] = 4096,
-				["sha256"] = new string('a', 64)
-			},
 			new JObject
 			{
 				["kind"] = ReduxUpdateArtifactKinds.Portable,

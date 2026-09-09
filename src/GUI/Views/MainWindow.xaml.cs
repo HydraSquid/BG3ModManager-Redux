@@ -1,8 +1,6 @@
 ﻿using AdonisUI;
 using AdonisUI.Controls;
 
-using AutoUpdaterDotNET;
-
 using DivinityModManager.AppServices;
 using DivinityModManager.Controls;
 using DivinityModManager.Extensions;
@@ -667,6 +665,14 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 	private bool _closeConfirmed;
 	private bool _nxmShutdownReady;
 	private bool _nxmShutdownInProgress;
+	private bool _updateRestartRequested;
+
+	public void RequestExitForUpdate()
+	{
+		if (Services.Get<ReduxUpdateLaunchService>()?.HasPendingUpdate != true) return;
+		_updateRestartRequested = true;
+		Close();
+	}
 
 	private bool ConfirmDiscardUnsavedLoadOrder()
 	{
@@ -690,6 +696,13 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 	{
 		if (!ConfirmDiscardUnsavedLoadOrder())
 		{
+			if (_updateRestartRequested)
+			{
+				Services.Get<ReduxUpdateLaunchService>()?.CancelPending();
+				Services.Get<AppUpdateWindowViewModel>()?.NotifyUpdateExitCancelled(
+					"The update was not applied because Redux remained open. Save or discard your changes, then try again.");
+				_updateRestartRequested = false;
+			}
 			e.Cancel = true;
 			return;
 		}
@@ -713,6 +726,13 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 		}
 		catch (Exception ex)
 		{
+			if (_updateRestartRequested)
+			{
+				Services.Get<ReduxUpdateLaunchService>()?.CancelPending();
+				Services.Get<AppUpdateWindowViewModel>()?.NotifyUpdateExitCancelled(
+					"The update was not applied because Redux could not safely finish closing. Try again after the download queue is saved.");
+				_updateRestartRequested = false;
+			}
 			DivinityApp.Log($"Could not stop Nexus downloads during shutdown:\n{ex}");
 			ReduxMessageBox.Show(this,
 				"Redux could not safely pause and save the download queue. The window will remain open so you can try again.",
@@ -729,13 +749,16 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 	{
 		if (ViewModel.Settings.SaveWindowLocation) UpdateWindowSettings();
 		ViewModel.SaveSettings();
+		if (_updateRestartRequested)
+		{
+			var launcher = Services.Get<ReduxUpdateLaunchService>();
+			if (launcher != null && !launcher.StartPending(out var error) && !String.IsNullOrWhiteSpace(error))
+			{
+				System.Windows.MessageBox.Show(error, "Redux Update Failed",
+					System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+			}
+		}
 		Application.Current.Shutdown();
-	}
-
-	private void AutoUpdater_OnClosing()
-	{
-		ViewModel.Settings.LastUpdateCheck = DateTimeOffset.Now.ToUnixTimeSeconds();
-		if (ConfirmDiscardUnsavedLoadOrder()) Close();
 	}
 
 	private WindowInteropHelper _wih;
@@ -794,8 +817,6 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 
 		UpdateWindow = new AppUpdateWindow();
 		ApplyCurrentTheme(UpdateWindow);
-		UpdateWindow.ViewModel.AppTitle = ViewModel.AppTitle;
-		UpdateWindow.ViewModel.AppVersion = ViewModel.Version;
 		UpdateWindow.ViewModel.WhenAnyValue(x => x.IsVisible).Subscribe(b =>
 		{
 			if (b)
@@ -818,8 +839,6 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 
 		Closing += MainWindow_Closing;
 		Closed += (o, e) => OnClosed();
-		AutoUpdater.ApplicationExitEvent += AutoUpdater_OnClosing;
-
 		DataContext = ViewModel;
 
 		_wih = new WindowInteropHelper(this);

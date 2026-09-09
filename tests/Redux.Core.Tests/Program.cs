@@ -55,13 +55,35 @@ internal static class Program
 		var packageArchives = new RetainedPackageArchiveServiceTests();
 		var downloadBatch = new DownloadBatchSafetyPlannerTests();
 		var applicationUpdates = new ReduxUpdateManifestTests();
+		var updateChannel = new ReduxUpdateChannelServiceTests();
+		var updateWindow = new AppUpdateWindowViewModelTests();
+		var updatePackages = new ReduxUpdatePackageServiceTests();
+		var updateLauncher = new ReduxUpdateLaunchServiceTests();
+		var updateTransaction = new ReduxUpdateTransactionTests();
 		var releaseVersions = new ReleaseVersionContractTests();
 		var tests = new (string Name, Action Run)[]
 		{
 			(nameof(releaseVersions.ApplicationAndBinaryVersionsIdentifyTheSameAlphaRelease), releaseVersions.ApplicationAndBinaryVersionsIdentifyTheSameAlphaRelease),
-			(nameof(applicationUpdates.ValidPublicAlphaManifestSelectsArtifactForDeploymentType), applicationUpdates.ValidPublicAlphaManifestSelectsArtifactForDeploymentType),
+			(nameof(updateTransaction.TransactionReplacesOwnedFilesAndPreservesUserFiles), updateTransaction.TransactionReplacesOwnedFilesAndPreservesUserFiles),
+			(nameof(updateTransaction.FailedReplacementRollsBackFilesChangedEarlierInTheTransaction), updateTransaction.FailedReplacementRollsBackFilesChangedEarlierInTheTransaction),
+			(nameof(updateTransaction.ReleaseInventoryCannotClaimUserState), updateTransaction.ReleaseInventoryCannotClaimUserState),
+			(nameof(updateLauncher.CompletedUpdateResultIsShownOnce), updateLauncher.CompletedUpdateResultIsShownOnce),
+			(nameof(updateLauncher.QueuedRunnerLivesOutsideTheInstallationAndCancellationCleansIt), updateLauncher.QueuedRunnerLivesOutsideTheInstallationAndCancellationCleansIt),
+			(nameof(updatePackages.VerifiedArchiveStagesWithoutChangingAnInstallation), updatePackages.VerifiedArchiveStagesWithoutChangingAnInstallation),
+			(nameof(updatePackages.TraversalEntryIsRejectedAndStagingIsRemoved), updatePackages.TraversalEntryIsRejectedAndStagingIsRemoved),
+			(nameof(updatePackages.UnlistedArchiveContentIsRejected), updatePackages.UnlistedArchiveContentIsRejected),
+			(nameof(updatePackages.CleanupRemovesOnlyOldReduxTransactionDirectories), updatePackages.CleanupRemovesOnlyOldReduxTransactionDirectories),
+			(nameof(updateWindow.AvailableUpdateOffersVerifiedRestart), updateWindow.AvailableUpdateOffersVerifiedRestart),
+			(nameof(updateWindow.CurrentReleaseStaysQuietDuringAutomaticCheck), updateWindow.CurrentReleaseStaysQuietDuringAutomaticCheck),
+			(nameof(updateWindow.ManualFailureExplainsThatTheInstallationWasNotChanged), updateWindow.ManualFailureExplainsThatTheInstallationWasNotChanged),
+			(nameof(updateChannel.FetchesAndEvaluatesTheOfficialChannelManifest), updateChannel.FetchesAndEvaluatesTheOfficialChannelManifest),
+			(nameof(updateChannel.RejectsOversizedManifestBeforeReadingItsBody), updateChannel.RejectsOversizedManifestBeforeReadingItsBody),
+			(nameof(updateChannel.RejectsUntrustedChannelEndpoint), updateChannel.RejectsUntrustedChannelEndpoint),
+			(nameof(updateChannel.AutomaticChecksUseTheLastSuccessfulCheckTime), updateChannel.AutomaticChecksUseTheLastSuccessfulCheckTime),
+			(nameof(updateChannel.FailedAutomaticChecksBackOffBeforeRetrying), updateChannel.FailedAutomaticChecksBackOffBeforeRetrying),
+			(nameof(applicationUpdates.ValidPublicAlphaManifestSelectsPortableArtifact), applicationUpdates.ValidPublicAlphaManifestSelectsPortableArtifact),
 			(nameof(applicationUpdates.SameAndNewerInstalledVersionsAreNeverOfferedAsUpdates), applicationUpdates.SameAndNewerInstalledVersionsAreNeverOfferedAsUpdates),
-			(nameof(applicationUpdates.PortableReleaseCanBootstrapBeforeInstallerArtifactExists), applicationUpdates.PortableReleaseCanBootstrapBeforeInstallerArtifactExists),
+			(nameof(applicationUpdates.ManifestRequiresExactlyOnePortableArtifact), applicationUpdates.ManifestRequiresExactlyOnePortableArtifact),
 			(nameof(applicationUpdates.ManifestRejectsDuplicateAndUnknownProperties), applicationUpdates.ManifestRejectsDuplicateAndUnknownProperties),
 			(nameof(applicationUpdates.ManifestRejectsTrailingContentAndWrongChannel), applicationUpdates.ManifestRejectsTrailingContentAndWrongChannel),
 			(nameof(applicationUpdates.ManifestRejectsMismatchedDisplayAndInternalVersions), applicationUpdates.ManifestRejectsMismatchedDisplayAndInternalVersions),
@@ -71,6 +93,7 @@ internal static class Program
 			(nameof(nxmManager.UnsafeLocalPackageRemainsVisibleButCannotEnterInstallState), nxmManager.UnsafeLocalPackageRemainsVisibleButCannotEnterInstallState),
 			(nameof(interactionBehavior.ReduceMotionKeepsPrimaryListStoryboardsFreezeSafeAndInstant), interactionBehavior.ReduceMotionKeepsPrimaryListStoryboardsFreezeSafeAndInstant),
 			(nameof(interactionBehavior.SaveCampaignAnimationReplacesFrozenTransforms), interactionBehavior.SaveCampaignAnimationReplacesFrozenTransforms),
+			(nameof(interactionBehavior.ModListHeaderSpansTheGutterAndScrollbarStartsBelowIt), interactionBehavior.ModListHeaderSpansTheGutterAndScrollbarStartsBelowIt),
 			(nameof(source.ReviewedModuleUuidResolvesItsProject), source.ReviewedModuleUuidResolvesItsProject),
 			(nameof(source.CommunityModuleUuidResolvesItsDependencySource), source.CommunityModuleUuidResolvesItsDependencySource),
 			(nameof(source.CommunityIdentityRequiresTheInstalledPackageNameToAgree), source.CommunityIdentityRequiresTheInstalledPackageNameToAgree),

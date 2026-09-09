@@ -83,7 +83,7 @@
 			Panel.ZIndex="1000"
 			Background="Transparent"
 			BorderBrush="{DynamicResource ReduxAccentHoverBrush}"
-			BorderThickness="2"
+			BorderThickness="{DynamicResource Redux.WindowInteraction.BorderThickness}"
 			CornerRadius="6"
 			IsHitTestVisible="False"
 			Opacity="0">
@@ -105,7 +105,7 @@
 				Opacity="0.62" />
 			<Border Margin="2"
 				BorderBrush="{DynamicResource ReduxAccentHoverBrush}"
-				BorderThickness="2"
+				BorderThickness="{DynamicResource Redux.WindowInteraction.BorderThickness}"
 				CornerRadius="6">
 				<Border.Effect>
 					<DropShadowEffect BlurRadius="12"

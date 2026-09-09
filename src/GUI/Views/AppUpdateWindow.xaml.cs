@@ -2,11 +2,10 @@
 using DivinityModManager.ViewModels;
 
 using System.ComponentModel;
+using System.Windows;
 using System.Windows.Documents;
 
 using ReactiveMarbles.ObservableEvents;
-using AutoUpdaterDotNET;
-
 namespace DivinityModManager.Views;
 
 public class AppUpdateWindowBase : HideWindowBase<AppUpdateWindowViewModel> { }
@@ -45,8 +44,14 @@ public partial class AppUpdateWindow : AppUpdateWindowBase
 		{
 			d(this.BindCommand(ViewModel, vm => vm.ConfirmCommand, v => v.ConfirmButton));
 			d(this.BindCommand(ViewModel, vm => vm.SkipCommand, v => v.SkipButton));
+			d(this.OneWayBind(ViewModel, vm => vm.ConfirmButtonText, v => v.ConfirmButton.Content));
+			d(this.OneWayBind(ViewModel, vm => vm.CanConfirm, v => v.ConfirmButton.Visibility,
+				canConfirm => canConfirm ? Visibility.Visible : Visibility.Collapsed));
 			d(this.OneWayBind(ViewModel, vm => vm.SkipButtonText, v => v.SkipButton.Content));
 			d(this.OneWayBind(ViewModel, vm => vm.UpdateDescription, v => v.UpdateDescription.Text));
+			d(this.OneWayBind(ViewModel, vm => vm.UpdateProgress, v => v.UpdateProgressBar.Value));
+			d(this.OneWayBind(ViewModel, vm => vm.IsProgressVisible, v => v.UpdateProgressBar.Visibility,
+				visible => visible ? Visibility.Visible : Visibility.Collapsed));
 			d(this.OneWayBind(ViewModel, vm => vm.UpdateChangelogView, v => v.UpdateChangelogView.Document, StringToMarkdown));
 
 			this.Events().IsVisibleChanged.Select(x => x.NewValue).BindTo(ViewModel, x => x.IsVisible);

@@ -502,6 +502,37 @@ public partial class MainViewControl : MainViewControlViewBase
 		// Keep attribution available without dedicating a second top-level menu to it.
 		if (menuItems.TryGetValue("Help", out var helpMenuItem))
 		{
+			var helpHeader = new StackPanel
+			{
+				Orientation = Orientation.Horizontal,
+				VerticalAlignment = VerticalAlignment.Center
+			};
+			helpHeader.Children.Add(new TextBlock
+			{
+				Text = "Help",
+				VerticalAlignment = VerticalAlignment.Center
+			});
+			var updateIndicator = new Border
+			{
+				Width = 6,
+				Height = 6,
+				CornerRadius = new CornerRadius(3),
+				Margin = new Thickness(5, 0, 0, 0),
+				VerticalAlignment = VerticalAlignment.Center,
+				ToolTip = "A Redux update is available."
+			};
+			updateIndicator.SetResourceReference(Border.BackgroundProperty, "ReduxSuccessBrush");
+			BindingOperations.SetBinding(
+				updateIndicator,
+				VisibilityProperty,
+				new Binding(nameof(AppUpdateWindowViewModel.HasAvailableUpdate))
+				{
+					Source = Services.Get<AppUpdateWindowViewModel>(),
+					Converter = FindResource("BoolToVisibilityConverter") as IValueConverter
+				});
+			helpHeader.Children.Add(updateIndicator);
+			helpMenuItem.Header = helpHeader;
+
 			helpMenuItem.Items.Add(new Separator());
 			var reduxWelcomeMenuItem = new MenuItem
 			{

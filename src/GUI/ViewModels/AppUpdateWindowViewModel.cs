@@ -1,130 +1,240 @@
-﻿using AutoUpdaterDotNET;
-
+using DivinityModManager.AppServices;
+using DivinityModManager.Models.Updates;
 using DivinityModManager.Util;
 using DivinityModManager.Views;
 
-using System.Text.RegularExpressions;
+using System.Globalization;
+using System.Threading;
+using System.Windows;
 using System.Windows.Input;
 
 namespace DivinityModManager.ViewModels;
+
+public enum ReduxUpdateCheckState
+{
+	Idle,
+	Checking,
+	UpToDate,
+	UpdateAvailable,
+	PreparingUpdate,
+	InstalledVersionIsNewer,
+	Failed
+}
+
 public partial class AppUpdateWindowViewModel : ReactiveObject
 {
+	private readonly ReduxUpdateChannelService _updates;
+	private readonly ReduxUpdatePackageService _packages;
+	private readonly ReduxUpdateLaunchService _launcher;
+	private int _checkInProgress;
+	private string _releaseNotesUrl = DivinityApp.URL_REDUX_RELEASES;
+	private ReduxUpdateDecision _availableUpdate;
+
 	[Reactive] public bool IsVisible { get; set; }
+	[Reactive] public bool IsChecking { get; set; }
 	[Reactive] public bool CanConfirm { get; set; }
-	[Reactive] public bool CanSkip { get; set; }
-	[Reactive] public string AppTitle { get; set; }
-	[Reactive] public Version AppVersion { get; set; }
-	[Reactive] public string SkipButtonText { get; set; }
-	[Reactive] public string UpdateDescription { get; set; }
-	[Reactive] public string UpdateChangelogView { get; set; }
-	[Reactive] public Version UpdateVersion { get; set; }
+	[Reactive] public bool CanSkip { get; set; } = true;
+	[Reactive] public string ConfirmButtonText { get; set; } = "View Release";
+	[Reactive] public string SkipButtonText { get; set; } = "Close";
+	[Reactive] public string UpdateDescription { get; set; } = "Check for a newer Redux public-alpha release.";
+	[Reactive] public string UpdateChangelogView { get; set; } = String.Empty;
+	[Reactive] public double UpdateProgress { get; set; }
+	[Reactive] public bool IsProgressVisible { get; set; }
+	[Reactive] public bool HasAvailableUpdate { get; set; }
+	[Reactive] public ReduxUpdateCheckState CheckState { get; set; } = ReduxUpdateCheckState.Idle;
 
-	public ICommand ConfirmCommand { get; private set; }
-	public ICommand SkipCommand { get; private set; }
-	public ReactiveCommand<UpdateInfoEventArgs, Unit> OnUpdateCheckCommand { get; private set; }
+	public ICommand ConfirmCommand { get; }
+	public ICommand SkipCommand { get; }
 
-	[GeneratedRegex(@"^\s+$[\r\n]*", RegexOptions.Multiline)]
-	private static partial Regex RemoveEmptyLinesRe();
-
-	private static readonly Regex RemoveEmptyLinesPattern = RemoveEmptyLinesRe();
-
-	private UpdateInfoEventArgs? _updateArgs;
-
-	private void TryRunUpdate()
+	public AppUpdateWindowViewModel(
+		ReduxUpdateChannelService updates,
+		ReduxUpdatePackageService packages,
+		ReduxUpdateLaunchService launcher)
 	{
+		_updates = updates ?? throw new ArgumentNullException(nameof(updates));
+		_packages = packages ?? throw new ArgumentNullException(nameof(packages));
+		_launcher = launcher ?? throw new ArgumentNullException(nameof(launcher));
+		var canConfirm = this.WhenAnyValue(x => x.CanConfirm);
+		ConfirmCommand = ReactiveCommand.CreateFromTask(PrepareAndRestartAsync, canConfirm, RxApp.MainThreadScheduler);
+		var canSkip = this.WhenAnyValue(x => x.CanSkip);
+		SkipCommand = ReactiveCommand.Create(() => IsVisible = false, canSkip, RxApp.MainThreadScheduler);
+	}
+
+	public void ScheduleUpdateCheck(bool showAlerts = false) => _ = CheckForUpdatesAsync(showAlerts);
+
+	public async Task CheckForUpdatesAsync(bool showAlerts = false, CancellationToken cancellationToken = default)
+	{
+		if (Interlocked.CompareExchange(ref _checkInProgress, 1, 0) != 0)
+		{
+			if (showAlerts) MainWindow.Self?.ViewModel?.ShowAlert("Redux is already checking for updates.", AlertType.Info, 12);
+			return;
+		}
+
 		try
 		{
-			MainWindow.Self.ViewModel.Settings.LastUpdateCheck = DateTimeOffset.Now.ToUnixTimeSeconds();
-			MainWindow.Self.ViewModel.SaveSettings();
-			if (AutoUpdater.DownloadUpdate(_updateArgs))
+			await RunOnMainThreadAsync(() =>
 			{
-				System.Windows.Application.Current.Shutdown();
-			}
-			Environment.Exit(0);
+				var main = MainWindow.Self?.ViewModel;
+				if (main != null)
+				{
+					main.Settings.LastUpdateCheckAttempt = DateTimeOffset.Now.ToUnixTimeSeconds();
+					main.SaveSettings();
+				}
+				CheckState = ReduxUpdateCheckState.Checking;
+				IsChecking = true;
+				CanConfirm = false;
+				CanSkip = false;
+				UpdateDescription = "Checking the Redux public-alpha channel...";
+			});
+
+			var decision = await _updates.CheckAsync(DivinityApp.REDUX_INTERNAL_VERSION, cancellationToken);
+			await RunOnMainThreadAsync(() => ApplyDecision(decision, showAlerts));
+		}
+		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+		{
+			DivinityApp.Log("Redux update check was cancelled.");
+			await RunOnMainThreadAsync(() => ApplyFailure("The update check was cancelled.", showAlerts));
+		}
+		catch (OperationCanceledException ex)
+		{
+			DivinityApp.Log($"Redux update check timed out:\n{ex}");
+			await RunOnMainThreadAsync(() => ApplyFailure("Redux could not reach the update channel before the request timed out.", showAlerts));
 		}
 		catch (Exception ex)
 		{
-			DivinityApp.Log($"Error updating program:\n{ex}");
-			IsVisible = false;
+			DivinityApp.Log($"Error checking for a Redux update:\n{ex}");
+			await RunOnMainThreadAsync(() => ApplyFailure("Redux could not verify the public-alpha update channel. Your current installation was not changed.", showAlerts));
+		}
+		finally
+		{
+			Interlocked.Exchange(ref _checkInProgress, 0);
+			await RunOnMainThreadAsync(() =>
+			{
+				IsChecking = false;
+				CanSkip = true;
+			});
 		}
 	}
 
-	private bool _showAlert;
-
-	private async Task OnUpdateCheckAsync(UpdateInfoEventArgs args)
+	private void ApplyDecision(ReduxUpdateDecision decision, bool showAlerts)
 	{
+		var main = MainWindow.Self?.ViewModel;
+		if (main != null)
+		{
+			main.Settings.LastUpdateCheck = DateTimeOffset.Now.ToUnixTimeSeconds();
+			main.SaveSettings();
+		}
+
+		_releaseNotesUrl = decision.Manifest.ReleaseNotesUrl;
+		HasAvailableUpdate = decision.Availability == ReduxUpdateAvailability.UpdateAvailable;
+		var published = decision.Manifest.PublishedAtUtc.ToLocalTime().ToString("d", CultureInfo.CurrentCulture);
+		UpdateChangelogView = $"## {decision.Manifest.DisplayVersion}\n\nPublished {published}.\n\n[View the official release notes]({_releaseNotesUrl})";
+
+		switch (decision.Availability)
+		{
+			case ReduxUpdateAvailability.UpdateAvailable:
+				_availableUpdate = decision;
+				CheckState = ReduxUpdateCheckState.UpdateAvailable;
+				UpdateDescription = $"Redux {decision.Manifest.DisplayVersion} is available. You have {DivinityApp.REDUX_DISPLAY_VERSION}.";
+				ConfirmButtonText = "Update & Restart";
+				SkipButtonText = "Later";
+				CanConfirm = true;
+				IsVisible = true;
+				if (showAlerts) main?.ShowAlert("A Redux update is available.", AlertType.Success, 20);
+				break;
+			case ReduxUpdateAvailability.InstalledVersionIsNewer:
+				CheckState = ReduxUpdateCheckState.InstalledVersionIsNewer;
+				UpdateDescription = $"This Redux build is newer than the published {decision.Manifest.DisplayVersion} release.";
+				CanConfirm = false;
+				IsVisible = showAlerts;
+				if (showAlerts) main?.ShowAlert("This Redux build is newer than the published update channel.", AlertType.Info, 20);
+				break;
+			default:
+				CheckState = ReduxUpdateCheckState.UpToDate;
+				UpdateDescription = $"Redux {DivinityApp.REDUX_DISPLAY_VERSION} is up to date.";
+				CanConfirm = false;
+				IsVisible = showAlerts;
+				if (showAlerts) main?.ShowAlert("Redux is up to date.", AlertType.Info, 15);
+				break;
+		}
+	}
+
+	private void ApplyFailure(string message, bool showAlerts)
+	{
+		CheckState = ReduxUpdateCheckState.Failed;
+		HasAvailableUpdate = false;
+		UpdateDescription = message;
+		UpdateChangelogView = "No update was downloaded or applied. You can keep using this Redux installation and try again later.";
+		CanConfirm = false;
+		IsVisible = showAlerts;
+		if (showAlerts) MainWindow.Self?.ViewModel?.ShowAlert(message, AlertType.Danger, 35);
+	}
+
+	private async Task PrepareAndRestartAsync()
+	{
+		if (CheckState != ReduxUpdateCheckState.UpdateAvailable || _availableUpdate == null) return;
 		try
 		{
-			var markdownText = await WebHelper.DownloadUrlAsStringAsync(DivinityApp.URL_CHANGELOG_RAW, CancellationToken.None);
-			if (!String.IsNullOrEmpty(markdownText))
+			CheckState = ReduxUpdateCheckState.PreparingUpdate;
+			IsChecking = true;
+			CanConfirm = false;
+			CanSkip = false;
+			IsProgressVisible = true;
+			UpdateProgress = 0;
+			var progress = new Progress<ReduxUpdateProgress>(value =>
 			{
-				markdownText = RemoveEmptyLinesPattern.Replace(markdownText, string.Empty);
-				await Observable.Start(() =>
-				{
-					UpdateChangelogView = markdownText;
-				}, RxApp.MainThreadScheduler);
-			}
-
-			_updateArgs = args;
-
-			if (args.IsUpdateAvailable)
-			{
-				UpdateDescription = $"{AppTitle} {args.CurrentVersion} is now available.\nYou have version {AppVersion} installed.";
-
-				CanConfirm = true;
-				SkipButtonText = "Skip";
-				CanSkip = true;
-				UpdateVersion = Version.Parse(args.CurrentVersion);
-				if (_showAlert) MainWindow.Self.ViewModel.ShowAlert("Update available", AlertType.Success, 20);
-			}
-			else
-			{
-				UpdateDescription = $"{AppTitle} is up-to-date.\nYou have version {AppVersion} installed.";
-				CanConfirm = false;
-				CanSkip = true;
-				SkipButtonText = "Close";
-				if (_showAlert) MainWindow.Self.ViewModel.ShowAlert("Already up to date", AlertType.Info, 20);
-			}
-
-			if (args.IsUpdateAvailable || _showAlert)
-			{
-				RxApp.MainThreadScheduler.Schedule(() =>
-				{
-					IsVisible = true;
-				});
-			}
+				UpdateDescription = value.Status;
+				UpdateProgress = Math.Clamp(value.Fraction, 0, 1);
+			});
+			var prepared = await _packages.DownloadAndStageAsync(_availableUpdate, progress);
+			var processPath = Environment.ProcessPath
+				?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BG3ModManager.exe");
+			var mainWindow = MainWindow.Self
+				?? throw new InvalidOperationException("The Redux main window is not available for restart.");
+			_launcher.Queue(prepared, Path.GetDirectoryName(processPath)!, Environment.ProcessId);
+			UpdateDescription = "Redux will finish the update after it closes.";
+			mainWindow.RequestExitForUpdate();
 		}
-		catch(Exception ex)
+		catch (Exception ex)
 		{
-			DivinityApp.Log($"Error checking for update:\n{ex}");
-			if (_showAlert) MainWindow.Self.ViewModel.ShowAlert("The update check failed. Check the log for details.", AlertType.Danger, 60);
-
-			if (ex is System.Net.WebException)
-			{
-				MainWindow.Self.DisplayError("Update Check Failed", "There was a problem reaching the update server. Please check your internet connection and try again later.", false);
-			}
+			DivinityApp.Log($"Could not prepare Redux update:\n{ex}");
+			_launcher.CancelPending();
+			CheckState = ReduxUpdateCheckState.UpdateAvailable;
+			UpdateDescription = "Redux could not safely prepare this update. The current installation was not changed.";
+			ConfirmButtonText = "Try Again";
+			CanConfirm = true;
+			IsVisible = true;
+			MainWindow.Self?.ViewModel?.ShowAlert(UpdateDescription, AlertType.Danger, 35);
+		}
+		finally
+		{
+			IsChecking = false;
+			CanSkip = true;
+			IsProgressVisible = false;
 		}
 	}
 
-	public void ScheduleUpdateCheck(bool showAlerts = false)
+	public void NotifyUpdateExitCancelled(string reason)
 	{
-		_showAlert = showAlerts;
-		AutoUpdater.ReportErrors = _showAlert;
-		AutoUpdater.Start(DivinityApp.URL_UPDATE);
-	}
-
-	public AppUpdateWindowViewModel()
-	{
-		OnUpdateCheckCommand = ReactiveCommand.CreateFromTask<UpdateInfoEventArgs>(OnUpdateCheckAsync, null, RxApp.TaskpoolScheduler);
-
-		var canConfirm = this.WhenAnyValue(x => x.CanConfirm);
-		ConfirmCommand = ReactiveCommand.Create(() =>
-		{
-			TryRunUpdate();
-		}, canConfirm, RxApp.MainThreadScheduler);
-
-		var canSkip = this.WhenAnyValue(x => x.CanSkip);
-		SkipCommand = ReactiveCommand.Create(() => IsVisible = false, canSkip);
+		if (_availableUpdate == null) return;
+		CheckState = ReduxUpdateCheckState.UpdateAvailable;
+		UpdateDescription = reason;
+		ConfirmButtonText = "Try Again";
+		SkipButtonText = "Later";
+		CanConfirm = true;
 		CanSkip = true;
+		IsProgressVisible = false;
+		IsVisible = true;
+	}
+
+	private static Task RunOnMainThreadAsync(Action action)
+	{
+		var dispatcher = Application.Current?.Dispatcher;
+		if (dispatcher == null || dispatcher.CheckAccess())
+		{
+			action();
+			return Task.CompletedTask;
+		}
+		return dispatcher.InvokeAsync(action).Task;
 	}
 }

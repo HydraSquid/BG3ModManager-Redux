@@ -64,6 +64,10 @@ jobs:
             exit $LASTEXITCODE
           }
 
+      - name: Build and test standalone web installer
+        shell: pwsh
+        run: .\Build-Installer.ps1 -Configuration Release -RunTests
+
       - name: Build and validate Publish package
         shell: pwsh
         run: |
@@ -105,6 +109,11 @@ jobs:
             foreach ($required in @(
               'BG3ModManager.exe',
               'BG3ModManager.dll',
+              'Redux-Release-Files.json',
+              'Updater/ReduxUpdater.exe',
+              'Updater/ReduxUpdater.dll',
+              'Updater/ReduxUpdater.deps.json',
+              'Updater/ReduxUpdater.runtimeconfig.json',
               '_Lib/LSLib.dll',
               '_Lib/LSLibNative.dll',
               '_Lib/Ijwhost.dll',
@@ -114,6 +123,25 @@ jobs:
             )) {
               if ($required -notin $entries) {
                 throw "Required package entry is missing: $required"
+              }
+            }
+            $inventoryEntry = $archive.GetEntry('Redux-Release-Files.json')
+            $reader = [System.IO.StreamReader]::new($inventoryEntry.Open())
+            try {
+              $inventory = $reader.ReadToEnd() | ConvertFrom-Json
+            }
+            finally {
+              $reader.Dispose()
+            }
+            if ($inventory.schemaVersion -ne 1) {
+              throw 'The release file inventory has an unsupported contract.'
+            }
+            if (@($inventory.files).Count -ne @($entries).Count) {
+              throw 'The release file inventory does not cover the complete archive.'
+            }
+            foreach ($entry in $entries) {
+              if ($entry -notin @($inventory.files)) {
+                throw "Archive entry is not owned by the release inventory: $entry"
               }
             }
           }

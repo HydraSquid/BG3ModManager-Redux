@@ -7,6 +7,12 @@ source for individual implementation details.
 
 - Public installation, migration, rollback, removal, privacy, support, contribution, security, and
   release-maintenance documentation.
+- Strict public-alpha update-channel checks with quiet background scheduling and explicit release
+  presentation.
+- Verified application update staging, release-owned file inventories, restart-based replacement,
+  transaction rollback, and post-update status reporting.
+- Separate lightweight web Setup for verified fresh installation, .NET 8 prerequisite handling,
+  per-user shortcuts, and inventory-scoped removal that preserves unlisted content.
 - Clean-machine, public update-channel, and distribution validation remain required before Redux
   leaves private alpha.
 
@@ -31,8 +37,9 @@ source for individual implementation details.
 
 - Main toolbar grouping, overflow parity, Quick Access coverage, action semantics, icons, spacing,
   and responsive layout.
-- Shared window chrome, modal transitions, focus restoration, deletion review, manager cards,
-  semantic pills, provider actions, and disabled-state presentation.
+- Shared window chrome and theme-aware move/resize feedback, modal transitions, focus restoration,
+  deletion review, manager cards, semantic pills and action icons, provider actions, and
+  disabled-state presentation.
 - Override separator appearance, persistent membership behavior, bulk collapse/expand controls, and
   category-driven icon/color customization.
 - Bundled typography choices: Manrope, Atkinson Hyperlegible, Archivo Black, IBM Plex Mono, and the
@@ -40,6 +47,8 @@ source for individual implementation details.
 - Reduce Motion coverage for lists, campaigns, windows, hover effects, and transitions.
 - Live custom-theme preview and Ctrl+L theme cycling performance through coalesced, incremental
   palette updates.
+- Quick Access hover and selection rails, semantic shortcut badges, and cleaner responsive
+  mod-list headers now follow the same interaction language as Categories and manager lists.
 
 ### Fixed
 
@@ -49,6 +58,8 @@ source for individual implementation details.
 - Deletion selection and disabled semantic-icon inconsistencies.
 - Stuck drag/drop overlays and incomplete drop-review thumbnails.
 - Hidden-toolbar parity, hover-card tag duplication, and shortcut chevron state.
+- Mod-list column headers now finish cleanly across the scrollbar gutter while vertical tracks
+  begin below the header strip.
 
 ### Safety
 

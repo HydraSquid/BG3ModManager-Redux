@@ -32,10 +32,14 @@ stronger organization, safer review workflows, and optional offline-assisted gui
 
 ## Install and update
 
-Redux is portable: it does not use a traditional installer.
+Redux remains portable. Public-alpha releases also provide a separate lightweight Setup for people
+who prefer a guided fresh installation; Setup downloads and verifies Redux rather than embedding
+the application.
 
-1. Install the [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
-2. Obtain the complete Redux archive from the
+1. Use the official lightweight Setup, or install the
+   [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) yourself for a manual
+   portable installation.
+2. For a manual installation, obtain the complete Redux archive from the
    [official Nexus Mods page](https://www.nexusmods.com/baldursgate3/mods/23799) or an official
    GitHub release when one is available.
 3. Extract the entire archive into its own writable folder. Do not run Redux from inside the ZIP,

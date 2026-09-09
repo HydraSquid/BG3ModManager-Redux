@@ -64,6 +64,14 @@ distribution in `THIRD-PARTY-NOTICES.md`.
 
 - Project: https://github.com/lucide-icons/lucide
 
+## Json.NET
+
+Redux and its standalone Setup use Json.NET (Newtonsoft.Json), copyright James Newton-King and
+contributors, under the MIT License. A copy is included in the distribution in
+`THIRD-PARTY-NOTICES.md`.
+
+- Project: https://github.com/JamesNK/Newtonsoft.Json
+
 ## GitHub branding
 
 Redux uses the official GitHub Invertocat image to identify links to GitHub repositories and

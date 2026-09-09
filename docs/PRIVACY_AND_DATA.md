@@ -19,6 +19,11 @@ Depending on enabled features and normal use, the Redux folder may contain:
 - load-order restore points, backups, and temporary staging data; and
 - diagnostic and startup logs.
 
+Application updating may temporarily place a verified release archive, extracted release files,
+transaction backups, and a small completion result under the current Windows user's local app-data
+folder. Successful transactions remove the large staging and backup content. This data contains
+Redux application files, not mods, saves, profiles, provider credentials, or signed download URLs.
+
 Redux also reads user-selected BG3 locations such as Mods, profiles, saves, the game directory, and
 Script Extender configuration. It changes those locations only through an explicit workflow such as
 install, delete, restore, save import, or game sync.
@@ -63,7 +68,8 @@ independent removal behavior. Clearing one must not silently remove another.
 Normal optional network activity can include:
 
 - Nexus Mods or mod.io for enabled source information and explicit downloads;
-- GitHub or a project-controlled update document for explicit application update checks; and
+- the official Redux GitHub update channel and release assets for enabled application update
+  checks and user-approved downloads; and
 - Norbyte's official Script Extender release/update services for Script Extender workflows.
 
 Core local package discovery, load-order editing, Mod Diagnostics, saved orders, and save browsing

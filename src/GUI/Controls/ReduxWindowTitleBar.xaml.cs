@@ -71,6 +71,7 @@ public partial class ReduxWindowTitleBar : UserControl
 				ReduxWindowBehavior.AttachWindowMotionPreference(window);
 				ReduxWindowBehavior.AttachRoundedCorners(window);
 				ReduxWindowBehavior.AttachWorkAreaMaximize(window);
+				ReduxWindowBehavior.AttachResizeFeedback(window);
 				window.StateChanged -= OwnerWindow_StateChanged;
 				window.StateChanged += OwnerWindow_StateChanged;
 			}

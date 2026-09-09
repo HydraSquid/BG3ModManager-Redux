@@ -5,8 +5,6 @@ using DivinityModManager.Util;
 using DivinityModManager.ViewModels;
 using DivinityModManager.Views;
 
-using AutoUpdaterDotNET;
-
 using System.Globalization;
 using System.ComponentModel;
 using System.Collections.Concurrent;
@@ -42,19 +40,13 @@ public partial class App : Application
 		client.DefaultRequestHeaders.Add("User-Agent", AppDomain.CurrentDomain.FriendlyName);
 		Services.RegisterSingleton(client);
 
-		var appUpdateVM = new AppUpdateWindowViewModel();
-
-		AutoUpdater.HttpUserAgent = "BG3ModManagerRedux";
-		AutoUpdater.RunUpdateAsAdmin = false;
-		AutoUpdater.Synchronous = false;
-		AutoUpdater.CheckForUpdateEvent += (e) =>
-		{
-			RxApp.TaskpoolScheduler.Schedule(() =>
-			{
-				appUpdateVM.OnUpdateCheckCommand.Execute(e).Subscribe();
-			});
-		};
-
+		var updateChannel = new ReduxUpdateChannelService(client);
+		Services.RegisterSingleton(updateChannel);
+		var updatePackages = new ReduxUpdatePackageService(client);
+		Services.RegisterSingleton(updatePackages);
+		var updateLauncher = new ReduxUpdateLaunchService();
+		Services.RegisterSingleton(updateLauncher);
+		var appUpdateVM = new AppUpdateWindowViewModel(updateChannel, updatePackages, updateLauncher);
 		Services.RegisterSingleton(appUpdateVM);
 
 		// POCO type warning suppression

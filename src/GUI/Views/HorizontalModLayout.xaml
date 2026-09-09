@@ -111,7 +111,7 @@
 			<DataTemplate x:Key="ModCategoryFilterNoticeContentTemplate">
 				<StackPanel Orientation="Horizontal">
 					<TextBlock Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
-						Text="Filtered view — " />
+						Text="Filtered: " />
 					<c:ReduxIcon Width="11" Height="11" Margin="0,0,4,0"
 						VerticalAlignment="Center"
 						Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
@@ -120,7 +120,7 @@
 					<TextBlock Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 						Text="{Binding SelectedModCategory}" />
 					<TextBlock Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
-						Text="; click to show all" />
+						Text=" · Clear" />
 				</StackPanel>
 			</DataTemplate>
 			<!-- One vertical rhythm for Categories, Active Mods, and Inactive Mods. -->

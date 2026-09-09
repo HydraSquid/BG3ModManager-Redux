@@ -17,7 +17,8 @@ public static class DivinityApp
 {
 	public const string REDUX_DISPLAY_VERSION = "0.1.0-alpha.14";
 	public const string REDUX_INTERNAL_VERSION = "0.1.0.14";
-	public static readonly bool REDUX_APPLICATION_UPDATES_ENABLED = false;
+	// Flip only when the moving public-alpha manifest has been published and smoke-tested.
+	public static readonly bool REDUX_UPDATE_CHECKS_ENABLED = false;
 
 	public const string DIR_DATA = "Data\\";
 	public const string URL_REPO = @"https://github.com/LaughingLeader/BG3ModManager";
@@ -29,11 +30,10 @@ public static class DivinityApp
 	public const string URL_REDUX_LICENSE = @"https://github.com/circleainn/BG3ModManager-Redux/blob/main/LICENSE";
 	public const string URL_REDUX_NEXUS = @"https://www.nexusmods.com/baldursgate3/mods/23799";
 	public const string URL_REDUX_DONATION = @"https://ko-fi.com/circleain";
+	public const string URL_REDUX_UPDATE_MANIFEST = @"https://github.com/circleainn/BG3ModManager-Redux/releases/download/public-alpha/Redux-Update-Public-Alpha.json";
 	public const string URL_BG3_NEXUS = @"https://www.nexusmods.com/baldursgate3";
 	public const string URL_EXTENDER_REPO = @"https://github.com/Norbyte/bg3se";
 	public const string URL_CHANGELOG = URL_REDUX_RELEASES;
-	public const string URL_CHANGELOG_RAW = @"https://raw.githubusercontent.com/circleainn/BG3ModManager-Redux/main/README.md";
-	public const string URL_UPDATE = @"https://raw.githubusercontent.com/circleainn/BG3ModManager-Redux/main/Update.xml";
 	public const string URL_AUTHOR = @"https://github.com/LaughingLeader";
 	public const string URL_ISSUES = URL_REDUX_ISSUES;
 	public const string URL_LICENSE = URL_REDUX_LICENSE;

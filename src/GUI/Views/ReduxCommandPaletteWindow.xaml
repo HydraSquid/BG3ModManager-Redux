@@ -33,6 +33,79 @@
 				<ResourceDictionary Source="../Themes/MainResourceDictionary.xaml" />
 			</ResourceDictionary.MergedDictionaries>
 
+			<Style x:Key="CommandPaletteInteractionRailStyle" TargetType="{x:Type Border}">
+				<Setter Property="BorderBrush" Value="{DynamicResource ReduxAccentBrush}" />
+				<Style.Triggers>
+					<MultiDataTrigger>
+						<MultiDataTrigger.Conditions>
+							<Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Success}" />
+							<Condition Binding="{Binding UsesContextualInteractionColors}" Value="True" />
+						</MultiDataTrigger.Conditions>
+						<Setter Property="BorderBrush" Value="{DynamicResource ReduxSuccessBrush}" />
+					</MultiDataTrigger>
+					<MultiDataTrigger>
+						<MultiDataTrigger.Conditions>
+							<Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Warning}" />
+							<Condition Binding="{Binding UsesContextualInteractionColors}" Value="True" />
+						</MultiDataTrigger.Conditions>
+						<Setter Property="BorderBrush" Value="{DynamicResource ReduxWarningBrush}" />
+					</MultiDataTrigger>
+					<MultiDataTrigger>
+						<MultiDataTrigger.Conditions>
+							<Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Error}" />
+							<Condition Binding="{Binding UsesContextualInteractionColors}" Value="True" />
+						</MultiDataTrigger.Conditions>
+						<Setter Property="BorderBrush" Value="{DynamicResource ReduxErrorBrush}" />
+					</MultiDataTrigger>
+					<MultiDataTrigger>
+						<MultiDataTrigger.Conditions>
+							<Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Nexus}" />
+							<Condition Binding="{Binding UsesContextualInteractionColors}" Value="True" />
+						</MultiDataTrigger.Conditions>
+						<Setter Property="BorderBrush" Value="{DynamicResource Redux.Pill.Nexus.Border}" />
+					</MultiDataTrigger>
+					<MultiDataTrigger>
+						<MultiDataTrigger.Conditions>
+							<Condition Binding="{Binding HasAccentColor}" Value="True" />
+							<Condition Binding="{Binding UsesContextualInteractionColors}" Value="True" />
+						</MultiDataTrigger.Conditions>
+						<Setter Property="BorderBrush" Value="{Binding AccentColor, Converter={StaticResource StringToSolidBrushConverter}}" />
+					</MultiDataTrigger>
+				</Style.Triggers>
+			</Style>
+
+			<Style x:Key="CommandPaletteGesturePillStyle" TargetType="{x:Type Border}">
+				<Setter Property="Background" Value="{DynamicResource ReduxSurfaceMutedBrush}" />
+				<Setter Property="BorderBrush" Value="Transparent" />
+				<Style.Triggers>
+					<MultiDataTrigger>
+						<MultiDataTrigger.Conditions><Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}" Value="True" /><Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Success}" /><Condition Binding="{Binding UsesContextualInteractionColors}" Value="True" /></MultiDataTrigger.Conditions>
+						<Setter Property="Background" Value="{DynamicResource ReduxSuccessPillBackground}" />
+					</MultiDataTrigger>
+					<MultiDataTrigger>
+						<MultiDataTrigger.Conditions><Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}" Value="True" /><Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Warning}" /><Condition Binding="{Binding UsesContextualInteractionColors}" Value="True" /></MultiDataTrigger.Conditions>
+						<Setter Property="Background" Value="{DynamicResource ReduxWarningPillBackground}" />
+					</MultiDataTrigger>
+					<MultiDataTrigger>
+						<MultiDataTrigger.Conditions><Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}" Value="True" /><Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Error}" /><Condition Binding="{Binding UsesContextualInteractionColors}" Value="True" /></MultiDataTrigger.Conditions>
+						<Setter Property="Background" Value="{DynamicResource ReduxErrorPillBackground}" />
+					</MultiDataTrigger>
+					<MultiDataTrigger>
+						<MultiDataTrigger.Conditions><Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}" Value="True" /><Condition Binding="{Binding Tone}" Value="{x:Static local:ReduxCommandPaletteTone.Nexus}" /><Condition Binding="{Binding UsesContextualInteractionColors}" Value="True" /></MultiDataTrigger.Conditions>
+						<Setter Property="Background" Value="{DynamicResource Redux.Pill.Nexus.Background}" />
+					</MultiDataTrigger>
+					<MultiDataTrigger>
+						<MultiDataTrigger.Conditions><Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}" Value="True" /><Condition Binding="{Binding HasAccentColor}" Value="True" /><Condition Binding="{Binding UsesContextualInteractionColors}" Value="True" /></MultiDataTrigger.Conditions>
+						<Setter Property="Background" Value="{Binding AccentColor, Converter={StaticResource StringToGradientBrushConverter}, ConverterParameter=28\,10}" />
+					</MultiDataTrigger>
+				</Style.Triggers>
+			</Style>
+
+			<Style x:Key="CommandPaletteGestureTextStyle" TargetType="{x:Type TextBlock}">
+				<Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" />
+				<Setter Property="FontWeight" Value="{DynamicResource Redux.FontWeight.Control}" />
+			</Style>
+
 			<Style x:Key="CommandPaletteItemStyle" TargetType="{x:Type ListBoxItem}">
 				<Setter Property="Margin" Value="0,0,0,3" />
 				<Setter Property="Padding" Value="0" />
@@ -181,6 +254,20 @@
 											</Style>
 										</Border.Style>
 									</Border>
+									<Border x:Name="HoverRail" Grid.ColumnSpan="3"
+										Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
+										BorderThickness="{DynamicResource Redux.Rail.Thickness}"
+										CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}"
+										IsHitTestVisible="False"
+										Opacity="0"
+										Style="{StaticResource CommandPaletteInteractionRailStyle}" />
+									<Border x:Name="SelectionRail" Grid.ColumnSpan="3"
+										Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
+										BorderThickness="{DynamicResource Redux.Rail.Thickness}"
+										CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}"
+										IsHitTestVisible="False"
+										Opacity="0"
+										Style="{StaticResource CommandPaletteInteractionRailStyle}" />
 									<Border Width="30" Height="30" Margin="11,8,10,8"
 										CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
 										Visibility="{Binding Path=(dapp:DivinityApp.ShowInterfaceIcons), Converter={StaticResource BoolToVisibilityConverter}}">
@@ -296,17 +383,16 @@
 											Text="{Binding Category}"
 											TextTrimming="CharacterEllipsis" />
 									</StackPanel>
-									<Border Grid.Column="2"
+									<Border x:Name="GesturePill" Grid.Column="2"
 										Margin="0,8,11,8"
 										Padding="7,3"
 										VerticalAlignment="Center"
-										Background="{DynamicResource ReduxSurfaceElevatedBrush}"
-										BorderBrush="{DynamicResource ReduxBorderBrush}"
 										BorderThickness="1"
 										CornerRadius="{DynamicResource Redux.CornerRadius.Pill}"
+										Style="{StaticResource CommandPaletteGesturePillStyle}"
 										Visibility="{Binding HasGesture, Converter={StaticResource BoolToVisibilityConverter}}">
-										<TextBlock Foreground="{DynamicResource ReduxTextSecondaryBrush}"
-											FontSize="{DynamicResource Redux.FontSize.11}"
+										<TextBlock x:Name="GestureText" FontSize="{DynamicResource Redux.FontSize.11}"
+											Style="{StaticResource CommandPaletteGestureTextStyle}"
 											Text="{Binding Gesture}" />
 									</Border>
 								</Grid>
@@ -321,11 +407,16 @@
 													To="1"
 													Duration="{StaticResource Redux.Motion.Fast}"
 													EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
-												<DoubleAnimation Storyboard.TargetName="ContextualHoverSurface"
+											<DoubleAnimation Storyboard.TargetName="ContextualHoverSurface"
 													Storyboard.TargetProperty="Opacity"
 													To="1"
 													Duration="{StaticResource Redux.Motion.Fast}"
-													EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
+												EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
+											<DoubleAnimation Storyboard.TargetName="HoverRail"
+												Storyboard.TargetProperty="Opacity"
+												To="1"
+												Duration="{StaticResource Redux.Motion.Fast}"
+												EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
 											</Storyboard>
 										</BeginStoryboard>
 									</Trigger.EnterActions>
@@ -336,10 +427,14 @@
 													Storyboard.TargetProperty="Opacity"
 													To="0"
 													Duration="{StaticResource Redux.Motion.Standard}" />
-												<DoubleAnimation Storyboard.TargetName="ContextualHoverSurface"
+											<DoubleAnimation Storyboard.TargetName="ContextualHoverSurface"
 													Storyboard.TargetProperty="Opacity"
-													To="0"
-													Duration="{StaticResource Redux.Motion.Standard}" />
+												To="0"
+												Duration="{StaticResource Redux.Motion.Standard}" />
+											<DoubleAnimation Storyboard.TargetName="HoverRail"
+												Storyboard.TargetProperty="Opacity"
+												To="0"
+												Duration="{StaticResource Redux.Motion.Standard}" />
 											</Storyboard>
 										</BeginStoryboard>
 									</Trigger.ExitActions>
@@ -347,6 +442,8 @@
 								<Trigger Property="IsSelected" Value="True">
 									<Setter TargetName="DefaultSelectionSurface" Property="Opacity" Value="1" />
 									<Setter TargetName="ContextualSelectionSurface" Property="Opacity" Value="1" />
+									<Setter TargetName="SelectionRail" Property="Opacity" Value="1" />
+									<Setter TargetName="HoverRail" Property="BorderBrush" Value="Transparent" />
 								</Trigger>
 								<Trigger Property="IsEnabled" Value="False">
 									<Setter TargetName="ItemChrome" Property="Opacity" Value="0.45" />

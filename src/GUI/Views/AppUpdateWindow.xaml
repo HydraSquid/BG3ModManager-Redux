@@ -8,9 +8,9 @@
 	xmlns:local="clr-namespace:DivinityModManager.Views"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
-	Title="App Update"
-	Width="900"
-	Height="620"
+	Title="Redux Update"
+	Width="760"
+	Height="540"
 	MinWidth="680"
 	MinHeight="460"
 	ResizeMode="CanResize"
@@ -39,10 +39,6 @@
 				<ResourceDictionary Source="../Themes/MainResourceDictionary.xaml" />
 				<ResourceDictionary Source="../Themes/DefaultStyles/MarkdownStyle.xaml" />
 			</ResourceDictionary.MergedDictionaries>
-			<Style BasedOn="{StaticResource {x:Type Button}}" TargetType="Button">
-				<Setter Property="Width" Value="120" />
-				<Setter Property="Margin" Value="10,0" />
-			</Style>
 			<Style x:Key="UpdateButtonPanelStyle" TargetType="StackPanel">
 				<Setter Property="VerticalAlignment" Value="Center" />
 				<Setter Property="Orientation" Value="Horizontal" />
@@ -66,7 +62,7 @@
 		<TextBlock Grid.Row="3"
 			Padding="4"
 			FontSize="{DynamicResource Redux.FontSize.24}"
-			Text="Release notes"
+			Text="Release details"
 			TextAlignment="Center" />
 		<FlowDocumentScrollViewer x:Name="UpdateChangelogView"
 			Grid.Row="4"
@@ -81,39 +77,41 @@
 		</FlowDocumentScrollViewer>
 		<Grid Grid.Row="1">
 			<Grid.RowDefinitions>
-				<RowDefinition Height="*" />
-				<RowDefinition Height="4*" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
 			</Grid.RowDefinitions>
 			<TextBlock x:Name="UpdateDescription"
 				Padding="0,10"
 				FontSize="{DynamicResource Redux.FontSize.18}"
-				Foreground="{DynamicResource {x:Static adonisUI:Brushes.AccentForegroundBrush}}"
+				Foreground="{DynamicResource ReduxTextPrimaryBrush}"
 				Text=""
 				TextAlignment="Center" />
-			<StackPanel Grid.Row="1"
+			<ProgressBar x:Name="UpdateProgressBar"
+				Grid.Row="1"
+				Width="360"
+				Height="8"
+				Margin="0,2,0,4"
+				Minimum="0"
+				Maximum="1"
+				Style="{StaticResource ReduxProgressBarStyle}"
+				Visibility="Collapsed" />
+			<StackPanel Grid.Row="2"
 				Margin="4,0,4,0"
 				HorizontalAlignment="Center"
 				Background="{DynamicResource {x:Static adonisUI:Brushes.Layer0BackgroundBrush}}"
 				Style="{StaticResource UpdateButtonPanelStyle}">
 				<Button x:Name="ConfirmButton"
 					HorizontalAlignment="Center"
-					Background="{DynamicResource ReduxSuccessBrush}"
-					Content="Download">
-					<Button.Resources>
-						<Style TargetType="Border">
-							<Setter Property="CornerRadius" Value="5" />
-						</Style>
-					</Button.Resources>
-				</Button>
+					MinWidth="120"
+					Margin="0,0,8,0"
+					Style="{StaticResource ReduxPrimaryActionButtonStyle}"
+					Content="Update &amp; Restart" />
 				<Button x:Name="SkipButton"
 					HorizontalAlignment="Center"
-					Content="Skip">
-					<Button.Resources>
-						<Style TargetType="Border">
-							<Setter Property="CornerRadius" Value="5" />
-						</Style>
-					</Button.Resources>
-				</Button>
+					MinWidth="96"
+					Style="{StaticResource ReduxSecondaryActionButtonStyle}"
+					Content="Close" />
 			</StackPanel>
 		</Grid>
 	</Grid>

@@ -125,7 +125,7 @@ public class DivinityModManagerSettings : ReactiveObject
 	[DataMember, Reactive] public bool AutoAddDependenciesWhenExporting { get; set; }
 
 	[DefaultValue(false)]
-	[SettingsEntry("Check for Redux updates automatically", "Reserved for a future Redux release. Automatic application updates are disabled during the alpha.")]
+	[SettingsEntry("Check for Redux updates automatically", "Check the public-alpha channel in the background after startup and notify me when a newer release is available.")]
 	[DataMember, Reactive] public bool CheckForUpdates { get; set; }
 
 	[DefaultValue("")]
@@ -411,6 +411,7 @@ public class DivinityModManagerSettings : ReactiveObject
 	[DataMember] public ConfirmationSettings Confirmations { get; set; }
 
 	[DataMember, Reactive] public long LastUpdateCheck { get; set; }
+	[DataMember, Reactive] public long LastUpdateCheckAttempt { get; set; }
 
 	[DataMember, Reactive] public string LastOrder { get; set; }
 

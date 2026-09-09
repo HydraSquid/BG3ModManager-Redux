@@ -10,5 +10,6 @@
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\Core\DivinityModManagerCore.csproj" />
 		<ProjectReference Include="..\..\src\GUI\GUI.csproj" />
+		<ProjectReference Include="..\..\src\Updater\ReduxUpdater.csproj" />
 	</ItemGroup>
 </Project>

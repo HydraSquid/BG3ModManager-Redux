@@ -16,6 +16,21 @@ to troubleshoot an unknown problem.
 Do not repeatedly launch Redux while an updater, antivirus scanner, cloud-sync client, or earlier
 Redux process is still replacing or locking its files.
 
+## An application update fails
+
+Redux verifies and extracts an update before closing. If that preparation fails, the existing
+installation remains unchanged and **Try Again** is available. If Redux cannot finish closing—for
+example, because its download queue cannot be saved—the queued update is cancelled rather than
+being applied later without warning.
+
+The updater changes only release-inventory files and attempts to restore those files when a
+replacement fails. Check write access to the Redux folder, close tools that may lock its binaries,
+and retry. If the files update successfully but Redux cannot restart automatically, launch
+`BG3ModManager.exe` yourself; the completed update is still valid. Preferences, downloads,
+archives, saved orders, and mods are not application-update targets. If the helper cannot run,
+download the complete archive from the official release page and follow the manual update steps in
+[Installation, updates, and removal](INSTALLATION.md).
+
 ## Paths or profiles are wrong
 
 Open Preferences and verify the BG3 executable, Mods, profiles, saves, and Script Extender paths.

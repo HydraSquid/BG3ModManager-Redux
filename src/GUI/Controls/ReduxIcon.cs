@@ -11,34 +11,6 @@ namespace DivinityModManager.Controls;
 /// </summary>
 public sealed class ReduxIcon : Control
 {
-	static ReduxIcon()
-	{
-		// Icons frequently have semantic local colours (success, warning, destructive). Coerce
-		// those colours only while the containing command is disabled, then let WPF restore the
-		// original value automatically when the command becomes available again.
-		ForegroundProperty.OverrideMetadata(
-			typeof(ReduxIcon),
-			new FrameworkPropertyMetadata(
-				null,
-				FrameworkPropertyMetadataOptions.Inherits | FrameworkPropertyMetadataOptions.AffectsRender,
-				null,
-				CoerceEnabledForeground));
-		IsEnabledProperty.OverrideMetadata(
-			typeof(ReduxIcon),
-			new FrameworkPropertyMetadata(true, (dependencyObject, _) => dependencyObject.CoerceValue(ForegroundProperty)));
-	}
-
-	private static object CoerceEnabledForeground(DependencyObject dependencyObject, object baseValue)
-	{
-		if (dependencyObject is ReduxIcon { IsEnabled: false } icon
-			&& icon.TryFindResource("ReduxTextMutedBrush") is Brush mutedBrush)
-		{
-			return mutedBrush;
-		}
-
-		return baseValue;
-	}
-
 	/// <summary>
 	/// Creates a consistently styled menu icon from an application geometry resource.
 	/// </summary>

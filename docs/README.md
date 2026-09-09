@@ -10,6 +10,7 @@ quick picture of Redux.
 |:--|:--|
 | Understand Redux as a user | [Project README](../README.md) |
 | Install, update, move, roll back, or remove Redux | [Installation and updates](INSTALLATION.md) |
+| Verify or recover a public-alpha release | [Public-alpha releases and update recovery](PUBLIC_ALPHA_RELEASES.md) |
 | Fix a startup, path, download, or sync problem | [Troubleshooting](TROUBLESHOOTING.md) |
 | Understand what Redux stores or sends | [Privacy and local data](PRIVACY_AND_DATA.md) |
 | Ask for help or report a problem | [Support](SUPPORT.md) |

@@ -13,6 +13,7 @@ using System.Linq;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 
@@ -63,6 +64,40 @@ public sealed class InteractionBehaviorTests
 		RegressionAssert.False(ReferenceEquals(frozen, writable));
 		writable.Y = -5;
 		RegressionAssert.Equal(-5d, writable.Y);
+	}
+
+	public void ModListHeaderSpansTheGutterAndScrollbarStartsBelowIt()
+	{
+		var resources = new ResourceDictionary
+		{
+			Source = new Uri(
+				"pack://application:,,,/BG3ModManager;component/Themes/MainResourceDictionary.xaml",
+				UriKind.Absolute)
+		};
+		var host = new Grid { Width = 12, Height = 260, Resources = resources };
+		var scrollBar = new ScrollBar
+		{
+			Width = 12,
+			Height = 260,
+			Maximum = 100,
+			ViewportSize = 20,
+			Template = (ControlTemplate)resources["ReduxModListVerticalScrollBarTemplate"]
+		};
+		host.Children.Add(scrollBar);
+		host.Measure(new Size(12, 260));
+		host.Arrange(new Rect(0, 0, 12, 260));
+		host.UpdateLayout();
+
+		var headerSurface = (Border?)scrollBar.Template.FindName("ColumnHeaderSurface", scrollBar)
+			?? throw new InvalidOperationException("The mod-list scrollbar header surface was not found.");
+		var track = (Track?)scrollBar.Template.FindName("PART_Track", scrollBar)
+			?? throw new InvalidOperationException("The mod-list scrollbar track was not found.");
+
+		if (Math.Abs(headerSurface.ActualWidth - scrollBar.ActualWidth) >= 0.01)
+			throw new InvalidOperationException($"Header width {headerSurface.ActualWidth} did not match scrollbar width {scrollBar.ActualWidth}.");
+		var trackTop = track.TransformToAncestor(scrollBar).Transform(new Point()).Y;
+		if (Math.Abs(trackTop - headerSurface.ActualHeight) >= 0.01)
+			throw new InvalidOperationException($"Track started at {trackTop} instead of below the {headerSurface.ActualHeight}px header surface.");
 	}
 
 	public void DrawerRetainsASelectedModDuringCrossListTransferOnly()
@@ -229,7 +264,10 @@ public sealed class InteractionBehaviorTests
 		try
 		{
 			var errorInteractionBrush = new SolidColorBrush(Colors.Red);
+			var primaryTextBrush = new SolidColorBrush(Colors.White);
 			window.Resources["ReduxErrorPillBackground"] = errorInteractionBrush;
+			window.Resources["ReduxErrorBrush"] = errorInteractionBrush;
+			window.Resources["ReduxTextPrimaryBrush"] = primaryTextBrush;
 			var list = (ListBox)window.FindName("CommandList");
 			list.ItemsSource = new[]
 			{
@@ -255,7 +293,7 @@ public sealed class InteractionBehaviorTests
 			window.UpdateLayout();
 			RegressionAssert.Equal(2, list.Items.Count);
 
-			Border CreateSelectedSurface(ReduxCommandPaletteItem data)
+			(ListBoxItem Item, Border Surface) CreateSelectedSurface(ReduxCommandPaletteItem data)
 			{
 				var item = new ListBoxItem
 				{
@@ -264,14 +302,18 @@ public sealed class InteractionBehaviorTests
 					Style = (Style)window.FindResource("CommandPaletteItemStyle")
 				};
 				item.Resources["ReduxErrorPillBackground"] = errorInteractionBrush;
+				item.Resources["ReduxErrorBrush"] = errorInteractionBrush;
+				item.Resources["ReduxTextPrimaryBrush"] = primaryTextBrush;
+				item.Resources["Redux.Rail.Thickness"] = new Thickness(3, 0, 0, 0);
 				item.ApplyTemplate();
 				item.Measure(new Size(560, 60));
 				item.Arrange(new Rect(0, 0, 560, 60));
 				item.UpdateLayout();
-				return (Border)item.Template.FindName("ContextualSelectionSurface", item);
+				return (item, (Border)item.Template.FindName("ContextualSelectionSurface", item));
 			}
 
-			var errorSurface = CreateSelectedSurface((ReduxCommandPaletteItem)list.Items[0]);
+			var errorSelection = CreateSelectedSurface((ReduxCommandPaletteItem)list.Items[0]);
+			var errorSurface = errorSelection.Surface;
 			if (errorSurface.Background is not SolidColorBrush errorBrush
 				|| errorBrush.Color != Colors.Red
 				|| errorSurface.Opacity != 1)
@@ -279,7 +321,18 @@ public sealed class InteractionBehaviorTests
 					$"{(errorSurface.Background as SolidColorBrush)?.Color} at opacity {errorSurface.Opacity}; " +
 					$"tone {(errorSurface.DataContext as ReduxCommandPaletteItem)?.Tone}, interactions {DivinityApp.UseCategoryColorsForInteractions}.");
 
-			var categorySurface = CreateSelectedSurface((ReduxCommandPaletteItem)list.Items[1]);
+			var selectionRail = (Border)errorSelection.Item.Template.FindName("SelectionRail", errorSelection.Item);
+			var hoverRail = (Border)errorSelection.Item.Template.FindName("HoverRail", errorSelection.Item);
+			var gesturePill = (Border)errorSelection.Item.Template.FindName("GesturePill", errorSelection.Item);
+			var gestureText = (TextBlock)errorSelection.Item.Template.FindName("GestureText", errorSelection.Item);
+			RegressionAssert.Equal(1d, selectionRail.Opacity);
+			RegressionAssert.Equal(new Thickness(3, 0, 0, 0), selectionRail.BorderThickness);
+			RegressionAssert.Equal(Colors.Red, ((SolidColorBrush)selectionRail.BorderBrush).Color);
+			RegressionAssert.Equal(Colors.Transparent, ((SolidColorBrush)hoverRail.BorderBrush).Color);
+			RegressionAssert.Equal(Colors.Transparent, ((SolidColorBrush)gesturePill.BorderBrush).Color);
+			RegressionAssert.Equal(Colors.White, ((SolidColorBrush)gestureText.Foreground).Color);
+
+			var categorySurface = CreateSelectedSurface((ReduxCommandPaletteItem)list.Items[1]).Surface;
 			if (categorySurface.Background is not LinearGradientBrush categoryBrush
 				|| categoryBrush.GradientStops.Count != 2
 				|| !categoryBrush.GradientStops.All(stop => stop.Color.R == 0xD7
@@ -298,6 +351,7 @@ public sealed class InteractionBehaviorTests
 	public void ReduxDialogTemplatesResolveCoreBindingsAtRuntime()
 	{
 		var nexusDownloads = new ReduxNexusDownloadsWindow();
+		ReduxThemeService.Apply(nexusDownloads.Resources, ReduxThemeType.ReduxDark);
 		var installReview = new ReduxInstallReviewWindow(null!,
 			[new ReduxInstallReviewItem("Clean package", "Version 1.0", "New mod", ReduxInstallReviewTone.Success)],
 			false, "Inactive Mods", "Destination: Inactive Mods · 1 new", true);
@@ -350,12 +404,45 @@ public sealed class InteractionBehaviorTests
 				window.UpdateLayout();
 			}
 
+			var sharedWindowTemplate = (ControlTemplate)nexusDownloads.FindResource("ReduxWindowTemplate");
+			var sharedWindowTemplateRoot = (FrameworkElement)sharedWindowTemplate.LoadContent();
+			var resizeGlow = sharedWindowTemplateRoot.FindName("SharedResizeGlow") as Border;
+			if (resizeGlow == null) throw new InvalidOperationException("The shared Redux window template did not create its resize feedback surface.");
+			if (!ReduxWindowBehavior.SupportsResizeFeedback(nexusDownloads)) throw new InvalidOperationException("A resizable Redux window was not eligible for shared resize feedback.");
+			if (ReduxWindowBehavior.SupportsResizeFeedback(new Window { ResizeMode = ResizeMode.NoResize })) throw new InvalidOperationException("A non-resizable window was eligible for shared resize feedback.");
+			if (!ReduxWindowBehavior.SupportsMoveFeedback(new Window { ResizeMode = ResizeMode.NoResize })) throw new InvalidOperationException("A non-resizable modal was not eligible for shared move feedback.");
+			RegressionAssert.Equal(0d, resizeGlow.Opacity);
+			RegressionAssert.Equal(
+				new Thickness(3),
+				(Thickness)nexusDownloads.FindResource("Redux.WindowInteraction.BorderThickness"));
+
 			var deleteButton = (Button)deleteFiles.FindName("DeleteActionButton");
 			var deleteIcon = (ReduxIcon)deleteFiles.FindName("DeleteActionIcon");
 			RegressionAssert.True(deleteButton.IsEnabled);
 			RegressionAssert.Equal(
 				((SolidColorBrush)deleteFiles.FindResource("ReduxErrorBrush")).Color,
 				((SolidColorBrush)deleteIcon.Foreground).Color);
+
+			var installAllButton = (Button)nexusDownloads.FindName("InstallAllButton");
+			var installAllIcon = (ReduxIcon)nexusDownloads.FindName("InstallAllIcon");
+			var clearArchivesButton = (Button)nexusDownloads.FindName("ClearArchivesButton");
+			var clearArchivesIcon = (ReduxIcon)nexusDownloads.FindName("ClearArchivesIcon");
+			RegressionAssert.Equal(
+				((SolidColorBrush)nexusDownloads.FindResource("ReduxSuccessBrush")).Color,
+				((SolidColorBrush)installAllButton.Foreground).Color);
+			RegressionAssert.Equal(
+				((SolidColorBrush)installAllButton.Foreground).Color,
+				((SolidColorBrush)installAllIcon.Foreground).Color);
+			RegressionAssert.Equal(
+				((SolidColorBrush)nexusDownloads.FindResource("ReduxWarningBrush")).Color,
+				((SolidColorBrush)clearArchivesButton.Foreground).Color);
+			RegressionAssert.Equal(
+				((SolidColorBrush)clearArchivesButton.Foreground).Color,
+				((SolidColorBrush)clearArchivesIcon.Foreground).Color);
+			installAllButton.IsEnabled = false;
+			RegressionAssert.Equal(
+				((SolidColorBrush)nexusDownloads.FindResource("ReduxSuccessBrush")).Color,
+				((SolidColorBrush)installAllIcon.Foreground).Color);
 		}
 		finally
 		{

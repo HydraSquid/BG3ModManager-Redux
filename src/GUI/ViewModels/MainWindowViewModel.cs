@@ -1,6 +1,4 @@
 
-using AutoUpdaterDotNET;
-
 using DivinityModManager.AppServices;
 using DivinityModManager.Controls;
 using DivinityModManager.Extensions;
@@ -533,7 +531,17 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	/// Called by App only after the prepared main window has been revealed,
 	/// activated, and allowed to complete a layout/render turn.
 	/// </summary>
-	public void NotifyMainWindowReady() => _startupNotifications.MarkReadyAndDrain();
+	public void NotifyMainWindowReady()
+	{
+		_startupNotifications.MarkReadyAndDrain();
+		if (ReduxUpdateResultService.TryConsume(out var updateResult))
+		{
+			ShowAlert(
+				updateResult.Message,
+				updateResult.Succeeded ? AlertType.Success : AlertType.Danger,
+				updateResult.Succeeded ? 20 : 35);
+		}
+	}
 
 	public void EnqueueNxmActivation(string value) =>
 		ShowWhenMainWindowReady($"nxm-{Guid.NewGuid():N}", () => _ = HandleNxmLinkAsync(value, fromProtocolActivation: true));
@@ -4659,7 +4667,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			if (Settings.CheckForUpdates && _firstRun)
 			{
 				_firstRun = false;
-				CheckForUpdates(false, true);
+				CheckForUpdates();
 			}
 
 			//RefreshAllModUpdatesBackground();
@@ -7525,13 +7533,13 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		}
 	}
 
-	public void CheckForUpdates(bool force = false, bool skipTimeCheck = false)
+	public void CheckForUpdates(bool force = false)
 	{
-		if (!DivinityApp.REDUX_APPLICATION_UPDATES_ENABLED)
+		if (!DivinityApp.REDUX_UPDATE_CHECKS_ENABLED)
 		{
 			if (force)
 			{
-				ShowAlert($"Application updates are disabled for Redux {DivinityApp.REDUX_DISPLAY_VERSION}. Private alpha builds are updated manually.", AlertType.Info, 30);
+				ShowAlert($"The Redux public-alpha update channel has not been published yet. {DivinityApp.REDUX_DISPLAY_VERSION} remains a manual build.", AlertType.Info, 30);
 			}
 			return;
 		}
@@ -7541,7 +7549,10 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		{
 			if (!force)
 			{
-				if (skipTimeCheck || Settings.LastUpdateCheck == -1 || (DateTimeOffset.Now.ToUnixTimeSeconds() - Settings.LastUpdateCheck >= 43200))
+				if (ReduxUpdateChannelService.IsAutomaticCheckDue(
+					Settings.LastUpdateCheck,
+					Settings.LastUpdateCheckAttempt,
+					DateTimeOffset.Now))
 				{
 					updateVM.ScheduleUpdateCheck();
 				}
@@ -7550,7 +7561,6 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			{
 				updateVM.ScheduleUpdateCheck(true);
 			}
-			Settings.LastUpdateCheck = DateTimeOffset.Now.ToUnixTimeSeconds();
 		}
 	}
 
@@ -10516,8 +10526,6 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		AppTitle = productName;
 		Version = assembly.GetName().Version;
 		Title = $"{productName} v{DivinityApp.REDUX_DISPLAY_VERSION}";
-		AutoUpdater.InstalledVersion = Version;
-		AutoUpdater.AppTitle = Title;
 		DivinityApp.Log($"{Title} initializing...");
 
 		this.DropHandler = new ModListDropHandler(this);
@@ -11045,7 +11053,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		var canCheckForUpdates = this.WhenAnyValue(x => x.MainProgressIsActive, b => b == false);
 		void checkForUpdatesAction()
 		{
-			if (DivinityApp.REDUX_APPLICATION_UPDATES_ENABLED)
+			if (DivinityApp.REDUX_UPDATE_CHECKS_ENABLED)
 			{
 				ShowAlert("Checking for Redux updates...", AlertType.Info, 30);
 			}

@@ -83,6 +83,7 @@ public static class ReduxWindowBehavior
 	private static readonly ConditionalWeakTable<Window, AdaptiveSizingState> AdaptiveSizingStates = new();
 	private static readonly ConditionalWeakTable<Window, WorkAreaState> WorkAreaStates = new();
 	private static readonly ConditionalWeakTable<Window, RoundedCornerState> RoundedCornerStates = new();
+	private static readonly ConditionalWeakTable<Window, ResizeFeedbackState> ResizeFeedbackStates = new();
 	private static readonly ConditionalWeakTable<Window, WindowMotionPreferenceState> WindowMotionPreferenceStates = new();
 	private static readonly ConditionalWeakTable<Window, OwnerBackdropState> OwnerBackdropStates = new();
 	private static readonly ConditionalWeakTable<Window, BackdropLeaseState> BackdropLeaseStates = new();
@@ -93,6 +94,11 @@ public static class ReduxWindowBehavior
 	private static readonly List<WeakReference<Popup>> ManagedPopups = new();
 	private static readonly List<WeakReference<ContextMenu>> ManagedContextMenus = new();
 	private const int WmGetMinMaxInfo = 0x0024;
+	private const int WmCancelMode = 0x001F;
+	private const int WmSizing = 0x0214;
+	private const int WmCaptureChanged = 0x0215;
+	private const int WmMoving = 0x0216;
+	private const int WmExitSizeMove = 0x0232;
 	private const uint MonitorDefaultToNearest = 0x00000002;
 	private const int DwmWindowCornerPreferenceAttribute = 33;
 	private const int DwmWindowBorderColorAttribute = 34;
@@ -130,6 +136,16 @@ public static class ReduxWindowBehavior
 		public bool IsAttached { get; set; }
 	}
 
+	private sealed class ResizeFeedbackState
+	{
+		public bool IsConfigured { get; set; }
+		public bool IsAttached { get; set; }
+		public bool IsVisible { get; set; }
+		public Border Glow { get; set; }
+		public HwndSource Source { get; set; }
+		public HwndSourceHook Hook { get; set; }
+	}
+
 	private sealed class WindowMotionPreferenceState
 	{
 		public bool IsAttached { get; set; }
@@ -158,6 +174,30 @@ public static class ReduxWindowBehavior
 	{
 		public bool IsAttached { get; set; }
 	}
+
+	public static readonly DependencyProperty SyncActionIconForegroundProperty = DependencyProperty.RegisterAttached(
+		"SyncActionIconForeground",
+		typeof(bool),
+		typeof(ReduxWindowBehavior),
+		new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits));
+
+	public static bool GetSyncActionIconForeground(DependencyObject element) =>
+		(bool)element.GetValue(SyncActionIconForegroundProperty);
+
+	public static void SetSyncActionIconForeground(DependencyObject element, bool value) =>
+		element.SetValue(SyncActionIconForegroundProperty, value);
+
+	public static readonly DependencyProperty ActionIconForegroundProperty = DependencyProperty.RegisterAttached(
+		"ActionIconForeground",
+		typeof(Brush),
+		typeof(ReduxWindowBehavior),
+		new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.Inherits));
+
+	public static Brush GetActionIconForeground(DependencyObject element) =>
+		(Brush)element.GetValue(ActionIconForegroundProperty);
+
+	public static void SetActionIconForeground(DependencyObject element, Brush value) =>
+		element.SetValue(ActionIconForegroundProperty, value);
 
 	public static readonly DependencyProperty HoverLiftProperty = DependencyProperty.RegisterAttached(
 		"HoverLift",
@@ -705,6 +745,139 @@ public static class ReduxWindowBehavior
 		}
 	}
 
+	public static bool SupportsResizeFeedback(Window window) =>
+		window != null
+		&& window.ResizeMode is ResizeMode.CanResize or ResizeMode.CanResizeWithGrip;
+
+	public static bool SupportsMoveFeedback(Window window) => window != null;
+
+	/// <summary>
+	/// Shows the shared, theme-aware window outline only while Windows is performing
+	/// an interactive move or resize. Programmatic layout and initial sizing stay quiet.
+	/// </summary>
+	public static void AttachResizeFeedback(Window window)
+	{
+		// Every Redux window can be moved, even compact NoResize dialogs. Resizing
+		// remains naturally limited by ResizeMode and therefore never raises WM_SIZING.
+		if (!SupportsMoveFeedback(window)) return;
+		var state = ResizeFeedbackStates.GetOrCreateValue(window);
+		if (state.IsConfigured) return;
+
+		window.ApplyTemplate();
+		// MainWindow owns move and resize feedback together. Leave that existing path
+		// intact while secondary Redux windows use the shared template surface.
+		if (window.FindName("WindowResizeGlow") is FrameworkElement) return;
+		state.Glow = window.Template?.FindName("SharedResizeGlow", window) as Border
+			?? FindVisualElementByName<Border>(window, "SharedResizeGlow");
+		if (state.Glow == null) return;
+		state.IsConfigured = true;
+
+		void HideImmediately()
+		{
+			state.IsVisible = false;
+			state.Glow.BeginAnimation(UIElement.OpacityProperty, null);
+			state.Glow.Opacity = 0;
+		}
+
+		void EndFeedback()
+		{
+			if (!state.IsVisible)
+			{
+				return;
+			}
+
+			state.IsVisible = false;
+			if (ReduceMotion)
+			{
+				HideImmediately();
+				return;
+			}
+
+			var currentOpacity = state.Glow.Opacity;
+			state.Glow.BeginAnimation(UIElement.OpacityProperty, null);
+			state.Glow.Opacity = 0;
+			state.Glow.BeginAnimation(UIElement.OpacityProperty, new ReduxDoubleAnimation
+			{
+				From = currentOpacity,
+				To = 0,
+				Duration = TimeSpan.FromMilliseconds(180),
+				FillBehavior = FillBehavior.Stop
+			});
+		}
+
+		void ShowFeedback()
+		{
+			if (ReduceMotion || window.WindowState == WindowState.Maximized)
+			{
+				HideImmediately();
+				return;
+			}
+
+			state.IsVisible = true;
+			state.Glow.BeginAnimation(UIElement.OpacityProperty, null);
+			state.Glow.Opacity = 0.9;
+		}
+
+		state.Hook = (IntPtr windowHandle, int message, IntPtr wParam, IntPtr lParam, ref bool handled) =>
+		{
+			switch (message)
+			{
+				case WmSizing:
+				case WmMoving:
+					ShowFeedback();
+					break;
+				case WmExitSizeMove:
+				case WmCancelMode:
+				case WmCaptureChanged:
+					EndFeedback();
+					break;
+			}
+			return IntPtr.Zero;
+		};
+
+		void AttachHook()
+		{
+			if (state.IsAttached || PresentationSource.FromVisual(window) is not HwndSource source) return;
+			state.Source = source;
+			source.AddHook(state.Hook);
+			state.IsAttached = true;
+		}
+
+		if (PresentationSource.FromVisual(window) is HwndSource)
+		{
+			AttachHook();
+		}
+		else
+		{
+			window.SourceInitialized += (_, _) => AttachHook();
+		}
+
+		window.StateChanged += (_, _) =>
+		{
+			if (window.WindowState == WindowState.Maximized) HideImmediately();
+		};
+		window.Closed += (_, _) =>
+		{
+			HideImmediately();
+			if (state.Source != null && state.Hook != null) state.Source.RemoveHook(state.Hook);
+			state.Source = null;
+			state.IsAttached = false;
+		};
+	}
+
+	private static T FindVisualElementByName<T>(DependencyObject root, string name) where T : FrameworkElement
+	{
+		if (root == null) return null;
+		for (var index = 0; index < VisualTreeHelper.GetChildrenCount(root); index++)
+		{
+			var child = VisualTreeHelper.GetChild(root, index);
+			if (child is T match && String.Equals(match.Name, name, StringComparison.Ordinal)) return match;
+			var descendant = FindVisualElementByName<T>(child, name);
+			if (descendant != null) return descendant;
+		}
+		return null;
+	}
+
 	public static void AttachRoundedCorners(Window window)
 	{
 		AttachWindowMotionPreference(window);
@@ -815,6 +988,22 @@ public static class ReduxWindowBehavior
 		minMaxInfo.MaxPosition.Y = monitorInfo.WorkArea.Top - monitorInfo.Monitor.Top;
 		minMaxInfo.MaxSize.X = monitorInfo.WorkArea.Right - monitorInfo.WorkArea.Left;
 		minMaxInfo.MaxSize.Y = monitorInfo.WorkArea.Bottom - monitorInfo.WorkArea.Top;
+		// This hook handles WM_GETMINMAXINFO so Windows will not continue into WPF's
+		// normal min/max pass. Preserve the Window constraints explicitly; without
+		// these values custom-chrome dialogs can be dragged narrower than MinWidth and
+		// their fixed summary/action content is clipped.
+		if (HwndSource.FromHwnd(windowHandle)?.RootVisual is Window window)
+		{
+			var dpi = VisualTreeHelper.GetDpi(window);
+			minMaxInfo.MinTrackSize.X = Math.Max(minMaxInfo.MinTrackSize.X,
+				(int)Math.Ceiling(window.MinWidth * dpi.DpiScaleX));
+			minMaxInfo.MinTrackSize.Y = Math.Max(minMaxInfo.MinTrackSize.Y,
+				(int)Math.Ceiling(window.MinHeight * dpi.DpiScaleY));
+			if (!Double.IsNaN(window.MaxWidth) && !Double.IsInfinity(window.MaxWidth))
+				minMaxInfo.MaxTrackSize.X = (int)Math.Ceiling(window.MaxWidth * dpi.DpiScaleX);
+			if (!Double.IsNaN(window.MaxHeight) && !Double.IsInfinity(window.MaxHeight))
+				minMaxInfo.MaxTrackSize.Y = (int)Math.Ceiling(window.MaxHeight * dpi.DpiScaleY);
+		}
 		Marshal.StructureToPtr(minMaxInfo, lParam, false);
 		handled = true;
 		return IntPtr.Zero;

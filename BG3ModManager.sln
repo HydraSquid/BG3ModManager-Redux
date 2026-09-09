@@ -10,7 +10,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Config", "Config", "{943120CC-2315-475E-9597-7136811228E6}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
-		Update.xml = Update.xml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Toolbox", "src\Toolbox\Toolbox.csproj", "{2F2EF4FE-7254-425A-8DE9-47457CC057C6}"
@@ -32,6 +31,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Redux.Core.Tests", "tests\Redux.Core.Tests\Redux.Core.Tests.csproj", "{21E2ACAA-52CF-4DD5-B91E-A5838CE479B8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{05F719AE-E7C8-42C1-B56A-745BDD600EDD}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReduxUpdater", "src\Updater\ReduxUpdater.csproj", "{A45D5EE5-1C00-4C83-A88C-6772F4FA1428}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -206,6 +207,26 @@ Global
 		{21E2ACAA-52CF-4DD5-B91E-A5838CE479B8}.Release|Any CPU.Build.0 = Release|x64
 		{21E2ACAA-52CF-4DD5-B91E-A5838CE479B8}.Release|x64.ActiveCfg = Release|x64
 		{21E2ACAA-52CF-4DD5-B91E-A5838CE479B8}.Release|x64.Build.0 = Release|x64
+		{A45D5EE5-1C00-4C83-A88C-6772F4FA1428}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{A45D5EE5-1C00-4C83-A88C-6772F4FA1428}.Debug|Any CPU.Build.0 = Debug|x64
+		{A45D5EE5-1C00-4C83-A88C-6772F4FA1428}.Debug|x64.ActiveCfg = Debug|x64
+		{A45D5EE5-1C00-4C83-A88C-6772F4FA1428}.Debug|x64.Build.0 = Debug|x64
+		{A45D5EE5-1C00-4C83-A88C-6772F4FA1428}.Editor Debug|Any CPU.ActiveCfg = Debug|x64
+		{A45D5EE5-1C00-4C83-A88C-6772F4FA1428}.Editor Debug|Any CPU.Build.0 = Debug|x64
+		{A45D5EE5-1C00-4C83-A88C-6772F4FA1428}.Editor Debug|x64.ActiveCfg = Debug|x64
+		{A45D5EE5-1C00-4C83-A88C-6772F4FA1428}.Editor Debug|x64.Build.0 = Debug|x64
+		{A45D5EE5-1C00-4C83-A88C-6772F4FA1428}.Publish|Any CPU.ActiveCfg = Publish|x64
+		{A45D5EE5-1C00-4C83-A88C-6772F4FA1428}.Publish|Any CPU.Build.0 = Publish|x64
+		{A45D5EE5-1C00-4C83-A88C-6772F4FA1428}.Publish|x64.ActiveCfg = Publish|x64
+		{A45D5EE5-1C00-4C83-A88C-6772F4FA1428}.Publish|x64.Build.0 = Publish|x64
+		{A45D5EE5-1C00-4C83-A88C-6772F4FA1428}.PublishTest|Any CPU.ActiveCfg = PublishTest|x64
+		{A45D5EE5-1C00-4C83-A88C-6772F4FA1428}.PublishTest|Any CPU.Build.0 = PublishTest|x64
+		{A45D5EE5-1C00-4C83-A88C-6772F4FA1428}.PublishTest|x64.ActiveCfg = PublishTest|x64
+		{A45D5EE5-1C00-4C83-A88C-6772F4FA1428}.PublishTest|x64.Build.0 = PublishTest|x64
+		{A45D5EE5-1C00-4C83-A88C-6772F4FA1428}.Release|Any CPU.ActiveCfg = Release|x64
+		{A45D5EE5-1C00-4C83-A88C-6772F4FA1428}.Release|Any CPU.Build.0 = Release|x64
+		{A45D5EE5-1C00-4C83-A88C-6772F4FA1428}.Release|x64.ActiveCfg = Release|x64
+		{A45D5EE5-1C00-4C83-A88C-6772F4FA1428}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

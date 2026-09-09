@@ -10,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 PUBLISH_DIR = ROOT / "bin" / "Publish"
+RELEASE_INVENTORY_NAME = "Redux-Release-Files.json"
 
 version = sys.argv[1].strip() if len(sys.argv) > 1 else ""
 if not version:
@@ -27,17 +28,22 @@ THIRD_PARTY_LICENSE_FILES = (
 	Path("Atkinson-Hyperlegible-OFL-1.1.txt"),
 	Path("ArchivoBlack-OFL-1.1.txt"),
 	Path("IBMPlexMono-OFL-1.1.txt"),
+	Path("NewtonsoftJson-MIT.txt"),
 )
 
 USER_STATE_DIRECTORIES = {
 	"data",
 	"orders",
+	"currentorders",
 	"_logs",
 	"logs",
 	"cache",
 	"_cache",
 	"backup",
 	"_backup",
+	"gamedirectoryinstalls",
+	"restorepoints",
+	"temp",
 }
 
 FORBIDDEN_FILE_NAMES = {
@@ -45,6 +51,7 @@ FORBIDDEN_FILE_NAMES = {
 	"keybindings.json",
 	"scriptextendersettings.json",
 	"lastexported.json",
+	"mod-annotations.json",
 	"hosts.yml",
 	".env",
 }
@@ -81,6 +88,10 @@ REQUIRED_FILES = {
 	Path("Resources/Fonts/AtkinsonHyperlegible-Regular.ttf"),
 	Path("Resources/Fonts/ArchivoBlack-Regular.ttf"),
 	Path("Resources/Fonts/IBMPlexMono-Regular.ttf"),
+	Path("Updater/ReduxUpdater.exe"),
+	Path("Updater/ReduxUpdater.dll"),
+	Path("Updater/ReduxUpdater.deps.json"),
+	Path("Updater/ReduxUpdater.runtimeconfig.json"),
 }
 
 BINARY_SUFFIXES = {".dll", ".exe"}
@@ -101,6 +112,12 @@ def prepare_publish_directory() -> None:
 	for child in list(PUBLISH_DIR.iterdir()):
 		if child.is_dir() and child.name.lower() in USER_STATE_DIRECTORIES:
 			remove_path(child)
+	remove_path(PUBLISH_DIR / RELEASE_INVENTORY_NAME)
+	# UpdaterPayload is an MSBuild intermediate. Only the curated Updater directory is shipped.
+	remove_path(PUBLISH_DIR / "UpdaterPayload")
+	for stale_updater_root_file in PUBLISH_DIR.glob("ReduxUpdater.*"):
+		remove_path(stale_updater_root_file)
+	remove_path(PUBLISH_DIR / "_Lib" / "ReduxUpdater.dll")
 
 	distribution_documents = {
 		ROOT / "README.md": PUBLISH_DIR / "README.md",
@@ -255,6 +272,23 @@ def write_archive(files: list[Path]) -> None:
 	shutil.copy2(archive_path, latest_path)
 
 
+def write_release_inventory(files: list[Path]) -> None:
+	"""Declare the exact files owned by Redux so updates never infer ownership."""
+	paths = sorted(
+		[path.relative_to(PUBLISH_DIR).as_posix() for path in files]
+		+ [RELEASE_INVENTORY_NAME],
+		key=str.casefold,
+	)
+	inventory = {
+		"schemaVersion": 1,
+		"files": paths,
+	}
+	(PUBLISH_DIR / RELEASE_INVENTORY_NAME).write_text(
+		json.dumps(inventory, indent=2) + "\n",
+		encoding="utf-8",
+	)
+
+
 def internal_version(display_version: str) -> str:
 	match = re.fullmatch(r"0\.1\.0-alpha\.([1-9][0-9]*)", display_version)
 	if not match:
@@ -300,6 +334,8 @@ def write_update_manifest() -> None:
 
 prepare_publish_directory()
 sanitize_binary_build_metadata()
+package_files = collect_package_files()
+write_release_inventory(package_files)
 package_files = collect_package_files()
 validate_package_privacy(package_files)
 write_archive(package_files)

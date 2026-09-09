@@ -53,7 +53,6 @@
 	<ItemGroup>
 		<PackageReference Include="AdonisUI" Version="1.17.1" />
 		<PackageReference Include="AdonisUI.ClassicTheme" Version="1.17.1" />
-		<PackageReference Include="Autoupdater.NET.Official" Version="1.9.2" />
 		<PackageReference Include="DynamicData" Version="9.1.2" />
 		<PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="5.0.124" />
 		<PackageReference Include="Fody" Version="6.9.2" PrivateAssets="all" />
@@ -149,11 +148,25 @@
 		</ItemGroup>
 		<Copy SourceFiles="@(LibFiles)" DestinationFolder="$(OutputPath)_Lib" OverwriteReadOnlyFiles="true" ContinueOnError="true" />
 	</Target>
-	
+
+	<Target Name="BuildReduxUpdater" BeforeTargets="CopyReduxUpdaterFiles">
+		<MSBuild Projects="$(MSBuildProjectDirectory)\..\Updater\ReduxUpdater.csproj"
+			Targets="Build"
+			Properties="Configuration=$(Configuration);Platform=x64" />
+	</Target>
+
+	<Target Name="CopyReduxUpdaterFiles" BeforeTargets="SetupLibFolder" AfterTargets="Build" DependsOnTargets="BuildReduxUpdater">
+		<RemoveDir Directories="$(OutputPath)Updater" />
+		<ItemGroup>
+			<ReduxUpdaterFiles Include="$(MSBuildProjectDirectory)\..\..\bin\UpdaterPayload\$(Configuration)\ReduxUpdater.*" />
+		</ItemGroup>
+		<Copy SourceFiles="@(ReduxUpdaterFiles)" DestinationFolder="$(OutputPath)Updater" SkipUnchangedFiles="true" />
+	</Target>
+
 	<Target Name="SetupLibFolder" AfterTargets="AfterBuild" Condition="'$(Configuration)' == 'Publish' or '$(Configuration)' == 'PublishTest'">
 		<ItemGroup>
 			<DeleteDebug Include="$(OutputPath)*.pdb" />
-			<MoveToLibFolder Include="$(OutputPath)*.dll;$(OutputPath)*.xml;$(OutputPath)\runtimes\win-x64\native\WebView2Loader.dll" Exclude="$(OutputPath)BG3ModManager.dll;$(OutputPath)WinRT.Runtime.dll" />
+			<MoveToLibFolder Include="$(OutputPath)*.dll;$(OutputPath)*.xml" Exclude="$(OutputPath)BG3ModManager.dll;$(OutputPath)WinRT.Runtime.dll" />
 		</ItemGroup>
 		<Move SourceFiles="@(MoveToLibFolder)" DestinationFolder="$(OutputPath)_Lib" OverwriteReadOnlyFiles="true" ContinueOnError="true" />
 		<!-- The C++/CLI loader shim is required for LSLibNative at runtime but is not

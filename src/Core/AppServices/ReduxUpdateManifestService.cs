@@ -95,8 +95,8 @@ public static partial class ReduxUpdateManifestService
 			requireFileName: false);
 		var artifactsToken = root["artifacts"] as JArray
 			?? throw new InvalidDataException("artifacts must be an array.");
-		if (artifactsToken.Count is < 1 or > 2)
-			throw new InvalidDataException("The update manifest must contain one or two release artifacts.");
+		if (artifactsToken.Count != 1)
+			throw new InvalidDataException("The update manifest must contain exactly one portable release artifact.");
 
 		var artifacts = new List<ReduxUpdateArtifact>(artifactsToken.Count);
 		var kinds = new HashSet<string>(StringComparer.Ordinal);
@@ -105,8 +105,8 @@ public static partial class ReduxUpdateManifestService
 			var artifactObject = RequireObject(artifactToken, "artifact");
 			RejectUnknownProperties(artifactObject, ArtifactProperties, "artifact");
 			var kind = RequireString(artifactObject, "kind", 32);
-			if (kind is not (ReduxUpdateArtifactKinds.Installer or ReduxUpdateArtifactKinds.Portable))
-				throw new InvalidDataException("Artifact kind must be 'installer' or 'portable'.");
+			if (kind != ReduxUpdateArtifactKinds.Portable)
+				throw new InvalidDataException("Artifact kind must be 'portable'.");
 			if (!kinds.Add(kind))
 				throw new InvalidDataException($"The update manifest contains more than one '{kind}' artifact.");
 
@@ -115,9 +115,8 @@ public static partial class ReduxUpdateManifestService
 				"url",
 				OfficialRepositoryPath + "releases/download/v" + displayVersion + "/",
 				requireFileName: true);
-			var expectedExtension = kind == ReduxUpdateArtifactKinds.Installer ? ".exe" : ".zip";
-			if (!url.EndsWith(expectedExtension, StringComparison.OrdinalIgnoreCase))
-				throw new InvalidDataException($"The {kind} artifact must use the {expectedExtension} file type.");
+			if (!url.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+				throw new InvalidDataException("The portable artifact must use the .zip file type.");
 			var sizeBytes = RequireInteger(artifactObject, "sizeBytes");
 			if (sizeBytes <= 0 || sizeBytes > MaximumArtifactBytes)
 				throw new InvalidDataException("Artifact sizeBytes is outside the supported range.");
@@ -150,8 +149,7 @@ public static partial class ReduxUpdateManifestService
 
 	public static ReduxUpdateDecision Evaluate(
 		ReduxUpdateManifest manifest,
-		string installedInternalVersion,
-		bool installerManaged)
+		string installedInternalVersion)
 	{
 		ArgumentNullException.ThrowIfNull(manifest);
 		if (!Version.TryParse(installedInternalVersion, out var installed))
@@ -165,15 +163,14 @@ public static partial class ReduxUpdateManifestService
 			: comparison < 0
 				? ReduxUpdateAvailability.InstalledVersionIsNewer
 				: ReduxUpdateAvailability.UpToDate;
-		var preferredKind = installerManaged ? ReduxUpdateArtifactKinds.Installer : ReduxUpdateArtifactKinds.Portable;
-		var preferred = manifest.Artifacts.FirstOrDefault(artifact => artifact.Kind == preferredKind)
-			?? throw new InvalidDataException($"The update manifest does not contain the required {preferredKind} artifact.");
+		var artifact = manifest.Artifacts.SingleOrDefault()
+			?? throw new InvalidDataException("The update manifest does not contain its portable artifact.");
 
 		return new ReduxUpdateDecision
 		{
 			Availability = availability,
 			Manifest = manifest,
-			PreferredArtifact = preferred
+			Artifact = artifact
 		};
 	}
 

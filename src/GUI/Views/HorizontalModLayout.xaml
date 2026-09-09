@@ -1940,9 +1940,10 @@
 					AutomationProperties.Name="Active Mods" />
 			</Grid>
 			<Border Grid.Row="1" Background="{DynamicResource ReduxBorderBrush}" />
-			<Grid x:Name="ActiveModListGrid" Grid.Row="2">
+			<Grid x:Name="ActiveModListGrid" Grid.Row="2" SizeChanged="OverrideWorkspace_SizeChanged">
 				<Grid.RowDefinitions>
-					<RowDefinition Name="ActiveModsListRow" Height="10*" />
+					<RowDefinition Name="ActiveModsListRow" Height="10*" MinHeight="96" />
+					<RowDefinition Height="Auto" />
 					<RowDefinition Name="ActiveModsListForcedModsRow" Height="Auto" />
 				</Grid.RowDefinitions>
 				<c:ModListView x:Name="ActiveModsListView"
@@ -1964,10 +1965,18 @@
 					View="{DynamicResource ModGridView}">
 					<c:ModListView.ContextMenu><ContextMenu /></c:ModListView.ContextMenu>
 				</c:ModListView>
-				<Grid x:Name="AlwaysLoadedSectionGrid" Grid.Row="1">
+				<GridSplitter x:Name="OverrideModsGridSplitter" Grid.Row="1" Height="6"
+					HorizontalAlignment="Stretch" VerticalAlignment="Center"
+					ResizeBehavior="PreviousAndNext" Style="{StaticResource ReduxHorizontalSplitterStyle}"
+					Visibility="Collapsed" AutomationProperties.Name="Resize Override Mods"
+					ToolTip="Drag to resize Override Mods"
+					PreviewKeyDown="OverrideModsGridSplitter_PreviewKeyDown"
+					DragStarted="OverrideModsGridSplitter_DragStarted"
+					DragCompleted="OverrideModsGridSplitter_DragCompleted" />
+				<Grid x:Name="AlwaysLoadedSectionGrid" Grid.Row="2">
 					<Grid.RowDefinitions>
 						<RowDefinition Height="Auto" />
-						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
 					</Grid.RowDefinitions>
 					<Border x:Name="AlwaysLoadedHeaderGrid" Margin="6,3,6,7" Padding="6,1"
 						Background="{DynamicResource ReduxSurfaceMutedBrush}"
@@ -2010,9 +2019,23 @@
 							</TextBlock>
 							<ToggleButton x:Name="AlwaysLoadedToggleButton" Grid.Column="3" Width="24" Height="24"
 								AutomationProperties.Name="Collapse or expand Override Mods"
-								Style="{StaticResource ModDetailsToggleStyle}"
+								Style="{StaticResource ReduxChromeToggleStyle}"
 								IsChecked="{Binding IsAlwaysLoadedExpanded, Mode=TwoWay}"
-								ToolTip="Collapse or expand Override Mods" />
+								ToolTip="Collapse or expand Override Mods">
+								<Path Width="10" Height="5" Stretch="Fill" StrokeThickness="1.25" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+									Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}">
+									<Path.Style>
+										<Style TargetType="{x:Type Path}">
+											<Setter Property="Data" Value="{StaticResource Redux.Icon.ChevronUpStroke}" />
+											<Style.Triggers>
+												<DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="True">
+													<Setter Property="Data" Value="{StaticResource Redux.Icon.ChevronDownStroke}" />
+												</DataTrigger>
+											</Style.Triggers>
+										</Style>
+									</Path.Style>
+								</Path>
+							</ToggleButton>
 						</Grid>
 					</Border>
 					<c:ModListView x:Name="ForceLoadedModsListView"

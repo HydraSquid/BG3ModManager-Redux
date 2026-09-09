@@ -6,13 +6,18 @@ using System.Windows.Data;
 using System.Windows.Media;
 
 using DivinityModManager.Models;
+using DivinityModManager.Controls;
 using DivinityModManager.Util;
 
 namespace Redux.Core.Tests;
 
 internal sealed class ForkTableStripingTests
 {
-	public void TableRowsAlternateAcrossBuiltInAndLiveCustomThemes()
+	public void TableRowsAlternateAcrossBuiltInAndLiveCustomThemes() => VerifyTableStriping(false);
+
+	public void ActualModRowsAlternateAcrossBuiltInAndLiveCustomThemes() => VerifyTableStriping(true);
+
+	private void VerifyTableStriping(bool actualModRows)
 	{
 		var app = Application.Current;
 		var previousResources = app.Resources;
@@ -23,7 +28,7 @@ internal sealed class ForkTableStripingTests
 		{
 			app.Resources = WpfRenderCapture.CreateReduxApplicationResources();
 
-			var table = CreateTable();
+			var table = CreateTable(actualModRows);
 			window = new Window
 			{
 				Content = table,
@@ -44,7 +49,7 @@ internal sealed class ForkTableStripingTests
 				ReduxThemeService.Apply(app.Resources, theme);
 				Layout(window);
 				AssertAlternating(table);
-				WpfRenderCapture.CaptureIfRequested(window, $"fork-table-stripes-{theme}");
+				WpfRenderCapture.CaptureIfRequested(window, $"fork-{(actualModRows ? "mod" : "table")}-stripes-{theme}");
 			}
 
 			var custom = ReduxThemeService.CreateFromBase("Stripe regression", ReduxThemeType.ReduxDark);
@@ -53,7 +58,7 @@ internal sealed class ForkTableStripingTests
 			Layout(window);
 			AssertAlternating(table);
 			RegressionAssert.Equal(Color.FromRgb(0xD5, 0xE8, 0xF1), AlternateBrush(table).Color);
-			WpfRenderCapture.CaptureIfRequested(window, "fork-table-stripes-custom");
+			WpfRenderCapture.CaptureIfRequested(window, $"fork-{(actualModRows ? "mod" : "table")}-stripes-custom");
 
 			custom.TextColor = "#EEDDCB";
 			ReduxThemeService.PreviewColors(app.Resources, custom);
@@ -74,9 +79,11 @@ internal sealed class ForkTableStripingTests
 		}
 	}
 
-	private static ListView CreateTable()
+	private static ListView CreateTable(bool actualModRows)
 	{
-		var table = new ListView { Height = 240 };
+		ListView table = actualModRows ? new ModListView() : new ListView();
+		table.Height = 240;
+		if (actualModRows) table.SetResourceReference(FrameworkElement.StyleProperty, "ModOrderListView");
 		table.SetResourceReference(Control.ForegroundProperty, "ReduxTextPrimaryBrush");
 		table.SetResourceReference(Control.BackgroundProperty, "ReduxListInteriorBrush");
 		var columns = new GridView();
@@ -107,6 +114,12 @@ internal sealed class ForkTableStripingTests
 			RegressionAssert.Equal(index % 2, ItemsControl.GetAlternationIndex(row));
 			RegressionAssert.Equal(index % 2 == 1,
 				ReferenceEquals(row.Background, Application.Current.FindResource("ReduxTableAlternateRowBrush")));
+			if (table is ModListView)
+			{
+				var rowBorder = (Border)row.Template.FindName("RowBorder", row);
+				RegressionAssert.Equal(index % 2 == 1,
+					ReferenceEquals(rowBorder.Background, Application.Current.FindResource("ReduxTableAlternateRowBrush")));
+			}
 		}
 	}
 

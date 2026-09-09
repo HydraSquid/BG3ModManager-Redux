@@ -15,7 +15,7 @@ plus the differences below.
 | Dependency batches | Selected prerequisites are ordered before dependents; missing/old requirements and cycles block affected packages. Failed prerequisites suppress their dependents. |
 | Dependency assistance | UUID-based installed/bundled/download matches, reviewed source links, and Copy UUID without name-based guessing. |
 | PAK installation | Stage and validate all archive packages before committing; roll back all destination changes on failure. Sibling packages satisfy each other's declared requirements. |
-| Layout | Adjacent-only pane resizing with responsive sizing and persisted Downloads visibility/width. |
+| Layout | Adjacent-only pane resizing with responsive sizing and persisted Downloads visibility/width. Override Mods has a height-resize handle, minimum list heights, and a chosen height retained across collapse/expand during the session. Downloads uses the shared pane-header arrow. |
 | Themes | Theme-aware alternating table rows, retaining upstream's current fonts, palettes, gradients, and transitions. |
 | Sources | Manual BG3 mod.io and Nexus page links with persisted provenance; native mod.io identity blocks automatic Nexus inference. |
 | Activation/shutdown | Restore activation after offscreen startup; require successful settings and queue persistence before closing. |
@@ -27,6 +27,11 @@ plus the differences below.
 - Current download inspection, retained package archive store, install history, and generic local-package intake.
 - Current mod-table selection reconciliation, load-order persistence, advisor, save manager, installer, and updater.
 - Current public documentation, release version, bundled mod database, and branding.
+
+The embedded Downloads pane retains upstream's card presentation. The old fork's
+dedicated **Download Again** and **Details / Inspect Failure** actions are not
+currently exposed there; their restoration remains a follow-up. Dependency review
+is available through **Dependencies**.
 
 ## Runtime compatibility
 

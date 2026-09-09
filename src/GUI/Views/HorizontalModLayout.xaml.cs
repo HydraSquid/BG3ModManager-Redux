@@ -265,6 +265,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 	private System.Threading.CancellationTokenSource _inactiveModsTransition;
 	private System.Threading.CancellationTokenSource _modDetailsTransition;
 	private System.Threading.CancellationTokenSource _overrideModsTransition;
+	private double _overrideModsExpandedHeight = Double.NaN;
 	private VisualDividerAnimation _activeVisualDividerTransition;
 	private VisualDividerAnimation _inactiveVisualDividerTransition;
 	private DispatcherOperation _modDetailsSelectionUpdate;
@@ -2517,13 +2518,14 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 	private async void UpdateOverrideModsLayout(bool hasAlwaysLoadedMods, bool isExpanded)
 	{
 		var showContents = hasAlwaysLoadedMods && isExpanded;
+		_overrideModsTransition?.Cancel();
+		OverrideModsGridSplitter.Visibility = BoolToVisibilityConverter.FromBool(showContents);
 		if (!IsLoaded || !hasAlwaysLoadedMods || ActiveModsListForcedModsRow.ActualHeight <= 0)
 		{
 			ApplyOverrideModsLayout(hasAlwaysLoadedMods, showContents);
 			return;
 		}
 
-		_overrideModsTransition?.Cancel();
 		_overrideModsTransition = new System.Threading.CancellationTokenSource();
 		var token = _overrideModsTransition.Token;
 		var startHeight = ActiveModsListForcedModsRow.ActualHeight;
@@ -2539,7 +2541,8 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			+ AlwaysLoadedHeaderGrid.Margin.Top
 			+ AlwaysLoadedHeaderGrid.Margin.Bottom;
 		var targetHeight = showContents
-			? Math.Max(headerHeight, AlwaysLoadedSectionGrid.DesiredSize.Height)
+			? Math.Min(ActiveModsListForcedModsRow.MaxHeight, Double.IsNaN(_overrideModsExpandedHeight)
+				? Math.Max(headerHeight, AlwaysLoadedSectionGrid.DesiredSize.Height) : _overrideModsExpandedHeight)
 			: Math.Max(1, headerHeight);
 
 		var completed = await AnimatePanelValueAsync(
@@ -2553,7 +2556,8 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 	private void ApplyOverrideModsLayout(bool hasAlwaysLoadedMods, bool showContents)
 	{
 		ForceLoadedModsListView.Visibility = BoolToVisibilityConverter.FromBool(showContents);
-		ActiveModsListForcedModsRow.MinHeight = 0;
+		OverrideModsGridSplitter.Visibility = BoolToVisibilityConverter.FromBool(showContents);
+		ActiveModsListForcedModsRow.MinHeight = showContents ? 72 : 0;
 		ActiveModsListRow.Height = new GridLength(1, GridUnitType.Star);
 
 		if (!hasAlwaysLoadedMods)
@@ -2562,7 +2566,45 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			return;
 		}
 
-		ActiveModsListForcedModsRow.Height = GridLength.Auto;
+		ActiveModsListForcedModsRow.Height = showContents && !Double.IsNaN(_overrideModsExpandedHeight)
+			? new GridLength(_overrideModsExpandedHeight) : GridLength.Auto;
+	}
+
+	private void OverrideWorkspace_SizeChanged(object sender, SizeChangedEventArgs e)
+	{
+		if (ActiveModsListForcedModsRow == null) return;
+		ActiveModsListForcedModsRow.MaxHeight = Math.Max(72, e.NewSize.Height - ActiveModsListRow.MinHeight - 6);
+	}
+
+	private void OverrideModsGridSplitter_DragStarted(object sender, DragStartedEventArgs e)
+		=> PrepareOverrideModsResize();
+
+	private void OverrideModsGridSplitter_PreviewKeyDown(object sender, KeyEventArgs e)
+	{
+		if (e.Key is not (Key.Up or Key.Down)) return;
+		PrepareOverrideModsResize();
+		Dispatcher.BeginInvoke(new Action(() =>
+		{
+			ActiveModListGrid.UpdateLayout();
+			_overrideModsExpandedHeight = ActiveModsListForcedModsRow.ActualHeight;
+		}));
+	}
+
+	private void PrepareOverrideModsResize()
+	{
+		_overrideModsTransition?.Cancel();
+		// Switch from the compact automatic height to a stretchable list before WPF
+		// moves the divider. Row generation must not reset the user's chosen height.
+		_overrideModsExpandedHeight = ActiveModsListForcedModsRow.ActualHeight;
+		ActiveModsListForcedModsRow.Height = new GridLength(_overrideModsExpandedHeight);
+		ActiveModsListForcedModsRow.MinHeight = 72;
+		ForceLoadedModsListView.Height = Double.NaN;
+	}
+
+	private void OverrideModsGridSplitter_DragCompleted(object sender, DragCompletedEventArgs e)
+	{
+		ActiveModListGrid.UpdateLayout();
+		_overrideModsExpandedHeight = ActiveModsListForcedModsRow.ActualHeight;
 	}
 
 	private async void UpdateInactiveModsLayout(bool isExpanded)
@@ -2746,6 +2788,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 
 	private void UpdateForceLoadedModsListHeight()
 	{
+		if (!Double.IsNaN(_overrideModsExpandedHeight)) return;
 		const int maximumVisibleRows = 3;
 		const double fallbackRowHeight = 32;
 

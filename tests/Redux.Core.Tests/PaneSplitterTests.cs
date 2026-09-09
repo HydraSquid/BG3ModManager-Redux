@@ -9,14 +9,106 @@ using System.Windows.Input;
 using System.Windows.Threading;
 
 using DivinityModManager.Controls;
+using DivinityModManager.Models;
 using DivinityModManager.Models.NexusMods;
+using DivinityModManager.Util;
 using DivinityModManager.ViewModels;
 using DivinityModManager.Views;
+using DynamicData;
 
 namespace Redux.Core.Tests;
 
 internal sealed class PaneSplitterTests
 {
+	public void OverridePaneResizesAndRetainsHeightAcrossCollapse()
+	{
+		var app = Application.Current;
+		var resources = app.Resources;
+		var shutdown = app.ShutdownMode;
+		var reduceMotion = ReduxWindowBehavior.ReduceMotion;
+		var disableEffects = ReduxWindowBehavior.BackgroundEffectsDisabled;
+		Window? window = null;
+		using var watcher = WpfRenderCapture.RegisterNoOpFileWatcherService();
+		try
+		{
+			app.Resources = WpfRenderCapture.CreateReduxApplicationResources();
+			app.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+			var viewModel = new OverrideFixtureViewModel();
+			var layout = new HorizontalModLayout { DataContext = viewModel, ViewModel = viewModel, Width = 1200, Height = 760, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top };
+			window = new Window { Content = layout, Width = 1200, Height = 760, WindowStyle = WindowStyle.None, Left = -15000, Top = -15000, ShowInTaskbar = false, ShowActivated = false };
+			window.Show();
+			Settle(window);
+			ReduxWindowBehavior.ConfigureAccessibility(true, disableEffects);
+			viewModel.AddOverrides();
+			Settle(window);
+			var splitter = (GridSplitter)layout.FindName("OverrideModsGridSplitter");
+			var section = (FrameworkElement)layout.FindName("AlwaysLoadedSectionGrid");
+			var toggle = (ToggleButton)layout.FindName("AlwaysLoadedToggleButton");
+			var list = (ModListView)layout.FindName("ForceLoadedModsListView");
+			var active = (ModListView)layout.FindName("ActiveModsListView");
+			RegressionAssert.True(splitter.IsVisible && list.Items.Count == 12);
+			var before = section.ActualHeight;
+			splitter.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+			splitter.RaiseEvent(new DragDeltaEventArgs(0, -80) { RoutedEvent = Thumb.DragDeltaEvent });
+			Settle(window);
+			splitter.RaiseEvent(new DragCompletedEventArgs(0, -80, false) { RoutedEvent = Thumb.DragCompletedEvent });
+			Settle(window);
+			var expandedHeight = section.ActualHeight;
+			RegressionAssert.True(expandedHeight > before + 70);
+			RegressionAssert.True(Double.IsNaN(list.Height) && active.ActualHeight >= 96);
+			AssertChevron("Redux.Icon.ChevronDownStroke");
+			WpfRenderCapture.CaptureIfRequested(layout, "override-pane-expanded-wide");
+			toggle.IsChecked = false;
+			Settle(window);
+			RegressionAssert.False(splitter.IsVisible || list.IsVisible);
+			RegressionAssert.True(section.ActualHeight < before);
+			AssertChevron("Redux.Icon.ChevronUpStroke");
+			WpfRenderCapture.CaptureIfRequested(layout, "override-pane-collapsed-wide");
+			toggle.IsChecked = true;
+			Settle(window);
+			RegressionAssert.True(Math.Abs(section.ActualHeight - expandedHeight) < 1);
+			viewModel.AddOverrides();
+			Settle(window);
+			RegressionAssert.True(Math.Abs(section.ActualHeight - expandedHeight) < 1);
+			layout.Width = 1000;
+			layout.Height = 500;
+			Settle(window);
+			WpfRenderCapture.AssertFullyWithin(list, layout);
+			RegressionAssert.True(active.ActualHeight >= 96);
+			WpfRenderCapture.CaptureIfRequested(layout, "override-pane-expanded-compact");
+			splitter.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+			splitter.RaiseEvent(new DragDeltaEventArgs(0, -10000) { RoutedEvent = Thumb.DragDeltaEvent });
+			Settle(window);
+			splitter.RaiseEvent(new DragCompletedEventArgs(0, -10000, false) { RoutedEvent = Thumb.DragCompletedEvent });
+			Settle(window);
+			RegressionAssert.True(active.ActualHeight >= 96 && section.ActualHeight >= 72);
+			splitter.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+			splitter.RaiseEvent(new DragDeltaEventArgs(0, 10000) { RoutedEvent = Thumb.DragDeltaEvent });
+			Settle(window);
+			splitter.RaiseEvent(new DragCompletedEventArgs(0, 10000, false) { RoutedEvent = Thumb.DragCompletedEvent });
+			Settle(window);
+			RegressionAssert.True(active.ActualHeight >= 96 && section.ActualHeight >= 72);
+			void AssertChevron(string key) => RegressionAssert.True(ReferenceEquals(
+				WpfRenderCapture.Descendants<System.Windows.Shapes.Path>(toggle).Single().Data, layout.FindResource(key)));
+		}
+		finally
+		{
+			window?.Close();
+			ReduxWindowBehavior.ConfigureAccessibility(reduceMotion, disableEffects);
+			app.Resources = resources;
+			app.ShutdownMode = shutdown;
+		}
+	}
+
+	private sealed class OverrideFixtureViewModel : MainWindowViewModel
+	{
+		public void AddOverrides()
+		{
+			for (var index = 0; index < 12; index++)
+				mods.AddOrUpdate(new DivinityModData { UUID = Guid.NewGuid().ToString(), Name = $"Override example {index + 1}", IsForceLoaded = true });
+		}
+	}
+
 	public void PaneDividersResizeOnlyTheirNeighborsAndRestoreResponsiveSizing()
 	{
 		var app = Application.Current;

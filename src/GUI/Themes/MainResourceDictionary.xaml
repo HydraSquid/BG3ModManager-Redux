@@ -2474,6 +2474,23 @@
 		</Grid>
 	</DataTemplate>
 
+	<!-- Define table bases before specialized rows resolve their BasedOn styles. -->
+	<Style TargetType="{x:Type ListView}" BasedOn="{StaticResource {x:Type ListView}}">
+		<Setter Property="AlternationCount" Value="2" />
+	</Style>
+	<Style TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource {x:Type ListViewItem}}">
+		<Setter Property="Background" Value="Transparent" />
+		<Style.Triggers>
+			<MultiTrigger>
+				<MultiTrigger.Conditions>
+					<Condition Property="ItemsControl.AlternationIndex" Value="1" />
+					<Condition Property="IsSelected" Value="False" />
+					<Condition Property="IsMouseOver" Value="False" />
+				</MultiTrigger.Conditions>
+				<Setter Property="Background" Value="{DynamicResource ReduxTableAlternateRowBrush}" />
+			</MultiTrigger>
+		</Style.Triggers>
+	</Style>
 	<Style x:Key="DivinityModDataListItem" BasedOn="{StaticResource {x:Type ListViewItem}}" TargetType="{x:Type ListViewItem}">
 		<!-- Let WPF's item-selection model restore recycled containers directly. The
 			 former generator-status callback re-walked the complete mod collection every
@@ -3030,24 +3047,6 @@
 	</Style>
 	<Style x:Key="DivinityModUpdateListItem" BasedOn="{StaticResource DivinityModUpdateNewListItem}" TargetType="{x:Type ListViewItem}">
 		<Setter Property="Tag" Value="{Binding UpdatedMod}" />
-	</Style>
-	<!-- Text-relative tint works in light, dark, and live custom palettes without
-		introducing a second set of theme colors. Interaction/status styles win. -->
-	<Style TargetType="{x:Type ListView}" BasedOn="{StaticResource {x:Type ListView}}">
-		<Setter Property="AlternationCount" Value="2" />
-	</Style>
-	<Style TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource {x:Type ListViewItem}}">
-		<Setter Property="Background" Value="Transparent" />
-		<Style.Triggers>
-			<MultiTrigger>
-				<MultiTrigger.Conditions>
-					<Condition Property="ItemsControl.AlternationIndex" Value="1" />
-					<Condition Property="IsSelected" Value="False" />
-					<Condition Property="IsMouseOver" Value="False" />
-				</MultiTrigger.Conditions>
-				<Setter Property="Background" Value="{DynamicResource ReduxTableAlternateRowBrush}" />
-			</MultiTrigger>
-		</Style.Triggers>
 	</Style>
 	<Style x:Key="VirtualizedModListView" BasedOn="{StaticResource {x:Type ListView}}" TargetType="ListView">
 		<Setter Property="Background" Value="{DynamicResource ReduxListInteriorBrush}" />

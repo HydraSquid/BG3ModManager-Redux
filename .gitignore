@@ -17,7 +17,7 @@ _Backup/
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
-!.vscode/extensions.jsons
+!.vscode/extensions.json
 
 # User-specific files
 *.suo

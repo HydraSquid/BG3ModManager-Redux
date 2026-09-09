@@ -66,7 +66,6 @@
 		<PackageReference Include="ReactiveUI.WPF" Version="20.1.63" />
 		<PackageReference Include="SharpCompress" Version="0.50.4" />
 		<PackageReference Include="Splat" Version="15.3.1" />
-		<PackageReference Include="Splat.Drawing" Version="15.3.1" />
 		<PackageReference Include="System.Drawing.Common" Version="8.0.30" />
 		<PackageReference Include="System.Reactive" Version="6.0.1" />
 		<PackageReference Include="WpfScreenHelper" Version="2.1.1" />

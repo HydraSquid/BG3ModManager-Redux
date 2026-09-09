@@ -21,6 +21,11 @@ and concise reproduction steps.
 Do not use a public issue to post API keys, signed URLs, saves, complete PAKs, or unreviewed logs.
 See [Privacy and local data](PRIVACY_AND_DATA.md).
 
+Report possible security vulnerabilities through GitHub's
+[private vulnerability-reporting form](https://github.com/circleainn/BG3ModManager-Redux/security/advisories/new),
+not the public issue tracker. See the [security policy](SECURITY.md) for scope and safe reporting
+guidance.
+
 ## Feature requests
 
 Use the [feature request form](https://github.com/circleainn/BG3ModManager-Redux/issues/new?template=feature-request.yaml).

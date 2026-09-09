@@ -11,9 +11,10 @@ Do not open a public issue for a vulnerability that could expose credentials, ov
 outside an intended destination, execute untrusted content, bypass archive validation, or disclose
 private user data.
 
-Use GitHub's private vulnerability-reporting feature when it is available for this repository. If
-private reporting is unavailable, contact the maintainer through a private channel listed on the
-official Redux project pages and include only the information needed to reproduce the problem.
+Use GitHub's [private vulnerability-reporting form](https://github.com/circleainn/BG3ModManager-Redux/security/advisories/new).
+If GitHub does not make that form available to you, contact the maintainer through a private
+channel listed on the official Redux project pages and include only the information needed to
+reproduce the problem.
 
 Please include:
 

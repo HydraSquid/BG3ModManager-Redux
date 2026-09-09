@@ -1,7 +1,10 @@
 blank_issues_enabled: true
 contact_links:
+  - name: Report a security vulnerability privately
+    url: https://github.com/circleainn/BG3ModManager-Redux/security/advisories/new
+    about: Do not disclose security-sensitive details in a public issue.
   - name: Read the Redux support guide
-    url: https://github.com/circleainn/BG3ModManager-Redux/blob/main/SUPPORT.md
+    url: https://github.com/circleainn/BG3ModManager-Redux/blob/main/docs/SUPPORT.md
     about: Installation, troubleshooting, privacy, and where to report different problems.
   - name: Download Redux on Nexus Mods
     url: https://www.nexusmods.com/baldursgate3/mods/23799

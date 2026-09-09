@@ -144,15 +144,16 @@ require confirmation, and deletion uses the Windows Recycle Bin.
 
 ### Game-Directory Mod Manager
 
-Open **Tools > Game-Directory Mod Manager...**, its **Mods & Campaign** toolbar shortcut, or **Quick Access** to
-review supported native and root-level mods that install beside BG3 rather than into the ordinary
-Mods folder. The action is also available in the shortcut editor if you want to assign your own key
-combination. These packages stay outside the PAK load-order panes. Redux shows every managed
-destination before applying a change and clearly warns that native DLLs execute inside the game.
+Open **Tools > Game-Directory Mod Manager...**, its **Mods & Campaign** toolbar shortcut, or
+**Quick Access** to review supported native and root-level mods that install beside BG3 rather than
+into the ordinary Mods folder. The action is also available in the shortcut editor if you want to
+assign your own key combination. These packages stay outside the PAK load-order panes. Redux shows
+every managed destination before applying a change and clearly warns that native DLLs execute
+inside the game.
 
-The first alpha.14 catalog recognizes reviewed layouts for Native Mod Loader, WASD and camera
-plugins, Achievement Enabler, Baldur's Priority, Improved Camera, Best of Hands, BG3WASD Camera
-Follow, True Third-Person Camera, bg3fgvk, and Script Extender. Script Extender now uses the same
+The reviewed catalog recognizes layouts for Native Mod Loader, WASD and camera plugins,
+Achievement Enabler, Baldur's Priority, Improved Camera, Best of Hands, BG3WASD Camera Follow,
+True Third-Person Camera, bg3fgvk, and Script Extender. Script Extender now uses the same
 staged game-directory transaction and ownership record as the rest of the reviewed catalog. Its
 dedicated manager action downloads, reviews, installs, updates, or reinstalls the current release;
 **Tools > Manage Script Extender...** navigates to that action instead of running a separate installer. Mixed
@@ -381,7 +382,8 @@ Redux exists because of [LaughingLeader's original BG3 Mod Manager](https://gith
 You can also [support LaughingLeader on Ko-fi](https://ko-fi.com/LaughingLeader).
 
 Bundled dependencies and assets include LSLib, CrossSpeak, AdonisUI, ReactiveUI,
-GongSolutions.WPF.DragDrop, Lucide, and the bundled open fonts. Attribution and full terms are in
+GongSolutions.WPF.DragDrop, Lucide, and the bundled open fonts. Attribution, the packaged-runtime
+license inventory, and retained license texts are in
 [Third-Party Notices](licenses/Third-Party-Notices.md).
 
 Baldur's Gate 3 is developed and published by Larian Studios. Redux is an unofficial community

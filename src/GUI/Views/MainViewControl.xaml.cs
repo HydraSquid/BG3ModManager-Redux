@@ -549,6 +549,21 @@ public partial class MainViewControl : MainViewControlViewBase
 			};
 			reportBugMenuItem.Click += (_, _) => ProcessHelper.TryOpenUrl(DivinityApp.URL_REDUX_BUG_REPORT);
 			helpMenuItem.Items.Add(reportBugMenuItem);
+			var discordMenuItem = new MenuItem
+			{
+				Header = "Join the Redux Discord...",
+				ToolTip = "Open the Redux community Discord server.",
+				Icon = ReduxIcon.FromResource("Redux.Icon.Discord")
+			};
+			discordMenuItem.SetResourceReference(
+				ReduxMenuItemExtension.SemanticHoverBrushProperty,
+				"Redux.Pill.Discord.Background");
+			discordMenuItem.SetResourceReference(
+				ReduxMenuItemExtension.SemanticRailBrushProperty,
+				"Redux.Pill.Discord.Border");
+			ReduxMenuItemExtension.SetUseSemanticHover(discordMenuItem, true);
+			discordMenuItem.Click += (_, _) => ProcessHelper.TryOpenUrl(DivinityApp.URL_REDUX_DISCORD);
+			helpMenuItem.Items.Add(discordMenuItem);
 			helpMenuItem.Items.Add(new Separator());
 			var creditsMenu = new MenuItem
 			{

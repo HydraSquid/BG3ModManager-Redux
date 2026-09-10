@@ -11094,15 +11094,18 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 		Keys.SpeakActiveModOrder.AddAction(() =>
 		{
+			bool spoken;
 			if (ActiveMods.Count > 0)
 			{
 				var text = string.Join(", ", ActiveMods.Select(x => x.DisplayName));
-				Services.ScreenReader.Speak($"{ActiveMods.Count} mods in the active order, including:\n{text}", true);
+				spoken = Services.ScreenReader.TrySpeak($"{ActiveMods.Count} mods in the active order, including:\n{text}", true);
 			}
 			else
 			{
-				Services.ScreenReader.Speak($"Zero mods are active.", true);
+				spoken = Services.ScreenReader.TrySpeak("Zero mods are active.", true);
 			}
+			if (!spoken)
+				ShowAlert("Redux could not start screen-reader or Windows speech output. Review the log for details.", AlertType.Warning, 20);
 		});
 
 		Keys.StopSpeaking.AddAction(() =>

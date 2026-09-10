@@ -2,6 +2,11 @@
 
 using DivinityModManager.Util;
 
+using DavyKager;
+
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+
 namespace DivinityModManager
 {
 	public interface IScreenReaderService
@@ -9,6 +14,7 @@ namespace DivinityModManager
 		bool IsScreenReaderActive();
 		void Output(string text, bool interrupt = false);
 		void Speak(string text, bool interrupt = false);
+		bool TrySpeak(string text, bool interrupt = false);
 		void Close();
 		void Silence();
 	}
@@ -18,7 +24,8 @@ namespace DivinityModManager.AppServices
 {
 	public class ScreenReaderService : IScreenReaderService
 	{
-		private static readonly string[] _dlls = ["nvdaControllerClient64.dll", "SAAPI64.dll", "Tolk.dll"];
+		private static readonly string[] _optionalDlls = ["nvdaControllerClient64.dll", "SAAPI64.dll"];
+		private const string TolkDll = "Tolk.dll";
 		private static bool _loadedDlls = false;
 		private readonly object _initializationLock = new();
 		private bool _initializationUnavailable;
@@ -42,7 +49,7 @@ namespace DivinityModManager.AppServices
 			}
 			try
 			{
-				var detected = !String.IsNullOrWhiteSpace(CrossSpeakManager.Instance.DetectScreenReader());
+				var detected = !String.IsNullOrWhiteSpace(Tolk.DetectScreenReader());
 				CacheDetectionResult(detected, now);
 				return detected;
 			}
@@ -57,7 +64,7 @@ namespace DivinityModManager.AppServices
 		{
 			try
 			{
-				if (CrossSpeakManager.Instance.IsLoaded()) CrossSpeakManager.Instance.Close();
+				if (Tolk.IsLoaded()) Tolk.Unload();
 			}
 			catch (Exception ex) { DisableAfterInteropFailure(ex); }
 		}
@@ -66,7 +73,7 @@ namespace DivinityModManager.AppServices
 		{
 			try
 			{
-				if (CrossSpeakManager.Instance.IsLoaded()) CrossSpeakManager.Instance.Silence();
+				if (Tolk.IsLoaded()) Tolk.Silence();
 			}
 			catch (Exception ex) { DisableAfterInteropFailure(ex); }
 		}
@@ -82,21 +89,27 @@ namespace DivinityModManager.AppServices
 					if (!_loadedDlls)
 					{
 						var libPath = Path.Combine(DivinityApp.GetAppDirectory(), "_Lib");
-						foreach (var dll in _dlls)
+						foreach (var dll in _optionalDlls)
 						{
 							var filePath = Path.Combine(libPath, dll);
 							if (File.Exists(filePath)) NativeLibraryHelper.LoadLibrary(filePath);
 						}
+
+						var tolkPath = Path.Combine(libPath, TolkDll);
+						if (!File.Exists(tolkPath))
+							throw new FileNotFoundException("The bundled screen-reader bridge is missing.", tolkPath);
+						if (NativeLibraryHelper.LoadLibrary(tolkPath) == IntPtr.Zero)
+							throw new Win32Exception(Marshal.GetLastWin32Error(), "Windows could not load the bundled screen-reader bridge.");
 						_loadedDlls = true;
 					}
 
-					if (!CrossSpeakManager.Instance.IsLoaded())
+					if (!Tolk.IsLoaded())
 					{
-						CrossSpeakManager.Instance.Initialize();
-						if (trySAPI && !CrossSpeakManager.Instance.HasSpeech())
-							CrossSpeakManager.Instance.TrySAPI(true);
+						Tolk.Load();
 					}
-					return CrossSpeakManager.Instance.IsLoaded();
+					if (trySAPI && Tolk.IsLoaded() && !Tolk.HasSpeech())
+						Tolk.TrySAPI(true);
+					return Tolk.IsLoaded();
 				}
 				catch (Exception ex)
 				{
@@ -106,17 +119,26 @@ namespace DivinityModManager.AppServices
 			}
 		}
 
-		public void Output(string text, bool interrupt = true)
+		public void Output(string text, bool interrupt = true) => TrySpeak(text, interrupt);
+
+		public bool TrySpeak(string text, bool interrupt = true)
 		{
-			if (!EnsureInit(true)) return;
+			if (String.IsNullOrWhiteSpace(text) || !EnsureInit(true)) return false;
 			try
 			{
-				CrossSpeakManager.Instance.Output(text, interrupt);
+				var delivered = Tolk.Output(text, interrupt);
+				if (!delivered)
+					DivinityApp.Log("Screen-reader output was requested, but the active screen reader or SAPI did not accept it.");
+				return delivered;
 			}
-			catch (Exception ex) { DisableAfterInteropFailure(ex); }
+			catch (Exception ex)
+			{
+				DisableAfterInteropFailure(ex);
+				return false;
+			}
 		}
 
-		public void Speak(string text, bool interrupt = true) => Output(text, interrupt);
+		public void Speak(string text, bool interrupt = true) => TrySpeak(text, interrupt);
 
 		private void CacheDetectionResult(bool detected, long tick)
 		{

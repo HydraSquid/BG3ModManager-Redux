@@ -96,6 +96,7 @@ internal static class Program
 			(nameof(interactionBehavior.ModListHeaderSpansTheGutterAndScrollbarStartsBelowIt), interactionBehavior.ModListHeaderSpansTheGutterAndScrollbarStartsBelowIt),
 			(nameof(interactionBehavior.CustomThemeEditorShellsPreviewTheBackgroundRoleLive), interactionBehavior.CustomThemeEditorShellsPreviewTheBackgroundRoleLive),
 			(nameof(interactionBehavior.PreferencesAndEditorActionsUseModernChromeAndLabeledIcons), interactionBehavior.PreferencesAndEditorActionsUseModernChromeAndLabeledIcons),
+			(nameof(interactionBehavior.OnboardingKeepsActionsVisibleAtItsMinimumSupportedSize), interactionBehavior.OnboardingKeepsActionsVisibleAtItsMinimumSupportedSize),
 			(nameof(source.ReviewedModuleUuidResolvesItsProject), source.ReviewedModuleUuidResolvesItsProject),
 			(nameof(source.CommunityModuleUuidResolvesItsDependencySource), source.CommunityModuleUuidResolvesItsDependencySource),
 			(nameof(source.CommunityIdentityRequiresTheInstalledPackageNameToAgree), source.CommunityIdentityRequiresTheInstalledPackageNameToAgree),

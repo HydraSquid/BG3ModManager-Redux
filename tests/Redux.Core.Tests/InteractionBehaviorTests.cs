@@ -305,6 +305,50 @@ public sealed class InteractionBehaviorTests
 		}
 	}
 
+	public void OnboardingKeepsActionsVisibleAtItsMinimumSupportedSize()
+	{
+		Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+		var window = new ReduxOnboardingWindow(null!, new DivinityModManagerSettings());
+		try
+		{
+			RegressionAssert.Equal(ResizeMode.CanResize, window.ResizeMode);
+			RegressionAssert.Equal(SizeToContent.Manual, window.SizeToContent);
+
+			window.Width = window.MinWidth;
+			window.Height = window.MinHeight;
+			var contentRoot = (FrameworkElement)window.Content;
+			contentRoot.Measure(new Size(window.MinWidth, window.MinHeight));
+			contentRoot.Arrange(new Rect(0, 0, window.MinWidth, window.MinHeight));
+			contentRoot.UpdateLayout();
+
+			var contentScrollViewer = (ScrollViewer)window.FindName("OnboardingContentScrollViewer");
+			var notNow = (Button)window.FindName("NotNowButton");
+			var saveContinue = (Button)window.FindName("SaveContinueButton");
+			if (contentScrollViewer.ActualHeight <= 0)
+				throw new InvalidOperationException("The onboarding content did not receive a scrollable viewport.");
+			AssertInsideWindow(notNow, contentRoot, "Not now");
+			AssertInsideWindow(saveContinue, contentRoot, "Save & Continue");
+		}
+		finally
+		{
+			window.Close();
+		}
+
+		static void AssertInsideWindow(FrameworkElement element, FrameworkElement windowContent, string name)
+		{
+			RegressionAssert.Equal(Visibility.Visible, element.Visibility);
+			if (element.ActualWidth <= 0 || element.ActualHeight <= 0)
+				throw new InvalidOperationException($"The onboarding '{name}' action was not arranged.");
+			var topLeft = element.TranslatePoint(new Point(0, 0), windowContent);
+			var bottomRight = element.TranslatePoint(new Point(element.ActualWidth, element.ActualHeight), windowContent);
+			if (topLeft.X < 0 || topLeft.Y < 0 || bottomRight.X > windowContent.ActualWidth || bottomRight.Y > windowContent.ActualHeight)
+			{
+				throw new InvalidOperationException(
+					$"The onboarding '{name}' action was outside the {windowContent.ActualWidth}x{windowContent.ActualHeight} content: {topLeft} to {bottomRight}.");
+			}
+		}
+	}
+
 	public void BuiltInIconPickerHasAUniqueExpandedCatalog()
 	{
 		var choices = ReduxIconCatalog.Choices.Where(choice => !choice.IsNone).ToList();

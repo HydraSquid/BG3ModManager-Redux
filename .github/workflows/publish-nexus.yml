@@ -31,15 +31,10 @@ jobs:
         shell: bash
         env:
           NEXUSMODS_API_KEY: ${{ secrets.NEXUSMODS_API_KEY }}
-          NEXUSMODS_MOD_ID: ${{ vars.NEXUSMODS_MOD_ID }}
           NEXUSMODS_PORTABLE_FILE_ID: ${{ vars.NEXUSMODS_PORTABLE_FILE_ID }}
         run: |
           if [[ -z "$NEXUSMODS_API_KEY" ]]; then
             echo 'The NEXUSMODS_API_KEY Actions secret is not configured.' >&2
-            exit 1
-          fi
-          if [[ -z "$NEXUSMODS_MOD_ID" ]]; then
-            echo 'The NEXUSMODS_MOD_ID Actions variable is not configured.' >&2
             exit 1
           fi
           if [[ -z "$NEXUSMODS_PORTABLE_FILE_ID" ]]; then
@@ -91,7 +86,6 @@ jobs:
           size="$(stat --format='%s' "$asset_path")"
           release_url="$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json url --jq '.url')"
 
-          delimiter="REDUX_RELEASE_NOTES_$(openssl rand -hex 12)"
           {
             echo "tag=$tag"
             echo "version=$version"
@@ -101,9 +95,6 @@ jobs:
             echo "md5=$md5"
             echo "size=$size"
             echo "release_url=$release_url"
-            echo "changelog<<$delimiter"
-            gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json body --jq '.body'
-            echo "$delimiter"
           } >> "$GITHUB_OUTPUT"
 
           {
@@ -141,7 +132,6 @@ jobs:
         uses: Nexus-Mods/upload-action@c96019556046053aa26044b44396cd38929daf23
         with:
           api_key: ${{ secrets.NEXUSMODS_API_KEY }}
-          mod_id: ${{ vars.NEXUSMODS_MOD_ID }}
           file_id: ${{ vars.NEXUSMODS_PORTABLE_FILE_ID }}
           filename: ${{ steps.release.outputs.asset_path }}
           version: ${{ steps.release.outputs.version }}
@@ -153,7 +143,6 @@ jobs:
           allow_mod_manager_download: true
           show_requirements_pop_up: false
           update_mod_version: true
-          changelog: ${{ steps.release.outputs.changelog }}
 
       - name: Record the Nexus publication
         shell: bash

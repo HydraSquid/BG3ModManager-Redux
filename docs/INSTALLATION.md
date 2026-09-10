@@ -1,7 +1,7 @@
 # Installation, updates, and removal
 
 Redux is a portable Windows application and does not need to be placed inside the Baldur's Gate 3
-directory. `0.1.0-alpha.15` is the current public-alpha line. Public releases support both manual
+directory. `0.1.0-alpha.16` is the current public-alpha release. Public releases support both manual
 extraction and a separate lightweight Setup.
 
 ## Requirements
@@ -50,7 +50,7 @@ untrusted mirror.
 
 ## Move from a private-alpha build
 
-Private-alpha builds are updated manually when moving to alpha.15:
+Private-alpha builds are updated manually when moving to the public alpha:
 
 1. Close BG3 and Redux. Wait for active downloads or file operations to finish.
 2. Back up the entire Redux folder, especially its runtime-state directories.

@@ -3,6 +3,23 @@
 This file summarizes user-visible Redux releases. The issue tracker and Git history remain the
 source for individual implementation details.
 
+## 0.1.0-alpha.16 — public-alpha hotfix
+
+### Fixed
+
+- Welcome Setup now stays within the available desktop work area, can be resized, and keeps its
+  navigation actions reachable on common laptop displays and non-default scaling.
+- Screen-reader speech now uses the bundled Tolk bridge directly and falls back to Windows SAPI
+  when the optional CrossSpeak wrapper is unavailable.
+- The elevated-process warning now uses the process token's actual elevation state, appears once
+  per startup, and provides working **Close** and **Don't show again** actions.
+
+### Distribution
+
+- Enabled Redux's verified public-alpha update checks now that the moving channel is live.
+- Added short-lived CI artifacts for both the portable application and standalone Setup so release
+  candidates come from the same tested commit.
+
 ## 0.1.0-alpha.15 — public alpha
 
 ### Distribution and identity

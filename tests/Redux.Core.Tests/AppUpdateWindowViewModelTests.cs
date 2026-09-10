@@ -15,7 +15,7 @@ public sealed class AppUpdateWindowViewModelTests
 {
 	public void AvailableUpdateOffersVerifiedRestart()
 	{
-		using var client = ClientReturning(HttpStatusCode.OK, Manifest("0.1.0-alpha.16", "0.1.0.16"));
+		using var client = ClientReturning(HttpStatusCode.OK, Manifest("0.1.0-alpha.17", "0.1.0.17"));
 		var viewModel = CreateViewModel(client);
 
 		viewModel.CheckForUpdatesAsync().GetAwaiter().GetResult();
@@ -26,13 +26,13 @@ public sealed class AppUpdateWindowViewModelTests
 		RegressionAssert.True(viewModel.HasAvailableUpdate);
 		RegressionAssert.Equal("Update & Restart", viewModel.ConfirmButtonText);
 		RegressionAssert.False(viewModel.IsChecking);
-		RegressionAssert.Contains(viewModel.UpdateDescription, "0.1.0-alpha.16");
+		RegressionAssert.Contains(viewModel.UpdateDescription, "0.1.0-alpha.17");
 		RegressionAssert.Contains(viewModel.UpdateChangelogView, "official release notes");
 	}
 
 	public void CurrentReleaseStaysQuietDuringAutomaticCheck()
 	{
-		using var client = ClientReturning(HttpStatusCode.OK, Manifest("0.1.0-alpha.15", "0.1.0.15"));
+		using var client = ClientReturning(HttpStatusCode.OK, Manifest("0.1.0-alpha.16", "0.1.0.16"));
 		var viewModel = CreateViewModel(client);
 
 		viewModel.CheckForUpdatesAsync(showAlerts: false).GetAwaiter().GetResult();

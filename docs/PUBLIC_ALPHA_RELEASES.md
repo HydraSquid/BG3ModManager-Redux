@@ -6,10 +6,11 @@ the exact files published on GitHub and Nexus Mods.
 
 ## Release artifacts
 
-`0.1.0-alpha.15` is the first Redux public-alpha version. Each public alpha has an immutable version
+`0.1.0-alpha.15` was the first Redux public-alpha version; `0.1.0-alpha.16` is the current hotfix.
+Each public alpha has an immutable version
 and a matching Git tag such as `v0.1.0-alpha.15`. The versioned GitHub release contains:
 
-- `BG3ModManager-Redux_v0.1.0-alpha.15.zip`, the portable application;
+- `BG3ModManager-Redux_v0.1.0-alpha.N.zip`, the versioned portable application;
 - `BG3ModManager-Redux-Setup.exe`, the separate fresh-install web bootstrapper; and
 - release notes for that exact version.
 
@@ -31,8 +32,8 @@ exact byte length and SHA-256 digest.
 
 1. Make the application, assembly, Setup, tag, ZIP filename, release notes, and manifest versions
    agree.
-   For alpha.15, start from [`releases/0.1.0-alpha.15.md`](releases/0.1.0-alpha.15.md) and update only
-   the final artifact-specific details.
+   Start from the previous file in [`releases/`](releases/) and update only the final,
+   artifact-specific details.
 2. Run `Build-Redux.ps1 -Configuration Debug` and the complete Redux regression executable.
 3. Run `Build-Installer.ps1 -Configuration Release -RunTests`.
 4. Run `Build-Redux.ps1 -Configuration Publish` with Python 3 available. This creates the
@@ -95,11 +96,11 @@ workflow, install/update/uninstall failure, or credential/privacy leak remains o
 Expected limitations should be written plainly in the release notes, installation guide, or
 troubleshooting guide. Speculative redesigns can remain deferred without blocking a safe alpha.
 
-## Final alpha.15 publication record
+## Per-release publication record
 
 Keep one maintainer record with the following values from the exact artifacts that are uploaded:
 
-- source commit and `v0.1.0-alpha.15` tag target;
+- source commit and matching `v0.1.0-alpha.N` tag target;
 - portable ZIP filename, byte length, and SHA-256;
 - Setup filename, byte length, and SHA-256;
 - `Redux-Update-Public-Alpha.json` byte length and SHA-256;

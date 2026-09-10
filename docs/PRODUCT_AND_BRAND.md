@@ -12,15 +12,15 @@ theme resources remain authoritative for live interface colors and control behav
 | Compact product name | **BG3 Mod Manager Redux** |
 | Short name | **Redux** |
 | Tagline | **Bring order to the chaos.** |
-| Version | **0.1.0-alpha.15** |
+| Version | **0.1.0-alpha.16** |
 | Lifecycle | **Public alpha** |
 | Category | Windows mod manager for Baldur's Gate 3 |
 | Runtime filename | `Redux.exe` |
-| Portable archive | `BG3ModManager-Redux_v0.1.0-alpha.15.zip` |
+| Portable archive | `BG3ModManager-Redux_v0.1.0-alpha.16.zip` |
 | Setup filename | `BG3ModManager-Redux-Setup.exe` |
 
 Use the full name on first mention and **Redux** afterward. Do not shorten the product to “BG3MM”
-where it could be confused with LaughingLeader's upstream application. Do not call alpha.15 a final,
+where it could be confused with LaughingLeader's upstream application. Do not call a public alpha a final,
 stable, official, or Larian-supported release.
 
 ## Core positioning
@@ -87,7 +87,7 @@ not interchangeable decorative accents.
 
 Public interface imagery must be grounded in the current built application.
 
-1. Capture the current alpha.15 `Redux.exe` at a completed layout pass and a known display scale.
+1. Capture the current public-alpha `Redux.exe` at a completed layout pass and a known display scale.
 2. Use real, publicly identifiable mod names already present in the maintainer's Redux library when
    permission and context allow. Do not invent fake authors, paths, versions, or package IDs.
 3. Redact personal usernames, private filesystem paths, API keys, signed URLs, save names, and any

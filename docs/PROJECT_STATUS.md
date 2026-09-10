@@ -11,7 +11,7 @@ proposals.
 | Product | Baldur's Gate 3 Mod Manager Redux |
 | Short name | Redux |
 | Tagline | **Bring order to the chaos.** |
-| Release line | `0.1.0-alpha.15` |
+| Release line | `0.1.0-alpha.16` |
 | Lifecycle | Public alpha |
 | Platform | Windows 10/11 x64 |
 | Runtime | .NET 8 Desktop Runtime |
@@ -19,13 +19,14 @@ proposals.
 | Guided installer | `BG3ModManager-Redux-Setup.exe` |
 | Active milestone | `v0.1.0 – Public Alpha` |
 
-The private-alpha stabilization milestone is complete. Alpha.15 establishes the first public-alpha
-baseline. GitHub Releases and Nexus Mods are authoritative for the current artifact availability;
-the release gate below applies whenever a build is prepared for publication. The public-alpha
+The private-alpha stabilization milestone is complete. Alpha.15 established the first public-alpha
+baseline, and alpha.16 is its focused startup and accessibility hotfix. GitHub Releases and Nexus
+Mods are authoritative for the current artifact availability. The release gate below applies
+whenever a build is prepared for publication. The public-alpha
 milestone remains open for launch feedback, stabilization, and later alpha releases; it is not a
 one-build milestone.
 
-## What alpha.15 establishes
+## What the current public alpha establishes
 
 - A cohesive Redux interface with responsive toolbar groups, shared modal chrome, semantic actions,
   categories, separators, a selected-mod drawer, custom themes, and accessibility controls.
@@ -42,9 +43,8 @@ one-build milestone.
   link.
 
 See [Changes from upstream](CHANGES_FROM_UPSTREAM.md) for the durable feature boundary and the
-[alpha.15 changelog](CHANGELOG.md) for release-specific detail.
-The polished public announcement copy is in the
-[alpha.15 release notes](releases/0.1.0-alpha.15.md).
+[changelog](CHANGELOG.md) for release-specific detail. Current release copy is in the
+[alpha.16 release notes](releases/0.1.0-alpha.16.md).
 
 ## Public launch gate
 
@@ -67,8 +67,9 @@ The complete operator sequence is in
 
 ## Public-alpha roadmap
 
-1. **Launch alpha.15.** Publish the tested portable ZIP and Setup on GitHub, mirror the intended
-   files on Nexus Mods, publish the update-channel manifest last, and synchronize announcements.
+1. **Maintain the public channel.** Publish each tested portable ZIP and Setup on GitHub, mirror the
+   intended files on Nexus Mods, publish the update-channel manifest last, and synchronize
+   announcements.
 2. **Observe real installations.** Triage startup, migration, path, package, save, native-mod,
    accessibility, and scaling reports. Security, privacy, data-loss, and primary-workflow defects
    take priority over cosmetic expansion.
@@ -81,7 +82,7 @@ The complete operator sequence is in
 
 ## Planned, non-blocking work
 
-Two longer-term explorations are intentionally outside the alpha.15 launch gate:
+Two longer-term explorations are intentionally outside the current public-alpha gate:
 
 - [#56 — Expand Redux localization and accessibility support](https://github.com/circleainn/BG3ModManager-Redux/issues/56)
 - [#63 — Explore a docked/paged Managers workspace](https://github.com/circleainn/BG3ModManager-Redux/issues/63)

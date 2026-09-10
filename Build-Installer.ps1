@@ -34,8 +34,8 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $builtSetup = Join-Path $repositoryRoot "bin\InstallerPayload\$Configuration\BG3ModManager-Redux-Setup.exe"
 if (-not (Test-Path -LiteralPath $builtSetup)) { throw "The standalone Setup executable was not created." }
-& $builtSetup --self-test
-if ($LASTEXITCODE -ne 0) { throw "The standalone Setup executable failed its embedded-dependency check." }
+$selfTest = Start-Process -FilePath $builtSetup -ArgumentList "--self-test" -Wait -PassThru -WindowStyle Hidden
+if ($selfTest.ExitCode -ne 0) { throw "The standalone Setup executable failed its embedded-dependency check." }
 
 if ($RunTests)
 {

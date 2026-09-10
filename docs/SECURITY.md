@@ -2,8 +2,8 @@
 
 ## Supported versions
 
-Only the newest published Redux alpha receives security fixes. Older private test builds and source
-snapshots are unsupported once a newer build is available.
+Only the newest published Redux public alpha receives security fixes. Older public alphas, private
+test builds, and source snapshots are unsupported once a newer build is available.
 
 ## Report a vulnerability
 

@@ -15,7 +15,8 @@ before investing in an implementation.
 
 ## Build and validate
 
-The supported local workflow is:
+Use Windows 10 or 11 x64 with .NET 8 SDK/Desktop Runtime and Visual Studio's managed-desktop,
+Desktop C++, and C++/CLI components. Clone with submodules. The supported local workflow is:
 
 ```powershell
 .\Build-Redux.ps1 -Configuration Debug
@@ -27,6 +28,20 @@ Changes affecting release packaging should also build the Publish configuration.
 archive, download, native-mod, and load-order changes need tests for failure, cancellation, and
 recovery—not only the success path. Visual changes require inspection across built-in themes,
 supported text sizes, common Windows scaling, and Reduce Motion.
+
+Release, installer, updater, runtime-name, or packaged-document changes require the complete gate:
+
+```powershell
+.\Build-Redux.ps1 -Configuration Debug -Rebuild
+.\Test-Redux.ps1
+.\Build-Installer.ps1 -Configuration Release -RunTests
+.\Build-Redux.ps1 -Configuration Publish -Rebuild -PythonExecutable "C:\Path\To\python.exe"
+git diff --check
+```
+
+The Publish build creates the portable ZIP and update-channel manifest locally; it does not publish
+a GitHub release. Do not commit generated archives, build directories, logs, user settings, or local
+test fixtures.
 
 ## Pull requests
 

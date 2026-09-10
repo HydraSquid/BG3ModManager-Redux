@@ -4,6 +4,9 @@ Redux is a local desktop mod manager. The current project does not include analy
 or general-purpose telemetry. Optional online features make requests only for the provider and
 update workflows the user enables or invokes.
 
+Public-alpha status does not change this boundary. Redux does not require a Redux account and does
+not upload a user's mod list, saves, categories, notes, settings, or diagnostics to a Redux service.
+
 This document describes the intended product boundary. Users should still review logs and exports
 before posting them publicly.
 

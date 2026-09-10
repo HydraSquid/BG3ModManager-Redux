@@ -1,6 +1,6 @@
 # Support
 
-BG3 Mod Manager Redux is an unofficial community project in alpha development. Support is
+BG3 Mod Manager Redux is an unofficial community project in public alpha. Support is
 best-effort; compatibility with every mod, tool, game patch, or system configuration is not
 guaranteed.
 
@@ -8,7 +8,8 @@ guaranteed.
 
 1. Read [Installation and updates](INSTALLATION.md) and
    [Troubleshooting](TROUBLESHOOTING.md).
-2. Confirm you are using an official, complete Redux archive.
+2. Confirm you are using the newest official, complete Redux public-alpha archive and that the
+   title bar reports the expected version.
 3. Search existing GitHub issues for the same behavior.
 4. Reproduce the problem with the smallest safe sequence you can.
 

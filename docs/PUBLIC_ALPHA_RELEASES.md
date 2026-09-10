@@ -6,8 +6,8 @@ the exact files published on GitHub and Nexus Mods.
 
 ## Release artifacts
 
-Each public alpha has an immutable version such as `0.1.0-alpha.15` and a matching Git tag such as
-`v0.1.0-alpha.15`. The versioned GitHub release contains:
+`0.1.0-alpha.15` is the first Redux public-alpha version. Each public alpha has an immutable version
+and a matching Git tag such as `v0.1.0-alpha.15`. The versioned GitHub release contains:
 
 - `BG3ModManager-Redux_v0.1.0-alpha.15.zip`, the portable application;
 - `BG3ModManager-Redux-Setup.exe`, the separate fresh-install web bootstrapper; and
@@ -16,6 +16,11 @@ Each public alpha has an immutable version such as `0.1.0-alpha.15` and a matchi
 The portable ZIP contains `Redux-Release-Files.json`. That inventory names every application file
 owned by the release. It deliberately excludes settings, saved orders, downloads, retained
 archives, logs, backups, custom themes, and other user-created state.
+
+The portable application starts at `Redux.exe`. The adjacent managed assembly is `Redux.dll`.
+`BG3ModManager.exe` was the private-alpha runtime name and must not be present at the root of an
+alpha.15 package. The Setup artifact retains its descriptive filename because it is a distinct
+bootstrapper, not the application runtime.
 
 The moving `public-alpha` channel release contains
 `Redux-Update-Public-Alpha.json`. Redux and Setup use its fixed URL; they do not rely on GitHub's
@@ -26,6 +31,8 @@ exact byte length and SHA-256 digest.
 
 1. Make the application, assembly, Setup, tag, ZIP filename, release notes, and manifest versions
    agree.
+   For alpha.15, start from [`releases/0.1.0-alpha.15.md`](releases/0.1.0-alpha.15.md) and update only
+   the final artifact-specific details.
 2. Run `Build-Redux.ps1 -Configuration Debug` and the complete Redux regression executable.
 3. Run `Build-Installer.ps1 -Configuration Release -RunTests`.
 4. Run `Build-Redux.ps1 -Configuration Publish` with Python 3 available. This creates the
@@ -36,6 +43,11 @@ exact byte length and SHA-256 digest.
    dumps, source paths, and other build-machine data.
 7. Complete clean-install, update-from-the-previous-alpha, rollback, uninstall, and core workflow
    smoke tests on the exact candidate files.
+
+For alpha.15, migration testing must also cover a folder from the legacy `BG3ModManager.exe` era.
+Setup should recognize that folder as an existing installation, while a clean alpha.15 package must
+contain only the new `Redux.*` root runtime. The final portable archive must be regenerated after
+any README or packaged-document change because those bytes affect its SHA-256 digest.
 
 ## Publish without creating a broken channel
 
@@ -48,6 +60,11 @@ exact byte length and SHA-256 digest.
    versioned artifact is reachable. The channel manifest is the final publication step.
 6. Reproduce an update from the previous public alpha and a fresh Setup install through the public
    URLs before announcing the release.
+
+For the first public alpha there is no previous public channel build. Replace that one upgrade test
+with a migration from the newest private alpha, a clean portable launch, and a clean Setup install.
+Publish the channel manifest last. Until that step, in-app checks and Setup must fail safely without
+changing an installation.
 
 Never replace an immutable versioned ZIP with different bytes while retaining its version. Publish
 a new, higher alpha version and a matching manifest instead.
@@ -77,3 +94,20 @@ workflow, install/update/uninstall failure, or credential/privacy leak remains o
 
 Expected limitations should be written plainly in the release notes, installation guide, or
 troubleshooting guide. Speculative redesigns can remain deferred without blocking a safe alpha.
+
+## Final alpha.15 publication record
+
+Keep one maintainer record with the following values from the exact artifacts that are uploaded:
+
+- source commit and `v0.1.0-alpha.15` tag target;
+- portable ZIP filename, byte length, and SHA-256;
+- Setup filename, byte length, and SHA-256;
+- `Redux-Update-Public-Alpha.json` byte length and SHA-256;
+- successful `dev` and `main` Windows CI run links;
+- clean portable, Setup install/uninstall, private-alpha migration, NXM association, update-channel,
+  and core load-order smoke-test results;
+- GitHub and Nexus Mods download URLs; and
+- announcement time plus any accepted public-alpha limitations.
+
+The generated channel manifest records the portable archive's byte length and SHA-256, but it is not
+a substitute for this human-readable release record.

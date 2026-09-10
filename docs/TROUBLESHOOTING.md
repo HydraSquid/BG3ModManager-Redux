@@ -6,11 +6,13 @@ to troubleshoot an unknown problem.
 ## Redux does not start
 
 1. Confirm the full archive was extracted and `.NET 8 Desktop Runtime` is installed.
-2. Move Redux to a normal writable folder if it is inside a ZIP, the BG3 directory, or a protected
+2. Confirm you are launching `Redux.exe`. `BG3ModManager.exe` is the obsolete private-alpha runtime
+   name and should not be used for alpha.15 or later.
+3. Move Redux to a normal writable folder if it is inside a ZIP, the BG3 directory, or a protected
    system location.
-3. Look for `startup_crash.log` or the newest log under Redux's `_Logs` directory.
-4. Back up runtime state before changing or removing any file.
-5. Report the exact Redux version and the first relevant exception. Redact personal paths and never
+4. Look for `startup_crash.log` or the newest log under Redux's `_Logs` directory.
+5. Back up runtime state before changing or removing any file.
+6. Report the exact Redux version and the first relevant exception. Redact personal paths and never
    include credentials.
 
 Do not repeatedly launch Redux while an updater, antivirus scanner, cloud-sync client, or earlier

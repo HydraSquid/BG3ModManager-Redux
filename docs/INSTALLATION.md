@@ -1,7 +1,8 @@
 # Installation, updates, and removal
 
 Redux is a portable Windows application and does not need to be placed inside the Baldur's Gate 3
-directory. Public-alpha releases support both manual extraction and a separate lightweight Setup.
+directory. `0.1.0-alpha.15` is the current public-alpha line. Public releases support both manual
+extraction and a separate lightweight Setup.
 
 ## Requirements
 
@@ -54,7 +55,8 @@ Private-alpha builds are updated manually when moving to alpha.15:
 1. Close BG3 and Redux. Wait for active downloads or file operations to finish.
 2. Back up the entire Redux folder, especially its runtime-state directories.
 3. Extract the complete new archive over the existing Redux folder.
-4. Start Redux and confirm the version shown in the title bar or About window.
+4. Start `Redux.exe`, not the legacy `BG3ModManager.exe`, and confirm the version shown in the title
+   bar or About window.
 5. Verify the selected profile and saved order before syncing the game load order.
 6. If the executable moved, repair Redux's NXM association from Download Manager.
 
@@ -62,6 +64,12 @@ The release packager deliberately excludes user state, including `Data`, `orders
 downloads, retained archives, and backups. An update archive should therefore replace application
 files without supplying somebody else's runtime state. Do not interpret that exclusion as
 permission to delete your existing state folders.
+
+Alpha.15 renamed the desktop runtime. A manual extract over a private-alpha folder can leave the old
+`BG3ModManager.exe` and related runtime files beside the new build because those files are not in the
+new release inventory. After confirming `Redux.exe` works and preserving a rollback backup, remove
+only the obsolete `BG3ModManager.exe`, `BG3ModManager.dll`, `BG3ModManager.deps.json`, and
+`BG3ModManager.runtimeconfig.json` files. Do not remove folders or other unlisted content.
 
 ## Update a public-alpha build
 

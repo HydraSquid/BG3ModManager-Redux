@@ -9,6 +9,9 @@ contact_links:
   - name: Download Redux on Nexus Mods
     url: https://www.nexusmods.com/baldursgate3/mods/23799
     about: Get the latest public Redux build and read the user-facing description.
+  - name: Join the Redux Discord
+    url: https://discord.gg/rJJF89vqFZ
+    about: Ask the community for general help, share setups, and follow announcements.
   - name: Support Redux on Ko-fi
     url: https://ko-fi.com/circleain
     about: Support circleain's continued work on BG3 Mod Manager Redux.

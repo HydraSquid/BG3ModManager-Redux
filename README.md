@@ -20,7 +20,7 @@
 </div>
 
 > [!IMPORTANT]
-> Redux is in early development. Keep independent backups of important profiles, saves, downloaded
+> Redux is in public alpha. Keep independent backups of important profiles, saves, downloaded
 > archives, and the BG3 Mods folder. Always review proposed load-order changes before applying them.
 
 Redux is a Windows mod manager built on
@@ -39,15 +39,16 @@ the application.
    portable installation.
 2. For a manual installation, obtain the complete Redux archive from the
    [official Nexus Mods page](https://www.nexusmods.com/baldursgate3/mods/23799) or an official
-   GitHub release when one is available.
+   [GitHub Releases page](https://github.com/circleainn/BG3ModManager-Redux/releases).
 3. Extract the entire archive into its own writable folder. Do not run Redux from inside the ZIP,
    the Baldur's Gate 3 installation directory, or a protected system folder.
 4. Run `Redux.exe`. On first launch, review the detected game and profile paths before
    installing or syncing anything.
 
-Alpha.15 contains Redux's verified update workflow and separate lightweight web Setup. Until the
-first public-alpha channel manifest is published, replace candidate builds manually: close Redux
-and BG3, back up the Redux folder, then extract the complete newer archive over it. Release archives
+`0.1.0-alpha.15` is Redux's first public-alpha line. It includes a verified in-app update workflow
+and a separate lightweight web Setup. The updater acts only when the official public-alpha channel
+points to a newer, fully published package; otherwise update manually by closing Redux and BG3,
+backing up the Redux folder, and extracting the complete newer archive over it. Release archives
 exclude runtime state such as `Data`, `_Logs`, caches, downloads, retained archives, and backups.
 Never delete those folders as part of a routine update. If Redux is moved, open Download Manager
 and repair the NXM association if Redux previously handled `nxm://` links.
@@ -349,18 +350,22 @@ distributed as a self-contained build.
 Known public-alpha limits include personal Nexus API-key authentication instead of public SSO,
 incomplete provider/category/dependency coverage, imported-font variability, incomplete mod.io
 author links, and limited clean-machine testing. Uncommon scaling and extremely dense layouts may
-still expose visual issues. The updater remains dormant until the official public-alpha channel is
-published and verified. Imported fonts and PNG icons remain the user's responsibility to license.
+still expose visual issues. The updater remains inactive whenever the official public-alpha channel
+manifest is unavailable. Imported fonts and PNG icons remain the user's responsibility to license.
 
 ## Documentation
 
 | Guide | Audience | Purpose |
 |:--|:--|:--|
 | [Documentation index](docs/README.md) | Everyone | Find the right user, author, or maintainer guide |
+| [Project status and roadmap](docs/PROJECT_STATUS.md) | Everyone | See the current public-alpha position, release gate, and planned work |
 | [Installation and updates](docs/INSTALLATION.md) | Users | Install, upgrade, move, roll back, or remove Redux safely |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Users and testers | Recover from common startup, path, download, and sync problems |
 | [Privacy and local data](docs/PRIVACY_AND_DATA.md) | Everyone | Understand stored data, network requests, logs, and safe sharing |
 | [Changes from upstream](docs/CHANGES_FROM_UPSTREAM.md) | Users and contributors | Understand what Redux retains and changes |
+| [Product and brand guide](docs/PRODUCT_AND_BRAND.md) | Maintainers and creators | Keep naming, messaging, identity, and screenshots consistent |
+| [Community and publishing](docs/COMMUNITY_AND_PUBLISHING.md) | Maintainers and moderators | Coordinate GitHub, Nexus Mods, the website, Discord, and launch messaging |
+| [Architecture](docs/ARCHITECTURE.md) | Contributors | Understand project boundaries, major components, and validation paths |
 | [Optional features](docs/REDUX_OPTIONAL_MODULES.md) | Contributors | Understand feature boundaries and safety rules |
 | [Redux mod database](docs/REDUX_MOD_DATABASE.md) | Contributors and maintainers | Recognition, advisor knowledge, and reports |
 | [Mod developer tools](docs/MOD_DEVELOPER_TOOLS.md) | Mod authors | Inspect releases before distribution |

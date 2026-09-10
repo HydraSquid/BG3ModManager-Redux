@@ -3,19 +3,42 @@
 This file summarizes user-visible Redux releases. The issue tracker and Git history remain the
 source for individual implementation details.
 
-## 0.1.0-alpha.15 — public-alpha candidate
+## 0.1.0-alpha.15 — public alpha
 
-- Public installation, migration, rollback, removal, privacy, support, contribution, security, and
-  release-maintenance documentation.
-- Strict public-alpha update-channel checks with quiet background scheduling and explicit release
-  presentation.
-- Verified application update staging, release-owned file inventories, restart-based replacement,
-  transaction rollback, and post-update status reporting.
+### Distribution and identity
+
 - Separate lightweight web Setup for verified fresh installation, .NET 8 prerequisite handling,
   per-user shortcuts, and inventory-scoped removal that preserves unlisted content.
+- Strict public-alpha update-channel checks with quiet background scheduling, explicit release
+  presentation, verified staging, restart-based replacement, transaction rollback, and post-update
+  status reporting.
+- Release-owned file inventories that keep application updates separate from settings, saved
+  orders, downloads, retained archives, logs, backups, and user-created content.
+- The desktop runtime is now `Redux.exe` / `Redux.dll`; Setup and Windows continue to present the
+  installed product as **BG3 Mod Manager Redux**, and Setup recognizes legacy private-alpha
+  installations that still contain `BG3ModManager.exe`.
+- New transparent Redux star application icon and consistent product identity across the app,
+  installer, repository, documentation, and public showcase materials.
+- Direct Redux Discord access from the application and public project navigation.
 
-Alpha.15 has not been published yet. Its update channel remains disabled until the exact candidate
-artifacts and channel manifest are available and verified.
+### Refined
+
+- App-wide button and modal consistency, including current semantic styling, action icons, close
+  affordances, and disabled states in Preferences, category/separator editors, and manager windows.
+- Load Order History styling now matches the current Redux review and organizer surfaces.
+- Custom Theme Editor and color-picker shells now participate in live background-color previews.
+- Expanded, deduplicated built-in category icon library and Segoe UI as Parchment's default font.
+- Override Mods once again has a usable vertical resize grip after its visual refresh.
+- Public installation, migration, rollback, removal, privacy, support, contribution, security,
+  release, brand, community, architecture, and FAQ documentation.
+
+### Fixed
+
+- Save Game Manager deletion no longer keeps the selected save locked by its own thumbnail preview.
+- Game-directory mod detection again evaluates the configured live game directory instead of an
+  unrelated showcase path.
+- Script Extender requirements use one dedicated row indicator and one complete diagnostic detail,
+  removing duplicate or incomplete warning tooltips.
 
 ## 0.1.0-alpha.14 — private alpha
 

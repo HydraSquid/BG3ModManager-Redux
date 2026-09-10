@@ -321,7 +321,7 @@ The upstream tracking discussion is
 Redux currently does not provide:
 
 - public Nexus SSO authentication;
-- automatic downloading, compatibility repair, or conflict resolution;
+- automatic dependency downloading, compatibility repair, or conflict resolution;
 - silent load-order sorting or automatic game-file export;
 - application localization;
 - Linux, macOS, Wine, or Proton support; or

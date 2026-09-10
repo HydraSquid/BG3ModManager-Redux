@@ -1,9 +1,13 @@
 using DivinityModManager.AppServices;
+using DivinityModManager.Converters;
 
 using System;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace Redux.Core.Tests;
 
@@ -47,6 +51,30 @@ public sealed class SaveGameServiceTests
 			RegressionAssert.Equal("Tav-123", save.CampaignName);
 			RegressionAssert.True(save.ThumbnailPath.EndsWith("Camp_Night.WebP", StringComparison.OrdinalIgnoreCase));
 			RegressionAssert.True(save.SizeBytes > 0);
+		});
+	}
+
+	public void SaveThumbnailPreviewDoesNotKeepItsFileOrFolderLocked()
+	{
+		WithTemporaryDirectory(root =>
+		{
+			var saveFolder = Path.Combine(root, "Tav-123__Camp_Night");
+			Directory.CreateDirectory(saveFolder);
+			var thumbnail = Path.Combine(saveFolder, "Camp_Night.png");
+			var source = BitmapSource.Create(1, 1, 96, 96, PixelFormats.Bgra32, null, new byte[] { 40, 80, 120, 255 }, 4);
+			var encoder = new PngBitmapEncoder();
+			encoder.Frames.Add(BitmapFrame.Create(source));
+			using (var output = new FileStream(thumbnail, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+				encoder.Save(output);
+
+			var converter = new FilePathToBitmapImageConverter();
+			var preview = converter.Convert(thumbnail, typeof(BitmapSource), null!, CultureInfo.InvariantCulture);
+
+			RegressionAssert.True(preview is BitmapSource { IsFrozen: true });
+			using (new FileStream(thumbnail, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) { }
+			FilePathToBitmapImageConverter.EvictTree(saveFolder);
+			Directory.Delete(saveFolder, true);
+			RegressionAssert.False(Directory.Exists(saveFolder));
 		});
 	}
 

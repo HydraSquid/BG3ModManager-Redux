@@ -294,7 +294,7 @@
 									<Border Background="{DynamicResource ReduxSurfaceMutedBrush}" CornerRadius="{DynamicResource Redux.CornerRadius.Control}" ClipToBounds="True">
 										<Grid>
 											<controls:ReduxIcon Width="25" Height="25" Foreground="{DynamicResource ReduxTextMutedBrush}" StrokeData="{StaticResource Redux.Icon.Camera}" />
-											<Image Source="{Binding ThumbnailPath}" Stretch="UniformToFill" />
+											<Image Source="{Binding ThumbnailPath, Converter={StaticResource FilePathToBitmapImageConverter}}" Stretch="UniformToFill" />
 										</Grid>
 									</Border>
 									<StackPanel Grid.Column="1" Margin="13,0,10,0" VerticalAlignment="Center">

@@ -108,9 +108,14 @@ public static class ReduxThemeService
 		DivinityModManagerSettings settings,
 		ReduxThemeType theme)
 	{
+		var useThemeDefaultTypography = settings.UseThemeDefaultTypography;
 		settings.ActiveCustomThemeId = String.Empty;
-		settings.TypographyFont = ReduxTypographyFont.Manrope;
-		settings.CustomTypographyFont = String.Empty;
+		if (useThemeDefaultTypography)
+		{
+			settings.UseThemeDefaultTypography = true;
+			settings.TypographyFont = ReduxTypographyService.GetThemeDefault(theme);
+			settings.CustomTypographyFont = String.Empty;
+		}
 		settings.TextSize = ReduxTextSize.Default;
 		ApplyBuiltInCategoryPresentation(settings, theme);
 		settings.ColorTheme = theme;
@@ -121,6 +126,9 @@ public static class ReduxThemeService
 		DivinityModManagerSettings settings,
 		ReduxCustomTheme theme)
 	{
+		// A custom theme owns its typography. If the user later returns to a
+		// built-in theme, resume that built-in theme's default presentation.
+		settings.UseThemeDefaultTypography = true;
 		settings.ActiveCustomThemeId = theme.Id;
 		settings.ColorTheme = theme.BaseTheme;
 		settings.TypographyFont = theme.TypographyFont;
@@ -313,6 +321,17 @@ public static class ReduxThemeService
 		if (resources == null || customTheme == null || !TryValidate(customTheme, out _)) return;
 		ApplyPalette(resources, CreateResourceColors(customTheme), customTheme.BaseTheme,
 			isCustomTheme: true, customTheme.UsesGeneratedGradients);
+	}
+
+	/// <summary>
+	/// Applies one live custom-theme edit to every independently-owned window
+	/// resource scope participating in the preview.
+	/// </summary>
+	public static void PreviewColors(ReduxCustomTheme customTheme, params ResourceDictionary[] resourceScopes)
+	{
+		if (customTheme == null || resourceScopes == null) return;
+		foreach (var resources in resourceScopes.Where(resources => resources != null).Distinct())
+			PreviewColors(resources, customTheme);
 	}
 
 	private static void ApplyPalette(ResourceDictionary resources, IReadOnlyDictionary<string, Color> palette,
@@ -699,7 +718,7 @@ public static class ReduxThemeService
 			or ReduxTypographyFont.AtkinsonHyperlegible
 			or ReduxTypographyFont.SegoeUI
 			? value
-			: ReduxTypographyFont.Manrope;
+			: ReduxTypographyService.GetThemeDefault(baseTheme);
 	private static ReduxTextSize NormalizeTextSize(ReduxTextSize value) =>
 		Enum.IsDefined(value) && value != 0 ? value : ReduxTextSize.Default;
 	private static Color Mix(Color left, Color right, double amount) => Color.FromRgb(

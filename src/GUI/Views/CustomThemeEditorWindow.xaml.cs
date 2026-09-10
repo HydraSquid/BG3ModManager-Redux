@@ -132,7 +132,9 @@ public partial class CustomThemeEditorWindow : AdonisWindow
 		void ApplyQueuedPreview()
 		{
 			previewOperation = null;
-			ReduxThemeService.PreviewColors(dialog.Resources, Theme);
+			// The picker and editor are separate top-level resource scopes. Refresh
+			// both in the same render pass so neither lags behind the main preview.
+			ReduxThemeService.PreviewColors(Theme, Resources, dialog.Resources);
 			ColorPreviewChanged?.Invoke(Theme);
 		}
 		dialog.ColorPreviewChanged += color =>

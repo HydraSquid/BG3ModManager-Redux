@@ -27,6 +27,50 @@ public sealed class SettingsMaintenanceTests
 		}, builtIns);
 	}
 
+	public void ParchmentUsesSegoeByDefaultAndKeepsExplicitOverrides()
+	{
+		var settings = new DivinityModManagerSettings
+		{
+			ColorTheme = ReduxThemeType.Parchment
+		};
+
+		var defaultSelection = ReduxTypographyService.ResolveSelection(settings);
+		RegressionAssert.Equal(ReduxTypographyFont.SegoeUI, defaultSelection.Font);
+		RegressionAssert.Equal(String.Empty, defaultSelection.CustomReference);
+
+		settings.UseThemeDefaultTypography = false;
+		settings.TypographyFont = ReduxTypographyFont.Manrope;
+		var explicitManrope = ReduxTypographyService.ResolveSelection(settings);
+		RegressionAssert.Equal(ReduxTypographyFont.Manrope, explicitManrope.Font);
+
+		var restored = JsonConvert.DeserializeObject<DivinityModManagerSettings>(JsonConvert.SerializeObject(settings));
+		RegressionAssert.True(restored != null);
+		RegressionAssert.False(restored!.UseThemeDefaultTypography);
+		RegressionAssert.Equal(ReduxTypographyFont.Manrope, ReduxTypographyService.ResolveSelection(restored).Font);
+	}
+
+	public void BuiltInThemeCyclingChangesOnlyInheritedTypography()
+	{
+		var inherited = new DivinityModManagerSettings { ColorTheme = ReduxThemeType.ReduxLight };
+		ReduxThemeService.CycleTheme(inherited);
+		RegressionAssert.Equal(ReduxThemeType.Parchment, inherited.ColorTheme);
+		RegressionAssert.Equal(ReduxTypographyFont.SegoeUI, ReduxTypographyService.ResolveSelection(inherited).Font);
+
+		ReduxThemeService.CycleTheme(inherited);
+		RegressionAssert.Equal(ReduxThemeType.ReduxDark, inherited.ColorTheme);
+		RegressionAssert.Equal(ReduxTypographyFont.Manrope, ReduxTypographyService.ResolveSelection(inherited).Font);
+
+		var overridden = new DivinityModManagerSettings
+		{
+			ColorTheme = ReduxThemeType.ReduxLight,
+			TypographyFont = ReduxTypographyFont.ArchivoBlack,
+			UseThemeDefaultTypography = false
+		};
+		ReduxThemeService.CycleTheme(overridden);
+		RegressionAssert.Equal(ReduxThemeType.Parchment, overridden.ColorTheme);
+		RegressionAssert.Equal(ReduxTypographyFont.ArchivoBlack, ReduxTypographyService.ResolveSelection(overridden).Font);
+	}
+
 	public void SaveGameCampaignCollapseStateRoundTripsWithoutDuplicates()
 	{
 		var settings = new DivinityModManagerSettings

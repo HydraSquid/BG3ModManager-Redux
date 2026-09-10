@@ -2191,6 +2191,7 @@
 	<conv:StringToGradientBrushConverter x:Key="StringToGradientBrushConverter" />
 	<conv:StringToLinearBrushConverter x:Key="StringToLinearBrushConverter" />
 	<conv:UriToBitmapImageConverter x:Key="UriToBitmapImageConverter" />
+	<conv:FilePathToBitmapImageConverter x:Key="FilePathToBitmapImageConverter" />
 	<conv:ModToDisplayNameConverter x:Key="ModToDisplayNameConverter" />
 	<conv:AvailableWidthConverter x:Key="AvailableWidthConverter" />
 	<Style x:Key="ReduxProgressBarStyle" TargetType="{x:Type ProgressBar}">

@@ -1996,9 +1996,15 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			if (IsInitialized) SaveSettings();
 		});
 
-		Settings.WhenAnyValue(x => x.TypographyFont, x => x.CustomTypographyFont).ObserveOn(RxApp.MainThreadScheduler).Subscribe((selection) =>
+		Settings.WhenAnyValue(
+			x => x.ColorTheme,
+			x => x.ActiveCustomThemeId,
+			x => x.TypographyFont,
+			x => x.CustomTypographyFont,
+			x => x.UseThemeDefaultTypographyPreference)
+			.ObserveOn(RxApp.MainThreadScheduler).Subscribe((_) =>
 		{
-			ReduxTypographyService.Apply(Application.Current.Resources, selection.Item1, selection.Item2);
+			ReduxTypographyService.Apply(Application.Current.Resources, Settings);
 			if (IsInitialized) SaveSettings();
 		});
 

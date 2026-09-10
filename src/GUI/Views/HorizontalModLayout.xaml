@@ -1939,7 +1939,8 @@
 			<Border Grid.Row="1" Background="{DynamicResource ReduxBorderBrush}" />
 			<Grid x:Name="ActiveModListGrid" Grid.Row="2">
 				<Grid.RowDefinitions>
-					<RowDefinition Name="ActiveModsListRow" Height="10*" />
+					<RowDefinition Name="ActiveModsListRow" Height="*" MinHeight="80" />
+					<RowDefinition Name="ActiveModsListGridRow" Height="0" />
 					<RowDefinition Name="ActiveModsListForcedModsRow" Height="Auto" />
 				</Grid.RowDefinitions>
 				<c:ModListView x:Name="ActiveModsListView"
@@ -1961,10 +1962,19 @@
 					View="{DynamicResource ModGridView}">
 					<c:ModListView.ContextMenu><ContextMenu /></c:ModListView.ContextMenu>
 				</c:ModListView>
-				<Grid x:Name="AlwaysLoadedSectionGrid" Grid.Row="1">
+				<GridSplitter x:Name="ActiveModListViewGridSplitter"
+					Grid.Row="1"
+					Height="6"
+					HorizontalAlignment="Stretch"
+					VerticalAlignment="Stretch"
+					ResizeBehavior="PreviousAndNext"
+					ShowsPreview="False"
+					Style="{StaticResource ReduxHorizontalSplitterStyle}"
+					Visibility="Collapsed" />
+				<Grid x:Name="AlwaysLoadedSectionGrid" Grid.Row="2">
 					<Grid.RowDefinitions>
 						<RowDefinition Height="Auto" />
-						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
 					</Grid.RowDefinitions>
 					<Border x:Name="AlwaysLoadedHeaderGrid" Margin="6,3,6,7" Padding="6,1"
 						Background="{DynamicResource ReduxSurfaceMutedBrush}"
@@ -2019,6 +2029,7 @@
 						HideHeader="True"
 						ItemContainerStyle="{StaticResource DivinityModDataListItem}"
 						LinkedHeaderListView="{Binding ElementName=ActiveModsListView}"
+						ScrollViewer.VerticalScrollBarVisibility="Auto"
 						View="{DynamicResource HeaderlessModGridView}">
 						<c:ModListView.ContextMenu><ContextMenu /></c:ModListView.ContextMenu>
 					</c:ModListView>

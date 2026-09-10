@@ -215,6 +215,20 @@ public sealed class InteractionBehaviorTests
 			choice.Id.Contains("wand", StringComparison.OrdinalIgnoreCase)).Count());
 	}
 
+	public void BuiltInIconPickerHasAUniqueExpandedCatalog()
+	{
+		var choices = ReduxIconCatalog.Choices.Where(choice => !choice.IsNone).ToList();
+
+		RegressionAssert.Equal(choices.Count, choices.Select(choice => choice.Id)
+			.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+		RegressionAssert.Equal(choices.Count, choices.Select(choice => choice.ResourceKey)
+			.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+		RegressionAssert.True(choices.Count >= 110);
+		RegressionAssert.True(ReduxIconCatalog.TryGet("backpack", out _));
+		RegressionAssert.True(ReduxIconCatalog.TryGet("languages", out _));
+		RegressionAssert.True(ReduxIconCatalog.TryGet("workflow", out _));
+	}
+
 	public void AsyncProviderMetadataSignalsAutomaticCategoryRefresh()
 	{
 		var mod = new DivinityModData { UUID = "metadata-refresh" };

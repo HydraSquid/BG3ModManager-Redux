@@ -349,6 +349,26 @@ public sealed class InteractionBehaviorTests
 		}
 	}
 
+	public void MessageBoxSupportsExplicitElevationWarningActions()
+	{
+		var window = new ReduxMessageBoxWindow(null!, "Elevation warning", "Redux Is Running as Administrator",
+			MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+		try
+		{
+			window.SetButtonLabel(MessageBoxResult.Yes, "Don't show again");
+			window.SetButtonLabel(MessageBoxResult.No, "Close");
+
+			RegressionAssert.Equal("Don't show again", ((TextBlock)window.FindName("YesButtonLabel")).Text);
+			RegressionAssert.Equal("Close", ((TextBlock)window.FindName("NoButtonLabel")).Text);
+			RegressionAssert.True(((Button)window.FindName("NoButton")).IsDefault);
+			RegressionAssert.False(((Button)window.FindName("YesButton")).IsDefault);
+		}
+		finally
+		{
+			window.Close();
+		}
+	}
+
 	public void BuiltInIconPickerHasAUniqueExpandedCatalog()
 	{
 		var choices = ReduxIconCatalog.Choices.Where(choice => !choice.IsNone).ToList();

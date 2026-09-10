@@ -112,6 +112,20 @@ public partial class ReduxMessageBoxWindow : AdonisUI.Controls.AdonisWindow
 		SeverityIcon.Foreground = brush;
 	}
 
+	public void SetButtonLabel(MessageBoxResult result, string label)
+	{
+		ArgumentException.ThrowIfNullOrWhiteSpace(label);
+		var labelElement = result switch
+		{
+			MessageBoxResult.OK => OkButtonLabel,
+			MessageBoxResult.Yes => YesButtonLabel,
+			MessageBoxResult.No => NoButtonLabel,
+			MessageBoxResult.Cancel => CancelButtonLabel,
+			_ => throw new ArgumentOutOfRangeException(nameof(result), result, "The result does not have a dialog button.")
+		};
+		labelElement.Text = label;
+	}
+
 	/// <summary>
 	/// Adds an extra action button (e.g. "Copy to Clipboard") alongside the standard result
 	/// buttons. Extra actions do not close the dialog unless requested.

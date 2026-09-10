@@ -135,4 +135,38 @@ public sealed class SettingsMaintenanceTests
 		RegressionAssert.False(settings.ModCategoryAssignments.ContainsKey(mod.UUID));
 		RegressionAssert.Equal("User Interface", automaticCategory);
 	}
+
+	public void ElevationWarningRequiresAnElevatedUnsuppressedProcessAndSchedulesOnce()
+	{
+		var standard = new ProcessElevationInfo(ProcessElevationState.Standard);
+		var elevated = new ProcessElevationInfo(ProcessElevationState.Elevated);
+		var unknown = new ProcessElevationInfo(ProcessElevationState.Unknown, 5);
+
+		RegressionAssert.False(ProcessElevationWarningPolicy.ShouldShow(standard, false));
+		RegressionAssert.False(ProcessElevationWarningPolicy.ShouldShow(unknown, false));
+		RegressionAssert.False(ProcessElevationWarningPolicy.ShouldShow(elevated, true));
+		RegressionAssert.True(ProcessElevationWarningPolicy.ShouldShow(elevated, false));
+
+		var schedulingGate = 0;
+		RegressionAssert.True(ProcessElevationWarningPolicy.TryMarkScheduled(ref schedulingGate));
+		RegressionAssert.False(ProcessElevationWarningPolicy.TryMarkScheduled(ref schedulingGate));
+	}
+
+	public void FailedElevationWarningSuppressionRestoresThePreviousPreference()
+	{
+		var confirmations = new DivinityModManager.Models.App.ConfirmationSettings();
+		RegressionAssert.False(ProcessElevationWarningPolicy.TryPersistSuppression(confirmations, () => false));
+		RegressionAssert.False(confirmations.DisableAdminModeWarning);
+
+		RegressionAssert.True(ProcessElevationWarningPolicy.TryPersistSuppression(confirmations, () => true));
+		RegressionAssert.True(confirmations.DisableAdminModeWarning);
+	}
+
+	public void CurrentWindowsProcessElevationCanBeReadFromItsToken()
+	{
+		if (!OperatingSystem.IsWindows()) return;
+		var elevation = ProcessHelper.GetCurrentProcessElevation();
+		if (elevation.State == ProcessElevationState.Unknown)
+			throw new InvalidOperationException($"Windows token elevation could not be read. Win32 error: {elevation.Win32Error}.");
+	}
 }

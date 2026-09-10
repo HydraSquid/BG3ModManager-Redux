@@ -104,9 +104,11 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	[Reactive] public bool IsInitialized { get; private set; }
 	private const string StartupLoadOrderWarningKey = "load-order-mod-warning";
 	private const string StartupRestoreLoadOrderPromptKey = "restore-reset-load-order";
+	private const string StartupElevationWarningKey = "process-elevation-warning";
 	private const string QuickSaveOrderName = "Current Order";
 	private const string ProviderCredentialFileName = "provider-credentials.dat";
 	private readonly StartupNotificationQueue _startupNotifications = new();
+	private int _elevationWarningScheduled;
 	private readonly SemaphoreSlim _nxmActivationGate = new(1, 1);
 	private readonly HashSet<string> _acquiredPackageInspections = new(StringComparer.Ordinal);
 	private NxmDownloadManager _nxmDownloadManager;
@@ -7627,25 +7629,44 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		RxApp.TaskpoolScheduler.ScheduleAsync(async (sch, token) =>
 		{
 			await RefreshAsync(sch, token);
-			if(ProcessHelper.IsCurrentProcessAdmin())
-			{
-				if(!Settings.Confirmations.DisableAdminModeWarning)
-				{
-					RxApp.MainThreadScheduler.Schedule(() =>
-					{
-						var result = ReduxMessageBox.Show(Window,
-						"BG3MM is currently running as an administrator, which can lead to issues.\nPlease restart BG3MM in non-admin mode.\nClick Cancel to disable this warning in the future.",
-						"Process Elevation Warning",
-						MessageBoxButton.OKCancel, MessageBoxImage.Warning, MessageBoxResult.OK);
-						if(result == MessageBoxResult.Cancel)
-						{
-							Settings.Confirmations.DisableAdminModeWarning = true;
-							SaveSettings();
-						}
-					});
-				}
-			}
+			ScheduleProcessElevationWarning();
 		});
+	}
+
+	private void ScheduleProcessElevationWarning()
+	{
+		var elevation = ProcessHelper.GetCurrentProcessElevation();
+		var errorDetail = elevation.Win32Error == 0 ? String.Empty : $", Win32 error {elevation.Win32Error}";
+		DivinityApp.Log($"Process elevation check: {elevation.State} (Windows TokenElevation{errorDetail}).");
+		if (!ProcessElevationWarningPolicy.ShouldShow(elevation, Settings.Confirmations.DisableAdminModeWarning)
+			|| !ProcessElevationWarningPolicy.TryMarkScheduled(ref _elevationWarningScheduled))
+		{
+			return;
+		}
+
+		RxApp.MainThreadScheduler.Schedule(() => ShowWhenMainWindowReady(StartupElevationWarningKey, () =>
+		{
+			if (Settings.Confirmations.DisableAdminModeWarning) return;
+			var result = ReduxMessageBox.ShowWithLabels(Window,
+				"Windows reports that Redux is running with administrator privileges. Redux does not request elevation, but it can inherit it from an elevated launcher or a Windows compatibility setting.\n\nRunning elevated can interfere with drag and drop and can change file or child-process behavior. Close Redux and start it normally unless elevated access is intentional.",
+				"Redux Is Running as Administrator",
+				MessageBoxButton.YesNo,
+				MessageBoxImage.Warning,
+				MessageBoxResult.No,
+				(MessageBoxResult.Yes, "Don't show again"),
+				(MessageBoxResult.No, "Close"));
+			if (result != MessageBoxResult.Yes) return;
+
+			if (!ProcessElevationWarningPolicy.TryPersistSuppression(Settings.Confirmations, SaveSettings))
+			{
+				ReduxMessageBox.Show(Window,
+					"Redux could not save this preference, so the administrator warning will remain enabled for the next launch.",
+					"Preference Not Saved",
+					MessageBoxButton.OK,
+					MessageBoxImage.Error,
+					MessageBoxResult.OK);
+			}
+		}));
 	}
 
 	public bool AutoChangedOrder { get; set; }

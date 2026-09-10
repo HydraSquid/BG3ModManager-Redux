@@ -24,7 +24,7 @@ Every channel should agree on these facts:
 
 - product: **Baldur's Gate 3 Mod Manager Redux**;
 - tagline: **Bring order to the chaos.**;
-- current line: **0.1.0-alpha.16 — public alpha**;
+- current line: **0.1.0-alpha.16.1 — public alpha hotfix**;
 - platform: Windows 10/11 x64 with .NET 8 Desktop Runtime;
 - application filename: `Redux.exe`;
 - installation choices: verified lightweight Setup or full portable archive;

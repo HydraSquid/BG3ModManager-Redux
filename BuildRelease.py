@@ -301,10 +301,17 @@ def write_release_inventory(files: list[Path]) -> None:
 
 
 def internal_version(display_version: str) -> str:
-	match = re.fullmatch(r"0\.1\.0-alpha\.([1-9][0-9]*)", display_version)
+	match = re.fullmatch(r"0\.1\.0-alpha\.([1-9][0-9]*)(?:\.([1-9][0-9]*))?", display_version)
 	if not match:
-		raise SystemExit("Publish versions must use the 0.1.0-alpha.N format.")
-	return f"0.1.0.{match.group(1)}"
+		raise SystemExit("Publish versions must use the 0.1.0-alpha.N or 0.1.0-alpha.N.H format.")
+	alpha = int(match.group(1))
+	hotfix = match.group(2)
+	if hotfix is not None:
+		return f"0.1.{alpha}.{int(hotfix)}"
+	# Alpha.15 and alpha.16 were published before the hotfix-aware mapping existed.
+	if alpha in (15, 16):
+		return f"0.1.0.{alpha}"
+	return f"0.1.{alpha}.0"
 
 
 def sha256(path: Path) -> str:

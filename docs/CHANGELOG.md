@@ -5,11 +5,18 @@ source for individual implementation details.
 
 ## Unreleased
 
+## 0.1.0-alpha.16.1 — public-alpha hotfix
+
+### Fixed
+
 - Added an explicit public-alpha hotfix version contract (`alpha.N.H`) so corrected builds can be
   delivered through the updater without pretending to be a new feature alpha or replacing existing
   release bytes.
 - Prevented an exceptional load-order rebuild during Sync—such as one involving legacy separator
   PAK state—from leaving Save, keyboard shortcuts, menus, and drag-and-drop permanently disabled.
+
+### Distribution
+
 - Setup now updates or repairs its existing registered Redux installation using verified,
   inventory-scoped replacement and rollback while preserving settings and other user content.
 

@@ -1,7 +1,7 @@
 # Installation, updates, and removal
 
 Redux is a portable Windows application and does not need to be placed inside the Baldur's Gate 3
-directory. `0.1.0-alpha.16` is the current public-alpha release. Public releases support both manual
+directory. `0.1.0-alpha.16.1` is the current public-alpha release. Public releases support both manual
 extraction and a separate lightweight Setup.
 
 ## Requirements

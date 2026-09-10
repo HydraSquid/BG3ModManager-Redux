@@ -33,6 +33,8 @@ _Backup/
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
+!docs/releases/
+!docs/releases/*.md
 x64/
 x86/
 bld/

@@ -148,8 +148,8 @@
 
 		<controls:ReduxWindowTitleBar IconData="{DynamicResource Redux.Icon.ColorPalette}" />
 
-		<Border Grid.Row="1"
-			Background="{DynamicResource ReduxSurfaceBrush}"
+		<Border x:Name="EditorWindowShell" Grid.Row="1"
+			Background="{DynamicResource ReduxWindowBrush}"
 			BorderThickness="0">
 			<Grid>
 				<Grid.RowDefinitions>

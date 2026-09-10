@@ -215,6 +215,45 @@ public sealed class InteractionBehaviorTests
 			choice.Id.Contains("wand", StringComparison.OrdinalIgnoreCase)).Count());
 	}
 
+	public void CustomThemeEditorShellsPreviewTheBackgroundRoleLive()
+	{
+		Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+		var theme = ReduxThemeService.CreateFromBase("Live shell preview", ReduxThemeType.ReduxDark);
+		var editor = new CustomThemeEditorWindow(theme);
+		var picker = new CategoryNameDialog("Background", theme.BackgroundColor, false);
+		try
+		{
+			ReduxThemeService.Apply(picker.Resources, theme.BaseTheme, theme);
+			theme.BackgroundColor = "#E409FF";
+			ReduxThemeService.PreviewColors(theme, editor.Resources, picker.Resources);
+			editor.Measure(new Size(editor.Width, editor.Height));
+			editor.Arrange(new Rect(0, 0, editor.Width, editor.Height));
+			picker.Measure(new Size(picker.Width, picker.Height));
+			picker.Arrange(new Rect(0, 0, picker.Width, picker.Height));
+			editor.UpdateLayout();
+			picker.UpdateLayout();
+
+			var editorShell = (Border?)editor.FindName("EditorWindowShell")
+				?? throw new InvalidOperationException("The custom-theme editor window shell was not found.");
+			var pickerShell = (Border?)picker.FindName("DialogWindowShell")
+				?? throw new InvalidOperationException("The color-picker window shell was not found.");
+			var expected = Color.FromRgb(0xE4, 0x09, 0xFF);
+			RegressionAssert.Equal(expected, RequireSolidColor(editor.Background, "editor window"));
+			RegressionAssert.Equal(expected, RequireSolidColor(editorShell.Background, "editor shell"));
+			RegressionAssert.Equal(expected, RequireSolidColor(pickerShell.Background, "picker shell"));
+		}
+		finally
+		{
+			picker.Close();
+			editor.Close();
+		}
+
+		static Color RequireSolidColor(Brush brush, string surface) =>
+			brush is SolidColorBrush solid
+				? solid.Color
+				: throw new InvalidOperationException($"The {surface} did not resolve a solid semantic background brush.");
+	}
+
 	public void BuiltInIconPickerHasAUniqueExpandedCatalog()
 	{
 		var choices = ReduxIconCatalog.Choices.Where(choice => !choice.IsNone).ToList();

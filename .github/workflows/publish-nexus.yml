@@ -139,8 +139,8 @@ jobs:
           description: The same portable Redux archive published and verified on GitHub.
           category: main
           archive_existing_version: true
-          primary_mod_manager_download: true
-          allow_mod_manager_download: true
+          primary_mod_manager_download: false
+          allow_mod_manager_download: false
           show_requirements_pop_up: false
           update_mod_version: true
 

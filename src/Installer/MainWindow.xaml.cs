@@ -41,6 +41,7 @@ public partial class MainWindow : Window
 	private DetectedInstallerPaths? _paths;
 	private DesktopRuntimeStatus? _runtime;
 	private string _installedApplicationPath = String.Empty;
+	private bool _updateExisting;
 	private bool _busy;
 	private bool _closeAfterCancellation;
 	private ErrorReturn _errorReturn;
@@ -77,20 +78,20 @@ public partial class MainWindow : Window
 		LoadingStatusText.Text = "Checking the official Redux release…";
 		try
 		{
-			var existing = new WindowsInstallerSystemIntegration().GetRegisteredInstallationDirectory();
-			if (!String.IsNullOrWhiteSpace(existing))
-			{
-				ShowError("Redux is already installed at “" + existing
-					+ "”. This lightweight Setup handles fresh installations only. Use Redux’s built-in updater for new releases, or uninstall the existing copy first.", ErrorReturn.None);
-				return;
-			}
-
 			_paths = InstallerPathService.Detect();
+			var existing = new WindowsInstallerSystemIntegration().GetRegisteredInstallationDirectory();
+			_updateExisting = !String.IsNullOrWhiteSpace(existing);
 			_runtime = DesktopRuntimeService.Detect();
 			using var channel = new InstallerChannelService();
 			_release = await channel.FetchAsync(_lifetimeCancellation.Token);
 
-			InstallPathTextBox.Text = _paths.RecommendedInstallDirectory;
+			InstallPathTextBox.Text = _updateExisting ? existing : _paths.RecommendedInstallDirectory;
+			InstallPathTextBox.IsReadOnly = _updateExisting;
+			BrowseInstallPathButton.Visibility = _updateExisting ? Visibility.Collapsed : Visibility.Visible;
+			InstallPathHeadingText.Text = _updateExisting ? "Update the registered Redux installation" : "Install Redux to";
+			InstallPathHelpText.Text = _updateExisting
+				? "Setup preserves settings and other unlisted user content while replacing verified release files."
+				: "Use the recommended per-user location or choose another empty, writable folder outside the game.";
 			GamePathTextBox.Text = _paths.GameDirectory;
 			LarianPathText.Text = _paths.LarianDataDirectory;
 			LarianPathText.ToolTip = _paths.LarianDataDirectory;
@@ -159,6 +160,12 @@ public partial class MainWindow : Window
 				"Redux Setup", MessageBoxButton.OK, MessageBoxImage.Warning);
 			return;
 		}
+		if (_updateExisting && IsReduxRunning())
+		{
+			MessageBox.Show(this, "Close Redux before installing the update, then try again.",
+				"Redux Setup", MessageBoxButton.OK, MessageBoxImage.Warning);
+			return;
+		}
 
 		var gameDirectory = GamePathTextBox.Text.Trim().Trim('"');
 		if (gameDirectory.Length > 0 && !InstallerPathService.IsGameDirectory(gameDirectory))
@@ -167,7 +174,8 @@ public partial class MainWindow : Window
 				"Redux Setup", MessageBoxButton.OK, MessageBoxImage.Warning);
 			return;
 		}
-		var destination = InstallDestinationService.Validate(InstallPathTextBox.Text, gameDirectory, true);
+		var destination = InstallDestinationService.Validate(InstallPathTextBox.Text, gameDirectory, true,
+			allowExistingInstallation: _updateExisting);
 		if (!destination.IsValid)
 		{
 			MessageBox.Show(this, destination.Message, "Redux Setup", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -181,31 +189,38 @@ public partial class MainWindow : Window
 		{
 			using var packageService = new InstallerPackageService();
 			using var package = await packageService.DownloadAndPrepareAsync(_release, CreateProgress(), _lifetimeCancellation.Token);
-			ProgressStatusText.Text = "Installing Redux…";
+			ProgressStatusText.Text = _updateExisting ? "Updating Redux…" : "Installing Redux…";
 			InstallProgressBar.Value = 1;
 			await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.Render);
 
-			var result = new InstallerInstallService().Install(new FreshInstallRequest
+			var result = new InstallerInstallService().Install(new InstallerInstallRequest
 			{
 				Package = package,
 				DestinationDirectory = destination.NormalizedPath,
 				GameDirectory = gameDirectory,
 				SetupExecutablePath = Assembly.GetExecutingAssembly().Location,
-				CreateDesktopShortcut = DesktopShortcutCheckBox.IsChecked == true
+				CreateDesktopShortcut = DesktopShortcutCheckBox.IsChecked == true,
+				UpdateExisting = _updateExisting
 			});
 			_installedApplicationPath = result.ApplicationPath;
 			CompleteHeadingText.Text = "Redux " + result.DisplayVersion + " is ready";
-			CompleteDetailText.Text = "Installed to “" + result.DestinationDirectory
-				+ "”. A Start Menu shortcut and normal Windows uninstall entry were created.";
+			CompleteDetailText.Text = result.UpdatedExisting
+				? "Updated in “" + result.DestinationDirectory + "”. Settings and other user content were preserved."
+				: "Installed to “" + result.DestinationDirectory
+					+ "”. A Start Menu shortcut and normal Windows uninstall entry were created.";
 			ShowView(SetupView.Complete);
 		}
 		catch (OperationCanceledException) when (_lifetimeCancellation.IsCancellationRequested)
 		{
-			if (!_closeAfterCancellation) ShowError("Installation was cancelled before Redux was installed.", ErrorReturn.Review);
+			if (!_closeAfterCancellation) ShowError(_updateExisting
+				? "The update was cancelled before the installed application was changed."
+				: "Installation was cancelled before Redux was installed.", ErrorReturn.Review);
 		}
 		catch (Exception ex)
 		{
-			ShowError("Redux was not installed. Setup rolled back the fresh installation so you can correct the issue and try again.\n\n"
+			ShowError((_updateExisting
+				? "Redux was not updated. Setup restored the previous application files; user content was not targeted.\n\n"
+				: "Redux was not installed. Setup rolled back the fresh installation so you can correct the issue and try again.\n\n")
 				+ FriendlyMessage(ex), ErrorReturn.Review);
 		}
 		finally
@@ -387,29 +402,38 @@ public partial class MainWindow : Window
 		{
 			case SetupView.Loading:
 				HeadingText.Text = "BG3 Mod Manager Redux Setup";
-				SubheadingText.Text = "Preparing a verified public-alpha installation.";
+				SubheadingText.Text = "Preparing the verified public-alpha release.";
 				FooterText.Text = "No game files, mods, or saves will be changed.";
 				PrimaryButton.Visibility = Visibility.Collapsed;
 				SecondaryButton.Content = "Cancel";
 				break;
 			case SetupView.Review:
-				HeadingText.Text = "Install BG3 Mod Manager Redux";
-				SubheadingText.Text = "Review the release, prerequisite, and paths before downloading.";
-				FooterText.Text = "Fresh install only • user content is never bundled or moved";
-				PrimaryButton.Content = "Install Redux";
+				HeadingText.Text = _updateExisting ? "Update BG3 Mod Manager Redux" : "Install BG3 Mod Manager Redux";
+				SubheadingText.Text = _updateExisting
+					? "Review the release before updating the registered installation."
+					: "Review the release, prerequisite, and paths before downloading.";
+				FooterText.Text = _updateExisting
+					? "Verified update • settings and user content stay in place"
+					: "Fresh install • user content is never bundled or moved";
+				PrimaryButton.Content = _updateExisting ? "Update Redux" : "Install Redux";
 				PrimaryButton.IsEnabled = true;
 				SecondaryButton.Content = "Cancel";
 				break;
 			case SetupView.Progress:
-				HeadingText.Text = _uninstallMode ? "Uninstalling Redux" : "Installing BG3 Mod Manager Redux";
-				SubheadingText.Text = _uninstallMode ? "Removing release-owned application files." : "Downloading, verifying, and installing the selected release.";
+				HeadingText.Text = _uninstallMode ? "Uninstalling Redux"
+					: _updateExisting ? "Updating BG3 Mod Manager Redux" : "Installing BG3 Mod Manager Redux";
+				SubheadingText.Text = _uninstallMode ? "Removing release-owned application files."
+					: _updateExisting ? "Downloading, verifying, and replacing release-owned application files."
+					: "Downloading, verifying, and installing the selected release.";
 				FooterText.Text = _uninstallMode ? "Your unlisted user content remains in place." : "Closing Setup safely cancels work that has not been committed.";
 				PrimaryButton.Visibility = Visibility.Collapsed;
 				SecondaryButton.Content = "Cancel";
 				break;
 			case SetupView.Complete:
-				HeadingText.Text = _uninstallMode ? "Uninstall complete" : "Installation complete";
-				SubheadingText.Text = _uninstallMode ? "Redux application files were removed." : "Redux is installed and ready to open.";
+				HeadingText.Text = _uninstallMode ? "Uninstall complete"
+					: _updateExisting ? "Update complete" : "Installation complete";
+				SubheadingText.Text = _uninstallMode ? "Redux application files were removed."
+					: _updateExisting ? "Redux is updated and ready to open." : "Redux is installed and ready to open.";
 				FooterText.Text = _uninstallMode ? "Thank you for trying Redux." : "You can also launch Redux from the Start Menu.";
 				PrimaryButton.Content = _uninstallMode ? "Close" : "Launch Redux";
 				PrimaryButton.IsEnabled = true;

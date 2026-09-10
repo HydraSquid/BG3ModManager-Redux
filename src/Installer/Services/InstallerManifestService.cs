@@ -77,16 +77,9 @@ internal static class InstallerManifestService
 			throw new InvalidDataException("The update manifest is not the Redux public-alpha channel.");
 
 		var displayVersion = RequireString(root, "displayVersion", 64);
-		var versionMatch = DisplayVersionPattern.Match(displayVersion);
-		int release;
-		if (!versionMatch.Success || !Int32.TryParse(versionMatch.Groups["release"].Value, out release)
-			|| release > UInt16.MaxValue)
-			throw new InvalidDataException("The release version is not a supported Redux public-alpha version.");
-		var hotfix = 0;
-		if (versionMatch.Groups["hotfix"].Success
-			&& (!Int32.TryParse(versionMatch.Groups["hotfix"].Value, out hotfix)
-				|| hotfix > UInt16.MaxValue))
-			throw new InvalidDataException("The release version is not a supported Redux public-alpha version.");
+		var comparableVersion = ParseDisplayVersion(displayVersion);
+		var release = comparableVersion.Build;
+		var hotfix = comparableVersion.Revision;
 
 		var internalVersionText = RequireString(root, "internalVersion", 64);
 		Version internalVersion;
@@ -137,6 +130,24 @@ internal static class InstallerManifestService
 				Sha256 = hash.ToLowerInvariant()
 			}
 		};
+	}
+
+	internal static int CompareDisplayVersions(string left, string right) =>
+		ParseDisplayVersion(left).CompareTo(ParseDisplayVersion(right));
+
+	private static Version ParseDisplayVersion(string displayVersion)
+	{
+		var versionMatch = DisplayVersionPattern.Match(displayVersion ?? String.Empty);
+		int release;
+		if (!versionMatch.Success || !Int32.TryParse(versionMatch.Groups["release"].Value, out release)
+			|| release > UInt16.MaxValue)
+			throw new InvalidDataException("The release version is not a supported Redux public-alpha version.");
+		var hotfix = 0;
+		if (versionMatch.Groups["hotfix"].Success
+			&& (!Int32.TryParse(versionMatch.Groups["hotfix"].Value, out hotfix)
+				|| hotfix > UInt16.MaxValue))
+			throw new InvalidDataException("The release version is not a supported Redux public-alpha version.");
+		return new Version(0, 1, release, hotfix);
 	}
 
 	private static bool MatchesDisplayVersion(Version internalVersion, int release, int hotfix)

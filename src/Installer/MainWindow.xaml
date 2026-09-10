@@ -75,16 +75,16 @@
 						</Grid>
 					</Border>
 
-					<TextBlock Margin="0,17,0,5" FontWeight="SemiBold" Text="Install Redux to" />
+					<TextBlock x:Name="InstallPathHeadingText" Margin="0,17,0,5" FontWeight="SemiBold" Text="Install Redux to" />
 					<Grid>
 						<Grid.ColumnDefinitions>
 							<ColumnDefinition Width="*" />
 							<ColumnDefinition Width="Auto" />
 						</Grid.ColumnDefinitions>
 						<TextBox x:Name="InstallPathTextBox" VerticalContentAlignment="Center" />
-						<Button Grid.Column="1" Content="Browse…" Click="BrowseInstallPath_Click" />
+						<Button x:Name="BrowseInstallPathButton" Grid.Column="1" Content="Browse…" Click="BrowseInstallPath_Click" />
 					</Grid>
-					<TextBlock Margin="0,5,0,0" Foreground="{StaticResource MutedTextBrush}" FontSize="12"
+					<TextBlock x:Name="InstallPathHelpText" Margin="0,5,0,0" Foreground="{StaticResource MutedTextBrush}" FontSize="12"
 						Text="Use the recommended per-user location or choose another empty, writable folder outside the game." />
 
 					<TextBlock Margin="0,15,0,5" FontWeight="SemiBold" Text="Baldur’s Gate 3 folder (optional)" />

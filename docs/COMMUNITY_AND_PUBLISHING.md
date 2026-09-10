@@ -104,7 +104,8 @@ only on a self-selected role.
 5. Download them anonymously and verify bytes, launch, install, and uninstall.
 6. Upload the intended files and current images to Nexus Mods; verify download parity.
 7. Publish `Redux-Update-Public-Alpha.json` to the moving channel only after versioned URLs work.
-8. Test a fresh Setup install through the public channel and the in-app update path where applicable.
+8. Test a fresh Setup install, a Setup-managed update, and the in-app update path through the public
+   channel where applicable.
 9. Update website state and publish matching Discord, Nexus, and GitHub announcements.
 10. Monitor support and security routes; never silently replace versioned artifacts.
 

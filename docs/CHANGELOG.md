@@ -10,6 +10,8 @@ source for individual implementation details.
   release bytes.
 - Prevented an exceptional load-order rebuild during Sync—such as one involving legacy separator
   PAK state—from leaving Save, keyboard shortcuts, menus, and drag-and-drop permanently disabled.
+- Setup now updates or repairs its existing registered Redux installation using verified,
+  inventory-scoped replacement and rollback while preserving settings and other user content.
 
 ## 0.1.0-alpha.16 — public-alpha hotfix
 

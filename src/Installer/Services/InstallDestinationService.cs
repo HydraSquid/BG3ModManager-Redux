@@ -8,7 +8,11 @@ namespace ReduxInstaller.Services;
 
 internal static class InstallDestinationService
 {
-	public static InstallDestinationValidation Validate(string destination, string gameDirectory, bool probeWriteAccess)
+	public static InstallDestinationValidation Validate(
+		string destination,
+		string gameDirectory,
+		bool probeWriteAccess,
+		bool allowExistingInstallation = false)
 	{
 		if (String.IsNullOrWhiteSpace(destination)) return Problem(InstallDestinationProblem.Missing,
 			"Choose where Redux should be installed.");
@@ -22,12 +26,16 @@ internal static class InstallDestinationService
 		if (IsWithin(full, gameDirectory))
 			return Problem(InstallDestinationProblem.InsideGameDirectory,
 				"Redux must be installed outside the Baldur's Gate 3 game directory.", full);
-		if (File.Exists(Path.Combine(full, "Redux.exe"))
-			|| File.Exists(Path.Combine(full, "BG3ModManager.exe"))
-			|| File.Exists(Path.Combine(full, InstallerPackageService.InventoryFileName)))
+		var hasRuntime = File.Exists(Path.Combine(full, "Redux.exe"))
+			|| File.Exists(Path.Combine(full, "BG3ModManager.exe"));
+		var hasInventory = File.Exists(Path.Combine(full, InstallerPackageService.InventoryFileName));
+		if ((hasRuntime || hasInventory) && !allowExistingInstallation)
 			return Problem(InstallDestinationProblem.ExistingInstallation,
-				"Redux is already installed here. Use its updater or uninstall it before running fresh setup.", full);
-		if (Directory.Exists(full) && Directory.EnumerateFileSystemEntries(full).Any())
+				"Redux is already installed here. Setup can update it only through its registered installation path.", full);
+		if (allowExistingInstallation && (!hasRuntime || !hasInventory))
+			return Problem(InstallDestinationProblem.ExistingInstallation,
+				"Setup cannot safely update this folder because its Redux runtime or release inventory is missing.", full);
+		if (!allowExistingInstallation && Directory.Exists(full) && Directory.EnumerateFileSystemEntries(full).Any())
 			return Problem(InstallDestinationProblem.NotEmpty, "Choose an empty folder for a fresh Redux installation.", full);
 
 		for (var current = new DirectoryInfo(FindExistingAncestor(full)); current != null; current = current.Parent)

@@ -10,7 +10,8 @@ namespace ReduxInstaller.Services;
 internal interface IInstallerSystemIntegration
 {
 	string GetRegisteredInstallationDirectory();
-	void Register(string installationDirectory, string displayVersion, long applicationBytes, bool desktopShortcut);
+	string GetRegisteredDisplayVersion();
+	void RegisterOrUpdate(string installationDirectory, string displayVersion, long applicationBytes, bool desktopShortcut);
 	void Remove(string installationDirectory);
 }
 
@@ -29,12 +30,15 @@ internal sealed class WindowsInstallerSystemIntegration : IInstallerSystemIntegr
 		catch { return String.Empty; }
 	}
 
-	public void Register(string installationDirectory, string displayVersion, long applicationBytes, bool desktopShortcut)
+	public void RegisterOrUpdate(string installationDirectory, string displayVersion, long applicationBytes, bool desktopShortcut)
 	{
 		var existing = GetRegisteredInstallationDirectory();
-		if (!String.IsNullOrWhiteSpace(existing))
-			throw new InvalidOperationException("Redux is already registered at '" + existing
-				+ "'. Setup performs fresh installations only.");
+		if (!String.IsNullOrWhiteSpace(existing)
+			&& !SamePath(existing, installationDirectory))
+		{
+			throw new InvalidOperationException("Redux is already registered at a different location: '"
+				+ existing + "'.");
+		}
 		var executable = Path.Combine(installationDirectory, "Redux.exe");
 		var uninstaller = Path.Combine(installationDirectory, InstallerInstallService.UninstallerFileName);
 		var startMenuFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "BG3 Mod Manager Redux");
@@ -56,6 +60,27 @@ internal sealed class WindowsInstallerSystemIntegration : IInstallerSystemIntegr
 		key.SetValue("NoModify", 1, RegistryValueKind.DWord);
 		key.SetValue("NoRepair", 1, RegistryValueKind.DWord);
 		key.SetValue("EstimatedSize", Math.Max(1, Math.Min(Int32.MaxValue, applicationBytes / 1024)), RegistryValueKind.DWord);
+	}
+
+	public string GetRegisteredDisplayVersion()
+	{
+		try
+		{
+			using var key = Registry.CurrentUser.OpenSubKey(ProductKey, writable: false);
+			return key?.GetValue("DisplayVersion") as string ?? String.Empty;
+		}
+		catch { return String.Empty; }
+	}
+
+	private static bool SamePath(string left, string right)
+	{
+		try
+		{
+			return String.Equals(Path.GetFullPath(left).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+				Path.GetFullPath(right).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+				StringComparison.OrdinalIgnoreCase);
+		}
+		catch { return false; }
 	}
 
 	public void Remove(string installationDirectory)

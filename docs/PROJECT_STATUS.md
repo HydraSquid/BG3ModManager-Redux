@@ -39,7 +39,8 @@ one-build milestone.
 - Separate Save Game Manager and reviewed Game-Directory Mod Manager workflows.
 - Conservative offline mod recognition, privacy-limited contribution reports, and optional creator
   manifests.
-- A verified public-alpha update contract and a small fresh-install web Setup.
+- A verified public-alpha update contract and a small web Setup for fresh installs and safe updates
+  to Setup-managed installations.
 - The new `Redux.exe` runtime identity, transparent Redux star, current tagline, and official Discord
   link.
 

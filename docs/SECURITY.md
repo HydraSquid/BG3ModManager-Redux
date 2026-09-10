@@ -43,8 +43,10 @@ release contents before launching its updater. The updater runs outside the inst
 for Redux to exit, and mutates only paths declared by the new or previously installed release
 inventory. Unlisted local files are outside its ownership boundary.
 
-Standalone Setup uses that same fixed official public-alpha channel but remains a separate,
-fresh-install-only bootstrapper. It bounds and strictly parses the channel document, verifies the
-portable archive's declared length and SHA-256 digest, rejects unsafe or unowned paths, and commits
-through isolated staging. If the x64 .NET 8 Desktop Runtime is missing, Setup accepts only the
+Standalone Setup uses that same fixed official public-alpha channel for fresh installations and
+updates to its registered installation. It bounds and strictly parses the channel document,
+verifies the portable archive's declared length and SHA-256 digest, rejects unsafe or unowned
+paths, and commits through isolated staging. Existing-install updates require the registered path
+and a valid prior release inventory, preserve unlisted content, and restore backed-up application
+files if replacement fails. If the x64 .NET 8 Desktop Runtime is missing, Setup accepts only the
 official Microsoft runtime download and verifies its Authenticode signature before execution.

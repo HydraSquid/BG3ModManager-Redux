@@ -28,10 +28,12 @@ repacked archives, and executables supplied through private messages.
 
 ## Should I use Setup or the portable ZIP?
 
-Use `BG3ModManager-Redux-Setup.exe` for a guided fresh installation, .NET 8 prerequisite help,
-shortcuts, and a normal Windows uninstall entry. Use the complete portable ZIP if you prefer to
-choose and maintain the application folder yourself. Setup downloads and verifies Redux; it does not
-embed the whole application and does not update an existing installation.
+Use `BG3ModManager-Redux-Setup.exe` for guided installation and updates, .NET 8 prerequisite help,
+shortcuts, and a normal Windows uninstall entry. If Setup previously installed Redux, a newer Setup
+updates that registered folder while preserving files outside the release inventory. Use the
+complete portable ZIP if you prefer to choose and maintain the application folder yourself. Setup
+downloads and verifies Redux; it does not embed the whole application or claim an arbitrary
+portable folder as its installation.
 
 ## Why is the application called `Redux.exe`?
 

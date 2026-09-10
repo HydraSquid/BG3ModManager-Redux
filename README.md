@@ -31,8 +31,8 @@ stronger organization, safer review workflows, and optional offline-assisted gui
 ## Install and update
 
 Redux remains portable. Public-alpha releases also provide a separate lightweight Setup for people
-who prefer a guided fresh installation; Setup downloads and verifies Redux rather than embedding
-the application.
+who prefer guided installation and updates; Setup downloads and verifies Redux rather than
+embedding the application.
 
 1. Use the official lightweight Setup, or install the
    [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) yourself for a manual
@@ -47,11 +47,13 @@ the application.
 
 `0.1.0-alpha.16` is the current public-alpha release. It includes a verified in-app update workflow
 and a separate lightweight web Setup. The updater acts only when the official public-alpha channel
-points to a newer, fully published package; otherwise update manually by closing Redux and BG3,
-backing up the Redux folder, and extracting the complete newer archive over it. Release archives
-exclude runtime state such as `Data`, `_Logs`, caches, downloads, retained archives, and backups.
-Never delete those folders as part of a routine update. If Redux is moved, open Download Manager
-and repair the NXM association if Redux previously handled `nxm://` links.
+points to a newer, fully published package. A Setup-managed installation can also be updated by
+closing Redux and running the newer Setup; it replaces only release-owned files and preserves
+settings and other user content. Portable copies can be updated manually by backing up the Redux
+folder and extracting the complete newer archive over it. Release archives exclude runtime state
+such as `Data`, `_Logs`, caches, downloads, retained archives, and backups. Never delete those
+folders as part of a routine update. If Redux is moved, open Download Manager and repair the NXM
+association if Redux previously handled `nxm://` links.
 
 See [Installation, updates, and removal](docs/INSTALLATION.md) for safe migration, rollback, and
 uninstall guidance.

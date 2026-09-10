@@ -10,7 +10,7 @@ not replace code, tests, schemas, or security validation.
 | Desktop application | `src/GUI/GUI.csproj` | WPF windows, controls, themes, interaction, app composition; builds `Redux.exe` / `Redux.dll` |
 | Core | `src/Core/DivinityModManagerCore.csproj` | Models, persistence, package/load-order logic, diagnostics, downloads, native installs, updates |
 | Updater | `src/Updater/ReduxUpdater.csproj` | Narrow out-of-process application-file replacement and rollback |
-| Setup | `src/Installer/ReduxInstaller.csproj` | Fresh-install web bootstrapper, prerequisite handling, shortcuts, inventory-scoped uninstall |
+| Setup | `src/Installer/ReduxInstaller.csproj` | Install/update web bootstrapper, prerequisite handling, shortcuts, transactional replacement, inventory-scoped uninstall |
 | Toolbox | `src/Toolbox/Toolbox.csproj` | Retained utility and Script Extender support code |
 | Runtime regression suite | `tests/Redux.Core.Tests` | Executable behavioral checks for core and WPF contracts |
 | Installer regression suite | `tests/Redux.Installer.Tests` | Executable checks for Setup, manifests, install, rollback, and uninstall |
@@ -74,7 +74,10 @@ managed because it did not preserve the user's original game file.
 Publish packaging produces an inventory of release-owned files. Setup and the in-app updater accept
 only the fixed public-alpha channel, strict version/host/path shapes, declared size and SHA-256, safe
 archive paths, and a complete inventory. The updater runs outside the installation and mutates only
-new or previously owned application files. Setup is fresh-install-only.
+new or previously owned application files. Setup uses isolated staging for a fresh install; for an
+existing registered install it backs up the prior inventory, atomically replaces new or previously
+owned files, removes obsolete owned files, preserves unlisted content, and rolls back failed
+transactions.
 
 ## UI and theme system
 

@@ -13,7 +13,7 @@ Each public alpha has an immutable version and a matching Git tag such as
 alpha remains `0.1.0-alpha.17`. The versioned GitHub release contains:
 
 - `BG3ModManager-Redux_v0.1.0-alpha.N[.H].zip`, the versioned portable application;
-- `BG3ModManager-Redux-Setup.exe`, the separate fresh-install web bootstrapper; and
+- `BG3ModManager-Redux-Setup.exe`, the separate install/update web bootstrapper; and
 - release notes for that exact version.
 
 The portable ZIP contains `Redux-Release-Files.json`. That inventory names every application file
@@ -38,9 +38,10 @@ public builds.
 
 Compatibility matters during the transition: the already-published alpha.15 and alpha.16 clients
 only parse the original `alpha.N` form, so they cannot discover a dotted hotfix automatically. The
-first dotted hotfix must therefore be installed manually, or be preceded by one final single-number
-bridge release. Once a hotfix-aware build is installed, later dotted hotfixes work normally. Never
-publish a dotted channel manifest on the assumption that an unmodified alpha.16 client can read it.
+first dotted hotfix must therefore be installed manually, applied by explicitly downloading and
+running its newer Setup, or be preceded by one final single-number bridge release. Once a
+hotfix-aware build is installed, later dotted hotfixes work normally. Never publish a dotted channel
+manifest on the assumption that an unmodified alpha.16 client can read it.
 
 ## Prepare a candidate
 
@@ -73,8 +74,8 @@ any README or packaged-document change because those bytes affect its SHA-256 di
 4. Confirm the manifest's versioned artifact and release-notes URLs work anonymously.
 5. Upload the already-tested manifest to the moving `public-alpha` channel only after every
    versioned artifact is reachable. The channel manifest is the final publication step.
-6. Reproduce an update from the previous public alpha and a fresh Setup install through the public
-   URLs before announcing the release.
+6. Reproduce an in-app update, a Setup update of its registered previous release, and a fresh Setup
+   install through the public URLs before announcing the release.
 
 For the first public alpha there is no previous public channel build. Replace that one upgrade test
 with a migration from the newest private alpha, a clean portable launch, and a clean Setup install.

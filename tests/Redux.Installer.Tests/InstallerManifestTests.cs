@@ -24,6 +24,10 @@ internal sealed class InstallerManifestTests
 
 		RegressionAssert.Equal("0.1.0-alpha.16.1", manifest.DisplayVersion);
 		RegressionAssert.Equal("0.1.16.1", manifest.InternalVersion);
+		RegressionAssert.True(InstallerManifestService.CompareDisplayVersions(
+			"0.1.0-alpha.16", "0.1.0-alpha.16.1") < 0);
+		RegressionAssert.True(InstallerManifestService.CompareDisplayVersions(
+			"0.1.0-alpha.16.2", "0.1.0-alpha.17") < 0);
 		RegressionAssert.Throws<InvalidDataException>(() => InstallerManifestService.ParseAndValidate(
 			ValidManifest()
 				.Replace("0.1.0-alpha.15", "0.1.0-alpha.16")

@@ -28,6 +28,16 @@ fixed official GitHub channel, declared byte length, SHA-256 hash, safe archive 
 inventory before Setup commits it. Setup adds a Start Menu shortcut, offers an optional Desktop
 shortcut, and registers a normal per-user Windows uninstall entry.
 
+When Windows already has a Redux installation registered by Setup, running a newer Setup switches
+to update mode and locks the destination to that registered folder. Close Redux first. Setup backs
+up the currently owned application files, applies the verified release, removes obsolete owned
+files, refreshes shortcuts and the Windows entry, and rolls back if the transaction fails. Settings,
+saved orders, downloads, archives, logs, and all other files outside the release inventory remain
+untouched. Setup refuses an unregistered folder or an installation without a valid release
+inventory rather than guessing what it owns.
+Setup allows a same-version repair but refuses to replace a registered newer alpha with an older
+channel release.
+
 If .NET 8 is missing, Setup can download its x64 Desktop Runtime installer directly from Microsoft.
 It verifies the final Microsoft download location and Authenticode signer before launching it, and
 also offers the official Microsoft download page as a fallback.
@@ -85,9 +95,10 @@ claimed or removed. If file replacement fails, the updater restores the files it
 the transaction.
 
 The built-in updater does not install Redux on a new computer and is separate from standalone
-Setup. Setup performs fresh installations only; it does not update, repair, or move an existing
-installation. A protected or read-only installation location can prevent an in-place update; use a
-writable application folder or update manually in that case.
+Setup. Setup can create a fresh installation or update/repair the installation it registered with
+Windows; it does not move an installation or claim an arbitrary portable folder. A protected or
+read-only installation location can prevent an in-place update; use a writable application folder
+or update a portable copy manually in that case.
 
 ## Move Redux
 

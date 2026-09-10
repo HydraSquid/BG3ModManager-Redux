@@ -27,6 +27,9 @@ internal static class Program
 			(nameof(environment.RuntimeDownloadAcceptsOnlyMicrosoftX64DesktopRuntimeAssets), environment.RuntimeDownloadAcceptsOnlyMicrosoftX64DesktopRuntimeAssets),
 			(nameof(transaction.FreshInstallCommitsReviewedFilesAndAnIndependentUninstaller), transaction.FreshInstallCommitsReviewedFilesAndAnIndependentUninstaller),
 			(nameof(transaction.IntegrationFailureRollsBackTheFreshApplicationDirectory), transaction.IntegrationFailureRollsBackTheFreshApplicationDirectory),
+			(nameof(transaction.ExistingInstallUpdatesOwnedFilesAndPreservesUserContent), transaction.ExistingInstallUpdatesOwnedFilesAndPreservesUserContent),
+			(nameof(transaction.FailedExistingUpdateRestoresOwnedFilesAndPreservesUserContent), transaction.FailedExistingUpdateRestoresOwnedFilesAndPreservesUserContent),
+			(nameof(transaction.ExistingUpdateRefusesToReplaceAnUnownedCollision), transaction.ExistingUpdateRefusesToReplaceAnUnownedCollision),
 			(nameof(transaction.UninstallRemovesOnlyReleaseFilesAndPreservesUserContent), transaction.UninstallRemovesOnlyReleaseFilesAndPreservesUserContent),
 			(nameof(transaction.CleanUninstallDoesNotMistakeTheRunningUninstallerForUserContent), transaction.CleanUninstallDoesNotMistakeTheRunningUninstallerForUserContent)
 		};

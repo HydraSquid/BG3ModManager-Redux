@@ -13,6 +13,10 @@ source for individual implementation details.
   when the optional CrossSpeak wrapper is unavailable.
 - The elevated-process warning now uses the process token's actual elevation state, appears once
   per startup, and provides working **Close** and **Don't show again** actions.
+- Top-bar menus, toolbar dropdowns, nested submenus, and combo boxes now prefer rightward placement,
+  with left/up placement retained only when required by a screen edge.
+- Cancelling the first-run BG3 folder picker no longer lets Welcome Setup overlap Preferences;
+  onboarding waits until Preferences has fully closed.
 
 ### Distribution
 

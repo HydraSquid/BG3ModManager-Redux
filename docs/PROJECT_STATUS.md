@@ -20,8 +20,9 @@ proposals.
 | Active milestone | `v0.1.0 – Public Alpha` |
 
 The private-alpha stabilization milestone is complete. Alpha.15 established the first public-alpha
-baseline, and alpha.16 is its focused startup and accessibility hotfix. GitHub Releases and Nexus
-Mods are authoritative for the current artifact availability. The release gate below applies
+baseline, and alpha.16 is its focused startup, accessibility, and window-behavior hotfix. GitHub
+Releases and Nexus Mods are authoritative for the current artifact availability. The release gate
+below applies
 whenever a build is prepared for publication. The public-alpha
 milestone remains open for launch feedback, stabilization, and later alpha releases; it is not a
 one-build milestone.

@@ -1,0 +1,182 @@
+name: Publish portable release to Nexus Mods
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing GitHub release tag to publish, such as v0.1.0-alpha.16.2
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nexus-portable-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  publish-portable:
+    name: Publish the GitHub portable ZIP to Nexus Mods
+    runs-on: ubuntu-24.04
+    environment:
+      name: nexus-production
+      url: https://www.nexusmods.com/baldursgate3/mods/23799?tab=files
+
+    steps:
+      - name: Check Nexus configuration
+        shell: bash
+        env:
+          NEXUSMODS_API_KEY: ${{ secrets.NEXUSMODS_API_KEY }}
+          NEXUSMODS_MOD_ID: ${{ vars.NEXUSMODS_MOD_ID }}
+          NEXUSMODS_PORTABLE_FILE_ID: ${{ vars.NEXUSMODS_PORTABLE_FILE_ID }}
+        run: |
+          if [[ -z "$NEXUSMODS_API_KEY" ]]; then
+            echo 'The NEXUSMODS_API_KEY Actions secret is not configured.' >&2
+            exit 1
+          fi
+          if [[ -z "$NEXUSMODS_MOD_ID" ]]; then
+            echo 'The NEXUSMODS_MOD_ID Actions variable is not configured.' >&2
+            exit 1
+          fi
+          if [[ -z "$NEXUSMODS_PORTABLE_FILE_ID" ]]; then
+            echo 'The NEXUSMODS_PORTABLE_FILE_ID Actions variable is not configured.' >&2
+            exit 1
+          fi
+
+      - name: Download the approved GitHub release asset
+        id: release
+        shell: bash
+        env:
+          EVENT_TAG: ${{ github.event.release.tag_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${EVENT_TAG:-$INPUT_TAG}"
+          if [[ ! "$tag" =~ ^v0\.1\.0-alpha\.[1-9][0-9]*(\.[1-9][0-9]*)?$ ]]; then
+            echo "Unsupported Redux public-alpha tag: $tag" >&2
+            exit 1
+          fi
+
+          version="${tag#v}"
+          filename="BG3ModManager-Redux_v${version}.zip"
+          asset_path="$RUNNER_TEMP/redux-nexus/$filename"
+          mkdir -p "$(dirname "$asset_path")"
+
+          # A release-created event can arrive while its assets are still settling.
+          # Retry only the read; this never rebuilds or rewrites the release archive.
+          downloaded=false
+          for attempt in {1..12}; do
+            rm -f "$asset_path"
+            if gh release download "$tag" \
+              --repo "$GITHUB_REPOSITORY" \
+              --pattern "$filename" \
+              --dir "$(dirname "$asset_path")"; then
+              downloaded=true
+              break
+            fi
+            echo "Portable asset is not available yet (attempt $attempt of 12)."
+            sleep 10
+          done
+          if [[ "$downloaded" != true || ! -f "$asset_path" ]]; then
+            echo "GitHub release $tag does not contain $filename." >&2
+            exit 1
+          fi
+
+          sha256="$(sha256sum "$asset_path" | awk '{print $1}')"
+          md5="$(md5sum "$asset_path" | awk '{print $1}')"
+          size="$(stat --format='%s' "$asset_path")"
+          release_url="$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json url --jq '.url')"
+
+          delimiter="REDUX_RELEASE_NOTES_$(openssl rand -hex 12)"
+          {
+            echo "tag=$tag"
+            echo "version=$version"
+            echo "filename=$filename"
+            echo "asset_path=$asset_path"
+            echo "sha256=$sha256"
+            echo "md5=$md5"
+            echo "size=$size"
+            echo "release_url=$release_url"
+            echo "changelog<<$delimiter"
+            gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json body --jq '.body'
+            echo "$delimiter"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo '### Approved portable artifact'
+            echo
+            echo "- Release: [$tag]($release_url)"
+            echo "- File: \`$filename\`"
+            echo "- Size: \`$size\` bytes"
+            echo "- SHA-256: \`$sha256\`"
+            echo "- MD5: \`$md5\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Refuse a duplicate Nexus version
+        shell: bash
+        env:
+          NEXUSMODS_API_KEY: ${{ secrets.NEXUSMODS_API_KEY }}
+          NEXUSMODS_PORTABLE_FILE_ID: ${{ vars.NEXUSMODS_PORTABLE_FILE_ID }}
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          response="$(curl --fail-with-body --silent --show-error \
+            --header "apikey: $NEXUSMODS_API_KEY" \
+            --header 'User-Agent: BG3ModManager-Redux release workflow' \
+            "https://api.nexusmods.com/v3/mod-files/$NEXUSMODS_PORTABLE_FILE_ID/versions")"
+
+          if jq --exit-status --arg version "$VERSION" \
+            '.data.versions[]? | select(.version == $version)' \
+            <<< "$response" > /dev/null; then
+            echo "Nexus already has portable version $VERSION. Refusing to create a duplicate." >&2
+            exit 1
+          fi
+
+      - name: Upload the approved portable ZIP to Nexus Mods
+        id: nexus
+        # Nexus-Mods/upload-action v1.0.0-beta.10, pinned to its reviewed commit.
+        uses: Nexus-Mods/upload-action@c96019556046053aa26044b44396cd38929daf23
+        with:
+          api_key: ${{ secrets.NEXUSMODS_API_KEY }}
+          mod_id: ${{ vars.NEXUSMODS_MOD_ID }}
+          file_id: ${{ vars.NEXUSMODS_PORTABLE_FILE_ID }}
+          filename: ${{ steps.release.outputs.asset_path }}
+          version: ${{ steps.release.outputs.version }}
+          display_name: Redux ${{ steps.release.outputs.version }} - Portable
+          description: The same portable Redux archive published and verified on GitHub.
+          category: main
+          archive_existing_version: true
+          primary_mod_manager_download: true
+          allow_mod_manager_download: true
+          show_requirements_pop_up: false
+          update_mod_version: true
+          changelog: ${{ steps.release.outputs.changelog }}
+
+      - name: Record the Nexus publication
+        shell: bash
+        env:
+          NEXUS_VERSION_ID: ${{ steps.nexus.outputs.version_id }}
+          VERSION: ${{ steps.release.outputs.version }}
+          FILENAME: ${{ steps.release.outputs.filename }}
+          SHA256: ${{ steps.release.outputs.sha256 }}
+          MD5: ${{ steps.release.outputs.md5 }}
+        run: |
+          if [[ -z "$NEXUS_VERSION_ID" ]]; then
+            echo 'Nexus did not return a file-version ID.' >&2
+            exit 1
+          fi
+
+          {
+            echo
+            echo '### Nexus Mods publication'
+            echo
+            echo "- Redux version: \`$VERSION\`"
+            echo "- Nexus file-version ID: \`$NEXUS_VERSION_ID\`"
+            echo "- File: \`$FILENAME\`"
+            echo "- SHA-256 before upload: \`$SHA256\`"
+            echo "- MD5 before upload: \`$MD5\`"
+            echo '- Result: the approved GitHub portable archive was submitted to Nexus Mods.'
+          } >> "$GITHUB_STEP_SUMMARY"

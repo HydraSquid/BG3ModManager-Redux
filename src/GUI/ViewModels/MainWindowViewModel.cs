@@ -45,6 +45,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 using ZstdSharp;
 
@@ -4355,6 +4356,11 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		{
 			return;
 		}
+		if (onlyIfUnseen && Window?.SettingsWindow?.IsVisible == true)
+		{
+			DeferFirstRunWelcomeUntilPreferencesClose();
+			return;
+		}
 
 		var welcomeWindow = new ReduxOnboardingWindow(Window, Settings);
 		ReduxWindowBehavior.ShowDialogWithOwnerBackdrop(welcomeWindow, Window);
@@ -4387,6 +4393,32 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 		if (SaveSettings() && welcomeWindow.ApplyChanges)
 			ApplyNxmAssociationPreference(welcomeWindow.SelectedNxmAssociationEnabled);
+	}
+
+	private bool _firstRunWelcomeIsDeferred;
+
+	private void DeferFirstRunWelcomeUntilPreferencesClose()
+	{
+		if (_firstRunWelcomeIsDeferred || Window?.SettingsWindow == null)
+		{
+			return;
+		}
+
+		_firstRunWelcomeIsDeferred = true;
+		void OnPreferencesVisibilityChanged(object sender, DependencyPropertyChangedEventArgs args)
+		{
+			if (args.NewValue is not false)
+			{
+				return;
+			}
+
+			Window.SettingsWindow.IsVisibleChanged -= OnPreferencesVisibilityChanged;
+			_firstRunWelcomeIsDeferred = false;
+			Window.Dispatcher.BeginInvoke(
+				() => ShowReduxWelcome(onlyIfUnseen: true),
+				DispatcherPriority.ContextIdle);
+		}
+		Window.SettingsWindow.IsVisibleChanged += OnPreferencesVisibilityChanged;
 	}
 
 	private async Task CheckForEmptyOrderAsync(IScheduler sch, CancellationToken token)

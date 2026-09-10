@@ -301,7 +301,7 @@
 						    AllowsTransparency="True"
 						    Focusable="False"
 						    IsOpen="{TemplateBinding ComboBox.IsDropDownOpen}"
-						    Placement="Bottom"
+						    util:ReduxWindowBehavior.PreferredPopupPlacement="BelowRightward"
 						    util:ReduxWindowBehavior.ManagedPopupAnimation="Fade">
 							<Grid x:Name="DropDown"
 							    Margin="4,0,4,4"

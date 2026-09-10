@@ -349,6 +349,32 @@ public sealed class InteractionBehaviorTests
 		}
 	}
 
+	public void PopupPlacementPrefersRightwardGrowthWithScreenEdgeFallbacks()
+	{
+		var below = ReduxWindowBehavior.GetBelowRightwardPlacements(
+			new Size(240, 180),
+			new Size(80, 32),
+			new Point(0, 4));
+		RegressionAssert.Equal(new Point(0, 36), below[0].Point);
+		RegressionAssert.Equal(new Point(-160, 36), below[1].Point);
+		RegressionAssert.Equal(new Point(0, -184), below[2].Point);
+		RegressionAssert.Equal(new Point(-160, -184), below[3].Point);
+
+		var beside = ReduxWindowBehavior.GetBesideRightwardPlacements(
+			new Size(240, 180),
+			new Size(80, 32),
+			new Point(0, 0));
+		RegressionAssert.Equal(new Point(80, 0), beside[0].Point);
+		RegressionAssert.Equal(new Point(-240, 0), beside[1].Point);
+
+		var popup = new Popup();
+		ReduxWindowBehavior.SetPreferredPopupPlacement(
+			popup,
+			ReduxPreferredPopupPlacement.BelowRightward);
+		RegressionAssert.Equal(PlacementMode.Custom, popup.Placement);
+		RegressionAssert.True(popup.CustomPopupPlacementCallback != null);
+	}
+
 	public void MessageBoxSupportsExplicitElevationWarningActions()
 	{
 		var window = new ReduxMessageBoxWindow(null!, "Elevation warning", "Redux Is Running as Administrator",

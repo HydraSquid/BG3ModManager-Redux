@@ -97,6 +97,7 @@ internal static class Program
 			(nameof(interactionBehavior.CustomThemeEditorShellsPreviewTheBackgroundRoleLive), interactionBehavior.CustomThemeEditorShellsPreviewTheBackgroundRoleLive),
 			(nameof(interactionBehavior.PreferencesAndEditorActionsUseModernChromeAndLabeledIcons), interactionBehavior.PreferencesAndEditorActionsUseModernChromeAndLabeledIcons),
 			(nameof(interactionBehavior.OnboardingKeepsActionsVisibleAtItsMinimumSupportedSize), interactionBehavior.OnboardingKeepsActionsVisibleAtItsMinimumSupportedSize),
+			(nameof(interactionBehavior.PopupPlacementPrefersRightwardGrowthWithScreenEdgeFallbacks), interactionBehavior.PopupPlacementPrefersRightwardGrowthWithScreenEdgeFallbacks),
 			(nameof(interactionBehavior.MessageBoxSupportsExplicitElevationWarningActions), interactionBehavior.MessageBoxSupportsExplicitElevationWarningActions),
 			(nameof(source.ReviewedModuleUuidResolvesItsProject), source.ReviewedModuleUuidResolvesItsProject),
 			(nameof(source.CommunityModuleUuidResolvesItsDependencySource), source.CommunityModuleUuidResolvesItsDependencySource),

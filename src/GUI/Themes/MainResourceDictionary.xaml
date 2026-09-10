@@ -415,7 +415,7 @@
 				AllowsTransparency="True"
 				Focusable="False"
 				IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
-				Placement="Right"
+				util:ReduxWindowBehavior.PreferredPopupPlacement="BesideRightward"
 				util:ReduxWindowBehavior.ManagedPopupAnimation="Fade">
 				<Grid Margin="4">
 					<Border
@@ -513,7 +513,7 @@
 				AllowsTransparency="True"
 				Focusable="False"
 				IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
-				Placement="Bottom"
+				util:ReduxWindowBehavior.PreferredPopupPlacement="BelowRightward"
 				util:ReduxWindowBehavior.ManagedPopupAnimation="Slide">
 				<!-- Margin keeps rounded antialiased chrome inside the native popup bounds at fractional DPI. -->
 				<Grid Margin="4">

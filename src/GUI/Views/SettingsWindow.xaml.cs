@@ -918,9 +918,7 @@ public partial class SettingsWindow : SettingsWindowBase
 		GameLaunchParamsMainButton.Events().Click.Subscribe(e =>
 		{
 			var menu = GameLaunchParamsMainButton.ContextMenu;
-			menu.PlacementTarget = GameLaunchParamsMainButton;
-			menu.Placement = PlacementMode.Bottom;
-			menu.IsOpen = true;
+			ReduxWindowBehavior.OpenRightwardDropDown(menu, GameLaunchParamsMainButton);
 		});
 
 		this.Bind(ViewModel, vm => vm.Settings.GameLaunchParams, view => view.GameLaunchParamsTextBox.Text);

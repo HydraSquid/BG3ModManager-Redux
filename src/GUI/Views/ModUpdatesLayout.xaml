@@ -203,7 +203,9 @@
 			</controls:AutoGrid>
 			<Grid Grid.Row="4" Margin="4">
 				<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Horizontal">
-					<Button x:Name="CopySelectedButton" Padding="8,2" Content="Copy Selected to Mods Folder" />
+					<Button x:Name="CopySelectedButton" Style="{StaticResource ReduxPrimaryActionButtonStyle}">
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Copy}" /><TextBlock Text="Copy Selected to Mods Folder" /></StackPanel>
+					</Button>
 				</StackPanel>
 			</Grid>
 		</Grid>

@@ -49,18 +49,30 @@
 			<ResourceDictionary.MergedDictionaries>
 				<ResourceDictionary Source="../Themes/MainResourceDictionary.xaml" />
 			</ResourceDictionary.MergedDictionaries>
-			<Style x:Key="SettingsActionButtonStyle" BasedOn="{StaticResource ReduxAccentPillButtonStyle}" TargetType="{x:Type Button}">
-				<Setter Property="Height" Value="30" />
+			<Style x:Key="SettingsActionButtonStyle" BasedOn="{StaticResource ReduxSecondaryActionButtonStyle}" TargetType="{x:Type Button}">
+				<Setter Property="MinHeight" Value="32" />
 				<Setter Property="Margin" Value="0,0,6,0" />
-				<Setter Property="Padding" Value="11,4" />
-				<Setter Property="Background" Value="{DynamicResource ReduxSurfaceMutedBrush}" />
-				<Setter Property="BorderBrush" Value="{DynamicResource ReduxBorderStrongBrush}" />
-				<Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" />
+				<Setter Property="Padding" Value="12,5" />
 			</Style>
-			<Style x:Key="SettingsPrimaryActionButtonStyle" BasedOn="{StaticResource SettingsActionButtonStyle}" TargetType="{x:Type Button}">
-				<Setter Property="Background" Value="{DynamicResource ReduxAccentBrush}" />
-				<Setter Property="BorderBrush" Value="{DynamicResource ReduxAccentHoverBrush}" />
-				<Setter Property="Foreground" Value="{DynamicResource ReduxAccentForegroundBrush}" />
+			<Style x:Key="SettingsPrimaryActionButtonStyle" BasedOn="{StaticResource ReduxPrimaryActionButtonStyle}" TargetType="{x:Type Button}">
+				<Setter Property="MinHeight" Value="32" />
+				<Setter Property="Margin" Value="0,0,6,0" />
+				<Setter Property="Padding" Value="13,5" />
+			</Style>
+			<Style x:Key="SettingsDestructiveActionButtonStyle" BasedOn="{StaticResource ReduxDestructiveActionButtonStyle}" TargetType="{x:Type Button}">
+				<Setter Property="MinHeight" Value="32" />
+				<Setter Property="Margin" Value="0,0,6,0" />
+				<Setter Property="Padding" Value="12,5" />
+			</Style>
+			<Style x:Key="SettingsIconActionButtonStyle" BasedOn="{StaticResource SettingsActionButtonStyle}" TargetType="{x:Type Button}">
+				<Setter Property="Width" Value="32" />
+				<Setter Property="MinWidth" Value="32" />
+				<Setter Property="Padding" Value="7" />
+			</Style>
+			<Style x:Key="SettingsDestructiveIconActionButtonStyle" BasedOn="{StaticResource SettingsDestructiveActionButtonStyle}" TargetType="{x:Type Button}">
+				<Setter Property="Width" Value="32" />
+				<Setter Property="MinWidth" Value="32" />
+				<Setter Property="Padding" Value="7" />
 			</Style>
 			<Style x:Key="LaunchParameterMenuItemStyle" TargetType="{x:Type MenuItem}">
 				<Setter Property="MinHeight" Value="28" />
@@ -856,9 +868,9 @@
 											<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
 											<ComboBox x:Name="TypographyComboBox" Grid.Column="0" MinWidth="170" HorizontalAlignment="Stretch" DisplayMemberPath="Name"
 						SelectionChanged="TypographyComboBox_SelectionChanged" />
-											<Button Grid.Column="1" Width="32" MinWidth="32" Margin="6,0,0,0" Padding="7" Style="{StaticResource SettingsActionButtonStyle}" Click="ImportCustomFont_Click" ToolTip="Import a TrueType or OpenType font"><controls:ReduxIcon Width="14" Height="14" StrokeData="{StaticResource Redux.Icon.Download}" /></Button>
-											<Button x:Name="DeleteCustomFontButton" Grid.Column="2" Width="32" MinWidth="32" Margin="6,0,0,0" Padding="7" Style="{StaticResource SettingsActionButtonStyle}" Click="DeleteCustomFont_Click" ToolTip="Remove the selected imported font"><controls:ReduxIcon Width="14" Height="14" StrokeData="{StaticResource Redux.Icon.Trash}" Foreground="{DynamicResource ReduxErrorBrush}" /></Button>
-											<Button Grid.Column="3" Width="32" MinWidth="32" Margin="6,0,0,0" Padding="7" Style="{StaticResource SettingsActionButtonStyle}" Click="OpenCustomFontsFolder_Click" ToolTip="Open the custom fonts folder"><controls:ReduxIcon Width="14" Height="14" StrokeData="{StaticResource Redux.Icon.FolderOpen}" /></Button>
+											<Button Grid.Column="1" Margin="6,0,0,0" Style="{StaticResource SettingsIconActionButtonStyle}" Click="ImportCustomFont_Click" ToolTip="Import a TrueType or OpenType font"><controls:ReduxIcon Width="14" Height="14" StrokeData="{StaticResource Redux.Icon.Download}" /></Button>
+											<Button x:Name="DeleteCustomFontButton" Grid.Column="2" Margin="6,0,0,0" Style="{StaticResource SettingsDestructiveIconActionButtonStyle}" Click="DeleteCustomFont_Click" ToolTip="Remove the selected imported font"><controls:ReduxIcon Width="14" Height="14" StrokeData="{StaticResource Redux.Icon.Trash}" /></Button>
+											<Button Grid.Column="3" Margin="6,0,0,0" Style="{StaticResource SettingsIconActionButtonStyle}" Click="OpenCustomFontsFolder_Click" ToolTip="Open the custom fonts folder"><controls:ReduxIcon Width="14" Height="14" StrokeData="{StaticResource Redux.Icon.FolderOpen}" /></Button>
 										</Grid>
 									</StackPanel>
 									<StackPanel Grid.Column="2">
@@ -887,11 +899,11 @@
 									<ComboBox x:Name="CustomThemeComboBox" MinWidth="240" DisplayMemberPath="Name"
 										SelectionChanged="CustomThemeComboBox_SelectionChanged" />
 									<WrapPanel Margin="0,8,0,0">
-										<Button Margin="0,0,6,6" Style="{StaticResource SettingsActionButtonStyle}" Click="CreateCustomTheme_Click"><StackPanel Margin="0" Orientation="Horizontal"><controls:ReduxIcon Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.AddCircle}" /><TextBlock Text="Create" /></StackPanel></Button>
+										<Button Margin="0,0,6,6" Style="{StaticResource SettingsPrimaryActionButtonStyle}" Click="CreateCustomTheme_Click"><StackPanel Margin="0" Orientation="Horizontal"><controls:ReduxIcon Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.AddCircle}" /><TextBlock Text="Create" /></StackPanel></Button>
 										<Button x:Name="EditCustomThemeButton" Margin="0,0,6,6" Style="{StaticResource SettingsActionButtonStyle}" Click="EditCustomTheme_Click"><StackPanel Margin="0" Orientation="Horizontal"><controls:ReduxIcon Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Create}" /><TextBlock Text="Edit" /></StackPanel></Button>
-										<Button x:Name="DuplicateCustomThemeButton" Margin="0,0,6,6" Style="{StaticResource SettingsActionButtonStyle}" Click="DuplicateCustomTheme_Click" Content="Duplicate" />
-										<Button x:Name="DeleteCustomThemeButton" Margin="0,0,6,6" Style="{StaticResource SettingsActionButtonStyle}" Click="DeleteCustomTheme_Click"><StackPanel Margin="0" Orientation="Horizontal"><controls:ReduxIcon Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Trash}" Foreground="{DynamicResource ReduxErrorBrush}" /><TextBlock Text="Delete" /></StackPanel></Button>
-						<Button Margin="0,0,6,6" Style="{StaticResource SettingsActionButtonStyle}" Click="ImportCustomTheme_Click"><StackPanel Margin="0" Orientation="Horizontal"><controls:ReduxIcon Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Download}" /><TextBlock Text="Import" /></StackPanel></Button>
+										<Button x:Name="DuplicateCustomThemeButton" Margin="0,0,6,6" Style="{StaticResource SettingsActionButtonStyle}" Click="DuplicateCustomTheme_Click"><StackPanel Margin="0" Orientation="Horizontal"><controls:ReduxIcon Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Duplicate}" /><TextBlock Text="Duplicate" /></StackPanel></Button>
+										<Button x:Name="DeleteCustomThemeButton" Margin="0,0,6,6" Style="{StaticResource SettingsDestructiveActionButtonStyle}" Click="DeleteCustomTheme_Click"><StackPanel Margin="0" Orientation="Horizontal"><controls:ReduxIcon Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Trash}" /><TextBlock Text="Delete" /></StackPanel></Button>
+										<Button Margin="0,0,6,6" Style="{StaticResource SettingsActionButtonStyle}" Click="ImportCustomTheme_Click"><StackPanel Margin="0" Orientation="Horizontal"><controls:ReduxIcon Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Download}" /><TextBlock Text="Import" /></StackPanel></Button>
 										<Button x:Name="ExportCustomThemeButton" Margin="0,0,0,6" Style="{StaticResource SettingsActionButtonStyle}" Click="ExportCustomTheme_Click"><StackPanel Margin="0" Orientation="Horizontal"><controls:ReduxIcon Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.CloudUpload}" /><TextBlock Text="Export" /></StackPanel></Button>
 									</WrapPanel>
 								</StackPanel>

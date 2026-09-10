@@ -160,7 +160,9 @@ public partial class CategoryNameDialog : AdonisWindow
 			: canResetToDefault
 			? "Built-in category names cannot be changed. Change its color and icon, or reset it to the default."
 			: "Choose a color and marker or icon. Dot is the default.";
-		ConfirmButton.Content = visualDividerMode ? "Save" : canEditName ? "Add" : "Save";
+		var isNewCategory = !visualDividerMode && canEditName;
+		ConfirmButtonText.Text = isNewCategory ? "Add" : "Save";
+		ConfirmButtonIcon.StrokeData = FindResource(isNewCategory ? "Redux.Icon.AddCircle" : "Redux.Icon.Save") as Geometry;
 		ResetToDefaultButton.Visibility = canResetToDefault ? Visibility.Visible : Visibility.Collapsed;
 		if (canResetToDefault)
 			CategoryNameTextBox.ToolTip = "Create a custom category to use a different name.";

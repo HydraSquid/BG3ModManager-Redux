@@ -85,9 +85,11 @@
 							</Border>
 						</StackPanel>
 						<Button Grid.Column="3" Margin="10,0,12,0" Padding="9,4" VerticalAlignment="Center"
-							Click="IgnoreAdviceButton_Click" CommandParameter="{Binding IgnoreKey}" Content="Ignore"
+							Click="IgnoreAdviceButton_Click" CommandParameter="{Binding IgnoreKey}"
 							Style="{StaticResource ReduxSecondaryActionButtonStyle}"
-							Visibility="{Binding CanIgnore, Converter={StaticResource BoolToVisibilityConverter}}" />
+							Visibility="{Binding CanIgnore, Converter={StaticResource BoolToVisibilityConverter}}">
+							<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0" StrokeData="{StaticResource Redux.Icon.CircleMinus}" /><TextBlock Text="Ignore" /></StackPanel>
+						</Button>
 					</Grid>
 				</Border>
 			</DataTemplate>
@@ -107,8 +109,10 @@
 								Text="{Binding Reason}" TextWrapping="Wrap" />
 						</StackPanel>
 						<Button Grid.Column="3" Margin="10,0,12,0" Padding="9,4" VerticalAlignment="Center"
-							Click="IgnoreAdviceButton_Click" CommandParameter="{Binding IgnoreKey}" Content="Ignore"
-							Style="{StaticResource ReduxSecondaryActionButtonStyle}" />
+							Click="IgnoreAdviceButton_Click" CommandParameter="{Binding IgnoreKey}"
+							Style="{StaticResource ReduxSecondaryActionButtonStyle}">
+							<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,5,0" StrokeData="{StaticResource Redux.Icon.CircleMinus}" /><TextBlock Text="Ignore" /></StackPanel>
+						</Button>
 					</Grid>
 				</Border>
 			</DataTemplate>
@@ -301,11 +305,17 @@
 							Text="Apply changes to this load order only. Use Ctrl+Z to undo, then sync with the game when ready."
 							TextTrimming="CharacterEllipsis" TextWrapping="Wrap" />
 					</Grid>
-					<Button x:Name="RestoreIgnoredButton" Grid.Column="1" Margin="0,0,10,0" Content="Restore Ignored Advice"
-						Click="RestoreIgnoredButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}" />
-					<Button Grid.Column="2" MinWidth="88" Margin="0,0,8,0" Content="Cancel" IsCancel="True" Style="{StaticResource ReduxSecondaryActionButtonStyle}" />
-					<Button x:Name="ApplyButton" Grid.Column="3" MinWidth="126" Content="Apply Changes"
-						Style="{StaticResource ReduxPrimaryActionButtonStyle}" Click="ApplyButton_Click" />
+					<Button x:Name="RestoreIgnoredButton" Grid.Column="1" Margin="0,0,10,0"
+						Click="RestoreIgnoredButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.RefreshStroke}" /><TextBlock Text="Restore Ignored Advice" /></StackPanel>
+					</Button>
+					<Button Grid.Column="2" MinWidth="88" Margin="0,0,8,0" IsCancel="True" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Close}" /><TextBlock Text="Cancel" /></StackPanel>
+					</Button>
+					<Button x:Name="ApplyButton" Grid.Column="3" MinWidth="126"
+						Style="{StaticResource ReduxPrimaryActionButtonStyle}" Click="ApplyButton_Click">
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Check}" /><TextBlock Text="Apply Changes" /></StackPanel>
+					</Button>
 				</Grid>
 			</Grid>
 		</Border>

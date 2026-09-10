@@ -254,6 +254,57 @@ public sealed class InteractionBehaviorTests
 				: throw new InvalidOperationException($"The {surface} did not resolve a solid semantic background brush.");
 	}
 
+	public void PreferencesAndEditorActionsUseModernChromeAndLabeledIcons()
+	{
+		Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+		var settings = new SettingsWindow();
+		var newCategory = new CategoryNameDialog("", "#8A6AF1", true);
+		var existingCategory = new CategoryNameDialog("Gameplay", "#D7A24B", false);
+		try
+		{
+			ReduxThemeService.Apply(settings.Resources, ReduxThemeType.ReduxDark);
+			settings.Measure(new Size(settings.Width, settings.Height));
+			settings.Arrange(new Rect(0, 0, settings.Width, settings.Height));
+			settings.UpdateLayout();
+
+			var modernTemplate = (ControlTemplate)settings.FindResource("ReduxActionButtonTemplate");
+			var duplicate = (Button)settings.FindName("DuplicateCustomThemeButton");
+			var delete = (Button)settings.FindName("DeleteCustomThemeButton");
+			RegressionAssert.True(ReferenceEquals(modernTemplate, duplicate.Template));
+			RegressionAssert.True(ReferenceEquals(modernTemplate, delete.Template));
+			AssertLabeledIcon(duplicate, "Duplicate");
+			AssertLabeledIcon(delete, "Delete");
+			RegressionAssert.Equal(
+				((SolidColorBrush)settings.FindResource("ReduxErrorBrush")).Color,
+				((SolidColorBrush)delete.Foreground).Color);
+
+			var addButton = (Button)newCategory.FindName("ConfirmButton");
+			var saveButton = (Button)existingCategory.FindName("ConfirmButton");
+			AssertLabeledIcon(addButton, "Add");
+			AssertLabeledIcon(saveButton, "Save");
+			RegressionAssert.True(ReferenceEquals(
+				newCategory.FindResource("Redux.Icon.AddCircle"),
+				((ReduxIcon)((StackPanel)addButton.Content).Children[0]).StrokeData));
+			RegressionAssert.True(ReferenceEquals(
+				existingCategory.FindResource("Redux.Icon.Save"),
+				((ReduxIcon)((StackPanel)saveButton.Content).Children[0]).StrokeData));
+		}
+		finally
+		{
+			existingCategory.Close();
+			newCategory.Close();
+			settings.Close();
+		}
+
+		static void AssertLabeledIcon(Button button, string expectedLabel)
+		{
+			if (button.Content is not StackPanel content)
+				throw new InvalidOperationException($"The {expectedLabel} action does not retain structured icon-and-label content.");
+			RegressionAssert.True(content.Children.OfType<ReduxIcon>().Any());
+			RegressionAssert.True(content.Children.OfType<TextBlock>().Any(text => text.Text == expectedLabel));
+		}
+	}
+
 	public void BuiltInIconPickerHasAUniqueExpandedCatalog()
 	{
 		var choices = ReduxIconCatalog.Choices.Where(choice => !choice.IsNone).ToList();

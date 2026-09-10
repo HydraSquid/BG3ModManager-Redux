@@ -327,7 +327,9 @@
 						Click="DeleteButton_Click" Style="{StaticResource ReduxMinorDestructiveActionButtonStyle}">
 						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{StaticResource Redux.Icon.Trash}" /><TextBlock Text="Delete" /></StackPanel>
 					</Button>
-					<Button Grid.Column="2" MinWidth="88" Content="Close" IsCancel="True" Style="{StaticResource ReduxSecondaryActionButtonStyle}" />
+					<Button Grid.Column="2" MinWidth="88" IsCancel="True" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Close}" /><TextBlock Text="Close" /></StackPanel>
+					</Button>
 				</Grid>
 			</Grid>
 		</Border>

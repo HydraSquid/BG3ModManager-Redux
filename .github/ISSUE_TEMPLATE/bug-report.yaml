@@ -1,7 +1,7 @@
 name: Bug report
 description: Report a reproducible problem in BG3 Mod Manager Redux
 title: "[Bug]: "
-labels: ["bug"]
+labels: ["type: bug"]
 body:
   - type: markdown
     attributes:

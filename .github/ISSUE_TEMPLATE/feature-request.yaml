@@ -1,7 +1,7 @@
 name: Feature request
 description: Suggest a focused improvement to BG3 Mod Manager Redux
 title: "[Feature]: "
-labels: ["feature-work"]
+labels: ["type: feature"]
 body:
   - type: markdown
     attributes:

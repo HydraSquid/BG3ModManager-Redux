@@ -4,7 +4,7 @@
 
 # Baldur's Gate 3 Mod Manager Redux
 
-**A more visual, deliberate way to organize Baldur's Gate 3 mods.**
+**Bring order to the chaos.**
 
 [![Current build](https://img.shields.io/badge/build-0.1.0--alpha.15-9A7BFF?style=flat-square)](https://github.com/circleainn/BG3ModManager-Redux/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-4F86F7?style=flat-square)](#requirements-and-alpha-status)

@@ -188,7 +188,7 @@ public partial class AppUpdateWindowViewModel : ReactiveObject
 			});
 			var prepared = await _packages.DownloadAndStageAsync(_availableUpdate, progress);
 			var processPath = Environment.ProcessPath
-				?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BG3ModManager.exe");
+				?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Redux.exe");
 			var mainWindow = MainWindow.Self
 				?? throw new InvalidOperationException("The Redux main window is not available for restart.");
 			_launcher.Queue(prepared, Path.GetDirectoryName(processPath)!, Environment.ProcessId);

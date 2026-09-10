@@ -248,7 +248,7 @@ internal sealed class ReduxModuleStateTests
 		var actionResources = new ResourceDictionary
 		{
 			Source = new Uri(
-				"pack://application:,,,/BG3ModManager;component/Themes/MainResourceDictionary.xaml",
+				"pack://application:,,,/Redux;component/Themes/MainResourceDictionary.xaml",
 				UriKind.Absolute)
 		};
 		var resources = new ResourceDictionary();
@@ -309,7 +309,7 @@ internal sealed class ReduxModuleStateTests
 		var sharedResources = new ResourceDictionary
 		{
 			Source = new Uri(
-				"pack://application:,,,/BG3ModManager;component/Themes/MainResourceDictionary.xaml",
+				"pack://application:,,,/Redux;component/Themes/MainResourceDictionary.xaml",
 				UriKind.Absolute)
 		};
 		var resources = new ResourceDictionary();

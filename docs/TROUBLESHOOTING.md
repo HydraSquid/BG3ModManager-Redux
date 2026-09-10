@@ -26,7 +26,7 @@ being applied later without warning.
 The updater changes only release-inventory files and attempts to restore those files when a
 replacement fails. Check write access to the Redux folder, close tools that may lock its binaries,
 and retry. If the files update successfully but Redux cannot restart automatically, launch
-`BG3ModManager.exe` yourself; the completed update is still valid. Preferences, downloads,
+`Redux.exe` yourself; the completed update is still valid. Preferences, downloads,
 archives, saved orders, and mods are not application-update targets. If the helper cannot run,
 download the complete archive from the official release page and follow the manual update steps in
 [Installation, updates, and removal](INSTALLATION.md).

@@ -71,7 +71,7 @@ public sealed class InteractionBehaviorTests
 		var resources = new ResourceDictionary
 		{
 			Source = new Uri(
-				"pack://application:,,,/BG3ModManager;component/Themes/MainResourceDictionary.xaml",
+				"pack://application:,,,/Redux;component/Themes/MainResourceDictionary.xaml",
 				UriKind.Absolute)
 		};
 		var host = new Grid { Width = 12, Height = 260, Resources = resources };

@@ -91,7 +91,7 @@ internal class Program
 	private static void RunApplication(string[] args)
 	{
 		var executablePath = Environment.ProcessPath
-			?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BG3ModManager.exe");
+			?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Redux.exe");
 		string initialNxmLink = null;
 		if (args.Length >= 2 && args[0].Equals("--nxm", StringComparison.OrdinalIgnoreCase))
 		{

@@ -35,7 +35,7 @@ internal sealed class WindowsInstallerSystemIntegration : IInstallerSystemIntegr
 		if (!String.IsNullOrWhiteSpace(existing))
 			throw new InvalidOperationException("Redux is already registered at '" + existing
 				+ "'. Setup performs fresh installations only.");
-		var executable = Path.Combine(installationDirectory, "BG3ModManager.exe");
+		var executable = Path.Combine(installationDirectory, "Redux.exe");
 		var uninstaller = Path.Combine(installationDirectory, InstallerInstallService.UninstallerFileName);
 		var startMenuFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "BG3 Mod Manager Redux");
 		Directory.CreateDirectory(startMenuFolder);

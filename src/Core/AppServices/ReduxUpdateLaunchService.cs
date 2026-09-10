@@ -42,7 +42,7 @@ public sealed class ReduxUpdateLaunchService
 		var transactionRoot = Path.GetFullPath(prepared.TransactionDirectory);
 		var stagedRoot = Path.GetFullPath(prepared.StagedDirectory);
 		var targetRoot = Path.GetFullPath(targetDirectory ?? throw new ArgumentNullException(nameof(targetDirectory)));
-		if (!Directory.Exists(stagedRoot) || !File.Exists(Path.Combine(targetRoot, "BG3ModManager.exe")))
+		if (!Directory.Exists(stagedRoot) || !File.Exists(Path.Combine(targetRoot, "Redux.exe")))
 			throw new InvalidDataException("Redux could not prepare the updater for this installation.");
 
 		try
@@ -68,7 +68,7 @@ public sealed class ReduxUpdateLaunchService
 				backupDirectory = Path.Combine(transactionRoot, "backup"),
 				resultPath,
 				displayVersion = prepared.DisplayVersion,
-				relaunchRelativePath = "BG3ModManager.exe"
+				relaunchRelativePath = "Redux.exe"
 			};
 			AtomicFileWriter.WriteAllText(requestPath, JsonConvert.SerializeObject(request, Formatting.Indented),
 				validateTemporaryFile: temporaryPath => new FileInfo(temporaryPath).Length > 0);

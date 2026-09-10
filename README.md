@@ -42,7 +42,7 @@ the application.
    GitHub release when one is available.
 3. Extract the entire archive into its own writable folder. Do not run Redux from inside the ZIP,
    the Baldur's Gate 3 installation directory, or a protected system folder.
-4. Run `BG3ModManager.exe`. On first launch, review the detected game and profile paths before
+4. Run `Redux.exe`. On first launch, review the detected game and profile paths before
    installing or syncing anything.
 
 Alpha.15 contains Redux's verified update workflow and separate lightweight web Setup. Until the

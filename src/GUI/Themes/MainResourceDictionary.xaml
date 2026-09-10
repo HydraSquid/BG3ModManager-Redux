@@ -4558,13 +4558,13 @@
 	<DataTemplate x:Key="NexusPlatformIconTemplate">
 		<Image Width="16" Height="16"
 			RenderOptions.BitmapScalingMode="HighQuality"
-			Source="/BG3ModManager;component/Resources/Icons/Platforms/nexus.png"
+			Source="/Redux;component/Resources/Icons/Platforms/nexus.png"
 			Stretch="Uniform" />
 	</DataTemplate>
 	<DataTemplate x:Key="ModioPlatformIconTemplate">
 		<Image Width="16" Height="16"
 			RenderOptions.BitmapScalingMode="HighQuality"
-			Source="/BG3ModManager;component/Resources/Icons/Platforms/modio.png"
+			Source="/Redux;component/Resources/Icons/Platforms/modio.png"
 			Stretch="Uniform" />
 	</DataTemplate>
 	<DataTemplate x:Key="GithubPlatformIconTemplate">
@@ -4572,7 +4572,7 @@
 			Background="{DynamicResource ReduxGithubIconBrush}"
 			RenderOptions.BitmapScalingMode="HighQuality">
 			<Border.OpacityMask>
-				<ImageBrush ImageSource="/BG3ModManager;component/Resources/Icons/Platforms/github.png"
+				<ImageBrush ImageSource="/Redux;component/Resources/Icons/Platforms/github.png"
 					Stretch="Uniform" />
 			</Border.OpacityMask>
 		</Border>

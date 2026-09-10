@@ -47,7 +47,7 @@ internal static class Program
 				};
 				TryWriteResult(request.ResultPath, restartWarning);
 				MessageBox(IntPtr.Zero,
-					"Redux was updated successfully, but it could not restart automatically. Start BG3ModManager.exe manually.\n\n" + ex.Message,
+					"Redux was updated successfully, but it could not restart automatically. Start Redux.exe manually.\n\n" + ex.Message,
 					"Redux Updated",
 					MessageBoxOk | MessageBoxIconWarning);
 			}

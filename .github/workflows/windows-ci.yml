@@ -107,8 +107,8 @@ jobs:
           try {
             $entries = $archive.Entries.FullName
             foreach ($required in @(
-              'BG3ModManager.exe',
-              'BG3ModManager.dll',
+              'Redux.exe',
+              'Redux.dll',
               'Redux-Release-Files.json',
               'Updater/ReduxUpdater.exe',
               'Updater/ReduxUpdater.dll',

@@ -82,9 +82,9 @@ public static class DivinityApp
 	public const LSLib.LS.Enums.Game GAME = LSLib.LS.Enums.Game.BaldursGate3;
 	public const LSLib.LS.Story.Compiler.TargetGame GAME_COMPILER = LSLib.LS.Story.Compiler.TargetGame.BG3;
 
-	public static readonly Uri LightTheme = new("pack://application:,,,/BG3ModManager;component/Themes/Light.xaml", UriKind.Absolute);
-	public static readonly Uri DarkTheme = new("pack://application:,,,/BG3ModManager;component/Themes/Dark.xaml", UriKind.Absolute);
-	public static readonly Uri ParchmentTheme = new("pack://application:,,,/BG3ModManager;component/Themes/Parchment.xaml", UriKind.Absolute);
+	public static readonly Uri LightTheme = new("pack://application:,,,/Redux;component/Themes/Light.xaml", UriKind.Absolute);
+	public static readonly Uri DarkTheme = new("pack://application:,,,/Redux;component/Themes/Dark.xaml", UriKind.Absolute);
+	public static readonly Uri ParchmentTheme = new("pack://application:,,,/Redux;component/Themes/Parchment.xaml", UriKind.Absolute);
 
 	public static Uri GetThemeUri(ReduxThemeType theme) => theme switch
 	{

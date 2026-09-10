@@ -9,7 +9,7 @@ public sealed class ReduxUpdateRequest
 	public string BackupDirectory { get; init; } = String.Empty;
 	public string ResultPath { get; init; } = String.Empty;
 	public string DisplayVersion { get; init; } = String.Empty;
-	public string RelaunchRelativePath { get; init; } = "BG3ModManager.exe";
+	public string RelaunchRelativePath { get; init; } = "Redux.exe";
 }
 
 public sealed class ReduxUpdateResult

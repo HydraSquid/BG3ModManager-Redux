@@ -74,10 +74,10 @@ FORBIDDEN_SUFFIXES = {
 }
 
 REQUIRED_FILES = {
-	Path("BG3ModManager.exe"),
-	Path("BG3ModManager.dll"),
-	Path("BG3ModManager.deps.json"),
-	Path("BG3ModManager.runtimeconfig.json"),
+	Path("Redux.exe"),
+	Path("Redux.dll"),
+	Path("Redux.deps.json"),
+	Path("Redux.runtimeconfig.json"),
 	Path("_Lib/LSLib.dll"),
 	Path("_Lib/LSLibNative.dll"),
 	Path("_Lib/Ijwhost.dll"),
@@ -113,6 +113,16 @@ def prepare_publish_directory() -> None:
 		if child.is_dir() and child.name.lower() in USER_STATE_DIRECTORIES:
 			remove_path(child)
 	remove_path(PUBLISH_DIR / RELEASE_INVENTORY_NAME)
+	# AssemblyName changed for alpha.15. Never let stale pre-rename runtime files leak into a
+	# package when publishing over an existing output directory.
+	for legacy_runtime_name in (
+		"BG3ModManager.exe",
+		"BG3ModManager.dll",
+		"BG3ModManager.deps.json",
+		"BG3ModManager.runtimeconfig.json",
+		"BG3ModManager.pdb",
+	):
+		remove_path(PUBLISH_DIR / legacy_runtime_name)
 	# UpdaterPayload is an MSBuild intermediate. Only the curated Updater directory is shipped.
 	remove_path(PUBLISH_DIR / "UpdaterPayload")
 	for stale_updater_root_file in PUBLISH_DIR.glob("ReduxUpdater.*"):

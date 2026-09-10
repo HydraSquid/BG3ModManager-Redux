@@ -12,7 +12,7 @@ internal sealed class InstallerTransactionTests
 {
 	private static readonly string[] ReleaseFiles =
 	{
-		"BG3ModManager.exe", "BG3ModManager.dll",
+		"Redux.exe", "Redux.dll",
 		"Updater/ReduxUpdater.exe", "Updater/ReduxUpdater.dll",
 		"Updater/ReduxUpdater.deps.json", "Updater/ReduxUpdater.runtimeconfig.json"
 	};
@@ -37,7 +37,7 @@ internal sealed class InstallerTransactionTests
 				CreateDesktopShortcut = true
 			});
 
-			RegressionAssert.Equal(Path.Combine(destination, "BG3ModManager.exe"), result.ApplicationPath);
+			RegressionAssert.Equal(Path.Combine(destination, "Redux.exe"), result.ApplicationPath);
 			RegressionAssert.True(File.Exists(result.ApplicationPath));
 			RegressionAssert.True(File.Exists(Path.Combine(destination, InstallerInstallService.UninstallerFileName)));
 			RegressionAssert.True(integration.Registered);
@@ -99,7 +99,7 @@ internal sealed class InstallerTransactionTests
 
 			RegressionAssert.True(uninstall.PreservedUserContent);
 			RegressionAssert.Equal("keep me", File.ReadAllText(userFile));
-			RegressionAssert.False(File.Exists(Path.Combine(destination, "BG3ModManager.exe")));
+			RegressionAssert.False(File.Exists(Path.Combine(destination, "Redux.exe")));
 			RegressionAssert.True(integration.Removed);
 			RegressionAssert.Equal(ReleaseFiles.Length + 1, uninstall.RemovedApplicationFiles);
 		}

@@ -50,6 +50,27 @@ internal sealed class InstallerEnvironmentTests
 		}
 	}
 
+	public void CurrentAndLegacyRuntimeNamesAreRecognizedAsExistingInstalls()
+	{
+		var root = Path.Combine(Path.GetTempPath(), "redux-installer-runtime-name-" + Guid.NewGuid().ToString("N"));
+		try
+		{
+			Directory.CreateDirectory(root);
+			foreach (var runtimeName in new[] { "Redux.exe", "BG3ModManager.exe" })
+			{
+				var runtimePath = Path.Combine(root, runtimeName);
+				File.WriteAllText(runtimePath, "fixture");
+				var result = InstallDestinationService.Validate(root, String.Empty, false);
+				RegressionAssert.Equal(InstallDestinationProblem.ExistingInstallation, result.Problem);
+				File.Delete(runtimePath);
+			}
+		}
+		finally
+		{
+			if (Directory.Exists(root)) Directory.Delete(root, true);
+		}
+	}
+
 	public void RuntimeDownloadAcceptsOnlyMicrosoftX64DesktopRuntimeAssets()
 	{
 		RegressionAssert.True(RuntimeInstallerService.IsApprovedMicrosoftRuntimeUri(new Uri(

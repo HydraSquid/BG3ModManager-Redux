@@ -12,7 +12,7 @@ namespace Redux.Core.Tests;
 internal sealed class NxmAssociationTests
 {
 	private const string Owner = "11111111-1111-1111-1111-111111111111";
-	private const string Executable = @"C:\Portable\Redux\BG3ModManager.exe";
+	private const string Executable = @"C:\Portable\Redux\Redux.exe";
 
 	public void EnableAndDisableRestoresPriorUserHandler()
 	{
@@ -42,7 +42,7 @@ internal sealed class NxmAssociationTests
 
 	public void RepairUpdatesOnlyOwnedMovedRegistration()
 	{
-		var oldExecutable = @"D:\Old Redux\BG3ModManager.exe";
+		var oldExecutable = @"D:\Old Redux\Redux.exe";
 		var store = new MemoryNxmRegistryStore
 		{
 			UserKey = NxmAssociationService.CreateOwnedKey(Owner, oldExecutable),
@@ -73,7 +73,7 @@ internal sealed class NxmAssociationTests
 
 	public void DifferentReduxInstallationCannotRepairOrDisableOwner()
 	{
-		var store = new MemoryNxmRegistryStore { UserKey = NxmAssociationService.CreateOwnedKey("other-owner", @"D:\Redux\BG3ModManager.exe") };
+		var store = new MemoryNxmRegistryStore { UserKey = NxmAssociationService.CreateOwnedKey("other-owner", @"D:\Redux\Redux.exe") };
 		var service = new NxmAssociationService(store, Owner, Executable);
 
 		RegressionAssert.Equal(NxmAssociationStatus.OwnedByAnotherHandler, service.GetStatus().Status);
@@ -153,12 +153,12 @@ internal sealed class NxmAssociationTests
 		var store = new MemoryNxmRegistryStore();
 		var service = new NxmAssociationService(store, Owner, Executable);
 		RegressionAssert.True(service.Enable().Success);
-		store.UserKey.SetValue(@"shell\open\command", "", NxmAssociationService.BuildCommand(@"C:\Other\BG3ModManager.exe"), RegistryValueKind.String);
+		store.UserKey.SetValue(@"shell\open\command", "", NxmAssociationService.BuildCommand(@"C:\Other\Redux.exe"), RegistryValueKind.String);
 
 		var result = service.Disable();
 
 		RegressionAssert.False(result.Success);
-		RegressionAssert.Equal(NxmAssociationService.BuildCommand(@"C:\Other\BG3ModManager.exe"),
+		RegressionAssert.Equal(NxmAssociationService.BuildCommand(@"C:\Other\Redux.exe"),
 			store.UserKey.GetString(@"shell\open\command", ""));
 	}
 
@@ -182,7 +182,7 @@ internal sealed class NxmAssociationTests
 		const string link = "nxm://skyrim/mods/42/files/99?key=secret";
 
 		RegressionAssert.True(NxmPreviousHandlerForwarder.TryCreateStartInfo(command, link,
-			@"C:\Redux\BG3ModManager.exe", out var startInfo, out _));
+			@"C:\Redux\Redux.exe", out var startInfo, out _));
 		RegressionAssert.Equal(executable, startInfo.FileName);
 		RegressionAssert.False(startInfo.UseShellExecute);
 		RegressionAssert.SequenceEqual(new[] { "--from-nexus", link }, startInfo.ArgumentList);
@@ -192,9 +192,9 @@ internal sealed class NxmAssociationTests
 	{
 		var executable = Path.Combine(Environment.SystemDirectory, "notepad.exe");
 		RegressionAssert.False(NxmPreviousHandlerForwarder.TryCreateStartInfo(
-			$"\"{executable}\" --url=%1", "nxm://skyrim/mods/42/files/99", @"C:\Redux\BG3ModManager.exe", out _, out _));
+			$"\"{executable}\" --url=%1", "nxm://skyrim/mods/42/files/99", @"C:\Redux\Redux.exe", out _, out _));
 		RegressionAssert.False(NxmPreviousHandlerForwarder.TryCreateStartInfo(
-			"\"C:\\Redux\\BG3ModManager.exe\" \"%1\"", "nxm://skyrim/mods/42/files/99", @"C:\Redux\BG3ModManager.exe", out _, out _));
+			"\"C:\\Redux\\Redux.exe\" \"%1\"", "nxm://skyrim/mods/42/files/99", @"C:\Redux\Redux.exe", out _, out _));
 	}
 
 	private static NxmRegistryKeySnapshot Handler(string command, string marker)

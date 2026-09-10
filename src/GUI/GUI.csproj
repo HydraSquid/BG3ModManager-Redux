@@ -10,9 +10,9 @@
 		<RootNamespace>DivinityModManager</RootNamespace>
 
 		<StartupObject>DivinityModManager.Program</StartupObject>
-		<ApplicationIcon>BG3ModManager.ico</ApplicationIcon>
+		<ApplicationIcon>Redux.ico</ApplicationIcon>
 
-		<AssemblyName>BG3ModManager</AssemblyName>
+		<AssemblyName>Redux</AssemblyName>
 		<AssemblyTitle>Baldur's Gate 3 Mod Manager Redux</AssemblyTitle>
 
 		<AssemblyVersion>0.1.0.15</AssemblyVersion>
@@ -73,7 +73,7 @@
 	</ItemGroup>
 	
 	<ItemGroup>
-		<Resource Include="BG3ModManager.ico" />
+		<Resource Include="Redux.ico" />
 		<None Include="Resources\*.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
@@ -165,7 +165,7 @@
 	<Target Name="SetupLibFolder" AfterTargets="AfterBuild" Condition="'$(Configuration)' == 'Publish' or '$(Configuration)' == 'PublishTest'">
 		<ItemGroup>
 			<DeleteDebug Include="$(OutputPath)*.pdb" />
-			<MoveToLibFolder Include="$(OutputPath)*.dll;$(OutputPath)*.xml" Exclude="$(OutputPath)BG3ModManager.dll;$(OutputPath)WinRT.Runtime.dll" />
+			<MoveToLibFolder Include="$(OutputPath)*.dll;$(OutputPath)*.xml" Exclude="$(OutputPath)Redux.dll;$(OutputPath)WinRT.Runtime.dll" />
 		</ItemGroup>
 		<Move SourceFiles="@(MoveToLibFolder)" DestinationFolder="$(OutputPath)_Lib" OverwriteReadOnlyFiles="true" ContinueOnError="true" />
 		<!-- The C++/CLI loader shim is required for LSLibNative at runtime but is not

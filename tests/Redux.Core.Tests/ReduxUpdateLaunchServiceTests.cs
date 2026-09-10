@@ -47,7 +47,7 @@ public sealed class ReduxUpdateLaunchServiceTests
 			var updater = Path.Combine(staged, "Updater");
 			Directory.CreateDirectory(target);
 			Directory.CreateDirectory(updater);
-			File.WriteAllText(Path.Combine(target, "BG3ModManager.exe"), "old");
+			File.WriteAllText(Path.Combine(target, "Redux.exe"), "old");
 			foreach (var name in new[] { "ReduxUpdater.exe", "ReduxUpdater.dll", "ReduxUpdater.deps.json", "ReduxUpdater.runtimeconfig.json" })
 				File.WriteAllText(Path.Combine(updater, name), name);
 			var service = new ReduxUpdateLaunchService();

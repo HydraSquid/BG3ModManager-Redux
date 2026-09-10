@@ -454,10 +454,13 @@ public partial class MainWindow : Window
 	{
 		try
 		{
-			foreach (var process in Process.GetProcessesByName("BG3ModManager"))
+			foreach (var processName in new[] { "Redux", "BG3ModManager" })
 			{
-				using (process)
-					if (!process.HasExited) return true;
+				foreach (var process in Process.GetProcessesByName(processName))
+				{
+					using (process)
+						if (!process.HasExited) return true;
+				}
 			}
 		}
 		catch

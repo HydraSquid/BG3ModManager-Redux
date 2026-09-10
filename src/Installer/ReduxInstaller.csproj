@@ -17,7 +17,7 @@
 		<Configurations>Debug;Release</Configurations>
 		<OutputPath>$(MSBuildProjectDirectory)\..\..\bin\InstallerPayload\$(Configuration)\</OutputPath>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-		<ApplicationIcon>..\GUI\BG3ModManager.ico</ApplicationIcon>
+		<ApplicationIcon>..\GUI\Redux.ico</ApplicationIcon>
 		<Nullable>enable</Nullable>
 		<LangVersion>latest</LangVersion>
 		<DebugType Condition="'$(Configuration)' == 'Debug'">full</DebugType>
@@ -33,7 +33,7 @@
 	<ItemGroup>
 		<EmbeddedResource Include="$(PkgNewtonsoft_Json)\lib\net45\Newtonsoft.Json.dll"
 			LogicalName="ReduxInstaller.Dependencies.Newtonsoft.Json.dll" />
-		<Resource Include="..\GUI\BG3ModManager.ico" Link="Resources\BG3ModManager.ico" />
+		<Resource Include="..\GUI\Redux.ico" Link="Resources\Redux.ico" />
 		<Resource Include="..\GUI\Resources\Fonts\Manrope-Regular.ttf" Link="Resources\Fonts\Manrope-Regular.ttf" />
 		<Resource Include="..\GUI\Resources\Fonts\Manrope-SemiBold.ttf" Link="Resources\Fonts\Manrope-SemiBold.ttf" />
 		<EmbeddedResource Include="..\..\LICENSE" Link="Legal\LICENSE.txt" />

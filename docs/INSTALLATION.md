@@ -38,7 +38,7 @@ also offers the official Microsoft download page as a fallback.
 2. Create a dedicated writable folder for Redux. Avoid the BG3 installation directory, Windows
    system folders, and running directly from a compressed archive.
 3. Extract every file while preserving the archive's folder structure.
-4. Run `BG3ModManager.exe`.
+4. Run `Redux.exe`.
 5. Review the detected BG3, profile, Mods, saves, and Script Extender paths before making changes.
 6. Complete Welcome Setup. Online source information, Load Order Advisor guidance, NXM handling,
    and retained package archives remain optional.

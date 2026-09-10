@@ -22,7 +22,9 @@ internal static class InstallDestinationService
 		if (IsWithin(full, gameDirectory))
 			return Problem(InstallDestinationProblem.InsideGameDirectory,
 				"Redux must be installed outside the Baldur's Gate 3 game directory.", full);
-		if (File.Exists(Path.Combine(full, "BG3ModManager.exe")) || File.Exists(Path.Combine(full, InstallerPackageService.InventoryFileName)))
+		if (File.Exists(Path.Combine(full, "Redux.exe"))
+			|| File.Exists(Path.Combine(full, "BG3ModManager.exe"))
+			|| File.Exists(Path.Combine(full, InstallerPackageService.InventoryFileName)))
 			return Problem(InstallDestinationProblem.ExistingInstallation,
 				"Redux is already installed here. Use its updater or uninstall it before running fresh setup.", full);
 		if (Directory.Exists(full) && Directory.EnumerateFileSystemEntries(full).Any())

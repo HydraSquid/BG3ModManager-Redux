@@ -70,7 +70,7 @@ internal sealed class InstallerInstallService
 			return new FreshInstallResult
 			{
 				DestinationDirectory = target,
-				ApplicationPath = Path.Combine(target, "BG3ModManager.exe"),
+				ApplicationPath = Path.Combine(target, "Redux.exe"),
 				DisplayVersion = request.Package.Manifest.DisplayVersion
 			};
 		}

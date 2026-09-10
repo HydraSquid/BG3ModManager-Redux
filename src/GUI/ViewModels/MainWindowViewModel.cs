@@ -884,7 +884,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 	private INxmAssociationService CreateNxmAssociationService(string ownerId = null) => new NxmAssociationService(
 		new NxmRegistryStore(), ownerId ?? Settings.NxmAssociationOwnerId,
-		Environment.ProcessPath ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BG3ModManager.exe"));
+		Environment.ProcessPath ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Redux.exe"));
 
 	public Task PauseNxmDownloadAsync(NxmDownloadItem item) => item == null || _nxmDownloadManager == null
 		? Task.CompletedTask : _nxmDownloadManager.PauseAsync(item.Id);

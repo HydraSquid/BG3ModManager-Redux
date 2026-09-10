@@ -36,8 +36,8 @@ public sealed class ReduxUpdatePackageService
 	};
 	private static readonly string[] RequiredReleaseFiles =
 	{
-		"BG3ModManager.exe",
-		"BG3ModManager.dll",
+		"Redux.exe",
+		"Redux.dll",
 		ReleaseInventoryFileName,
 		"Updater/ReduxUpdater.exe",
 		"Updater/ReduxUpdater.dll",

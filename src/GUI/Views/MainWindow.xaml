@@ -19,7 +19,7 @@
     xmlns:vm="clr-namespace:DivinityModManager.ViewModels"
     xmlns:xc="http://schemas.xceed.com/wpf/xaml/toolkit"
     Title="{Binding Title}"
-	Icon="/BG3ModManager;component/BG3ModManager.ico"
+	Icon="/Redux;component/Redux.ico"
 	Width="1440"
 	Height="900"
 	MinWidth="960"

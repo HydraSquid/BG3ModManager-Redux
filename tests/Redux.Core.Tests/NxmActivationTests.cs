@@ -14,7 +14,7 @@ internal sealed class NxmActivationTests
 {
 	public void SameUserPipeDeliversValidatedLink()
 	{
-		var identity = @"C:\Tests\" + Guid.NewGuid().ToString("N") + @"\BG3ModManager.exe";
+		var identity = @"C:\Tests\" + Guid.NewGuid().ToString("N") + @"\Redux.exe";
 		var received = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
 		using var server = NxmActivationCoordinator.CreateForExecutable(identity);
 		RegressionAssert.True(server.StartListening(value =>
@@ -31,7 +31,7 @@ internal sealed class NxmActivationTests
 
 	public void OversizedMessageIsRejectedBeforeConnection()
 	{
-		using var client = NxmActivationCoordinator.CreateForExecutable(@"C:\Tests\" + Guid.NewGuid().ToString("N") + @"\BG3ModManager.exe");
+		using var client = NxmActivationCoordinator.CreateForExecutable(@"C:\Tests\" + Guid.NewGuid().ToString("N") + @"\Redux.exe");
 		var oversized = "nxm://baldursgate3/mods/42/files/99?key=" + new string('x', NexusModManagerLinkParser.MaximumLength);
 
 		RegressionAssert.False(client.TryForwardAsync(oversized, TimeSpan.FromMilliseconds(50)).GetAwaiter().GetResult());
@@ -39,7 +39,7 @@ internal sealed class NxmActivationTests
 
 	public void ListenerSurvivesMalformedClientMessage()
 	{
-		var identity = @"C:\Tests\" + Guid.NewGuid().ToString("N") + @"\BG3ModManager.exe";
+		var identity = @"C:\Tests\" + Guid.NewGuid().ToString("N") + @"\Redux.exe";
 		var received = new List<string>();
 		using var server = NxmActivationCoordinator.CreateForExecutable(identity);
 		RegressionAssert.True(server.StartListening(value =>

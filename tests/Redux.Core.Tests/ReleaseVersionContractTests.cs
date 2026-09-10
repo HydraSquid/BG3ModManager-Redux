@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -21,6 +22,8 @@ public sealed class ReleaseVersionContractTests
 		RegressionAssert.Equal(expectedInternal, Version.Parse(DivinityModManager.DivinityApp.REDUX_INTERNAL_VERSION));
 
 		var guiAssembly = typeof(DivinityModManager.App).Assembly;
+		RegressionAssert.Equal("Redux", guiAssembly.GetName().Name);
+		RegressionAssert.Equal("Redux.dll", Path.GetFileName(guiAssembly.Location));
 		RegressionAssert.Equal(expectedInternal, guiAssembly.GetName().Version);
 		RegressionAssert.Equal(
 			DivinityModManager.DivinityApp.REDUX_DISPLAY_VERSION,

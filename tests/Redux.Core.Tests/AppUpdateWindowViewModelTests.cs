@@ -15,7 +15,7 @@ public sealed class AppUpdateWindowViewModelTests
 {
 	public void AvailableUpdateOffersVerifiedRestart()
 	{
-		using var client = ClientReturning(HttpStatusCode.OK, Manifest("0.1.0-alpha.17", "0.1.0.17"));
+		using var client = ClientReturning(HttpStatusCode.OK, Manifest("0.1.0-alpha.17", "0.1.17.0"));
 		var viewModel = CreateViewModel(client);
 
 		viewModel.CheckForUpdatesAsync().GetAwaiter().GetResult();

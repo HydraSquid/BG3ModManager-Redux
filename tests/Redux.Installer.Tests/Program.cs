@@ -14,6 +14,7 @@ internal static class Program
 		var checks = new List<(string Name, Action Run)>
 		{
 			(nameof(manifest.ExactPublicAlphaManifestIsAccepted), manifest.ExactPublicAlphaManifestIsAccepted),
+			(nameof(manifest.HotfixAwarePublicAlphaManifestIsAccepted), manifest.HotfixAwarePublicAlphaManifestIsAccepted),
 			(nameof(manifest.DuplicateAndUnknownManifestPropertiesAreRejected), manifest.DuplicateAndUnknownManifestPropertiesAreRejected),
 			(nameof(manifest.ManifestCannotRedirectSetupOutsideOfficialVersionedRelease), manifest.ManifestCannotRedirectSetupOutsideOfficialVersionedRelease),
 			(nameof(package.VerifiedReleaseIsPreparedWithoutChangingAnInstallLocation), package.VerifiedReleaseIsPreparedWithoutChangingAnInstallLocation),

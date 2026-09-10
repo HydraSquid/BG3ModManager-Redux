@@ -3,6 +3,14 @@
 This file summarizes user-visible Redux releases. The issue tracker and Git history remain the
 source for individual implementation details.
 
+## Unreleased
+
+- Added an explicit public-alpha hotfix version contract (`alpha.N.H`) so corrected builds can be
+  delivered through the updater without pretending to be a new feature alpha or replacing existing
+  release bytes.
+- Prevented an exceptional load-order rebuild during Sync—such as one involving legacy separator
+  PAK state—from leaving Save, keyboard shortcuts, menus, and drag-and-drop permanently disabled.
+
 ## 0.1.0-alpha.16 — public-alpha hotfix
 
 ### Fixed

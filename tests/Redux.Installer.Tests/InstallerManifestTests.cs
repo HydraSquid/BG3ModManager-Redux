@@ -15,6 +15,25 @@ internal sealed class InstallerManifestTests
 		RegressionAssert.Equal(8192L, manifest.Artifact.SizeBytes);
 	}
 
+	public void HotfixAwarePublicAlphaManifestIsAccepted()
+	{
+		var manifest = InstallerManifestService.ParseAndValidate(
+			ValidManifest()
+				.Replace("0.1.0-alpha.15", "0.1.0-alpha.16.1")
+				.Replace("0.1.0.15", "0.1.16.1"));
+
+		RegressionAssert.Equal("0.1.0-alpha.16.1", manifest.DisplayVersion);
+		RegressionAssert.Equal("0.1.16.1", manifest.InternalVersion);
+		RegressionAssert.Throws<InvalidDataException>(() => InstallerManifestService.ParseAndValidate(
+			ValidManifest()
+				.Replace("0.1.0-alpha.15", "0.1.0-alpha.16")
+				.Replace("0.1.0.15", "0.1.16.0")));
+		RegressionAssert.Throws<InvalidDataException>(() => InstallerManifestService.ParseAndValidate(
+			ValidManifest()
+				.Replace("0.1.0-alpha.15", "0.1.0-alpha.17")
+				.Replace("0.1.0.15", "0.1.0.17")));
+	}
+
 	public void DuplicateAndUnknownManifestPropertiesAreRejected()
 	{
 		RegressionAssert.Throws<InvalidDataException>(() => InstallerManifestService.ParseAndValidate(

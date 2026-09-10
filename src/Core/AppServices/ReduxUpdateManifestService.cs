@@ -18,6 +18,7 @@ public static partial class ReduxUpdateManifestService
 	public const long MaximumManifestBytes = 256 * 1024;
 	public const long MaximumArtifactBytes = 1024L * 1024 * 1024;
 	private const int MaximumJsonDepth = 16;
+	private const int LastLegacyPublicAlpha = 16;
 	private const string OfficialRepositoryPath = "/circleainn/BG3ModManager-Redux/";
 
 	private static readonly HashSet<string> RootProperties = new(StringComparer.Ordinal)
@@ -30,7 +31,7 @@ public static partial class ReduxUpdateManifestService
 		"kind", "url", "sizeBytes", "sha256"
 	};
 
-	[GeneratedRegex(@"^0\.1\.0-alpha\.(?<release>[1-9][0-9]*)$", RegexOptions.CultureInvariant)]
+	[GeneratedRegex(@"^0\.1\.0-alpha\.(?<release>[1-9][0-9]*)(?:\.(?<hotfix>[1-9][0-9]*))?$", RegexOptions.CultureInvariant)]
 	private static partial Regex DisplayVersionPattern();
 
 	[GeneratedRegex(@"^[a-fA-F0-9]{64}$", RegexOptions.CultureInvariant)]
@@ -69,13 +70,21 @@ public static partial class ReduxUpdateManifestService
 
 		var displayVersion = RequireString(root, "displayVersion", 64);
 		var versionMatch = DisplayVersionPattern().Match(displayVersion);
-		if (!versionMatch.Success || !Int32.TryParse(versionMatch.Groups["release"].Value, out var releaseNumber))
+		if (!versionMatch.Success
+			|| !Int32.TryParse(versionMatch.Groups["release"].Value, out var releaseNumber)
+			|| releaseNumber > UInt16.MaxValue)
 			throw new InvalidDataException("The update display version is not a supported public-alpha version.");
+		var hotfixNumber = 0;
+		if (versionMatch.Groups["hotfix"].Success
+			&& (!Int32.TryParse(versionMatch.Groups["hotfix"].Value, out hotfixNumber)
+				|| hotfixNumber > UInt16.MaxValue))
+		{
+			throw new InvalidDataException("The update display version is not a supported public-alpha version.");
+		}
 
 		var internalVersionText = RequireString(root, "internalVersion", 64);
 		if (!Version.TryParse(internalVersionText, out var internalVersion)
-			|| internalVersion.Major != 0 || internalVersion.Minor != 1 || internalVersion.Build != 0
-			|| internalVersion.Revision != releaseNumber)
+			|| !MatchesDisplayVersion(internalVersion, releaseNumber, hotfixNumber))
 		{
 			throw new InvalidDataException("The display and internal update versions do not identify the same release.");
 		}
@@ -145,6 +154,21 @@ public static partial class ReduxUpdateManifestService
 			ReleaseNotesUrl = releaseNotesUrl,
 			Artifacts = artifacts
 		};
+	}
+
+	private static bool MatchesDisplayVersion(Version internalVersion, int releaseNumber, int hotfixNumber)
+	{
+		if (internalVersion.Major != 0 || internalVersion.Minor != 1) return false;
+
+		// Alpha.15 and alpha.16 used 0.1.0.N before hotfix-aware versioning.
+		var legacyBaseRelease = releaseNumber <= LastLegacyPublicAlpha
+			&& hotfixNumber == 0
+			&& internalVersion.Build == 0
+			&& internalVersion.Revision == releaseNumber;
+		var hotfixAwareRelease = (hotfixNumber > 0 || releaseNumber > LastLegacyPublicAlpha)
+			&& internalVersion.Build == releaseNumber
+			&& internalVersion.Revision == hotfixNumber;
+		return legacyBaseRelease || hotfixAwareRelease;
 	}
 
 	public static ReduxUpdateDecision Evaluate(

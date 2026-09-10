@@ -7,10 +7,12 @@ the exact files published on GitHub and Nexus Mods.
 ## Release artifacts
 
 `0.1.0-alpha.15` was the first Redux public-alpha version; `0.1.0-alpha.16` is the current hotfix.
-Each public alpha has an immutable version
-and a matching Git tag such as `v0.1.0-alpha.15`. The versioned GitHub release contains:
+Each public alpha has an immutable version and a matching Git tag such as
+`v0.1.0-alpha.16`. A correction to an already-published alpha uses a hotfix suffix such as
+`0.1.0-alpha.16.1`, then `.16.2`; it does not replace the earlier release's files. The next planned
+alpha remains `0.1.0-alpha.17`. The versioned GitHub release contains:
 
-- `BG3ModManager-Redux_v0.1.0-alpha.N.zip`, the versioned portable application;
+- `BG3ModManager-Redux_v0.1.0-alpha.N[.H].zip`, the versioned portable application;
 - `BG3ModManager-Redux-Setup.exe`, the separate fresh-install web bootstrapper; and
 - release notes for that exact version.
 
@@ -27,6 +29,18 @@ The moving `public-alpha` channel release contains
 `Redux-Update-Public-Alpha.json`. Redux and Setup use its fixed URL; they do not rely on GitHub's
 generic latest-release selection. The document points to one versioned portable ZIP and records its
 exact byte length and SHA-256 digest.
+
+The updater compares a four-part numeric internal version. Alpha.15 and alpha.16 retain their
+published legacy values (`0.1.0.15` and `0.1.0.16`). Starting with the hotfix-aware contract,
+`0.1.0-alpha.N.H` maps to `0.1.N.H`, and a new base alpha maps to `0.1.N.0`. This keeps
+`alpha.16 < alpha.16.1 < alpha.16.2 < alpha.17` while preserving updates from the two legacy
+public builds.
+
+Compatibility matters during the transition: the already-published alpha.15 and alpha.16 clients
+only parse the original `alpha.N` form, so they cannot discover a dotted hotfix automatically. The
+first dotted hotfix must therefore be installed manually, or be preceded by one final single-number
+bridge release. Once a hotfix-aware build is installed, later dotted hotfixes work normally. Never
+publish a dotted channel manifest on the assumption that an unmodified alpha.16 client can read it.
 
 ## Prepare a candidate
 
@@ -100,7 +114,7 @@ troubleshooting guide. Speculative redesigns can remain deferred without blockin
 
 Keep one maintainer record with the following values from the exact artifacts that are uploaded:
 
-- source commit and matching `v0.1.0-alpha.N` tag target;
+- source commit and matching `v0.1.0-alpha.N[.H]` tag target;
 - portable ZIP filename, byte length, and SHA-256;
 - Setup filename, byte length, and SHA-256;
 - `Redux-Update-Public-Alpha.json` byte length and SHA-256;

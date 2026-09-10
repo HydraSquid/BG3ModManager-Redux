@@ -83,6 +83,8 @@ internal static class Program
 			(nameof(updateChannel.FailedAutomaticChecksBackOffBeforeRetrying), updateChannel.FailedAutomaticChecksBackOffBeforeRetrying),
 			(nameof(applicationUpdates.ValidPublicAlphaManifestSelectsPortableArtifact), applicationUpdates.ValidPublicAlphaManifestSelectsPortableArtifact),
 			(nameof(applicationUpdates.SameAndNewerInstalledVersionsAreNeverOfferedAsUpdates), applicationUpdates.SameAndNewerInstalledVersionsAreNeverOfferedAsUpdates),
+			(nameof(applicationUpdates.HotfixVersionsUpdateTheirBaseAndOrderBeforeTheNextAlpha), applicationUpdates.HotfixVersionsUpdateTheirBaseAndOrderBeforeTheNextAlpha),
+			(nameof(applicationUpdates.HotfixVersionsRejectZeroOverflowAndMismatchedInternalVersions), applicationUpdates.HotfixVersionsRejectZeroOverflowAndMismatchedInternalVersions),
 			(nameof(applicationUpdates.ManifestRequiresExactlyOnePortableArtifact), applicationUpdates.ManifestRequiresExactlyOnePortableArtifact),
 			(nameof(applicationUpdates.ManifestRejectsDuplicateAndUnknownProperties), applicationUpdates.ManifestRejectsDuplicateAndUnknownProperties),
 			(nameof(applicationUpdates.ManifestRejectsTrailingContentAndWrongChannel), applicationUpdates.ManifestRejectsTrailingContentAndWrongChannel),

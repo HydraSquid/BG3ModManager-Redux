@@ -18,6 +18,7 @@ internal static class InstallerManifestService
 	public const int SchemaVersion = 1;
 	public const long MaximumManifestBytes = 256 * 1024;
 	public const long MaximumArtifactBytes = 1024L * 1024 * 1024;
+	private const int LastLegacyPublicAlpha = 16;
 	public const string Channel = "public-alpha";
 	public const string ManifestUrl =
 		"https://github.com/circleainn/BG3ModManager-Redux/releases/download/public-alpha/Redux-Update-Public-Alpha.json";
@@ -32,7 +33,7 @@ internal static class InstallerManifestService
 		"kind", "url", "sizeBytes", "sha256"
 	};
 	private static readonly Regex DisplayVersionPattern = new Regex(
-		@"^0\.1\.0-alpha\.(?<release>[1-9][0-9]*)$",
+		@"^0\.1\.0-alpha\.(?<release>[1-9][0-9]*)(?:\.(?<hotfix>[1-9][0-9]*))?$",
 		RegexOptions.Compiled | RegexOptions.CultureInvariant);
 	private static readonly Regex Sha256Pattern = new Regex(
 		"^[a-fA-F0-9]{64}$",
@@ -78,14 +79,19 @@ internal static class InstallerManifestService
 		var displayVersion = RequireString(root, "displayVersion", 64);
 		var versionMatch = DisplayVersionPattern.Match(displayVersion);
 		int release;
-		if (!versionMatch.Success || !Int32.TryParse(versionMatch.Groups["release"].Value, out release))
+		if (!versionMatch.Success || !Int32.TryParse(versionMatch.Groups["release"].Value, out release)
+			|| release > UInt16.MaxValue)
+			throw new InvalidDataException("The release version is not a supported Redux public-alpha version.");
+		var hotfix = 0;
+		if (versionMatch.Groups["hotfix"].Success
+			&& (!Int32.TryParse(versionMatch.Groups["hotfix"].Value, out hotfix)
+				|| hotfix > UInt16.MaxValue))
 			throw new InvalidDataException("The release version is not a supported Redux public-alpha version.");
 
 		var internalVersionText = RequireString(root, "internalVersion", 64);
 		Version internalVersion;
 		if (!Version.TryParse(internalVersionText, out internalVersion)
-			|| internalVersion.Major != 0 || internalVersion.Minor != 1 || internalVersion.Build != 0
-			|| internalVersion.Revision != release)
+			|| !MatchesDisplayVersion(internalVersion, release, hotfix))
 			throw new InvalidDataException("The display and internal release versions do not agree.");
 
 		var publishedText = RequireString(root, "publishedAtUtc", 64);
@@ -131,6 +137,19 @@ internal static class InstallerManifestService
 				Sha256 = hash.ToLowerInvariant()
 			}
 		};
+	}
+
+	private static bool MatchesDisplayVersion(Version internalVersion, int release, int hotfix)
+	{
+		if (internalVersion.Major != 0 || internalVersion.Minor != 1) return false;
+		var legacyBaseRelease = release <= LastLegacyPublicAlpha
+			&& hotfix == 0
+			&& internalVersion.Build == 0
+			&& internalVersion.Revision == release;
+		var hotfixAwareRelease = (hotfix > 0 || release > LastLegacyPublicAlpha)
+			&& internalVersion.Build == release
+			&& internalVersion.Revision == hotfix;
+		return legacyBaseRelease || hotfixAwareRelease;
 	}
 
 	private static JObject RequireObject(JToken token, string name)

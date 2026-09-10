@@ -32,6 +32,35 @@ public sealed class ReduxUpdateManifestTests
 			ReduxUpdateManifestService.Evaluate(manifest, "0.1.0.16").Availability);
 	}
 
+	public void HotfixVersionsUpdateTheirBaseAndOrderBeforeTheNextAlpha()
+	{
+		var hotfix = ReduxUpdateManifestService.ParseAndValidate(
+			CreateManifest("0.1.0-alpha.16.1", "0.1.16.1").ToString());
+		var nextAlpha = ReduxUpdateManifestService.ParseAndValidate(
+			CreateManifest("0.1.0-alpha.17", "0.1.17.0").ToString());
+
+		RegressionAssert.Equal(
+			ReduxUpdateAvailability.UpdateAvailable,
+			ReduxUpdateManifestService.Evaluate(hotfix, "0.1.0.16").Availability);
+		RegressionAssert.Equal(
+			ReduxUpdateAvailability.UpdateAvailable,
+			ReduxUpdateManifestService.Evaluate(nextAlpha, hotfix.InternalVersion).Availability);
+	}
+
+	public void HotfixVersionsRejectZeroOverflowAndMismatchedInternalVersions()
+	{
+		RegressionAssert.Throws<InvalidDataException>(() => ReduxUpdateManifestService.ParseAndValidate(
+			CreateManifest("0.1.0-alpha.16.0", "0.1.16.0").ToString()));
+		RegressionAssert.Throws<InvalidDataException>(() => ReduxUpdateManifestService.ParseAndValidate(
+			CreateManifest("0.1.0-alpha.16.65536", "0.1.16.65536").ToString()));
+		RegressionAssert.Throws<InvalidDataException>(() => ReduxUpdateManifestService.ParseAndValidate(
+			CreateManifest("0.1.0-alpha.16.1", "0.1.0.16").ToString()));
+		RegressionAssert.Throws<InvalidDataException>(() => ReduxUpdateManifestService.ParseAndValidate(
+			CreateManifest("0.1.0-alpha.16", "0.1.16.0").ToString()));
+		RegressionAssert.Throws<InvalidDataException>(() => ReduxUpdateManifestService.ParseAndValidate(
+			CreateManifest("0.1.0-alpha.17", "0.1.0.17").ToString()));
+	}
+
 	public void ManifestRequiresExactlyOnePortableArtifact()
 	{
 		var missing = CreateManifest();
@@ -130,20 +159,22 @@ public sealed class ReduxUpdateManifestTests
 		}
 	}
 
-	private static JObject CreateManifest() => new()
+	private static JObject CreateManifest(
+		string displayVersion = "0.1.0-alpha.15",
+		string internalVersion = "0.1.0.15") => new()
 	{
 		["schemaVersion"] = 1,
 		["channel"] = ReduxUpdateChannels.PublicAlpha,
-		["displayVersion"] = "0.1.0-alpha.15",
-		["internalVersion"] = "0.1.0.15",
+		["displayVersion"] = displayVersion,
+		["internalVersion"] = internalVersion,
 		["publishedAtUtc"] = "2026-09-08T16:30:00Z",
-		["releaseNotesUrl"] = "https://github.com/circleainn/BG3ModManager-Redux/releases/tag/v0.1.0-alpha.15",
+		["releaseNotesUrl"] = $"https://github.com/circleainn/BG3ModManager-Redux/releases/tag/v{displayVersion}",
 		["artifacts"] = new JArray
 		{
 			new JObject
 			{
 				["kind"] = ReduxUpdateArtifactKinds.Portable,
-				["url"] = "https://github.com/circleainn/BG3ModManager-Redux/releases/download/v0.1.0-alpha.15/BG3ModManager-Redux_v0.1.0-alpha.15.zip",
+				["url"] = $"https://github.com/circleainn/BG3ModManager-Redux/releases/download/v{displayVersion}/BG3ModManager-Redux_v{displayVersion}.zip",
 				["sizeBytes"] = 8192,
 				["sha256"] = new string('b', 64)
 			}

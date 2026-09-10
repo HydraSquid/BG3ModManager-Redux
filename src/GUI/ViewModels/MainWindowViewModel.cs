@@ -3038,6 +3038,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		}
 
 		IsLoadingOrder = true;
+		using var loadingState = Disposable.Create(() => IsLoadingOrder = false);
 
 		var currentOrder = new DivinityLoadOrder()
 		{
@@ -3132,7 +3133,6 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				DivinityApp.Log($"Error setting next load order:\n{ex}");
 			}
 		}
-		IsLoadingOrder = false;
 	}
 
 	private string CreatePakImportTemporaryPath(string finalPath)

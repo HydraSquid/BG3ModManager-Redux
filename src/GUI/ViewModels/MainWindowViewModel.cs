@@ -416,7 +416,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	private readonly SerialDisposable _allModUpdatesRefreshTask = new();
 	private readonly SerialDisposable _nexusMetadataRefreshTask = new();
 	private readonly SerialDisposable _modioMetadataRefreshTask = new();
-	private readonly SerialDisposable _manualNexusAssociationTasks = new()
+	private readonly SerialDisposable _manualSourceAssociationTasks = new()
 	{
 		Disposable = new CompositeDisposable()
 	};
@@ -469,7 +469,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			mod.NexusModsData?.MetadataOrigin is NexusMetadataOrigin.Manual
 				or NexusMetadataOrigin.ManualUnlinked
 				or NexusMetadataOrigin.ReduxBundleImport ||
-			mod.ModioData?.MetadataOrigin == ModioMetadataOrigin.ReduxBundleImport))
+			mod.ModioData?.MetadataOrigin is ModioMetadataOrigin.ReduxBundleImport
+				or ModioMetadataOrigin.Manual))
 		{
 			mod.NexusModsData.ResetSourceAssociation();
 			mod.ModioData = new ModioModData { UUID = mod.UUID };
@@ -2660,7 +2661,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 		_nexusMetadataRefreshTask.Disposable = null;
 		_modioMetadataRefreshTask.Disposable = null;
-		_manualNexusAssociationTasks.Disposable = new CompositeDisposable();
+		_manualSourceAssociationTasks.Disposable = new CompositeDisposable();
 
 		if (hadModUpdateRefresh)
 		{
@@ -4225,9 +4226,79 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		SaveAndRefreshManualNexusAssociation(mod, false);
 	}
 
+	public async Task<(bool Success, string Error)> TryManuallyLinkModioModAsync(
+		DivinityModData mod,
+		string linkOrId,
+		bool replaceAuthoritativeNexus = false)
+	{
+		if (!Modules.SourceIntegrationsEnabled)
+		{
+			return (false, "Mod-page linking is unavailable while online mod information is disabled.");
+		}
+		if (mod == null)
+		{
+			return (false, "No mod was selected.");
+		}
+		var hasAuthoritativeNexus = mod.NexusModsData?.MetadataOrigin is NexusMetadataOrigin.Manual
+			or NexusMetadataOrigin.NexusArchiveImport
+			or NexusMetadataOrigin.ReduxBundleImport;
+		if (hasAuthoritativeNexus && !replaceAuthoritativeNexus)
+		{
+			return (false, "This package has an explicit Nexus Mods source. Unlink that source before linking a mod.io page.");
+		}
+		if (String.IsNullOrWhiteSpace(Settings.ModioAPIKey))
+		{
+			return (false, "Add a mod.io API key in Preferences before linking a page. Redux uses it to verify that the page belongs to Baldur's Gate 3.");
+		}
+		if (!ModioDataLoader.TryParseBg3ProjectReference(linkOrId, out var reference, out var parseError))
+		{
+			return (false, parseError);
+		}
+
+		try
+		{
+			var linkedMetadata = await ModioDataLoader.LoadModDataByProjectReferenceAsync(
+				mod, reference, Settings.ModioAPIKey, CancellationToken.None);
+			if (linkedMetadata == null)
+			{
+				return (false, "Redux could not verify that mod.io page as a Baldur's Gate 3 mod. The existing source link was not changed.");
+			}
+
+			linkedMetadata.MetadataOrigin = ModioMetadataOrigin.Manual;
+			if (hasAuthoritativeNexus)
+			{
+				mod.NexusModsData.ResetSourceAssociation();
+				mod.NexusModsData.MetadataOrigin = NexusMetadataOrigin.ManualUnlinked;
+				UpdateHandler.Nexus.CacheData.Mods[mod.UUID] = mod.NexusModsData;
+				await UpdateHandler.Nexus.SaveCacheAsync(false, Version.ToString(), CancellationToken.None);
+			}
+			mod.ModioData.ResetSourceAssociation();
+			mod.ModioData.Update(linkedMetadata);
+			UpdateHandler.Modio.CacheData.Mods[mod.UUID] = mod.ModioData;
+			await UpdateHandler.Modio.SaveCacheAsync(false, Version.ToString(), CancellationToken.None);
+			ScheduleRefreshModCategories();
+			return (true, null);
+		}
+		catch (Exception ex)
+		{
+			DivinityApp.Log($"Failed to verify the manual mod.io association for '{mod.FileName}':\n{ex}");
+			return (false, "Redux could not reach mod.io to verify that page. The existing source link was not changed.");
+		}
+	}
+
+	public async Task UnlinkModioModAsync(DivinityModData mod)
+	{
+		if (!Modules.SourceIntegrationsEnabled || mod?.ModioData?.MetadataOrigin != ModioMetadataOrigin.Manual) return;
+		mod.ModioData.ResetSourceAssociation();
+		UpdateHandler.Modio.CacheData.Mods.Remove(mod.UUID);
+		await UpdateHandler.Modio.SaveCacheAsync(false, Version.ToString(), CancellationToken.None);
+		ScheduleRefreshModCategories();
+		LoadModioMetadataBackground();
+	}
+
 	private void SaveAndRefreshManualNexusAssociation(DivinityModData mod, bool refreshLiveMetadata)
 	{
-		var sourceTaskLifetime = _manualNexusAssociationTasks.Disposable as CompositeDisposable;
+		var sourceTaskLifetime = _manualSourceAssociationTasks.Disposable as CompositeDisposable;
 		var scheduledTask = RxApp.TaskpoolScheduler.ScheduleAsync(async (_, cancellationToken) =>
 		{
 			try
@@ -5917,6 +5988,16 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			return false;
 		}
 
+		if (archiveMatch != null)
+		{
+			var metadata = archiveMatch.CreateMetadata(mod.UUID);
+			metadata.MetadataOrigin = NexusMetadataOrigin.NexusArchiveImport;
+			mod.NexusModsData.Update(metadata);
+			UpdateHandler.Nexus.CacheData.Mods[mod.UUID] = mod.NexusModsData;
+			DivinityApp.Log($"Matched imported archive to Nexus Mods project {archiveMatch.ModId} using Redux offline match '{archiveMatch.Kind}'.");
+			return true;
+		}
+
 		if (fileNameInfo.Success)
 		{
 			// The archive name is direct Nexus provenance. Preserve that source choice
@@ -5924,14 +6005,6 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			mod.NexusModsData.SetModVersion(fileNameInfo);
 			mod.NexusModsData.MetadataOrigin = NexusMetadataOrigin.NexusArchiveImport;
 			UpdateHandler.Nexus.CacheData.Mods[mod.UUID] = mod.NexusModsData;
-			return true;
-		}
-
-		if (archiveMatch != null)
-		{
-			mod.NexusModsData.Update(archiveMatch.CreateMetadata(mod.UUID));
-			UpdateHandler.Nexus.CacheData.Mods[mod.UUID] = mod.NexusModsData;
-			DivinityApp.Log($"Matched imported archive to Nexus Mods project {archiveMatch.ModId} using Redux offline match '{archiveMatch.Kind}'.");
 			return true;
 		}
 
@@ -10562,7 +10635,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		_allModUpdatesRefreshTask.DisposeWith(Disposables);
 		_nexusMetadataRefreshTask.DisposeWith(Disposables);
 		_modioMetadataRefreshTask.DisposeWith(Disposables);
-		_manualNexusAssociationTasks.DisposeWith(Disposables);
+		_manualSourceAssociationTasks.DisposeWith(Disposables);
 		ModHealthSnapshots = new ReadOnlyObservableCollection<ModHealthSnapshot>(_modHealthSnapshotItems);
 		ActiveDiagnosticAttentionSnapshots = new ReadOnlyObservableCollection<ModHealthSnapshot>(_activeDiagnosticAttentionItems);
 		ActiveDiagnosticFindingGroups = new ReadOnlyObservableCollection<ModDiagnosticFindingGroupViewModel>(_activeDiagnosticFindingGroupItems);

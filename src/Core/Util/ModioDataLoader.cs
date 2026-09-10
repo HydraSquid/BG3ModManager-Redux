@@ -19,6 +19,43 @@ public static class ModioDataLoader
 	private static readonly HttpClient Client = new();
 	private static long _bg3GameId;
 
+	public readonly record struct ModioProjectReference(long? ProjectId, string NameId);
+
+	public static bool TryParseBg3ProjectReference(string value, out ModioProjectReference reference, out string error)
+	{
+		reference = default;
+		error = null;
+		var input = value?.Trim();
+		if (Int64.TryParse(input, out var projectId) && projectId > 0)
+		{
+			reference = new ModioProjectReference(projectId, null);
+			return true;
+		}
+
+		if (!Uri.TryCreate(input, UriKind.Absolute, out var uri)
+			|| uri.Scheme != Uri.UriSchemeHttps
+			|| !(String.Equals(uri.Host, "mod.io", StringComparison.OrdinalIgnoreCase)
+				|| String.Equals(uri.Host, "www.mod.io", StringComparison.OrdinalIgnoreCase)))
+		{
+			error = "Paste a Baldur's Gate 3 mod.io page URL, for example https://mod.io/g/baldursgate3/m/mod-name.";
+			return false;
+		}
+
+		var segments = uri.AbsolutePath.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+		if (segments.Length != 4
+			|| !String.Equals(segments[0], "g", StringComparison.OrdinalIgnoreCase)
+			|| !String.Equals(segments[1], Bg3GameSlug, StringComparison.OrdinalIgnoreCase)
+			|| !String.Equals(segments[2], "m", StringComparison.OrdinalIgnoreCase)
+			|| !Regex.IsMatch(segments[3], "^[a-z0-9][a-z0-9-]*$", RegexOptions.IgnoreCase))
+		{
+			error = "That is not a Baldur's Gate 3 mod.io mod page.";
+			return false;
+		}
+
+		reference = new ModioProjectReference(null, segments[3]);
+		return true;
+	}
+
 	public static async Task<ModioModData> LoadModDataAsync(DivinityModData mod, string apiKey, CancellationToken cancellationToken)
 	{
 		if (mod == null || mod.PublishHandle == 0 || String.IsNullOrWhiteSpace(apiKey))
@@ -123,6 +160,49 @@ public static class ModioDataLoader
 
 		result.UUID = mod.UUID;
 		return result;
+	}
+
+	public static async Task<ModioModData> LoadModDataByProjectReferenceAsync(
+		DivinityModData mod,
+		ModioProjectReference reference,
+		string apiKey,
+		CancellationToken cancellationToken)
+	{
+		if (reference.ProjectId is > 0)
+		{
+			return await LoadModDataByProjectIdAsync(mod, reference.ProjectId.Value, apiKey, cancellationToken);
+		}
+		if (mod == null || String.IsNullOrWhiteSpace(reference.NameId) || String.IsNullOrWhiteSpace(apiKey))
+		{
+			return null;
+		}
+
+		var gameId = await GetBg3GameIdAsync(apiKey, cancellationToken);
+		if (gameId <= 0) return null;
+
+		var gameApiBaseUrl = $"https://g-{gameId}.modapi.io/v1";
+		var lookupUrl = $"{gameApiBaseUrl}/games/{gameId}/mods?api_key={Uri.EscapeDataString(apiKey)}&name_id={Uri.EscapeDataString(reference.NameId)}&_limit=2";
+		using var response = await Client.GetAsync(lookupUrl, cancellationToken);
+		if (!response.IsSuccessStatusCode)
+		{
+			DivinityApp.Log($"mod.io manual lookup failed for '{reference.NameId}': HTTP {(int)response.StatusCode}");
+			return null;
+		}
+
+		var json = await response.Content.ReadAsStringAsync(cancellationToken);
+		var matches = JsonConvert.DeserializeObject<ModioListResponse<ModioModData>>(json)?.Data
+			.Where(result => result != null
+				&& String.Equals(result.NameId, reference.NameId, StringComparison.OrdinalIgnoreCase)
+				&& (result.GameId <= 0 || result.GameId == gameId))
+			.ToList() ?? new List<ModioModData>();
+		if (matches.Count != 1)
+		{
+			DivinityApp.Log($"Rejected missing or ambiguous mod.io manual match for '{reference.NameId}'.");
+			return null;
+		}
+
+		matches[0].UUID = mod.UUID;
+		return matches[0];
 	}
 
 	private static async Task<long> GetBg3GameIdAsync(string apiKey, CancellationToken cancellationToken)

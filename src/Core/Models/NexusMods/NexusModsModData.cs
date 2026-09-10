@@ -77,6 +77,13 @@ public class NexusModsModData : INotifyPropertyChanged, IExternalModMetadata
 	[JsonProperty("name")]
 	public string Name { get; set; }
 
+	/// <summary>
+	/// Trusted file-level title for packages where several downloadable files share
+	/// one Nexus project. The project title remains in <see cref="Name" />.
+	/// </summary>
+	[JsonProperty("file_display_name")]
+	public string FileDisplayName { get; set; }
+
 	[JsonProperty("summary")]
 	public string Summary { get; set; }
 
@@ -215,7 +222,7 @@ public class NexusModsModData : INotifyPropertyChanged, IExternalModMetadata
 		ModId = -1;
 		LastFileId = -1;
 		CategoryId = 0;
-		Name = Summary = Description = Version = Author = UploadedBy = Status = null;
+		Name = FileDisplayName = Summary = Description = Version = Author = UploadedBy = Status = null;
 		PictureUrl = UploadedUsersProfileUrl = null;
 		Available = DescriptionLoaded = ChangelogsLoaded = IsUpdated = false;
 		Changelogs = new Dictionary<string, List<string>>();

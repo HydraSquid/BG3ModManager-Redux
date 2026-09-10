@@ -42,6 +42,58 @@ public sealed class SourceAssociationTests
 		RegressionAssert.Equal(ReduxOfflineMatchKind.CommunityIdentity, match.Kind);
 	}
 
+	public void ExactNexusFilesUseDistinctPackageTitlesWithoutReplacingTheProjectTitle()
+	{
+		var unofficial = ReduxModDatabaseService.TryResolveFile(4597, 69812);
+		var official = ReduxModDatabaseService.TryResolveFile(4597, 88943);
+		RegressionAssert.True(unofficial != null);
+		RegressionAssert.True(official != null);
+
+		var unofficialMod = CreateMod();
+		unofficialMod.NexusModsEnabled = true;
+		unofficialMod.NexusModsData.Update(unofficial!.CreateMetadata(unofficialMod.UUID));
+		var officialMod = CreateMod();
+		officialMod.NexusModsEnabled = true;
+		officialMod.NexusModsData.Update(official!.CreateMetadata(officialMod.UUID));
+
+		RegressionAssert.Equal("Better Inventory UI (with Mark Books as Read support)", unofficialMod.Metadata.Title);
+		RegressionAssert.Equal("Better Inventory UI (with Mark Books as Read support)", officialMod.Metadata.Title);
+		RegressionAssert.Equal("Addon for Better Inventory UI (unofficial)", unofficialMod.Metadata.PackageTitle);
+		RegressionAssert.Equal("Addon for Better Inventory UI (official)", officialMod.Metadata.PackageTitle);
+	}
+
+	public void ModioManualLinkParserAcceptsOnlyBg3Projects()
+	{
+		RegressionAssert.True(ModioDataLoader.TryParseBg3ProjectReference(
+			"https://mod.io/g/baldursgate3/m/example-project", out var slug, out _));
+		RegressionAssert.Equal("example-project", slug.NameId);
+		RegressionAssert.True(ModioDataLoader.TryParseBg3ProjectReference("12345", out var numeric, out _));
+		RegressionAssert.Equal(12345L, numeric.ProjectId!.Value);
+		RegressionAssert.False(ModioDataLoader.TryParseBg3ProjectReference(
+			"https://mod.io/g/skyrim/m/example-project", out _, out _));
+		RegressionAssert.False(ModioDataLoader.TryParseBg3ProjectReference(
+			"https://example.com/g/baldursgate3/m/example-project", out _, out _));
+	}
+
+	public void ManualModioAssociationSurvivesCacheRoundTrip()
+	{
+		var mod = CreateMod();
+		var cache = new ModioCachedData();
+		cache.Mods[mod.UUID] = new ModioModData
+		{
+			UUID = mod.UUID,
+			ModId = 12345,
+			Name = "Manually linked mod.io project",
+			MetadataOrigin = ModioMetadataOrigin.Manual
+		};
+
+		var cached = RoundTrip(cache).Mods[mod.UUID];
+		RegressionAssert.True(ModioCacheHandler.IsCachedAssociationCompatible(mod, cached));
+		mod.ModioData.Update(cached);
+		RegressionAssert.Equal(ModioMetadataOrigin.Manual, mod.ModioData.MetadataOrigin);
+		RegressionAssert.True(mod.ModioData.HasMetadata);
+	}
+
 	public void CommunityIdentityRequiresTheInstalledPackageNameToAgree()
 	{
 		var mod = CreateMod();

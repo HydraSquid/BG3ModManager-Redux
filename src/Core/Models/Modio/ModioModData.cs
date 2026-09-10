@@ -11,7 +11,8 @@ public enum ModioMetadataOrigin
 	Unknown = 0,
 	NativePackage = 1,
 	CreatorManifest = 2,
-	ReduxBundleImport = 3
+	ReduxBundleImport = 3,
+	Manual = 4
 }
 
 /// <summary>
@@ -131,6 +132,29 @@ public class ModioModData : IExternalModMetadata
 		ModFile = data.ModFile;
 		Tags = data.Tags ?? new List<ModioTagData>();
 
+		foreach (var property in typeof(ModioModData).GetProperties())
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property.Name));
+		}
+	}
+
+	public void ResetSourceAssociation()
+	{
+		ModId = 0;
+		MetadataOrigin = ModioMetadataOrigin.Unknown;
+		GameId = 0;
+		NameId = Name = Summary = Description = ProfileUrl = null;
+		DateUpdated = 0;
+		SubmittedBy = null;
+		Logo = null;
+		Media = null;
+		ModFile = null;
+		Tags = new List<ModioTagData>();
+		RaiseAllPropertiesChanged();
+	}
+
+	public void RaiseAllPropertiesChanged()
+	{
 		foreach (var property in typeof(ModioModData).GetProperties())
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property.Name));

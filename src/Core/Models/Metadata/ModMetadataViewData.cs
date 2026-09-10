@@ -56,6 +56,16 @@ public sealed class ModMetadataViewData : ReactiveObject
 		}
 	}
 
+	/// <summary>
+	/// The package-level title shown in mod lists. Exact Redux database matches can
+	/// distinguish multiple downloadable files belonging to one Nexus project.
+	/// </summary>
+	public string PackageTitle => Provider == _mod.NexusModsData
+		&& _mod.NexusModsData?.OfflineMatchKind is ReduxOfflineMatchKind.ExactPak or ReduxOfflineMatchKind.ExactArchive
+		&& !String.IsNullOrWhiteSpace(_mod.NexusModsData?.FileDisplayName)
+		? _mod.NexusModsData.FileDisplayName
+		: Title;
+
 	public string Author => HasOnlineMetadata && !String.IsNullOrWhiteSpace(Provider?.Author)
 		? Provider.Author
 		: _mod.Author;
@@ -117,9 +127,12 @@ public sealed class ModMetadataViewData : ReactiveObject
 				NexusMetadataOrigin.BundledProvenance => "Automatically linked from the Redux mod database",
 				_ => "Automatically linked from Nexus Mods"
 			}
-			: _mod.ModioData?.MetadataOrigin == ModioMetadataOrigin.ReduxBundleImport
-				? "Linked from an imported Redux modlist"
-				: $"Automatically linked from {SourceLabel}"
+			: _mod.ModioData?.MetadataOrigin switch
+			{
+				ModioMetadataOrigin.Manual => "Manually linked from mod.io",
+				ModioMetadataOrigin.ReduxBundleImport => "Linked from an imported Redux modlist",
+				_ => $"Automatically linked from {SourceLabel}"
+			}
 		: "Local package metadata";
 
 	public bool UsesBundledNexusMetadata => SourceType == ModSourceType.NEXUSMODS
@@ -251,6 +264,7 @@ public sealed class ModMetadataViewData : ReactiveObject
 	private void RaiseDisplayPropertiesChanged()
 	{
 		this.RaisePropertyChanged(nameof(Title));
+		this.RaisePropertyChanged(nameof(PackageTitle));
 		this.RaisePropertyChanged(nameof(Author));
 		this.RaisePropertyChanged(nameof(Version));
 		this.RaisePropertyChanged(nameof(Summary));

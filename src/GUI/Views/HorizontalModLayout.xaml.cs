@@ -2,6 +2,8 @@
 using DivinityModManager.Converters;
 using DivinityModManager.Models;
 using DivinityModManager.Models.Health;
+using DivinityModManager.Models.Modio;
+using DivinityModManager.Models.NexusMods;
 using DivinityModManager.Util;
 using DivinityModManager.Util.ScreenReader;
 using DivinityModManager.ViewModels;
@@ -1067,13 +1069,33 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			};
 			if (mod.Metadata.SourceType == ModSourceType.MODIO)
 			{
-				sourceMenu.Items.Add(new MenuItem
+				var changeModioItem = new MenuItem
 				{
-					Header = "Linked to mod.io",
-					IsEnabled = false,
-					ToolTip = "This package identifies itself as a mod.io mod.",
-					Icon = ReduxIcon.FromResource("Redux.Icon.Information", true, "ReduxInfoBrush")
-				});
+					Header = "Change Linked mod.io Page...",
+					Icon = ReduxIcon.FromResource("Redux.Icon.LinkStroke", true, "Redux.Pill.Modio.Border")
+				};
+				ApplySemanticMenuHover(changeModioItem, "Redux.Pill.Modio.Background", "Redux.Pill.Modio.Border");
+				changeModioItem.Click += (_, _) => ShowManualModioLinkDialog(mod);
+				sourceMenu.Items.Add(changeModioItem);
+
+				if (mod.ModioData?.MetadataOrigin == ModioMetadataOrigin.Manual)
+				{
+					sourceMenu.Items.Add(new Separator());
+					var clearModioItem = new MenuItem
+					{
+						Header = "Clear Manual mod.io Link",
+						Icon = ReduxIcon.FromResource("Redux.Icon.UnlinkStroke", true, "ReduxErrorBrush")
+					};
+					ApplySemanticMenuHover(clearModioItem, "ReduxErrorPillBackground", "ReduxErrorBrush");
+					clearModioItem.Click += async (_, _) =>
+					{
+						var result = ShowCategoryMessage(
+							$"Clear the manual mod.io source link from '{mod.DisplayName}'?\n\nThe installed package and its load-order position will not be changed.",
+							"Clear mod.io Link", MessageBoxButton.YesNo, MessageBoxImage.Question);
+						if (result == MessageBoxResult.Yes) await ViewModel.UnlinkModioModAsync(mod);
+					};
+					sourceMenu.Items.Add(clearModioItem);
+				}
 			}
 			else
 			{
@@ -1104,6 +1126,15 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 					};
 					sourceMenu.Items.Add(unlinkItem);
 				}
+				sourceMenu.Items.Add(new Separator());
+				var modioLinkItem = new MenuItem
+				{
+					Header = hasNexusLink ? "Change Source to mod.io..." : "Link mod.io Page...",
+					Icon = ReduxIcon.FromResource("Redux.Icon.LinkStroke", true, "Redux.Pill.Modio.Border")
+				};
+				ApplySemanticMenuHover(modioLinkItem, "Redux.Pill.Modio.Background", "Redux.Pill.Modio.Border");
+				modioLinkItem.Click += (_, _) => ShowManualModioLinkDialog(mod);
+				sourceMenu.Items.Add(modioLinkItem);
 			}
 			menu.Items.Insert(Math.Min(3, menu.Items.Count), sourceMenu);
 		}
@@ -2514,6 +2545,32 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 	private void ModDetailsGridSplitter_DragCompleted(object sender, DragCompletedEventArgs e)
 	{
 		Dispatcher.BeginInvoke(new Action(RememberExpandedModDetailsHeight));
+	}
+
+	private async void ShowManualModioLinkDialog(DivinityModData mod)
+	{
+		var replaceNexus = mod.NexusModsData?.MetadataOrigin is NexusMetadataOrigin.Manual
+			or NexusMetadataOrigin.NexusArchiveImport
+			or NexusMetadataOrigin.ReduxBundleImport;
+		if (replaceNexus)
+		{
+			var confirmation = ShowCategoryMessage(
+				$"Replace the current Nexus Mods source for '{mod.DisplayName}' with a verified mod.io page?\n\nRedux will keep the current Nexus association unless the mod.io page verifies successfully. The installed package and load order will not change.",
+				"Change Mod Source", MessageBoxButton.YesNo, MessageBoxImage.Question);
+			if (confirmation != MessageBoxResult.Yes) return;
+		}
+
+		var currentLink = mod.ModioData?.HasMetadata == true ? mod.ModioData.SourcePageUrl : null;
+		var dialog = new ModioManualLinkDialog(currentLink) { Owner = Window.GetWindow(this) };
+		ReduxThemeService.Apply(dialog.Resources, ViewModel.Settings.ColorTheme,
+			ReduxThemeService.GetActiveTheme(ViewModel.Settings), ViewModel.Settings.UsesGeneratedGradients);
+		if (dialog.ShowDialog() != true) return;
+
+		var result = await ViewModel.TryManuallyLinkModioModAsync(mod, dialog.ModioLink, replaceNexus);
+		if (!result.Success)
+		{
+			ShowCategoryMessage(result.Error, "Link mod.io Project", MessageBoxButton.OK, MessageBoxImage.Information);
+		}
 	}
 
 	private void RememberExpandedOverrideModsHeight()

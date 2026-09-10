@@ -498,7 +498,7 @@ public class DivinityModData : DivinityBaseModData, ISelectable
 			.ToUIProperty(this, x => x.OpenNexusModsLinkVisibility, Visibility.Collapsed);
 
 		// Presentation-only provider label used by the mod list.
-		this.WhenAnyValue(x => x.Metadata.Title)
+		this.WhenAnyValue(x => x.Metadata.PackageTitle)
 			.ToUIProperty(this, x => x.DisplayTitle, DisplayName);
 		this.WhenAnyValue(x => x.IsActive, x => x.Index, x => x.IsForceLoaded, x => x.IsForceLoadedMergedMod, x => x.ForceAllowInLoadOrder)
 			.Select(state => state.Item3 && !state.Item4 && !state.Item5

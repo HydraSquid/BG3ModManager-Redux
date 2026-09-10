@@ -151,7 +151,7 @@ jobs:
 
       - name: Upload portable test build
         if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Redux-portable-${{ github.ref_name }}-${{ github.run_number }}
           path: BG3ModManager-Redux_v*.zip
@@ -160,7 +160,7 @@ jobs:
 
       - name: Upload installer test build
         if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Redux-installer-${{ github.ref_name }}-${{ github.run_number }}
           path: artifacts/installer/BG3ModManager-Redux-Setup.exe

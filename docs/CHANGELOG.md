@@ -5,6 +5,23 @@ source for individual implementation details.
 
 ## Unreleased
 
+## 0.1.0-alpha.16.2 — public-alpha hotfix
+
+### Fixed
+
+- Preserved the exact selected Nexus file name in the mod list when several files belong to the
+  same Nexus page, while retaining the shared project title in source details.
+- Added manual mod.io source linking, replacement, and clearing with URL/ID validation and explicit
+  confirmation when replacing an existing Nexus link.
+
+### Distribution
+
+- Simplified public releases to one portable ZIP shared byte-for-byte by GitHub Releases and Nexus
+  Mods. The separate Setup artifact is no longer part of future public releases.
+- Added a protected Nexus Mods publishing workflow that downloads the approved GitHub release ZIP,
+  refuses duplicate versions, uploads through Nexus Mods' official action, and records the resulting
+  file-version ID.
+
 ## 0.1.0-alpha.16.1 — public-alpha hotfix
 
 ### Fixed

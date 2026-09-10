@@ -29,15 +29,17 @@ archive, download, native-mod, and load-order changes need tests for failure, ca
 recovery—not only the success path. Visual changes require inspection across built-in themes,
 supported text sizes, common Windows scaling, and Reduce Motion.
 
-Release, installer, updater, runtime-name, or packaged-document changes require the complete gate:
+Release, updater, runtime-name, or packaged-document changes require the complete public gate:
 
 ```powershell
 .\Build-Redux.ps1 -Configuration Debug -Rebuild
 .\Test-Redux.ps1
-.\Build-Installer.ps1 -Configuration Release -RunTests
 .\Build-Redux.ps1 -Configuration Publish -Rebuild -PythonExecutable "C:\Path\To\python.exe"
 git diff --check
 ```
+
+The retained Setup prototype is not a public artifact. Changes inside `src/Installer` or its tests
+must additionally run `Build-Installer.ps1 -Configuration Release -RunTests`.
 
 The Publish build creates the portable ZIP and update-channel manifest locally; it does not publish
 a GitHub release. Do not commit generated archives, build directories, logs, user settings, or local

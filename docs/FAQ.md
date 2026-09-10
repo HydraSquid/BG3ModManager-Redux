@@ -14,9 +14,9 @@ No. Redux is not affiliated with or endorsed by Larian Studios, Nexus Mods, or m
 3 is developed and published by Larian Studios. Redux retains and credits substantial work from the
 upstream BG3 Mod Manager project.
 
-## Is alpha.16.1 stable?
+## Is alpha.16.2 stable?
 
-`0.1.0-alpha.16.1` is a public alpha, not a final stable release. Its core workflows have automated and
+`0.1.0-alpha.16.2` is a public alpha, not a final stable release. Its core workflows have automated and
 private testing, but public use will expose more combinations of Windows versions, display scaling,
 game paths, tools, and mod sets. Keep independent backups and report reproducible problems.
 
@@ -26,14 +26,11 @@ Use only the [official Nexus Mods page](https://www.nexusmods.com/baldursgate3/m
 [GitHub Releases](https://github.com/circleainn/BG3ModManager-Redux/releases). Avoid mirrors,
 repacked archives, and executables supplied through private messages.
 
-## Should I use Setup or the portable ZIP?
+## How do I install the portable ZIP?
 
-Use `BG3ModManager-Redux-Setup.exe` for guided installation and updates, .NET 8 prerequisite help,
-shortcuts, and a normal Windows uninstall entry. If Setup previously installed Redux, a newer Setup
-updates that registered folder while preserving files outside the release inventory. Use the
-complete portable ZIP if you prefer to choose and maintain the application folder yourself. Setup
-downloads and verifies Redux; it does not embed the whole application or claim an arbitrary
-portable folder as its installation.
+Install the .NET 8 Desktop Runtime, download the complete Redux ZIP, and extract every file into a
+dedicated writable folder such as `C:\Modding\Redux`. Run `Redux.exe` from that folder. Public Redux
+releases are portable-only; they do not create an Installed Apps entry or system-wide installation.
 
 ## Why is the application called `Redux.exe`?
 
@@ -81,7 +78,7 @@ information, or contribute a privacy-limited database report for maintainer revi
 
 Core local package discovery, load-order editing, Mod Diagnostics, saved orders, and save browsing
 remain usable without optional provider enrichment. Nexus Mods, mod.io, NXM downloads, application
-updates, Script Extender retrieval, and Setup require their relevant network services.
+updates and Script Extender retrieval require their relevant network services.
 
 ## Does Redux collect telemetry?
 

@@ -6,7 +6,7 @@
 
 **Bring order to the chaos.**
 
-[![Current build](https://img.shields.io/badge/build-0.1.0--alpha.16.1-9A7BFF?style=flat-square)](https://github.com/circleainn/BG3ModManager-Redux/releases)
+[![Current build](https://img.shields.io/badge/build-0.1.0--alpha.16.2-9A7BFF?style=flat-square)](https://github.com/circleainn/BG3ModManager-Redux/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-4F86F7?style=flat-square)](#requirements-and-alpha-status)
 [![License](https://img.shields.io/badge/license-MIT-42A66F?style=flat-square)](LICENSE)
 [![Support on Ko-fi](https://img.shields.io/badge/Support-Ko--fi-FF5E5B?style=flat-square&logo=ko-fi&logoColor=white)](https://ko-fi.com/circleain)
@@ -30,30 +30,25 @@ stronger organization, safer review workflows, and optional offline-assisted gui
 
 ## Install and update
 
-Redux remains portable. Public-alpha releases also provide a separate lightweight Setup for people
-who prefer guided installation and updates; Setup downloads and verifies Redux rather than
-embedding the application.
+Redux public-alpha releases use one portable ZIP. GitHub Releases and Nexus Mods receive the same
+approved archive, and Redux's built-in updater uses that archive for existing installations.
 
-1. Use the official lightweight Setup, or install the
-   [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) yourself for a manual
-   portable installation.
-2. For a manual installation, obtain the complete Redux archive from the
+1. Install the [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
+2. Obtain the complete Redux portable archive from the
    [official Nexus Mods page](https://www.nexusmods.com/baldursgate3/mods/23799) or an official
    [GitHub Releases page](https://github.com/circleainn/BG3ModManager-Redux/releases).
-3. Extract the entire archive into its own writable folder. Do not run Redux from inside the ZIP,
-   the Baldur's Gate 3 installation directory, or a protected system folder.
+3. Extract the entire archive into a dedicated writable folder such as `C:\Modding\Redux`. Do not
+   run Redux from inside the ZIP, the Baldur's Gate 3 installation directory, or a protected system
+   folder.
 4. Run `Redux.exe`. On first launch, review the detected game and profile paths before
    installing or syncing anything.
 
-`0.1.0-alpha.16.1` is the current public-alpha release. It includes a verified in-app update workflow
-and a separate lightweight web Setup. The updater acts only when the official public-alpha channel
-points to a newer, fully published package. A Setup-managed installation can also be updated by
-closing Redux and running the newer Setup; it replaces only release-owned files and preserves
-settings and other user content. Portable copies can be updated manually by backing up the Redux
-folder and extracting the complete newer archive over it. Release archives exclude runtime state
-such as `Data`, `_Logs`, caches, downloads, retained archives, and backups. Never delete those
-folders as part of a routine update. If Redux is moved, open Download Manager and repair the NXM
-association if Redux previously handled `nxm://` links.
+`0.1.0-alpha.16.2` is the current public-alpha release. The updater acts only when the official
+public-alpha channel points to a newer, fully published package. You can also update manually by
+backing up the Redux folder and extracting the complete newer archive over it. Release archives
+exclude runtime state such as `Data`, `_Logs`, caches, downloads, retained archives, and backups.
+Never delete those folders as part of a routine update. If Redux is moved, open Download Manager and
+repair the NXM association if Redux previously handled `nxm://` links.
 
 See [Installation, updates, and removal](docs/INSTALLATION.md) for safe migration, rollback, and
 uninstall guidance.

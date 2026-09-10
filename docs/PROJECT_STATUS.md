@@ -11,18 +11,20 @@ proposals.
 | Product | Baldur's Gate 3 Mod Manager Redux |
 | Short name | Redux |
 | Tagline | **Bring order to the chaos.** |
-| Release line | `0.1.0-alpha.16.1` |
+| Release line | `0.1.0-alpha.16.2` |
 | Lifecycle | Public alpha |
 | Platform | Windows 10/11 x64 |
 | Runtime | .NET 8 Desktop Runtime |
 | Application entry point | `Redux.exe` |
-| Guided installer | `BG3ModManager-Redux-Setup.exe` |
+| Public artifact | `BG3ModManager-Redux_v0.1.0-alpha.N[.H].zip` |
 | Active milestone | `v0.1.0 – Public Alpha` |
 
 The private-alpha stabilization milestone is complete. Alpha.15 established the first public-alpha
 baseline, alpha.16 delivered its focused startup, accessibility, and window-behavior fixes, and
-alpha.16.1 corrects Sync recovery and adds safe Setup-managed updates. GitHub
-Releases and Nexus Mods are authoritative for the current artifact availability. The release gate
+alpha.16.1 corrected Sync recovery and was the final release to experiment with a separate Setup.
+Alpha.16.2 fixes public reports about Nexus file names and mod.io source correction, and begins the
+single portable ZIP workflow shared by GitHub Releases and Nexus Mods. Those services
+are authoritative for the current artifact availability. The release gate
 below applies
 whenever a build is prepared for publication. The public-alpha
 milestone remains open for launch feedback, stabilization, and later alpha releases; it is not a
@@ -40,26 +42,24 @@ one-build milestone.
 - Separate Save Game Manager and reviewed Game-Directory Mod Manager workflows.
 - Conservative offline mod recognition, privacy-limited contribution reports, and optional creator
   manifests.
-- A verified public-alpha update contract and a small web Setup for fresh installs and safe updates
-  to Setup-managed installations.
+- A verified public-alpha update contract for safe in-app updates to existing portable folders.
 - The new `Redux.exe` runtime identity, transparent Redux star, current tagline, and official Discord
   link.
 
 See [Changes from upstream](CHANGES_FROM_UPSTREAM.md) for the durable feature boundary and the
 [changelog](CHANGELOG.md) for release-specific detail. Current release copy is in the
-[alpha.16.1 release notes](releases/0.1.0-alpha.16.1.md).
+[alpha.16.2 release notes](releases/0.1.0-alpha.16.2.md).
 
 ## Public launch gate
 
 The source is ready for the publication sequence only when all of the following are true:
 
 - `dev` and `main` point to the reviewed release commit and their Windows CI runs pass.
-- The version agrees across the application, Setup, archive, channel manifest, tag, and release copy.
+- The version agrees across the application, archive, channel manifest, tag, and release copy.
 - A clean Publish build creates a portable ZIP with `Redux.exe`, `Redux.dll`, its release inventory,
   and exactly the expected updater payload—without user state or legacy root runtimes.
-- The standalone Setup self-test and installer regression suite pass.
-- The exact portable ZIP and Setup executable pass clean-machine, private-alpha migration, launch,
-  core load-order, NXM association, uninstall, and recovery smoke tests.
+- The exact portable ZIP passes clean extraction, private-alpha migration, manual and in-app update,
+  launch, core load-order, NXM association, removal, and recovery smoke tests.
 - GitHub and Nexus Mods copy matches the README, support boundaries, requirements, and known limits.
 - GitHub receives immutable versioned artifacts before the moving public-alpha channel manifest is
   published.
@@ -70,9 +70,9 @@ The complete operator sequence is in
 
 ## Public-alpha roadmap
 
-1. **Maintain the public channel.** Publish each tested portable ZIP and Setup on GitHub, mirror the
-   intended files on Nexus Mods, publish the update-channel manifest last, and synchronize
-   announcements.
+1. **Maintain the public channel.** Publish each tested portable ZIP on GitHub, send those exact
+   bytes to Nexus Mods through the protected release workflow, publish the update-channel manifest
+   last, and synchronize announcements.
 2. **Observe real installations.** Triage startup, migration, path, package, save, native-mod,
    accessibility, and scaling reports. Security, privacy, data-loss, and primary-workflow defects
    take priority over cosmetic expansion.

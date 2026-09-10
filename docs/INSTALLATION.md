@@ -1,8 +1,8 @@
 # Installation, updates, and removal
 
-Redux is a portable Windows application and does not need to be placed inside the Baldur's Gate 3
-directory. `0.1.0-alpha.16.1` is the current public-alpha release. Public releases support both manual
-extraction and a separate lightweight Setup.
+Redux is a portable Windows application and does not belong inside the Baldur's Gate 3 directory.
+`0.1.0-alpha.16.2` is the current public-alpha release. Public releases use one portable ZIP;
+GitHub Releases and Nexus Mods receive the same approved archive.
 
 ## Requirements
 
@@ -15,39 +15,10 @@ self-contained application.
 
 ## Install Redux
 
-### Lightweight Setup (public alpha)
-
-Download `BG3ModManager-Redux-Setup.exe` from the official Redux release. Setup is a small web
-bootstrapper: Redux is not packed inside it. Before downloading the current public-alpha archive,
-Setup shows its exact version and size, checks the required x64 .NET 8 Desktop Runtime, and lets you
-review the detected game and per-user data paths.
-
-Setup defaults to a writable per-user application folder, accepts another empty location, and
-refuses to install inside the Baldur's Gate 3 directory. The downloaded archive must match the
-fixed official GitHub channel, declared byte length, SHA-256 hash, safe archive paths, and release
-inventory before Setup commits it. Setup adds a Start Menu shortcut, offers an optional Desktop
-shortcut, and registers a normal per-user Windows uninstall entry.
-
-When Windows already has a Redux installation registered by Setup, running a newer Setup switches
-to update mode and locks the destination to that registered folder. Close Redux first. Setup backs
-up the currently owned application files, applies the verified release, removes obsolete owned
-files, refreshes shortcuts and the Windows entry, and rolls back if the transaction fails. Settings,
-saved orders, downloads, archives, logs, and all other files outside the release inventory remain
-untouched. Setup refuses an unregistered folder or an installation without a valid release
-inventory rather than guessing what it owns.
-Setup allows a same-version repair but refuses to replace a registered newer alpha with an older
-channel release.
-
-If .NET 8 is missing, Setup can download its x64 Desktop Runtime installer directly from Microsoft.
-It verifies the final Microsoft download location and Authenticode signer before launching it, and
-also offers the official Microsoft download page as a fallback.
-
-### Portable archive
-
-1. Download the complete archive from the official Redux Nexus Mods page or an official GitHub
-   release.
-2. Create a dedicated writable folder for Redux. Avoid the BG3 installation directory, Windows
-   system folders, and running directly from a compressed archive.
+1. Download the complete portable archive from the official Redux Nexus Mods page or an official
+   GitHub release.
+2. Create a dedicated writable folder such as `C:\Modding\Redux`. Avoid the BG3 installation
+   directory, Windows system folders, and running directly from a compressed archive.
 3. Extract every file while preserving the archive's folder structure.
 4. Run `Redux.exe`.
 5. Review the detected BG3, profile, Mods, saves, and Script Extender paths before making changes.
@@ -94,11 +65,9 @@ preferences, downloads, retained archives, saved orders, logs, and user-created 
 claimed or removed. If file replacement fails, the updater restores the files it backed up before
 the transaction.
 
-The built-in updater does not install Redux on a new computer and is separate from standalone
-Setup. Setup can create a fresh installation or update/repair the installation it registered with
-Windows; it does not move an installation or claim an arbitrary portable folder. A protected or
-read-only installation location can prevent an in-place update; use a writable application folder
-or update a portable copy manually in that case.
+The built-in updater updates an existing Redux folder; it is not a fresh installer. For a manual
+update, close Redux, back up its folder, and extract the complete newer portable archive over it. A
+protected or read-only location can prevent an in-place update, so keep Redux in a writable folder.
 
 ## Move Redux
 
@@ -124,12 +93,6 @@ Mod Manager workflows for those items.
 
 Removing the application does not uninstall mods, saves, Script Extender, or game-directory mods.
 
-If Redux was installed with lightweight Setup, use the normal **BG3 Mod Manager Redux** entry in
-Windows Installed Apps. Its uninstaller removes only files owned by the installed release inventory
-and preserves unlisted content in the application folder.
-
-For a manually extracted portable copy:
-
 1. Finish or cancel active downloads and close BG3.
 2. If Redux handles `nxm://` links, use **Disable NXM Links** so it can restore the previous handler
    where possible.
@@ -138,8 +101,12 @@ For a manually extracted portable copy:
 4. Close Redux.
 5. Keep any saved orders, archives, logs, or backups you still need, then remove the Redux folder.
 
-If Redux cannot start and still owns the NXM association, reinstall or restore the same Redux folder
-long enough to disable the association, or repair the Windows default-app/protocol setting manually.
+Older public-alpha Setup builds may still leave a **BG3 Mod Manager Redux** entry in Windows
+Installed Apps. Use that entry to remove the old registration before deleting its folder. New public
+releases are portable and do not create an Installed Apps entry.
+
+If Redux cannot start and still owns the NXM association, restore the same Redux folder long enough
+to disable the association, or repair the Windows default-app/protocol setting manually.
 
 ## Back up the right things
 

@@ -24,10 +24,10 @@ Every channel should agree on these facts:
 
 - product: **Baldur's Gate 3 Mod Manager Redux**;
 - tagline: **Bring order to the chaos.**;
-- current line: **0.1.0-alpha.16.1 — public alpha hotfix**;
+- current line: **0.1.0-alpha.16.2 — public alpha hotfix**;
 - platform: Windows 10/11 x64 with .NET 8 Desktop Runtime;
 - application filename: `Redux.exe`;
-- installation choices: verified lightweight Setup or full portable archive;
+- installation: one complete portable archive;
 - official distribution: GitHub Releases and Nexus Mods;
 - upstream lineage and unofficial-project disclaimer; and
 - public-alpha backup, review, and limitation language.
@@ -42,7 +42,7 @@ Use this order so a first-time visitor can decide safely without reading a wall 
 
 1. Product name, tagline, public-alpha label, and one-sentence description.
 2. A current 16:9 hero image made from real application-rendered UI.
-3. Clear **Requirements** and **Install** sections with Setup and portable choices.
+3. Clear **Requirements** and **Install** sections for the portable archive.
 4. A concise feature grid: organization, deliberate load-order review, Download Manager, save and
    game-directory management, themes/accessibility, and offline recognition.
 5. A **How Redux differs from BG3MM** summary that preserves upstream credit.
@@ -51,9 +51,8 @@ Use this order so a first-time visitor can decide safely without reading a wall 
 7. Known public-alpha limitations and the supported reporting routes.
 8. Changelog, credits, source, privacy, Discord, and license links.
 
-The Files tab should make Setup versus portable use obvious. Do not describe Setup as a bundled
-offline installer: it is a small web bootstrapper that fetches and verifies the portable release.
-Do not upload two differently built files under the same version and filename.
+The Files tab should provide one clearly named portable release. GitHub and Nexus Mods must receive
+the same approved ZIP; never rebuild or repack it for one destination.
 
 ## Website structure
 
@@ -100,12 +99,13 @@ only on a self-selected role.
 1. Freeze the reviewed source commit and regenerate every packaged document and artifact.
 2. Record hashes and complete local artifact tests.
 3. Push and verify `dev` and `main` CI.
-4. Create the immutable versioned GitHub release and upload the tested portable ZIP and Setup.
-5. Download them anonymously and verify bytes, launch, install, and uninstall.
-6. Upload the intended files and current images to Nexus Mods; verify download parity.
-7. Publish `Redux-Update-Public-Alpha.json` to the moving channel only after versioned URLs work.
-8. Test a fresh Setup install, a Setup-managed update, and the in-app update path through the public
-   channel where applicable.
+4. Create the immutable versioned GitHub release and upload the tested portable ZIP.
+5. Download it anonymously and verify its size, hash, contents, and launch behavior.
+6. Approve the protected Nexus deployment so the release workflow uploads that exact GitHub ZIP;
+   record the returned Nexus file-version ID and verify parity.
+7. Publish `Redux-Update-Public-Alpha.json` to the moving channel only after both destinations work.
+8. Test a fresh portable launch, a manual replacement update, and the in-app update path through the
+   public channel.
 9. Update website state and publish matching Discord, Nexus, and GitHub announcements.
 10. Monitor support and security routes; never silently replace versioned artifacts.
 

@@ -10,10 +10,10 @@ not replace code, tests, schemas, or security validation.
 | Desktop application | `src/GUI/GUI.csproj` | WPF windows, controls, themes, interaction, app composition; builds `Redux.exe` / `Redux.dll` |
 | Core | `src/Core/DivinityModManagerCore.csproj` | Models, persistence, package/load-order logic, diagnostics, downloads, native installs, updates |
 | Updater | `src/Updater/ReduxUpdater.csproj` | Narrow out-of-process application-file replacement and rollback |
-| Setup | `src/Installer/ReduxInstaller.csproj` | Install/update web bootstrapper, prerequisite handling, shortcuts, transactional replacement, inventory-scoped uninstall |
+| Dormant Setup prototype | `src/Installer/ReduxInstaller.csproj` | Retained install/update prototype; not part of the current portable-only public distribution |
 | Toolbox | `src/Toolbox/Toolbox.csproj` | Retained utility and Script Extender support code |
 | Runtime regression suite | `tests/Redux.Core.Tests` | Executable behavioral checks for core and WPF contracts |
-| Installer regression suite | `tests/Redux.Installer.Tests` | Executable checks for Setup, manifests, install, rollback, and uninstall |
+| Installer regression suite | `tests/Redux.Installer.Tests` | Retained checks for the dormant Setup prototype |
 | Database tools | `tools/ReduxModDatabaseTool*` | Preview-first validation and reviewed offline-database maintenance |
 
 `External/` contains the upstream and vendored dependencies required by the inherited BG3MM/LSLib
@@ -71,13 +71,12 @@ managed because it did not preserve the user's original game file.
 
 ### Application distribution
 
-Publish packaging produces an inventory of release-owned files. Setup and the in-app updater accept
-only the fixed public-alpha channel, strict version/host/path shapes, declared size and SHA-256, safe
-archive paths, and a complete inventory. The updater runs outside the installation and mutates only
-new or previously owned application files. Setup uses isolated staging for a fresh install; for an
-existing registered install it backs up the prior inventory, atomically replaces new or previously
-owned files, removes obsolete owned files, preserves unlisted content, and rolls back failed
-transactions.
+Publish packaging produces one portable ZIP and an inventory of release-owned files. The in-app
+updater accepts only the fixed public-alpha channel, strict version/host/path shapes, declared size
+and SHA-256, safe archive paths, and a complete inventory. It runs outside the application folder and
+mutates only new or previously owned application files. Fresh installation remains an explicit
+portable extraction. The retained Setup prototype is not built or published by the current release
+workflow.
 
 ## UI and theme system
 
@@ -127,10 +126,12 @@ Common commands from the repository root:
 ```powershell
 .\Build-Redux.ps1 -Configuration Debug -Rebuild
 .\Test-Redux.ps1
-.\Build-Installer.ps1 -Configuration Release -RunTests
 .\Build-Redux.ps1 -Configuration Publish -Rebuild -PythonExecutable "C:\Path\To\python.exe"
 git diff --check
 ```
+
+If work resumes on the dormant Setup prototype, validate it separately with
+`Build-Installer.ps1 -Configuration Release -RunTests`.
 
 The main build requires Visual Studio managed-desktop, Desktop C++, and C++/CLI components because
 LSLib includes native and managed/native projects. Publish packaging also requires Python 3.

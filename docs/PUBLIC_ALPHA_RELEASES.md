@@ -1,32 +1,34 @@
 # Public-alpha releases and update recovery
 
 This page documents Redux's public release contract so maintainers, contributors, and users can
-verify what the installer and in-app updater are allowed to download. It does not replace testing
+verify what the in-app updater is allowed to download. It does not replace testing
 the exact files published on GitHub and Nexus Mods.
 
 ## Release artifacts
 
-`0.1.0-alpha.15` was the first Redux public-alpha version; `0.1.0-alpha.16.1` is the current hotfix.
+`0.1.0-alpha.15` was the first Redux public-alpha version; `0.1.0-alpha.16.2` is the current hotfix.
 Each public alpha has an immutable version and a matching Git tag such as
-`v0.1.0-alpha.16.1`. A correction to an already-published alpha uses a hotfix suffix such as
+`v0.1.0-alpha.16.2`. A correction to an already-published alpha uses a hotfix suffix such as
 `0.1.0-alpha.16.1`, then `.16.2`; it does not replace the earlier release's files. The next planned
-alpha remains `0.1.0-alpha.17`. The versioned GitHub release contains:
+alpha remains `0.1.0-alpha.17`. Starting with alpha.16.2, the public artifact
+set contains:
 
-- `BG3ModManager-Redux_v0.1.0-alpha.N[.H].zip`, the versioned portable application;
-- `BG3ModManager-Redux-Setup.exe`, the separate install/update web bootstrapper; and
+- `BG3ModManager-Redux_v0.1.0-alpha.N[.H].zip`, the versioned portable application; and
 - release notes for that exact version.
+
+Alpha.16.1 was the last release to include the experimental Setup artifact. Historical release notes
+retain that fact, but future releases and current installation guidance are portable-only.
 
 The portable ZIP contains `Redux-Release-Files.json`. That inventory names every application file
 owned by the release. It deliberately excludes settings, saved orders, downloads, retained
 archives, logs, backups, custom themes, and other user-created state.
 
 The portable application starts at `Redux.exe`. The adjacent managed assembly is `Redux.dll`.
-`BG3ModManager.exe` was the private-alpha runtime name and must not be present at the root of an
-alpha.15 package. The Setup artifact retains its descriptive filename because it is a distinct
-bootstrapper, not the application runtime.
+`BG3ModManager.exe` was the private-alpha runtime name and must not be present at the root of a
+public portable package.
 
 The moving `public-alpha` channel release contains
-`Redux-Update-Public-Alpha.json`. Redux and Setup use its fixed URL; they do not rely on GitHub's
+`Redux-Update-Public-Alpha.json`. Redux uses its fixed URL rather than relying on GitHub's
 generic latest-release selection. The document points to one versioned portable ZIP and records its
 exact byte length and SHA-256 digest.
 
@@ -38,49 +40,49 @@ public builds.
 
 Compatibility matters during the transition: the already-published alpha.15 and alpha.16 clients
 only parse the original `alpha.N` form, so they cannot discover a dotted hotfix automatically. The
-first dotted hotfix must therefore be installed manually, applied by explicitly downloading and
-running its newer Setup, or be preceded by one final single-number bridge release. Once a
-hotfix-aware build is installed, later dotted hotfixes work normally. Never publish a dotted channel
-manifest on the assumption that an unmodified alpha.16 client can read it.
+first dotted hotfix must therefore be installed manually by extracting its portable archive, or be
+preceded by one final single-number bridge release. Once a hotfix-aware build is installed, later
+dotted hotfixes work normally. Never publish a dotted channel manifest on the assumption that an
+unmodified alpha.16 client can read it.
 
 ## Prepare a candidate
 
-1. Make the application, assembly, Setup, tag, ZIP filename, release notes, and manifest versions
-   agree.
+1. Make the application, assembly, tag, ZIP filename, release notes, and manifest versions agree.
    Start from the previous file in [`releases/`](releases/) and update only the final,
    artifact-specific details.
 2. Run `Build-Redux.ps1 -Configuration Debug` and the complete Redux regression executable.
-3. Run `Build-Installer.ps1 -Configuration Release -RunTests`.
-4. Run `Build-Redux.ps1 -Configuration Publish` with Python 3 available. This creates the
+3. Run `Build-Redux.ps1 -Configuration Publish` with Python 3 available. This creates the
    versioned and Latest ZIPs, release inventory, and public-alpha channel manifest.
-5. Confirm the portable inventory exactly covers the ZIP, the ZIP has only the four expected
-   `Updater/` files, and Setup is not inside the portable archive.
-6. Audit NuGet dependencies and inspect both deliverables for secrets, logs, settings, caches,
+4. Confirm the portable inventory exactly covers the ZIP and the ZIP has only the four expected
+   `Updater/` files.
+5. Audit NuGet dependencies and inspect the archive for secrets, logs, settings, caches,
    dumps, source paths, and other build-machine data.
-7. Complete clean-install, update-from-the-previous-alpha, rollback, uninstall, and core workflow
-   smoke tests on the exact candidate files.
+6. Complete clean-extraction, update-from-the-previous-alpha, rollback, removal, and core workflow
+   smoke tests on the exact candidate archive.
 
-For alpha.15, migration testing must also cover a folder from the legacy `BG3ModManager.exe` era.
-Setup should recognize that folder as an existing installation, while a clean alpha.15 package must
-contain only the new `Redux.*` root runtime. The final portable archive must be regenerated after
-any README or packaged-document change because those bytes affect its SHA-256 digest.
+For alpha.15, migration testing also covered a folder from the legacy `BG3ModManager.exe` era. A
+clean public package must contain only the new `Redux.*` root runtime. The final portable archive
+must be regenerated after any README or packaged-document change because those bytes affect its
+SHA-256 digest.
 
 ## Publish without creating a broken channel
 
-1. Publish the immutable versioned release and upload the tested portable ZIP and Setup executable.
-2. Download both files from GitHub and repeat their size, hash, launch, install, and uninstall checks.
-3. If Nexus Mods also hosts the files, confirm its downloads are byte-identical to the tested GitHub
-   artifacts where the filenames represent the same build.
-4. Confirm the manifest's versioned artifact and release-notes URLs work anonymously.
-5. Upload the already-tested manifest to the moving `public-alpha` channel only after every
+1. Publish the immutable versioned GitHub release with the tested portable ZIP.
+2. Download the ZIP from GitHub and repeat its size, hash, contents, and launch checks.
+3. Approve the protected `nexus-production` deployment. The release workflow downloads the GitHub
+   asset and submits those exact bytes through Nexus Mods' official upload action.
+4. Record the returned Nexus file-version ID and verify the Nexus entry matches the GitHub version,
+   filename, and archive.
+5. Confirm the manifest's versioned artifact and release-notes URLs work anonymously.
+6. Upload the already-tested manifest to the moving `public-alpha` channel only after every
    versioned artifact is reachable. The channel manifest is the final publication step.
-6. Reproduce an in-app update, a Setup update of its registered previous release, and a fresh Setup
-   install through the public URLs before announcing the release.
+7. Reproduce an in-app update, a manual replacement update, and a fresh portable launch through the
+   public URLs before announcing the release.
 
-For the first public alpha there is no previous public channel build. Replace that one upgrade test
-with a migration from the newest private alpha, a clean portable launch, and a clean Setup install.
-Publish the channel manifest last. Until that step, in-app checks and Setup must fail safely without
-changing an installation.
+For the first public alpha there was no previous public channel build, so its upgrade test was
+replaced by migration from the newest private alpha and a clean portable launch. Publish the channel
+manifest last. Until that step, in-app update checks must fail safely without changing an
+installation.
 
 Never replace an immutable versioned ZIP with different bytes while retaining its version. Publish
 a new, higher alpha version and a matching manifest instead.
@@ -103,8 +105,8 @@ downloads, retained archives, or backups as part of application rollback.
 
 ## Evidence for the public-alpha gate
 
-Record the tested Windows and BG3 versions, source and target Redux versions, install type, hashes of
-the exact Setup and portable ZIP, and the result of each major smoke-test group. Link defects to
+Record the tested Windows and BG3 versions, source and target Redux versions, the exact portable ZIP
+hash, and the result of each major smoke-test group. Link defects to
 focused issues. Release only when no known crash, data-loss risk, unsafe mutation, broken primary
 workflow, install/update/uninstall failure, or credential/privacy leak remains open.
 
@@ -117,10 +119,9 @@ Keep one maintainer record with the following values from the exact artifacts th
 
 - source commit and matching `v0.1.0-alpha.N[.H]` tag target;
 - portable ZIP filename, byte length, and SHA-256;
-- Setup filename, byte length, and SHA-256;
 - `Redux-Update-Public-Alpha.json` byte length and SHA-256;
 - successful `dev` and `main` Windows CI run links;
-- clean portable, Setup install/uninstall, private-alpha migration, NXM association, update-channel,
+- clean extraction, manual update/removal, private-alpha migration, NXM association, update-channel,
   and core load-order smoke-test results;
 - GitHub and Nexus Mods download URLs; and
 - announcement time plus any accepted public-alpha limitations.

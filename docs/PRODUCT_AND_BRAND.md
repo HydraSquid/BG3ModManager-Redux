@@ -12,12 +12,12 @@ theme resources remain authoritative for live interface colors and control behav
 | Compact product name | **BG3 Mod Manager Redux** |
 | Short name | **Redux** |
 | Tagline | **Bring order to the chaos.** |
-| Version | **0.1.0-alpha.16.1** |
+| Version | **0.1.0-alpha.16.2** |
 | Lifecycle | **Public alpha** |
 | Category | Windows mod manager for Baldur's Gate 3 |
 | Runtime filename | `Redux.exe` |
-| Portable archive | `BG3ModManager-Redux_v0.1.0-alpha.16.1.zip` |
-| Setup filename | `BG3ModManager-Redux-Setup.exe` |
+| Portable archive | `BG3ModManager-Redux_v0.1.0-alpha.16.2.zip` |
+| Public distribution | Portable ZIP only |
 
 Use the full name on first mention and **Redux** afterward. Do not shorten the product to “BG3MM”
 where it could be confused with LaughingLeader's upstream application. Do not call a public alpha a final,
@@ -46,7 +46,7 @@ The canonical public mark is the four-point Redux star:
 - [`assets/brand/redux-star.svg`](../assets/brand/redux-star.svg) is the scalable transparent brand
   source used by the README and public layouts.
 - [`src/GUI/Redux.ico`](../src/GUI/Redux.ico) is the multi-resolution Windows application icon used
-  by `Redux.exe` and Setup.
+  by `Redux.exe`.
 
 Keep the star's transparent surroundings. Do not place it in an accidental black square, stretch it,
 crop its points, add a second container tile, or redraw it synthetically. Provide clear space of

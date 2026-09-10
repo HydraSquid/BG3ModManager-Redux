@@ -36,6 +36,7 @@ quick picture of Redux.
 - [Contribution guide](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
 - [Changelog](CHANGELOG.md)
+- [Alpha.16.2 release notes](releases/0.1.0-alpha.16.2.md)
 - [Alpha.16.1 release notes](releases/0.1.0-alpha.16.1.md)
 - [Alpha.16 release notes](releases/0.1.0-alpha.16.md)
 - [Alpha.15 release notes](releases/0.1.0-alpha.15.md)

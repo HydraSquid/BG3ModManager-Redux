@@ -64,10 +64,6 @@ jobs:
             exit $LASTEXITCODE
           }
 
-      - name: Build and test standalone web installer
-        shell: pwsh
-        run: .\Build-Installer.ps1 -Configuration Release -RunTests
-
       - name: Build and validate Publish package
         shell: pwsh
         run: |
@@ -155,14 +151,5 @@ jobs:
         with:
           name: Redux-portable-${{ github.ref_name }}-${{ github.run_number }}
           path: BG3ModManager-Redux_v*.zip
-          if-no-files-found: error
-          retention-days: 7
-
-      - name: Upload installer test build
-        if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v7
-        with:
-          name: Redux-installer-${{ github.ref_name }}-${{ github.run_number }}
-          path: artifacts/installer/BG3ModManager-Redux-Setup.exe
           if-no-files-found: error
           retention-days: 7

@@ -24,7 +24,7 @@ Every channel should agree on these facts:
 
 - product: **Baldur's Gate 3 Mod Manager Redux**;
 - tagline: **Bring order to the chaos.**;
-- current line: **0.1.0-alpha.16.3 — public alpha hotfix**;
+- current line: **0.1.0-alpha.16.3.1 — silent public-alpha maintenance release**;
 - platform: Windows 10/11 x64 with .NET 8 Desktop Runtime;
 - application filename: `Redux.exe`;
 - installation: one complete portable archive;
@@ -95,6 +95,13 @@ notifications are enough for a small server. Do not grant moderation or reposito
 only on a self-selected role.
 
 ## Coordinated release sequence
+
+Two-component releases such as `alpha.16.4`, `.16.5`, and `.16.6` are normal releases and receive
+the Discord announcement and release-role ping. Three-component releases such as `.16.3.1`,
+`.16.3.2`, and `.16.4.1` are quiet fixes or small additions. Their GitHub release notes must include
+`<!-- redux:no-announce -->`; the helper bot records them as current but skips the announcement and
+ping. Silent releases are still published normally, marked Latest on GitHub, uploaded to Nexus Mods,
+and promoted through the public-alpha updater channel.
 
 1. Freeze the reviewed source commit and regenerate every packaged document and artifact.
 2. Record hashes and complete local artifact tests.

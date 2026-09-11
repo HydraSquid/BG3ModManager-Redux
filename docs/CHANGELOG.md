@@ -5,6 +5,10 @@ source for individual implementation details.
 
 ## Unreleased
 
+No additional changes are queued after alpha.16.3.1.
+
+## 0.1.0-alpha.16.3.1 — silent public-alpha maintenance release
+
 ### Fixed
 
 - Removed the generic mod.io health warning because a linked source page does not prove that the

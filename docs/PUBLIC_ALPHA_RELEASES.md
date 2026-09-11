@@ -6,7 +6,8 @@ the exact files published on GitHub and Nexus Mods.
 
 ## Release artifacts
 
-`0.1.0-alpha.15` was the first Redux public-alpha version; `0.1.0-alpha.16.3` is the current hotfix.
+`0.1.0-alpha.15` was the first Redux public-alpha version; `0.1.0-alpha.16.3.1` is the current
+maintenance release.
 Each public alpha has an immutable version and a matching Git tag such as
 `v0.1.0-alpha.16.2`. A correction to an already-published alpha uses a hotfix suffix such as
 `0.1.0-alpha.16.1`, then `.16.2`; a quiet correction to one of those hotfixes may add a maintenance
@@ -50,6 +51,12 @@ The same rule applies to maintenance suffixes: the already-published alpha.16.3 
 `.16.3.1`. Use a two-component bridge such as `.16.4` for automatic updates, or require a manual
 install of `.16.3.1`. Once a maintenance-aware build is installed, later three-component versions
 are ordered and updated normally.
+
+Two-component releases (`.16.4`, `.16.5`, `.16.6`) are announced releases. Three-component releases
+(`.16.3.1`, `.16.3.2`, `.16.4.1`) are silent maintenance releases and must include
+`<!-- redux:no-announce -->` in their GitHub notes. The helper bot still records a silent release but
+does not post or ping. The release remains a normal published GitHub release, is marked Latest,
+uploads to Nexus Mods, and moves the public-alpha channel like any other release.
 
 ## Prepare a candidate
 
@@ -123,7 +130,7 @@ troubleshooting guide. Speculative redesigns can remain deferred without blockin
 
 Keep one maintainer record with the following values from the exact artifacts that are uploaded:
 
-- source commit and matching `v0.1.0-alpha.N[.H]` tag target;
+- source commit and matching `v0.1.0-alpha.N[.H[.M]]` tag target;
 - portable ZIP filename, byte length, and SHA-256;
 - `Redux-Update-Public-Alpha.json` byte length and SHA-256;
 - successful `dev` and `main` Windows CI run links;

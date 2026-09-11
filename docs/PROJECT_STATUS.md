@@ -11,12 +11,12 @@ proposals.
 | Product | Baldur's Gate 3 Mod Manager Redux |
 | Short name | Redux |
 | Tagline | **Bring order to the chaos.** |
-| Release line | `0.1.0-alpha.16.3` |
+| Release line | `0.1.0-alpha.16.3.1` |
 | Lifecycle | Public alpha |
 | Platform | Windows 10/11 x64 |
 | Runtime | .NET 8 Desktop Runtime |
 | Application entry point | `Redux.exe` |
-| Public artifact | `BG3ModManager-Redux_v0.1.0-alpha.N[.H].zip` |
+| Public artifact | `BG3ModManager-Redux_v0.1.0-alpha.N[.H[.M]].zip` |
 | Active milestone | `v0.1.0 – Public Alpha` |
 
 The private-alpha stabilization milestone is complete. Alpha.15 established the first public-alpha
@@ -48,7 +48,7 @@ one-build milestone.
 
 See [Changes from upstream](CHANGES_FROM_UPSTREAM.md) for the durable feature boundary and the
 [changelog](CHANGELOG.md) for release-specific detail. Current release copy is in the
-[alpha.16.3 release notes](releases/0.1.0-alpha.16.3.md).
+[alpha.16.3.1 release notes](releases/0.1.0-alpha.16.3.1.md).
 
 ## Public launch gate
 

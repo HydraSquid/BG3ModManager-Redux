@@ -5,9 +5,9 @@ source for individual implementation details.
 
 ## Unreleased
 
-No additional changes are queued after the alpha.16.3 release candidate.
+No additional changes are queued after alpha.16.3.
 
-## 0.1.0-alpha.16.3 — pending public-alpha hotfix
+## 0.1.0-alpha.16.3 — public-alpha hotfix
 
 ### Fixed
 
@@ -19,9 +19,6 @@ No additional changes are queued after the alpha.16.3 release candidate.
   same-provider name collisions instead of guessing.
 - Added conservative bundled mod.io recognition that requires a matching UUID and exact package
   name, folder, or filename and never overrides native or manually selected provenance.
-
-This release is prepared but is not public until its immutable portable ZIP, GitHub release, Nexus
-upload, and public-alpha update manifest have all passed the release gates.
 
 ## 0.1.0-alpha.16.2 — public-alpha hotfix
 

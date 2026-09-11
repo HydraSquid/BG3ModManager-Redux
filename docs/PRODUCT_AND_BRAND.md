@@ -12,11 +12,11 @@ theme resources remain authoritative for live interface colors and control behav
 | Compact product name | **BG3 Mod Manager Redux** |
 | Short name | **Redux** |
 | Tagline | **Bring order to the chaos.** |
-| Version | **0.1.0-alpha.16.2** |
+| Version | **0.1.0-alpha.16.3** |
 | Lifecycle | **Public alpha** |
 | Category | Windows mod manager for Baldur's Gate 3 |
 | Runtime filename | `Redux.exe` |
-| Portable archive | `BG3ModManager-Redux_v0.1.0-alpha.16.2.zip` |
+| Portable archive | `BG3ModManager-Redux_v0.1.0-alpha.16.3.zip` |
 | Public distribution | Portable ZIP only |
 
 Use the full name on first mention and **Redux** afterward. Do not shorten the product to “BG3MM”

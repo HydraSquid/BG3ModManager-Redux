@@ -12,4 +12,8 @@ The canonical paste-ready description is [`docs/NEXUS_DESCRIPTION.bbcode`](../..
 - No logo, illustration, card, glow, color accent, or section numbering
 - Naming and order follow the current Nexus description sections
 
+Selected dividers also have a `-light.png` companion for the GitHub README. The original files
+remain the Nexus and GitHub dark-theme versions; the companions recolor only neutral lettering and
+hairlines so they stay readable in GitHub's light theme.
+
 The editable SVG sources and deterministic renderer are maintained with the project’s external promotional source assets. Keep these public PNG paths stable because the Nexus description links to their `raw.githubusercontent.com` URLs.

@@ -43,7 +43,7 @@ compatibility,” “guaranteed safe,” or “supports every mod.”
 
 The canonical public mark is the four-point Redux star:
 
-- [`assets/brand/redux-star.svg`](../assets/brand/redux-star.svg) is the scalable transparent brand
+- [`docs/assets/redux-star.svg`](assets/redux-star.svg) is the scalable transparent brand
   source used by the README and public layouts.
 - [`src/GUI/Redux.ico`](../src/GUI/Redux.ico) is the multi-resolution Windows application icon used
   by `Redux.exe`.

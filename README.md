@@ -1,8 +1,12 @@
 <div align="center">
 
-<img src="assets/brand/redux-star.svg" alt="BG3 Mod Manager Redux" width="128">
-
-# Baldur's Gate 3 Mod Manager Redux
+<h1>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/00-redux-header.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/00-redux-header-light.png">
+  <img src="docs/assets/nexus-description/00-redux-header-light.png" alt="Baldur's Gate 3 Mod Manager Redux" width="100%">
+</picture>
+</h1>
 
 **Bring order to the chaos.**
 
@@ -53,7 +57,13 @@ repair the NXM association if Redux previously handled `nxm://` links.
 See [Installation, updates, and removal](docs/INSTALLATION.md) for safe migration, rollback, and
 uninstall guidance.
 
-## Redux at a glance
+<h2 id="redux-at-a-glance">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/02-main-features.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/02-main-features-light.png">
+  <img src="docs/assets/nexus-description/02-main-features-light.png" alt="Redux at a glance" width="100%">
+</picture>
+</h2>
 
 | Organize | Review | Personalize |
 |:--|:--|:--|
@@ -76,7 +86,13 @@ uninstall guidance.
 
 ## What Redux adds
 
-### Categories, separators, and mod details
+<h3 id="categories-separators-and-mod-details">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/03-organization.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/03-organization-light.png">
+  <img src="docs/assets/nexus-description/03-organization-light.png" alt="Categories, separators, and mod details" width="100%">
+</picture>
+</h3>
 
 - Automatic and custom categories with names, descriptions, colors, icons, ordering, and filtering.
 - Up to three visible category assignments per mod.
@@ -91,7 +107,13 @@ uninstall guidance.
 Categories, separators, and notes are Redux presentation data. They never enter the game's
 `modsettings.lsx`.
 
-### Diagnostics and Load Order Advisor
+<h3 id="diagnostics-and-load-order-advisor">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/08-diagnostics-and-load-order-advisor.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/08-diagnostics-and-load-order-advisor-light.png">
+  <img src="docs/assets/nexus-description/08-diagnostics-and-load-order-advisor-light.png" alt="Diagnostics and Load Order Advisor" width="100%">
+</picture>
+</h3>
 
 Mod Diagnostics is built into Redux. It brings facts already detected by BG3MM's package parser—
 including dependencies, UUID problems, overrides, Mod Fixer behavior, and Script Extender
@@ -111,7 +133,13 @@ relationships that need review; unchanged preserved separators are left out of t
 Applying it creates one undoable, unsaved edit, and individual recommendations can be ignored and
 restored later.
 
-### Safer load-order changes
+<h3 id="safer-load-order-changes">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/04-saving-and-syncing.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/04-saving-and-syncing-light.png">
+  <img src="docs/assets/nexus-description/04-saving-and-syncing-light.png" alt="Safer saving and syncing" width="100%">
+</picture>
+</h3>
 
 - Explicit working state with an unsaved indicator and close protection.
 - Named order creation, renaming, deletion, comparison, and history.
@@ -122,7 +150,13 @@ restored later.
 - External-change protection: Redux will not undo over a game file changed afterward by BG3 or
   another manager.
 
-### Save Game Manager
+<h3 id="save-game-manager">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/06-save-game-manager.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/06-save-game-manager-light.png">
+  <img src="docs/assets/nexus-description/06-save-game-manager-light.png" alt="Save Game Manager" width="100%">
+</picture>
+</h3>
 
 Open **Tools > Save Game Manager...** or use the **Saves** toolbar group. Redux groups story
 saves by campaign and shows available thumbnails, dates, sizes, and difficulty metadata. Honour
@@ -138,7 +172,13 @@ require confirmation, and deletion uses the Windows Recycle Bin.
 > Redux does not edit or validate save contents. Close BG3 before changing saves, keep independent
 > backups, and remember that Steam Cloud may restore files removed locally.
 
-### Game-Directory Mod Manager
+<h3 id="game-directory-mod-manager">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/07-game-directory-mods.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/07-game-directory-mods-light.png">
+  <img src="docs/assets/nexus-description/07-game-directory-mods-light.png" alt="Game-Directory Mod Manager" width="100%">
+</picture>
+</h3>
 
 Open **Tools > Game-Directory Mod Manager...**, its **Mods & Campaign** toolbar shortcut, or
 **Quick Access** to review supported native and root-level mods that install beside BG3 rather than
@@ -180,7 +220,13 @@ the ownership record.
 > source you trust, close BG3 first, and use the manager's status and recovery information instead
 > of manually deleting Redux-owned files.
 
-### Download Manager
+<h3 id="download-manager">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/05-downloads.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/05-downloads-light.png">
+  <img src="docs/assets/nexus-description/05-downloads-light.png" alt="Download Manager" width="100%">
+</picture>
+</h3>
 
 **Download Manager** is Redux's shared intake inbox for local packages and optional Nexus Mod
 Manager downloads. Add a package from the window or drop supported PAK, LSV, ZIP, 7z, RAR, TAR, or
@@ -281,7 +327,13 @@ PAKs—to an [issue](https://github.com/circleainn/BG3ModManager-Redux/issues). 
 they are never imported into the bundled database automatically. The full trust and contribution
 model is documented in the [Redux mod database guide](docs/REDUX_MOD_DATABASE.md).
 
-## Themes and accessibility
+<h2 id="themes-and-accessibility">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/09-themes-and-personalization.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/09-themes-and-personalization-light.png">
+  <img src="docs/assets/nexus-description/09-themes-and-personalization-light.png" alt="Themes and accessibility" width="100%">
+</picture>
+</h2>
 
 - Redux Dark, Redux Light, Parchment, and importable custom themes.
 - Solid semantic action colors or theme-generated gradients.

@@ -719,7 +719,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				: String.Empty;
 			return report.IsReadable
 				? new AcquiredPackageClassification(report.DisplayName, "PAK mod", "Inactive Mods",
-					"PAK mod · Ready to install to Inactive Mods", true, thumbnail)
+					"PAK mod · New mods go inactive; updates keep their placement", true, thumbnail)
 				: new AcquiredPackageClassification(Path.GetFileNameWithoutExtension(path), "Unreadable PAK", String.Empty,
 					"Redux could not read usable mod metadata from this PAK. No files were changed.", false, String.Empty);
 		}
@@ -740,7 +740,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			ArchivePackagePreflightKind.PakArchive when inspection.Packages.Count > 0 => new AcquiredPackageClassification(
 				inspection.Packages.Count == 1 ? inspection.Packages[0].DisplayName : Path.GetFileNameWithoutExtension(path),
 				"PAK mod archive", "Inactive Mods",
-				$"{inspection.Packages.Count} PAK mod{(inspection.Packages.Count == 1 ? String.Empty : "s")} · Ready to install to Inactive Mods", true, archiveThumbnail),
+				$"{inspection.Packages.Count} PAK mod{(inspection.Packages.Count == 1 ? String.Empty : "s")} · New mods go inactive; updates keep their placement", true, archiveThumbnail),
 			ArchivePackagePreflightKind.Mixed when inspection.GameDirectoryInspection != null => new AcquiredPackageClassification(
 				inspection.GameDirectoryInspection.Definition.Name, "Hybrid game-directory mod", "Game-directory Mods",
 				"Reviewed hybrid package · Ready for Game-directory Mod Manager", true, archiveThumbnail),
@@ -1018,16 +1018,17 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			var nexusSource = item.HasNexusSource
 				? new NexusModManagerLink(item.ModId, item.FileId, null, null, null)
 				: null;
-			var targetActiveState = item.PreserveExistingModPlacement ? (bool?)null : false;
-			var installed = await ReviewAndImportModsAsync([archivePath], targetActiveState, nexusSource, dialogOwner,
+			// New packages still enter Inactive Mods, but updates inherit the installed
+			// mod's active state and load-order position. Passing false here used to
+			// force freshly downloaded updates into Inactive Mods.
+			var installed = await ReviewAndImportModsAsync([archivePath], null, nexusSource, dialogOwner,
 				async () =>
 				{
 					installStarted = true;
 					await _nxmDownloadManager.SetStateAsync(item.Id, NxmDownloadState.Installing);
 				});
 			if (installed)
-				await CompleteAcquiredPackageInstallAsync(item,
-					item.PreserveExistingModPlacement ? "Mod Library · placement preserved" : "Inactive Mods", archivePath);
+				await CompleteAcquiredPackageInstallAsync(item, "Mod Library", archivePath);
 			else if (installStarted)
 				await _nxmDownloadManager.SetStateAsync(item.Id, NxmDownloadState.InstallFailed,
 					"install-failed", "Redux could not finish installing this package. Review the import error and try again.");
@@ -1246,7 +1247,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 						? new NexusModManagerLink(candidate.Item.ModId, candidate.Item.FileId, null, null, null) : null;
 					var installedOk = candidate.Kind switch
 					{
-						AcquiredPackageBatchKind.Pak => await ImportModsWithoutReviewAsync([candidate.ArchivePath], false, nexusSource),
+						AcquiredPackageBatchKind.Pak => await ImportModsWithoutReviewAsync([candidate.ArchivePath], null, nexusSource),
 						AcquiredPackageBatchKind.Save => await ImportSaveBatchPackageAsync(candidate.ArchivePath),
 						AcquiredPackageBatchKind.GameDirectory => await InstallGameDirectoryBatchPackageAsync(candidate.ArchivePath, nexusSource),
 						_ => false
@@ -1300,8 +1301,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		var required = reports.SelectMany(report => report.Mod.Dependencies.Items).Select(dependency => dependency.UUID)
 			.Where(uuid => !String.IsNullOrWhiteSpace(uuid)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
 		candidates.Add(new AcquiredPackageBatchCandidate(item, archivePath, AcquiredPackageBatchKind.Pak,
-			"Inactive Mods", 10, provided.Select(uuid => $"pak:{uuid}").ToArray(), provided, required,
-			new ReduxInstallReviewItem(name, $"Inactive Mods · {Path.GetFileName(archivePath)}",
+			"Mod Library", 10, provided.Select(uuid => $"pak:{uuid}").ToArray(), provided, required,
+			new ReduxInstallReviewItem(name, $"New mods → Inactive Mods · updates keep placement · {Path.GetFileName(archivePath)}",
 				$"Ready · {reports.Count} PAK mod{(reports.Count == 1 ? String.Empty : "s")}", ReduxInstallReviewTone.Success)));
 	}
 
@@ -9686,7 +9687,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 	public async Task<bool> ImportModsWithoutReviewAsync(
 		IReadOnlyList<string> files,
-		bool toActiveList,
+		bool? toActiveList,
 		NexusModManagerLink nexusSource = null)
 	{
 		if (files == null || files.Count == 0) return false;

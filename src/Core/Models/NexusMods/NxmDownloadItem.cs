@@ -243,16 +243,15 @@ public sealed class NxmDownloadItem : ReactiveObject
 			};
 			return DetectedDestination switch
 			{
-				"Inactive Mods" => $"{prefix} to Inactive Mods",
+				"Inactive Mods" => prefix,
 				"Save Games" => $"{prefix} with Save Manager",
 				"Game-directory Mods" => $"{prefix} with Game-directory Manager",
 				_ => prefix
 			};
 		}
 	}
-	public string InstallActionToolTip => PreserveExistingModPlacement
-		|| (State == NxmDownloadState.Installed && DetectedDestination == "Inactive Mods")
-		? "Replace installed files while preserving each mod's active or inactive state and load-order position. Mods no longer installed return to Inactive Mods."
+	public string InstallActionToolTip => DetectedDestination == "Inactive Mods"
+		? "New mods go to Inactive Mods. Updates preserve each installed mod's active or inactive state and load-order position."
 		: String.Empty;
 	public string RemoveActionText => State == NxmDownloadState.Installed ? "Clear" : "Remove";
 	public bool IsInstalledHistory => State == NxmDownloadState.Installed;

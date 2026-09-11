@@ -435,7 +435,7 @@ public class DivinityModManagerSettings : ReactiveObject
 	[SettingsEntry("Clear ModCrashSanityCheck", "Delete BG3's ModCrashSanityCheck folder when needed so it cannot silently deactivate installed mods.")]
 	[DataMember, Reactive] public bool DeleteModCrashSanityCheck { get; set; }
 
-	[DataMember] public ConfirmationSettings Confirmations { get; set; }
+	[DataMember, Reactive] public ConfirmationSettings Confirmations { get; set; }
 
 	[DataMember, Reactive] public long LastUpdateCheck { get; set; }
 	[DataMember, Reactive] public long LastUpdateCheckAttempt { get; set; }

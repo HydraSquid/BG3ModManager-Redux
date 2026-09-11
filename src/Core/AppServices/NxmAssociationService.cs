@@ -6,6 +6,7 @@ public interface INxmAssociationService
 {
 	NxmAssociationResult GetStatus();
 	NxmAssociationResult Enable();
+	NxmAssociationResult TakeOver();
 	NxmAssociationResult Repair();
 	NxmAssociationResult Disable();
 }
@@ -78,6 +79,23 @@ public sealed class NxmAssociationService : INxmAssociationService
 		if (status.Status == NxmAssociationStatus.OwnedByAnotherHandler)
 			return new NxmAssociationResult(false, status.Status, "Another Redux installation or application changed the marked association.", status.CurrentHandler);
 
+		return ReplaceCurrentAssociation(status);
+	}
+
+	public NxmAssociationResult TakeOver()
+	{
+		var status = GetStatus();
+		if (!status.Success) return status;
+		if (status.Status == NxmAssociationStatus.Owned) return status;
+		if (status.Status == NxmAssociationStatus.NeedsRepair) return Repair();
+		if (status.Status != NxmAssociationStatus.OwnedByAnotherHandler)
+			return Enable();
+
+		return ReplaceCurrentAssociation(status);
+	}
+
+	private NxmAssociationResult ReplaceCurrentAssociation(NxmAssociationResult status)
+	{
 		var userKey = _store.ReadUserKey();
 		var effectiveKey = userKey ?? _store.ReadMachineKey();
 		var backup = new NxmAssociationBackup(userKey != null, userKey, effectiveKey?.GetString(CommandSubkey, ""));

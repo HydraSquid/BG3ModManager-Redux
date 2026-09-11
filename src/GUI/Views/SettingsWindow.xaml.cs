@@ -373,6 +373,7 @@ public partial class SettingsWindow : SettingsWindowBase
 		CustomThemeComboBox.ItemsSource = ViewModel.Settings.CustomThemes;
 		var activeTheme = ReduxThemeService.GetActiveTheme(ViewModel.Settings);
 		CustomThemeComboBox.SelectedItem = activeTheme;
+		CurrentThemeNameText.Text = activeTheme?.Name ?? ViewModel.Settings.ColorTheme.GetDescription();
 		GeneratedGradientsCheckBox.IsChecked = activeTheme?.UsesGeneratedGradients
 			?? ViewModel.Settings.UsesGeneratedGradients;
 		var hasSelection = CustomThemeComboBox.SelectedItem is ReduxCustomTheme;
@@ -381,7 +382,7 @@ public partial class SettingsWindow : SettingsWindowBase
 		DuplicateCustomThemeButton.IsEnabled = hasSelection;
 		ExportCustomThemeButton.IsEnabled = hasSelection;
 		CustomThemeStatusText.Text = activeTheme != null
-			? $"Active custom theme · {activeTheme.BaseTheme.GetDescription()} · {ReduxCustomFontService.GetDisplayName(activeTheme.TypographyFont, activeTheme.CustomTypographyFont)} · {activeTheme.TextSize.GetDescription()} text"
+			? $"Active custom theme · {activeTheme.Name} · {ReduxCustomFontService.GetDisplayName(activeTheme.TypographyFont, activeTheme.CustomTypographyFont)} · {activeTheme.TextSize.GetDescription()} text"
 			: ViewModel.Settings.CustomThemes.Count == 0
 				? "No custom themes yet. Create one from the current built-in palette."
 				: "Choose a custom theme above, or keep using a built-in theme.";

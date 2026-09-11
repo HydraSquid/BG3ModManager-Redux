@@ -830,7 +830,23 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		}
 		if (status.Status == NxmAssociationStatus.OwnedByAnotherHandler)
 		{
-			ShowAlert("Another Redux installation owns the current NXM registration. Redux left it unchanged.", AlertType.Warning, 25);
+			var takeoverPrompt = $"Use this Redux installation for Nexus Mod Manager links instead?\n\nCurrent handler: {status.CurrentHandler ?? "Unknown"}\n\nThe current handler will be saved so Redux can restore it later.";
+			if (ReduxMessageBox.Show(Window, takeoverPrompt, "Use Redux for NXM Links", MessageBoxButton.YesNo,
+				MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+
+			if (!Guid.TryParseExact(Settings.NxmAssociationOwnerId, "D", out _))
+			{
+				Settings.NxmAssociationOwnerId = Guid.NewGuid().ToString("D");
+				if (!SaveSettings())
+				{
+					Settings.NxmAssociationOwnerId = String.Empty;
+					ShowAlert("Redux could not save the NXM registration owner, so Windows was not changed.", AlertType.Danger, 25);
+					return;
+				}
+			}
+
+			var takeoverResult = CreateNxmAssociationService().TakeOver();
+			ShowAlert(takeoverResult.Message, takeoverResult.Success ? AlertType.Success : AlertType.Danger, 25);
 			return;
 		}
 		var disable = status.Status == NxmAssociationStatus.Owned;

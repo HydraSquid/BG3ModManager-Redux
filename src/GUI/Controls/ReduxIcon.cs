@@ -222,6 +222,7 @@ public static class ReduxIconCatalog
 		new("anvil", "Anvil / smithing", "Redux.Icon.Anvil", true),
 
 		// Magic, lore, and nature.
+		new("redux-star", "Redux star", "Redux.Icon.ReduxStar"),
 		new("sparkles", "Magic / sparkles", "Redux.Icon.Sparkles"),
 		new("moon-star", "Spells / arcane", "Redux.Icon.MoonStar", true),
 		new("wand", "Magic wand", "Redux.Icon.ColorWand"),

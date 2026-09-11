@@ -407,6 +407,8 @@ public sealed class InteractionBehaviorTests
 		RegressionAssert.True(ReduxIconCatalog.TryGet("backpack", out _));
 		RegressionAssert.True(ReduxIconCatalog.TryGet("languages", out _));
 		RegressionAssert.True(ReduxIconCatalog.TryGet("workflow", out _));
+		RegressionAssert.True(ReduxIconCatalog.TryGet("redux-star", out var reduxStar));
+		RegressionAssert.Equal("Redux.Icon.ReduxStar", reduxStar.ResourceKey);
 	}
 
 	public void AsyncProviderMetadataSignalsAutomaticCategoryRefresh()

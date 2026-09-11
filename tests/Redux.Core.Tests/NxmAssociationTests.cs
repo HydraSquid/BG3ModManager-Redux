@@ -82,6 +82,22 @@ internal sealed class NxmAssociationTests
 		RegressionAssert.Equal("other-owner", store.UserKey.GetString("", NxmAssociationService.OwnerValueName));
 	}
 
+	public void DifferentReduxInstallationCanBeReassociatedByExplicitTakeover()
+	{
+		var previous = NxmAssociationService.CreateOwnedKey("22222222-2222-2222-2222-222222222222", @"D:\Old Redux\Redux.exe");
+		var store = new MemoryNxmRegistryStore { UserKey = previous.Clone() };
+		var service = new NxmAssociationService(store, Owner, Executable);
+
+		var result = service.TakeOver();
+
+		RegressionAssert.True(result.Success);
+		RegressionAssert.Equal(NxmAssociationStatus.Owned, result.Status);
+		RegressionAssert.Equal(Owner, store.UserKey.GetString("", NxmAssociationService.OwnerValueName));
+		RegressionAssert.Equal(NxmAssociationService.BuildCommand(Executable), store.UserKey.GetString(@"shell\open\command", ""));
+		RegressionAssert.Equal("22222222-2222-2222-2222-222222222222",
+			store.Backup.UserKey.GetString("", NxmAssociationService.OwnerValueName));
+	}
+
 	public void RegistrySnapshotPreservesValueKindsAndSubkeys()
 	{
 		var prior = Handler(@"C:\Handler.exe", null);

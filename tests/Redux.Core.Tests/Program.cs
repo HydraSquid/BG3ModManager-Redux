@@ -403,6 +403,7 @@ internal static class Program
 			(nameof(nxmAssociation.RepairUpdatesOnlyOwnedMovedRegistration), nxmAssociation.RepairUpdatesOnlyOwnedMovedRegistration),
 			(nameof(nxmAssociation.DisableNeverOverwritesAnInterveningHandler), nxmAssociation.DisableNeverOverwritesAnInterveningHandler),
 			(nameof(nxmAssociation.DifferentReduxInstallationCannotRepairOrDisableOwner), nxmAssociation.DifferentReduxInstallationCannotRepairOrDisableOwner),
+			(nameof(nxmAssociation.DifferentReduxInstallationCanBeReassociatedByExplicitTakeover), nxmAssociation.DifferentReduxInstallationCanBeReassociatedByExplicitTakeover),
 			(nameof(nxmAssociation.RegistrySnapshotPreservesValueKindsAndSubkeys), nxmAssociation.RegistrySnapshotPreservesValueKindsAndSubkeys),
 			(nameof(nxmAssociation.ProductionRegistryStoreRoundTripsOnlyDisposableHkcuPaths), nxmAssociation.ProductionRegistryStoreRoundTripsOnlyDisposableHkcuPaths),
 			(nameof(nxmAssociation.FailedEnableRestoresPriorHandler), nxmAssociation.FailedEnableRestoresPriorHandler),

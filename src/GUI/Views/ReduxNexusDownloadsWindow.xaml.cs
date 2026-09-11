@@ -106,7 +106,7 @@ public partial class ReduxNexusDownloadsWindow : AdonisUI.Controls.AdonisWindow
 		{
 			NxmAssociationStatus.Owned => "Disable NXM Links...",
 			NxmAssociationStatus.NeedsRepair => "Repair NXM Links...",
-			NxmAssociationStatus.OwnedByAnotherHandler => "NXM Links Managed Elsewhere",
+			NxmAssociationStatus.OwnedByAnotherHandler => "Use Redux for NXM Links...",
 			_ => "Enable NXM Links..."
 		};
 		AssociationIcon.SetResourceReference(DivinityModManager.Controls.ReduxIcon.StrokeDataProperty,
@@ -115,10 +115,11 @@ public partial class ReduxNexusDownloadsWindow : AdonisUI.Controls.AdonisWindow
 		{
 			NxmAssociationStatus.Owned => "ReduxMinorDestructiveActionButtonStyle",
 			NxmAssociationStatus.NeedsRepair => "ReduxMinorWarningActionButtonStyle",
+			NxmAssociationStatus.OwnedByAnotherHandler => "ReduxMinorNexusActionButtonStyle",
 			_ => "ReduxMinorActionButtonStyle"
 		};
 		AssociationButton.SetResourceReference(StyleProperty, styleResource);
-		AssociationButton.IsEnabled = status.Success && status.Status != NxmAssociationStatus.OwnedByAnotherHandler;
+		AssociationButton.IsEnabled = status.Success;
 		AssociationButton.ToolTip = status.Message;
 	}
 

@@ -789,6 +789,8 @@
 	<!-- Lucide vector icons, normalized to Lucide's native 24x24 view box. -->
 	<!-- Curated fantasy/category glyphs. Keep these readable at 12-16px. -->
 	<PathGeometry x:Key="Redux.Icon.Shirt" Figures="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z" />
+	<!-- Monochrome Redux brand mark, normalized from redux-star.svg to the shared 24x24 icon canvas. -->
+	<PathGeometry x:Key="Redux.Icon.ReduxStar" Figures="M12 1.266 C12.352 6.492 13.898 10.406 22.313 12 C13.898 13.594 12.352 17.508 12 22.734 C11.648 17.508 10.102 13.594 1.688 12 C10.102 10.406 11.648 6.492 12 1.266 Z" />
 	<GeometryGroup x:Key="Redux.Icon.Sparkles">
 		<PathGeometry Figures="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" />
 		<PathGeometry Figures="M20 2v4" />
@@ -1576,6 +1578,7 @@
 			<Trigger Property="IconKey" Value="palette"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.ColorPalette}" /></Trigger>
 			<Trigger Property="IconKey" Value="shirt"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Shirt}" /></Trigger>
 			<Trigger Property="IconKey" Value="sparkles"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Sparkles}" /></Trigger>
+			<Trigger Property="IconKey" Value="redux-star"><Setter Property="Data" Value="{StaticResource Redux.Icon.ReduxStar}" /></Trigger>
 			<Trigger Property="IconKey" Value="shield"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Shield}" /></Trigger>
 			<Trigger Property="IconKey" Value="flask"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Flask}" /></Trigger>
 			<Trigger Property="IconKey" Value="skull"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Skull}" /></Trigger>

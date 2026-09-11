@@ -758,8 +758,7 @@
 								<Grid.ColumnDefinitions><ColumnDefinition Width="210" /><ColumnDefinition Width="1" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
 								<StackPanel Margin="0,0,14,0">
 									<TextBlock Style="{StaticResource SettingsSectionTitleStyle}" Text="Current theme" />
-									<TextBlock Margin="0,3,0,7" Foreground="{DynamicResource ReduxTextMutedBrush}"
-										Text="{Binding SelectedItem.Description, ElementName=ThemeComboBox}" />
+									<TextBlock x:Name="CurrentThemeNameText" Margin="0,3,0,7" Foreground="{DynamicResource ReduxTextMutedBrush}" />
 					<StackPanel Orientation="Horizontal">
 										<Border Width="18" Height="18" Margin="0,0,6,0" Background="{DynamicResource ReduxWindowBrush}" BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1" CornerRadius="9" />
 										<Border Width="18" Height="18" Margin="0,0,6,0" Background="{DynamicResource ReduxSurfaceBrush}" BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1" CornerRadius="9" />

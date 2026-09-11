@@ -5,7 +5,17 @@ source for individual implementation details.
 
 ## Unreleased
 
-No additional changes are queued after alpha.16.3.2.
+No additional changes are queued after alpha.16.3.3.
+
+## 0.1.0-alpha.16.3.3 — silent public-alpha maintenance release
+
+- Let users deliberately reassociate NXM links with the current Redux when an older Redux install
+  or another marked handler owns the Windows registration, while preserving the previous handler.
+- Simplified repetitive Download Manager guidance.
+- Corrected the current-theme summary to show an active custom theme's own name.
+- Added the Redux star to the built-in icon library and used its theme-aware monochrome form on the
+  startup screen.
+- Gave the NXM reassociation action the same Nexus source styling used elsewhere in Redux.
 
 ## 0.1.0-alpha.16.3.2 — silent public-alpha maintenance release
 

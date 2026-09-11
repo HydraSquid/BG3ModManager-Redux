@@ -28,6 +28,19 @@ internal sealed class InstallerManifestTests
 			"0.1.0-alpha.16", "0.1.0-alpha.16.1") < 0);
 		RegressionAssert.True(InstallerManifestService.CompareDisplayVersions(
 			"0.1.0-alpha.16.2", "0.1.0-alpha.17") < 0);
+		RegressionAssert.True(InstallerManifestService.CompareDisplayVersions(
+			"0.1.0-alpha.16.3", "0.1.0-alpha.16.3.1") < 0);
+		RegressionAssert.True(InstallerManifestService.CompareDisplayVersions(
+			"0.1.0-alpha.16.3.1", "0.1.0-alpha.16.4") < 0);
+		var maintenance = InstallerManifestService.ParseAndValidate(
+			ValidManifest()
+				.Replace("0.1.0-alpha.15", "0.1.0-alpha.16.3.1")
+				.Replace("0.1.0.15", "0.1.16.301"));
+		RegressionAssert.Equal("0.1.16.301", maintenance.InternalVersion);
+		RegressionAssert.Throws<InvalidDataException>(() => InstallerManifestService.ParseAndValidate(
+			ValidManifest()
+				.Replace("0.1.0-alpha.15", "0.1.0-alpha.16.3.1")
+				.Replace("0.1.0.15", "0.1.16.3")));
 		RegressionAssert.Throws<InvalidDataException>(() => InstallerManifestService.ParseAndValidate(
 			ValidManifest()
 				.Replace("0.1.0-alpha.15", "0.1.0-alpha.16")

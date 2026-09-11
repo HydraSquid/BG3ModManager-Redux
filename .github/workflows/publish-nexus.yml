@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing GitHub release tag to publish, such as v0.1.0-alpha.16.2
+        description: Existing GitHub release tag to publish, such as v0.1.0-alpha.16.3.1
         required: true
         type: string
 
@@ -51,7 +51,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag="${EVENT_TAG:-$INPUT_TAG}"
-          if [[ ! "$tag" =~ ^v0\.1\.0-alpha\.[1-9][0-9]*(\.[1-9][0-9]*)?$ ]]; then
+          if [[ ! "$tag" =~ ^v0\.1\.0-alpha\.[1-9][0-9]*(\.[1-9][0-9]*(\.[1-9][0-9]*)?)?$ ]]; then
             echo "Unsupported Redux public-alpha tag: $tag" >&2
             exit 1
           fi

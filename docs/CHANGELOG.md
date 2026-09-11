@@ -9,6 +9,8 @@ source for individual implementation details.
 
 - Removed the generic mod.io health warning because a linked source page does not prove that the
   installed package is subscribed through the in-game manager or managed by Steam Cloud.
+- Added maintenance-release versions such as `.16.3.1` across the updater and Nexus publication
+  contract, including deterministic ordering between their parent and the next hotfix.
 
 ## 0.1.0-alpha.16.3 — public-alpha hotfix
 

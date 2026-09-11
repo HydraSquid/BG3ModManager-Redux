@@ -9,11 +9,12 @@ the exact files published on GitHub and Nexus Mods.
 `0.1.0-alpha.15` was the first Redux public-alpha version; `0.1.0-alpha.16.3` is the current hotfix.
 Each public alpha has an immutable version and a matching Git tag such as
 `v0.1.0-alpha.16.2`. A correction to an already-published alpha uses a hotfix suffix such as
-`0.1.0-alpha.16.1`, then `.16.2`; it does not replace the earlier release's files. The next planned
+`0.1.0-alpha.16.1`, then `.16.2`; a quiet correction to one of those hotfixes may add a maintenance
+suffix such as `.16.3.1`. These versions do not replace earlier release files. The next planned
 alpha remains `0.1.0-alpha.17`. Starting with alpha.16.2, the public artifact
 set contains:
 
-- `BG3ModManager-Redux_v0.1.0-alpha.N[.H].zip`, the versioned portable application; and
+- `BG3ModManager-Redux_v0.1.0-alpha.N[.H[.M]].zip`, the versioned portable application; and
 - release notes for that exact version.
 
 Alpha.16.1 was the last release to include the experimental Setup artifact. Historical release notes
@@ -33,10 +34,10 @@ generic latest-release selection. The document points to one versioned portable 
 exact byte length and SHA-256 digest.
 
 The updater compares a four-part numeric internal version. Alpha.15 and alpha.16 retain their
-published legacy values (`0.1.0.15` and `0.1.0.16`). Starting with the hotfix-aware contract,
-`0.1.0-alpha.N.H` maps to `0.1.N.H`, and a new base alpha maps to `0.1.N.0`. This keeps
-`alpha.16 < alpha.16.1 < alpha.16.2 < alpha.17` while preserving updates from the two legacy
-public builds.
+published legacy values (`0.1.0.15` and `0.1.0.16`), and alpha.16.1 through alpha.16.3 retain their
+original flat revisions. Maintenance-aware releases encode `.H.M` as revision `H × 100 + M`, so
+`.16.3.1` uses `0.1.16.301` and `.16.4` uses `0.1.16.400`. This keeps
+`alpha.16.3 < alpha.16.3.1 < alpha.16.4 < alpha.17` without changing an already-published version.
 
 Compatibility matters during the transition: the already-published alpha.15 and alpha.16 clients
 only parse the original `alpha.N` form, so they cannot discover a dotted hotfix automatically. The
@@ -44,6 +45,11 @@ first dotted hotfix must therefore be installed manually by extracting its porta
 preceded by one final single-number bridge release. Once a hotfix-aware build is installed, later
 dotted hotfixes work normally. Never publish a dotted channel manifest on the assumption that an
 unmodified alpha.16 client can read it.
+
+The same rule applies to maintenance suffixes: the already-published alpha.16.3 client cannot parse
+`.16.3.1`. Use a two-component bridge such as `.16.4` for automatic updates, or require a manual
+install of `.16.3.1`. Once a maintenance-aware build is installed, later three-component versions
+are ordered and updated normally.
 
 ## Prepare a candidate
 

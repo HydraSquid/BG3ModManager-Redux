@@ -47,12 +47,33 @@ public sealed class ReduxUpdateManifestTests
 			ReduxUpdateManifestService.Evaluate(nextAlpha, hotfix.InternalVersion).Availability);
 	}
 
+	public void MaintenanceVersionsOrderBetweenTheirHotfixAndTheNextHotfix()
+	{
+		var maintenance = ReduxUpdateManifestService.ParseAndValidate(
+			CreateManifest("0.1.0-alpha.16.3.1", "0.1.16.301").ToString());
+		var nextHotfix = ReduxUpdateManifestService.ParseAndValidate(
+			CreateManifest("0.1.0-alpha.16.4", "0.1.16.400").ToString());
+
+		RegressionAssert.Equal(
+			ReduxUpdateAvailability.UpdateAvailable,
+			ReduxUpdateManifestService.Evaluate(maintenance, "0.1.16.3").Availability);
+		RegressionAssert.Equal(
+			ReduxUpdateAvailability.UpdateAvailable,
+			ReduxUpdateManifestService.Evaluate(nextHotfix, maintenance.InternalVersion).Availability);
+	}
+
 	public void HotfixVersionsRejectZeroOverflowAndMismatchedInternalVersions()
 	{
 		RegressionAssert.Throws<InvalidDataException>(() => ReduxUpdateManifestService.ParseAndValidate(
 			CreateManifest("0.1.0-alpha.16.0", "0.1.16.0").ToString()));
 		RegressionAssert.Throws<InvalidDataException>(() => ReduxUpdateManifestService.ParseAndValidate(
 			CreateManifest("0.1.0-alpha.16.65536", "0.1.16.65536").ToString()));
+		RegressionAssert.Throws<InvalidDataException>(() => ReduxUpdateManifestService.ParseAndValidate(
+			CreateManifest("0.1.0-alpha.16.3.0", "0.1.16.300").ToString()));
+		RegressionAssert.Throws<InvalidDataException>(() => ReduxUpdateManifestService.ParseAndValidate(
+			CreateManifest("0.1.0-alpha.16.3.100", "0.1.16.400").ToString()));
+		RegressionAssert.Throws<InvalidDataException>(() => ReduxUpdateManifestService.ParseAndValidate(
+			CreateManifest("0.1.0-alpha.16.3.1", "0.1.16.3").ToString()));
 		RegressionAssert.Throws<InvalidDataException>(() => ReduxUpdateManifestService.ParseAndValidate(
 			CreateManifest("0.1.0-alpha.16.1", "0.1.0.16").ToString()));
 		RegressionAssert.Throws<InvalidDataException>(() => ReduxUpdateManifestService.ParseAndValidate(

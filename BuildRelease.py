@@ -301,13 +301,35 @@ def write_release_inventory(files: list[Path]) -> None:
 
 
 def internal_version(display_version: str) -> str:
-	match = re.fullmatch(r"0\.1\.0-alpha\.([1-9][0-9]*)(?:\.([1-9][0-9]*))?", display_version)
+	match = re.fullmatch(
+		r"0\.1\.0-alpha\.([1-9][0-9]*)(?:\.([1-9][0-9]*)(?:\.([1-9][0-9]*))?)?",
+		display_version,
+	)
 	if not match:
-		raise SystemExit("Publish versions must use the 0.1.0-alpha.N or 0.1.0-alpha.N.H format.")
+		raise SystemExit(
+			"Publish versions must use the 0.1.0-alpha.N, 0.1.0-alpha.N.H, "
+			"or 0.1.0-alpha.N.H.M format."
+		)
 	alpha = int(match.group(1))
 	hotfix = match.group(2)
+	maintenance = match.group(3)
+	if maintenance is not None:
+		maintenance_number = int(maintenance)
+		if maintenance_number >= 100:
+			raise SystemExit("Maintenance release components must be between 1 and 99.")
+		encoded_revision = (int(hotfix) * 100) + maintenance_number
+		if encoded_revision > 65535:
+			raise SystemExit("The encoded maintenance version exceeds the supported internal range.")
+		return f"0.1.{alpha}.{encoded_revision}"
 	if hotfix is not None:
-		return f"0.1.{alpha}.{int(hotfix)}"
+		hotfix_number = int(hotfix)
+		# Alpha.16.1 through alpha.16.3 retain their already-published flat revisions.
+		if alpha == 16 and hotfix_number <= 3:
+			return f"0.1.{alpha}.{hotfix_number}"
+		encoded_revision = hotfix_number * 100
+		if encoded_revision > 65535:
+			raise SystemExit("The encoded hotfix version exceeds the supported internal range.")
+		return f"0.1.{alpha}.{encoded_revision}"
 	# Alpha.15 and alpha.16 were published before the hotfix-aware mapping existed.
 	if alpha in (15, 16):
 		return f"0.1.0.{alpha}"

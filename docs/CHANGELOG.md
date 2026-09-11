@@ -15,7 +15,7 @@ No additional changes are queued after alpha.16.3.
   is introduced to an existing mod installation.
 - Added symmetric source controls: explicit Nexus/mod.io labels, persistent mod.io unlinking, and a
   **Change Source to Nexus Mods** action for mods currently displaying mod.io metadata.
-- Synchronized Redux's offline source catalog with VOLO while refusing cross-provider and
+- Expanded Redux's offline source catalog while refusing cross-provider and
   same-provider name collisions instead of guessing.
 - Added conservative bundled mod.io recognition that requires a matching UUID and exact package
   name, folder, or filename and never overrides native or manually selected provenance.

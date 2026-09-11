@@ -1,14 +1,10 @@
 <div align="center">
 
-<h1>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/00-redux-header.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/00-redux-header-light.png">
   <img src="docs/assets/nexus-description/00-redux-header-light.png" alt="Baldur's Gate 3 Mod Manager Redux" width="100%">
 </picture>
-</h1>
-
-**Bring order to the chaos.**
 
 [![Current build](https://img.shields.io/badge/build-0.1.0--alpha.16.3.3-9A7BFF?style=flat-square)](https://github.com/circleainn/BG3ModManager-Redux/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-4F86F7?style=flat-square)](#requirements-and-alpha-status)
@@ -32,7 +28,8 @@ Redux is a Windows mod manager built on
 BG3MM's proven package, profile, and load-order foundation while adding a cohesive interface,
 stronger organization, safer review workflows, and optional offline-assisted guidance.
 
-## Install and update
+<h3 id="install-and-update" align="center">Install and update</h3>
+<hr>
 
 Redux public-alpha releases use one portable ZIP. GitHub Releases and Nexus Mods receive the same
 approved archive, and Redux's built-in updater uses that archive for existing installations.
@@ -57,13 +54,12 @@ repair the NXM association if Redux previously handled `nxm://` links.
 See [Installation, updates, and removal](docs/INSTALLATION.md) for safe migration, rollback, and
 uninstall guidance.
 
-<h2 id="redux-at-a-glance">
+<a id="redux-at-a-glance"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/02-main-features.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/02-main-features-light.png">
   <img src="docs/assets/nexus-description/02-main-features-light.png" alt="Redux at a glance" width="100%">
 </picture>
-</h2>
 
 | Organize | Review | Personalize |
 |:--|:--|:--|
@@ -72,7 +68,8 @@ uninstall guidance.
 | Saved orders and comparisons | Export previews and restore points | Adjustable text, fonts, icons, and motion |
 | Context-aware <kbd>Ctrl</kbd> + <kbd>Q</kbd> Quick Access | Undo/Redo for reversible changes | Grouped shortcut editor and motion controls |
 
-### The main workflow
+<h3 id="the-main-workflow" align="center">The main workflow</h3>
+<hr>
 
 1. **Install and inspect.** Drop a supported package anywhere on the main Redux window. Its unified
    install target inspects and routes the package; ordinary PAK mods always enter Inactive Mods
@@ -84,15 +81,15 @@ uninstall guidance.
 4. **Review the game change.** **Sync Load Order to Game** shows what will activate, deactivate, or
    move before Redux writes `modsettings.lsx`.
 
-## What Redux adds
+<h3 id="what-redux-adds" align="center">What Redux adds</h3>
+<hr>
 
-<h3 id="categories-separators-and-mod-details">
+<a id="categories-separators-and-mod-details"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/03-organization.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/03-organization-light.png">
   <img src="docs/assets/nexus-description/03-organization-light.png" alt="Categories, separators, and mod details" width="100%">
 </picture>
-</h3>
 
 - Automatic and custom categories with names, descriptions, colors, icons, ordering, and filtering.
 - Up to three visible category assignments per mod.
@@ -107,13 +104,12 @@ uninstall guidance.
 Categories, separators, and notes are Redux presentation data. They never enter the game's
 `modsettings.lsx`.
 
-<h3 id="diagnostics-and-load-order-advisor">
+<a id="diagnostics-and-load-order-advisor"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/08-diagnostics-and-load-order-advisor.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/08-diagnostics-and-load-order-advisor-light.png">
   <img src="docs/assets/nexus-description/08-diagnostics-and-load-order-advisor-light.png" alt="Diagnostics and Load Order Advisor" width="100%">
 </picture>
-</h3>
 
 Mod Diagnostics is built into Redux. It brings facts already detected by BG3MM's package parser—
 including dependencies, UUID problems, overrides, Mod Fixer behavior, and Script Extender
@@ -133,13 +129,12 @@ relationships that need review; unchanged preserved separators are left out of t
 Applying it creates one undoable, unsaved edit, and individual recommendations can be ignored and
 restored later.
 
-<h3 id="safer-load-order-changes">
+<a id="safer-load-order-changes"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/04-saving-and-syncing.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/04-saving-and-syncing-light.png">
   <img src="docs/assets/nexus-description/04-saving-and-syncing-light.png" alt="Safer saving and syncing" width="100%">
 </picture>
-</h3>
 
 - Explicit working state with an unsaved indicator and close protection.
 - Named order creation, renaming, deletion, comparison, and history.
@@ -150,13 +145,12 @@ restored later.
 - External-change protection: Redux will not undo over a game file changed afterward by BG3 or
   another manager.
 
-<h3 id="save-game-manager">
+<a id="save-game-manager"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/06-save-game-manager.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/06-save-game-manager-light.png">
   <img src="docs/assets/nexus-description/06-save-game-manager-light.png" alt="Save Game Manager" width="100%">
 </picture>
-</h3>
 
 Open **Tools > Save Game Manager...** or use the **Saves** toolbar group. Redux groups story
 saves by campaign and shows available thumbnails, dates, sizes, and difficulty metadata. Honour
@@ -172,13 +166,12 @@ require confirmation, and deletion uses the Windows Recycle Bin.
 > Redux does not edit or validate save contents. Close BG3 before changing saves, keep independent
 > backups, and remember that Steam Cloud may restore files removed locally.
 
-<h3 id="game-directory-mod-manager">
+<a id="game-directory-mod-manager"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/07-game-directory-mods.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/07-game-directory-mods-light.png">
   <img src="docs/assets/nexus-description/07-game-directory-mods-light.png" alt="Game-Directory Mod Manager" width="100%">
 </picture>
-</h3>
 
 Open **Tools > Game-Directory Mod Manager...**, its **Mods & Campaign** toolbar shortcut, or
 **Quick Access** to review supported native and root-level mods that install beside BG3 rather than
@@ -220,13 +213,12 @@ the ownership record.
 > source you trust, close BG3 first, and use the manager's status and recovery information instead
 > of manually deleting Redux-owned files.
 
-<h3 id="download-manager">
+<a id="download-manager"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/05-downloads.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/05-downloads-light.png">
   <img src="docs/assets/nexus-description/05-downloads-light.png" alt="Download Manager" width="100%">
 </picture>
-</h3>
 
 **Download Manager** is Redux's shared intake inbox for local packages and optional Nexus Mod
 Manager downloads. Add a package from the window or drop supported PAK, LSV, ZIP, 7z, RAR, TAR, or
@@ -293,7 +285,8 @@ Reinstalling a retained PAK is placement-preserving: an installed mod keeps its 
 inactive state and its load-order position. A mod that is no longer installed returns to Inactive
 Mods. Reinstall never applies or syncs the load order.
 
-### Redux Modlists
+<h3 id="redux-modlists" align="center">Redux Modlists</h3>
+<hr>
 
 A `.bg3redux` Modlist can carry a saved order plus selected Redux presentation data:
 
@@ -310,7 +303,8 @@ Source-link import is off by default so a recipient's existing provider associat
 **Back Up Active Mods to ZIP** is a separate personal-backup feature. It asks where to save and
 reminds users that redistributing mod files requires permission from every relevant author.
 
-## Offline mod recognition
+<h3 id="offline-mod-recognition" align="center">Offline mod recognition</h3>
+<hr>
 
 Redux includes a curated offline database that connects exact package fingerprints and reviewed
 module identities to Nexus Mods projects. Matching is intentionally conservative: uncertain mods
@@ -327,13 +321,12 @@ PAKs—to an [issue](https://github.com/circleainn/BG3ModManager-Redux/issues). 
 they are never imported into the bundled database automatically. The full trust and contribution
 model is documented in the [Redux mod database guide](docs/REDUX_MOD_DATABASE.md).
 
-<h2 id="themes-and-accessibility">
+<a id="themes-and-accessibility"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/09-themes-and-personalization.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/09-themes-and-personalization-light.png">
   <img src="docs/assets/nexus-description/09-themes-and-personalization-light.png" alt="Themes and accessibility" width="100%">
 </picture>
-</h2>
 
 - Redux Dark, Redux Light, Parchment, and importable custom themes.
 - Solid semantic action colors or theme-generated gradients.
@@ -358,7 +351,8 @@ Advisor guidance, API keys, and accessibility choices. Optional online and advis
 disabled. Provider keys are masked, encrypted for the current Windows account, and excluded from
 ordinary settings and diagnostic exports.
 
-## Built on BG3 Mod Manager
+<h3 id="built-on-bg3-mod-manager" align="center">Built on BG3 Mod Manager</h3>
+<hr>
 
 Redux is a fork, not a from-scratch replacement. It retains substantial work from LaughingLeader
 and other BG3MM contributors, including:
@@ -374,7 +368,8 @@ and other BG3MM contributors, including:
 Redux reworks and extends many of these systems while retaining their credit. See
 [Changes from upstream BG3 Mod Manager](docs/CHANGES_FROM_UPSTREAM.md) for a precise comparison.
 
-## For mod authors
+<h3 id="for-mod-authors" align="center">For mod authors</h3>
+<hr>
 
 **Tools > Inspect Mod Package** performs a read-only preflight on PAKs, common release archives,
 reviewed or unknown native/DLL layouts, hybrid packages, save archives, and loose `.lsv` files. It
@@ -387,7 +382,8 @@ Authors may also include an optional root-level
 against parsed `meta.lsx` data before using it for Nexus Mods or mod.io identification. Invalid
 claims are ignored and reported without changing packages or load orders.
 
-## Requirements and alpha status
+<h3 id="requirements-and-alpha-status" align="center">Requirements and alpha status</h3>
+<hr>
 
 - Windows 10 or Windows 11, x64
 - [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
@@ -402,7 +398,8 @@ author links, and limited clean-machine testing. Uncommon scaling and extremely 
 still expose visual issues. The updater remains inactive whenever the official public-alpha channel
 manifest is unavailable. Imported fonts and PNG icons remain the user's responsibility to license.
 
-## Documentation
+<h3 id="documentation" align="center">Documentation</h3>
+<hr>
 
 | Guide | Audience | Purpose |
 |:--|:--|:--|
@@ -420,7 +417,8 @@ manifest is unavailable. Imported fonts and PNG icons remain the user's responsi
 | [Mod developer tools](docs/MOD_DEVELOPER_TOOLS.md) | Mod authors | Inspect releases before distribution |
 | [Creator manifest](docs/REDUX_CREATOR_MANIFEST.md) | Mod authors | Add a validated source identity to a PAK |
 
-## Reporting problems
+<h3 id="reporting-problems" align="center">Reporting problems</h3>
+<hr>
 
 Use the [issue tracker](https://github.com/circleainn/BG3ModManager-Redux/issues) for reproducible
 bugs. Include the Redux version, the smallest reliable reproduction steps, relevant screenshots or
@@ -428,7 +426,8 @@ logs, and affected mod names or UUIDs. Never post API keys or unreviewed private
 Read [Support](docs/SUPPORT.md) and [Troubleshooting](docs/TROUBLESHOOTING.md) before sharing logs or
 runtime data.
 
-## Credits and license
+<h3 id="credits-and-license" align="center">Credits and license</h3>
+<hr>
 
 Redux exists because of [LaughingLeader's original BG3 Mod Manager](https://github.com/LaughingLeader/BG3ModManager).
 You can also [support LaughingLeader on Ko-fi](https://ko-fi.com/LaughingLeader).

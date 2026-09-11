@@ -15,9 +15,9 @@ namespace DivinityModManager;
 
 public static class DivinityApp
 {
-	public const string REDUX_DISPLAY_VERSION = "0.1.0-alpha.15";
-	public const string REDUX_INTERNAL_VERSION = "0.1.0.15";
-	// Flip only when the moving public-alpha manifest has been published and smoke-tested.
+	public const string REDUX_DISPLAY_VERSION = "0.1.0-alpha.16.3.3";
+	public const string REDUX_INTERNAL_VERSION = "0.1.16.303";
+	// Keep this fork from offering upstream binaries that omit its retained workflows.
 	public static readonly bool REDUX_UPDATE_CHECKS_ENABLED = false;
 
 	public const string DIR_DATA = "Data\\";
@@ -30,6 +30,7 @@ public static class DivinityApp
 	public const string URL_REDUX_LICENSE = @"https://github.com/circleainn/BG3ModManager-Redux/blob/main/LICENSE";
 	public const string URL_REDUX_NEXUS = @"https://www.nexusmods.com/baldursgate3/mods/23799";
 	public const string URL_REDUX_DONATION = @"https://ko-fi.com/circleain";
+	public const string URL_REDUX_DISCORD = @"https://discord.gg/rJJF89vqFZ";
 	public const string URL_REDUX_UPDATE_MANIFEST = @"https://github.com/circleainn/BG3ModManager-Redux/releases/download/public-alpha/Redux-Update-Public-Alpha.json";
 	public const string URL_BG3_NEXUS = @"https://www.nexusmods.com/baldursgate3";
 	public const string URL_EXTENDER_REPO = @"https://github.com/Norbyte/bg3se";
@@ -81,9 +82,9 @@ public static class DivinityApp
 	public const LSLib.LS.Enums.Game GAME = LSLib.LS.Enums.Game.BaldursGate3;
 	public const LSLib.LS.Story.Compiler.TargetGame GAME_COMPILER = LSLib.LS.Story.Compiler.TargetGame.BG3;
 
-	public static readonly Uri LightTheme = new("pack://application:,,,/BG3ModManager;component/Themes/Light.xaml", UriKind.Absolute);
-	public static readonly Uri DarkTheme = new("pack://application:,,,/BG3ModManager;component/Themes/Dark.xaml", UriKind.Absolute);
-	public static readonly Uri ParchmentTheme = new("pack://application:,,,/BG3ModManager;component/Themes/Parchment.xaml", UriKind.Absolute);
+	public static readonly Uri LightTheme = new("pack://application:,,,/Redux;component/Themes/Light.xaml", UriKind.Absolute);
+	public static readonly Uri DarkTheme = new("pack://application:,,,/Redux;component/Themes/Dark.xaml", UriKind.Absolute);
+	public static readonly Uri ParchmentTheme = new("pack://application:,,,/Redux;component/Themes/Parchment.xaml", UriKind.Absolute);
 
 	public static Uri GetThemeUri(ReduxThemeType theme) => theme switch
 	{

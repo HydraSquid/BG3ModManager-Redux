@@ -34,6 +34,10 @@ public class NexusModsCacheHandler : IExternalModCacheHandler<NexusModsCachedDat
 		{
 			return true;
 		}
+		if (data.MetadataOrigin == NexusMetadataOrigin.ManualUnlinked)
+		{
+			return true;
+		}
 		if (mod.ModioData?.MetadataOrigin == ModioMetadataOrigin.Manual
 			&& mod.ModioData.HasAssociation)
 		{

@@ -44,20 +44,22 @@ internal sealed class InstallDestinationValidation
 	public string NormalizedPath { get; set; } = String.Empty;
 }
 
-internal sealed class FreshInstallRequest
+internal sealed class InstallerInstallRequest
 {
 	public PreparedInstallerPackage Package { get; set; } = new PreparedInstallerPackage();
 	public string DestinationDirectory { get; set; } = String.Empty;
 	public string GameDirectory { get; set; } = String.Empty;
 	public string SetupExecutablePath { get; set; } = String.Empty;
 	public bool CreateDesktopShortcut { get; set; }
+	public bool UpdateExisting { get; set; }
 }
 
-internal sealed class FreshInstallResult
+internal sealed class InstallerInstallResult
 {
 	public string DestinationDirectory { get; set; } = String.Empty;
 	public string ApplicationPath { get; set; } = String.Empty;
 	public string DisplayVersion { get; set; } = String.Empty;
+	public bool UpdatedExisting { get; set; }
 }
 
 internal sealed class UninstallResult

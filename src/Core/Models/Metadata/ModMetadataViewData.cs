@@ -26,11 +26,23 @@ public sealed class ModMetadataViewData : ReactiveObject
 		{
 			if (!_mod.OnlineMetadataEnabled) return null;
 
-			// Explicit Nexus choices and Nexus archive provenance are authoritative
-			// even before API enrichment or when the PAK carries a mod.io PublishHandle.
-			if (_mod.NexusModsData?.MetadataOrigin is NexusMetadataOrigin.Manual
+			// Explicit provider choices take priority over automatic catalog matches.
+			if ((_mod.NexusModsData?.MetadataOrigin is NexusMetadataOrigin.Manual
 					or NexusMetadataOrigin.NexusArchiveImport
-					or NexusMetadataOrigin.ReduxBundleImport
+					or NexusMetadataOrigin.ReduxBundleImport)
+				&& _mod.NexusModsData.ModId >= DivinityApp.NEXUSMODS_MOD_ID_START)
+			{
+				return _mod.NexusModsData;
+			}
+
+			if ((_mod.ModioData?.MetadataOrigin is ModioMetadataOrigin.Manual
+				or ModioMetadataOrigin.ReduxBundleImport)
+				&& _mod.ModioData.HasAssociation)
+			{
+				return _mod.ModioData;
+			}
+
+			if (_mod.NexusModsData?.MetadataOrigin == NexusMetadataOrigin.BundledProvenance
 				&& _mod.NexusModsData.ModId >= DivinityApp.NEXUSMODS_MOD_ID_START)
 			{
 				return _mod.NexusModsData;
@@ -55,6 +67,16 @@ public sealed class ModMetadataViewData : ReactiveObject
 			return "Unknown package";
 		}
 	}
+
+	/// <summary>
+	/// The package-level title shown in mod lists. Exact Redux database matches can
+	/// distinguish multiple downloadable files belonging to one Nexus project.
+	/// </summary>
+	public string PackageTitle => Provider == _mod.NexusModsData
+		&& _mod.NexusModsData?.OfflineMatchKind is ReduxOfflineMatchKind.ExactPak or ReduxOfflineMatchKind.ExactArchive
+		&& !String.IsNullOrWhiteSpace(_mod.NexusModsData?.FileDisplayName)
+		? _mod.NexusModsData.FileDisplayName
+		: Title;
 
 	public string Author => HasOnlineMetadata && !String.IsNullOrWhiteSpace(Provider?.Author)
 		? Provider.Author
@@ -117,9 +139,13 @@ public sealed class ModMetadataViewData : ReactiveObject
 				NexusMetadataOrigin.BundledProvenance => "Automatically linked from the Redux mod database",
 				_ => "Automatically linked from Nexus Mods"
 			}
-			: _mod.ModioData?.MetadataOrigin == ModioMetadataOrigin.ReduxBundleImport
-				? "Linked from an imported Redux modlist"
-				: $"Automatically linked from {SourceLabel}"
+			: _mod.ModioData?.MetadataOrigin switch
+			{
+				ModioMetadataOrigin.Manual => "Manually linked from mod.io",
+				ModioMetadataOrigin.ReduxBundleImport => "Linked from an imported Redux modlist",
+				ModioMetadataOrigin.BundledProvenance => "Matched by Redux's bundled mod database",
+				_ => $"Automatically linked from {SourceLabel}"
+			}
 		: "Local package metadata";
 
 	public bool UsesBundledNexusMetadata => SourceType == ModSourceType.NEXUSMODS
@@ -251,6 +277,7 @@ public sealed class ModMetadataViewData : ReactiveObject
 	private void RaiseDisplayPropertiesChanged()
 	{
 		this.RaisePropertyChanged(nameof(Title));
+		this.RaisePropertyChanged(nameof(PackageTitle));
 		this.RaisePropertyChanged(nameof(Author));
 		this.RaisePropertyChanged(nameof(Version));
 		this.RaisePropertyChanged(nameof(Summary));

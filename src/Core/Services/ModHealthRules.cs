@@ -423,22 +423,3 @@ public sealed class McmActivationHealthRule : IModHealthRule
 			"MCM includes files that can load before its normal module entry is active. That can make MCM appear in game while it warns that the load order was reset. Move MCM into the active pane and use Sync Load Order to Game. Its reference to BG3MM also applies to compatible managers such as Redux."));
 	}
 }
-
-/// <summary>
-/// Provider-specific safety notes. In Local-only mode the provider is masked,
-/// so this rule naturally produces no findings.
-/// </summary>
-public sealed class ModSourceHealthRule : IModHealthRule
-{
-	public void Evaluate(ModHealthAnalysisContext context, ICollection<ModHealthFinding> findings)
-	{
-		if (context.Mod.Metadata.SourceType == ModSourceType.MODIO)
-		{
-			findings.Add(new ModHealthFinding(
-				ModHealthFindingCode.ModioManagedSource,
-				ModHealthSeverity.Warning,
-				"BG3 or Steam may restore this mod",
-				"Removing the local file does not unsubscribe from it. BG3 can reinstall subscribed mod.io mods, and Steam Cloud may retain a cached copy even after you unsubscribe. For predictable load-order control, avoid mixing the in-game/mod.io manager with Redux."));
-		}
-	}
-}

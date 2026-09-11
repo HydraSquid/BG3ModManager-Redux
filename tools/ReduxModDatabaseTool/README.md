@@ -16,6 +16,7 @@ Run commands from the repository root.
 |:--|:--|:--:|
 | `validate` | Check schema, counts, references, hashes, group cycles, and collisions | No |
 | `fingerprint` | Calculate Redux's exact PAK or archive fingerprint | No |
+| `sync-volo` | Import exact provider-exclusive VOLO catalog candidates and report ambiguities | No |
 | `review-report` | Privacy-audit and classify a contribution report | Only the requested review output |
 | `accept-report` | Preview selected, independently reviewed report records | No |
 | `add` | Preview one project and exact-artifact addition | No |
@@ -30,6 +31,21 @@ dotnet run --project tools/ReduxModDatabaseTool -- validate --database "C:\Redux
 Validation covers the complete database, including source identities, exact-match collisions,
 ordering-group references and cycles, dependency aliases and substitutes, supported match policy,
 and recorded counts. Run it before and after every accepted update.
+
+## Synchronize VOLO
+
+```powershell
+dotnet run --project tools/ReduxModDatabaseTool -- sync-volo `
+  --masterlist "C:\VOLO\masterlist\bg3-masterlist.json" `
+  --nexus-catalog "C:\VOLO\nexus\catalog.json" `
+  --modio-catalog "C:\VOLO\modio\catalog.json" `
+  --review-output "C:\Temp\redux-volo-review.json"
+```
+
+The sync uses exact normalized names and accepts a candidate only when it resolves to one listing
+on one provider. Nexus/mod.io overlap, same-provider collisions, and fuzzy matches remain unresolved.
+The generated review file records ambiguous candidates without changing the database. Add `--write`
+only after reviewing the preview; the final replacement is validated and atomic.
 
 ## Fingerprint one artifact
 

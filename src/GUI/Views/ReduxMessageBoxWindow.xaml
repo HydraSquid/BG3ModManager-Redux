@@ -92,7 +92,7 @@
 						<controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0"
 							Foreground="{DynamicResource ReduxTextPrimaryBrush}"
 							StrokeData="{StaticResource Redux.Icon.Close}" />
-						<TextBlock Text="No" />
+						<TextBlock x:Name="NoButtonLabel" Text="No" />
 					</StackPanel>
 				</Button>
 				<Button x:Name="CancelButton" MinWidth="80" Margin="8,0,0,0" Style="{StaticResource ReduxSecondaryActionButtonStyle}" Click="CancelButton_Click" Visibility="Collapsed" IsCancel="True">
@@ -100,7 +100,7 @@
 						<controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0"
 							Foreground="{DynamicResource ReduxTextPrimaryBrush}"
 							StrokeData="{StaticResource Redux.Icon.Close}" />
-						<TextBlock Text="Cancel" />
+						<TextBlock x:Name="CancelButtonLabel" Text="Cancel" />
 					</StackPanel>
 				</Button>
 				<Button x:Name="YesButton" MinWidth="80" Margin="8,0,0,0" Style="{StaticResource ReduxPrimaryActionButtonStyle}" Click="YesButton_Click" Visibility="Collapsed">
@@ -108,7 +108,7 @@
 						<controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0"
 							Foreground="{DynamicResource ReduxAccentForegroundBrush}"
 							StrokeData="{StaticResource Redux.Icon.Check}" />
-						<TextBlock Text="Yes" />
+						<TextBlock x:Name="YesButtonLabel" Text="Yes" />
 					</StackPanel>
 				</Button>
 				<Button x:Name="OkButton" MinWidth="80" Margin="8,0,0,0" Style="{StaticResource ReduxPrimaryActionButtonStyle}" Click="OkButton_Click" Visibility="Collapsed">
@@ -116,7 +116,7 @@
 						<controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0"
 							Foreground="{DynamicResource ReduxAccentForegroundBrush}"
 							StrokeData="{StaticResource Redux.Icon.Check}" />
-						<TextBlock Text="OK" />
+						<TextBlock x:Name="OkButtonLabel" Text="OK" />
 					</StackPanel>
 				</Button>
 			</StackPanel>

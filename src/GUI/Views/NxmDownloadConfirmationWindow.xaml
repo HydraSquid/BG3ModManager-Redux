@@ -72,8 +72,12 @@
 						<TextBlock Grid.Row="4" Margin="0,8,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Download" />
 						<TextBlock Grid.Row="4" Grid.Column="1" Margin="0,8,0,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}" Text="{Binding Size}" />
 						<Button Grid.Row="5" Grid.Column="1" Margin="0,13,0,0" HorizontalAlignment="Left"
-							Style="{StaticResource ReduxMinorNexusActionButtonStyle}" Click="NexusPage_Click"
-							Content="View exact file on Nexus Mods" />
+							Style="{StaticResource ReduxMinorNexusActionButtonStyle}" Click="NexusPage_Click">
+							<StackPanel Orientation="Horizontal">
+								<controls:ReduxIcon Width="13" Height="13" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.LinkStroke}" />
+								<TextBlock Text="View exact file on Nexus Mods" />
+							</StackPanel>
+						</Button>
 					</Grid>
 				</Border>
 				<Grid Grid.Row="2">
@@ -81,10 +85,13 @@
 					<CheckBox x:Name="SkipCleanConfirmationCheckBox" VerticalAlignment="Center"
 						Content="Don't ask again for clean downloads" />
 				<StackPanel Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal">
-					<Button x:Name="CancelButton" MinWidth="88" IsCancel="True"
-						Style="{StaticResource ReduxSecondaryActionButtonStyle}" Content="Cancel" />
+					<Button x:Name="CancelButton" MinWidth="88" IsCancel="True" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Close}" /><TextBlock Text="Cancel" /></StackPanel>
+					</Button>
 					<Button MinWidth="150" Margin="9,0,0,0" IsDefault="True"
-						Style="{StaticResource ReduxPrimaryActionButtonStyle}" Click="Install_Click" Content="Add to Downloads" />
+						Style="{StaticResource ReduxPrimaryActionButtonStyle}" Click="Install_Click">
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Download}" /><TextBlock Text="Add to Downloads" /></StackPanel>
+					</Button>
 				</StackPanel>
 				</Grid>
 			</Grid>

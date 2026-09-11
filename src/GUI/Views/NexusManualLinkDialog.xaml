@@ -42,7 +42,7 @@
 				Text="Paste the Baldur's Gate 3 Nexus Mods or mod.io page for this mod. The installed file and load order will not change." />
 			<TextBox x:Name="ModPageLinkTextBox" Grid.Row="2" MinHeight="34" Padding="9,5"
 				ToolTip="Nexus Mods or mod.io Baldur's Gate 3 page URL" />
-			<TextBlock Grid.Row="3" Margin="0,8,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}"
+			<TextBlock Grid.Row="3" Margin="0,8,0,0" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextMutedBrush}"
 				Text="The source is saved immediately. An API key is only required to load current page information." />
 			<StackPanel Grid.Row="4" Margin="0,14,0,0" HorizontalAlignment="Right" Orientation="Horizontal">
 				<Button MinWidth="92" Margin="0,0,8,0" IsDefault="True" Click="Link_Click" Style="{StaticResource ReduxPrimaryActionButtonStyle}">

@@ -71,7 +71,7 @@ public sealed class InteractionBehaviorTests
 		var resources = new ResourceDictionary
 		{
 			Source = new Uri(
-				"pack://application:,,,/BG3ModManager;component/Themes/MainResourceDictionary.xaml",
+				"pack://application:,,,/Redux;component/Themes/MainResourceDictionary.xaml",
 				UriKind.Absolute)
 		};
 		var host = new Grid { Width = 12, Height = 260, Resources = resources };
@@ -215,6 +215,202 @@ public sealed class InteractionBehaviorTests
 			choice.Id.Contains("wand", StringComparison.OrdinalIgnoreCase)).Count());
 	}
 
+	public void CustomThemeEditorShellsPreviewTheBackgroundRoleLive()
+	{
+		Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+		var theme = ReduxThemeService.CreateFromBase("Live shell preview", ReduxThemeType.ReduxDark);
+		var editor = new CustomThemeEditorWindow(theme);
+		var picker = new CategoryNameDialog("Background", theme.BackgroundColor, false);
+		try
+		{
+			ReduxThemeService.Apply(picker.Resources, theme.BaseTheme, theme);
+			theme.BackgroundColor = "#E409FF";
+			ReduxThemeService.PreviewColors(theme, editor.Resources, picker.Resources);
+			editor.Measure(new Size(editor.Width, editor.Height));
+			editor.Arrange(new Rect(0, 0, editor.Width, editor.Height));
+			picker.Measure(new Size(picker.Width, picker.Height));
+			picker.Arrange(new Rect(0, 0, picker.Width, picker.Height));
+			editor.UpdateLayout();
+			picker.UpdateLayout();
+
+			var editorShell = (Border?)editor.FindName("EditorWindowShell")
+				?? throw new InvalidOperationException("The custom-theme editor window shell was not found.");
+			var pickerShell = (Border?)picker.FindName("DialogWindowShell")
+				?? throw new InvalidOperationException("The color-picker window shell was not found.");
+			var expected = Color.FromRgb(0xE4, 0x09, 0xFF);
+			RegressionAssert.Equal(expected, RequireSolidColor(editor.Background, "editor window"));
+			RegressionAssert.Equal(expected, RequireSolidColor(editorShell.Background, "editor shell"));
+			RegressionAssert.Equal(expected, RequireSolidColor(pickerShell.Background, "picker shell"));
+		}
+		finally
+		{
+			picker.Close();
+			editor.Close();
+		}
+
+		static Color RequireSolidColor(Brush brush, string surface) =>
+			brush is SolidColorBrush solid
+				? solid.Color
+				: throw new InvalidOperationException($"The {surface} did not resolve a solid semantic background brush.");
+	}
+
+	public void PreferencesAndEditorActionsUseModernChromeAndLabeledIcons()
+	{
+		Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+		var settings = new SettingsWindow();
+		var newCategory = new CategoryNameDialog("", "#8A6AF1", true);
+		var existingCategory = new CategoryNameDialog("Gameplay", "#D7A24B", false);
+		try
+		{
+			ReduxThemeService.Apply(settings.Resources, ReduxThemeType.ReduxDark);
+			settings.Measure(new Size(settings.Width, settings.Height));
+			settings.Arrange(new Rect(0, 0, settings.Width, settings.Height));
+			settings.UpdateLayout();
+
+			var modernTemplate = (ControlTemplate)settings.FindResource("ReduxActionButtonTemplate");
+			var duplicate = (Button)settings.FindName("DuplicateCustomThemeButton");
+			var delete = (Button)settings.FindName("DeleteCustomThemeButton");
+			RegressionAssert.True(ReferenceEquals(modernTemplate, duplicate.Template));
+			RegressionAssert.True(ReferenceEquals(modernTemplate, delete.Template));
+			AssertLabeledIcon(duplicate, "Duplicate");
+			AssertLabeledIcon(delete, "Delete");
+			RegressionAssert.Equal(
+				((SolidColorBrush)settings.FindResource("ReduxErrorBrush")).Color,
+				((SolidColorBrush)delete.Foreground).Color);
+
+			var addButton = (Button)newCategory.FindName("ConfirmButton");
+			var saveButton = (Button)existingCategory.FindName("ConfirmButton");
+			AssertLabeledIcon(addButton, "Add");
+			AssertLabeledIcon(saveButton, "Save");
+			RegressionAssert.True(ReferenceEquals(
+				newCategory.FindResource("Redux.Icon.AddCircle"),
+				((ReduxIcon)((StackPanel)addButton.Content).Children[0]).StrokeData));
+			RegressionAssert.True(ReferenceEquals(
+				existingCategory.FindResource("Redux.Icon.Save"),
+				((ReduxIcon)((StackPanel)saveButton.Content).Children[0]).StrokeData));
+		}
+		finally
+		{
+			existingCategory.Close();
+			newCategory.Close();
+			settings.Close();
+		}
+
+		static void AssertLabeledIcon(Button button, string expectedLabel)
+		{
+			if (button.Content is not StackPanel content)
+				throw new InvalidOperationException($"The {expectedLabel} action does not retain structured icon-and-label content.");
+			RegressionAssert.True(content.Children.OfType<ReduxIcon>().Any());
+			RegressionAssert.True(content.Children.OfType<TextBlock>().Any(text => text.Text == expectedLabel));
+		}
+	}
+
+	public void OnboardingKeepsActionsVisibleAtItsMinimumSupportedSize()
+	{
+		Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+		var window = new ReduxOnboardingWindow(null!, new DivinityModManagerSettings());
+		try
+		{
+			RegressionAssert.Equal(ResizeMode.CanResize, window.ResizeMode);
+			RegressionAssert.Equal(SizeToContent.Manual, window.SizeToContent);
+
+			window.Width = window.MinWidth;
+			window.Height = window.MinHeight;
+			var contentRoot = (FrameworkElement)window.Content;
+			contentRoot.Measure(new Size(window.MinWidth, window.MinHeight));
+			contentRoot.Arrange(new Rect(0, 0, window.MinWidth, window.MinHeight));
+			contentRoot.UpdateLayout();
+
+			var contentScrollViewer = (ScrollViewer)window.FindName("OnboardingContentScrollViewer");
+			var notNow = (Button)window.FindName("NotNowButton");
+			var saveContinue = (Button)window.FindName("SaveContinueButton");
+			if (contentScrollViewer.ActualHeight <= 0)
+				throw new InvalidOperationException("The onboarding content did not receive a scrollable viewport.");
+			AssertInsideWindow(notNow, contentRoot, "Not now");
+			AssertInsideWindow(saveContinue, contentRoot, "Save & Continue");
+		}
+		finally
+		{
+			window.Close();
+		}
+
+		static void AssertInsideWindow(FrameworkElement element, FrameworkElement windowContent, string name)
+		{
+			RegressionAssert.Equal(Visibility.Visible, element.Visibility);
+			if (element.ActualWidth <= 0 || element.ActualHeight <= 0)
+				throw new InvalidOperationException($"The onboarding '{name}' action was not arranged.");
+			var topLeft = element.TranslatePoint(new Point(0, 0), windowContent);
+			var bottomRight = element.TranslatePoint(new Point(element.ActualWidth, element.ActualHeight), windowContent);
+			if (topLeft.X < 0 || topLeft.Y < 0 || bottomRight.X > windowContent.ActualWidth || bottomRight.Y > windowContent.ActualHeight)
+			{
+				throw new InvalidOperationException(
+					$"The onboarding '{name}' action was outside the {windowContent.ActualWidth}x{windowContent.ActualHeight} content: {topLeft} to {bottomRight}.");
+			}
+		}
+	}
+
+	public void PopupPlacementPrefersRightwardGrowthWithScreenEdgeFallbacks()
+	{
+		var below = ReduxWindowBehavior.GetBelowRightwardPlacements(
+			new Size(240, 180),
+			new Size(80, 32),
+			new Point(0, 4));
+		RegressionAssert.Equal(new Point(0, 36), below[0].Point);
+		RegressionAssert.Equal(new Point(-160, 36), below[1].Point);
+		RegressionAssert.Equal(new Point(0, -184), below[2].Point);
+		RegressionAssert.Equal(new Point(-160, -184), below[3].Point);
+
+		var beside = ReduxWindowBehavior.GetBesideRightwardPlacements(
+			new Size(240, 180),
+			new Size(80, 32),
+			new Point(0, 0));
+		RegressionAssert.Equal(new Point(80, 0), beside[0].Point);
+		RegressionAssert.Equal(new Point(-240, 0), beside[1].Point);
+
+		var popup = new Popup();
+		ReduxWindowBehavior.SetPreferredPopupPlacement(
+			popup,
+			ReduxPreferredPopupPlacement.BelowRightward);
+		RegressionAssert.Equal(PlacementMode.Custom, popup.Placement);
+		RegressionAssert.True(popup.CustomPopupPlacementCallback != null);
+	}
+
+	public void MessageBoxSupportsExplicitElevationWarningActions()
+	{
+		var window = new ReduxMessageBoxWindow(null!, "Elevation warning", "Redux Is Running as Administrator",
+			MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+		try
+		{
+			window.SetButtonLabel(MessageBoxResult.Yes, "Don't show again");
+			window.SetButtonLabel(MessageBoxResult.No, "Close");
+
+			RegressionAssert.Equal("Don't show again", ((TextBlock)window.FindName("YesButtonLabel")).Text);
+			RegressionAssert.Equal("Close", ((TextBlock)window.FindName("NoButtonLabel")).Text);
+			RegressionAssert.True(((Button)window.FindName("NoButton")).IsDefault);
+			RegressionAssert.False(((Button)window.FindName("YesButton")).IsDefault);
+		}
+		finally
+		{
+			window.Close();
+		}
+	}
+
+	public void BuiltInIconPickerHasAUniqueExpandedCatalog()
+	{
+		var choices = ReduxIconCatalog.Choices.Where(choice => !choice.IsNone).ToList();
+
+		RegressionAssert.Equal(choices.Count, choices.Select(choice => choice.Id)
+			.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+		RegressionAssert.Equal(choices.Count, choices.Select(choice => choice.ResourceKey)
+			.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+		RegressionAssert.True(choices.Count >= 110);
+		RegressionAssert.True(ReduxIconCatalog.TryGet("backpack", out _));
+		RegressionAssert.True(ReduxIconCatalog.TryGet("languages", out _));
+		RegressionAssert.True(ReduxIconCatalog.TryGet("workflow", out _));
+		RegressionAssert.True(ReduxIconCatalog.TryGet("redux-star", out var reduxStar));
+		RegressionAssert.Equal("Redux.Icon.ReduxStar", reduxStar.ResourceKey);
+	}
+
 	public void AsyncProviderMetadataSignalsAutomaticCategoryRefresh()
 	{
 		var mod = new DivinityModData { UUID = "metadata-refresh" };
@@ -350,6 +546,15 @@ public sealed class InteractionBehaviorTests
 
 	public void ReduxDialogTemplatesResolveCoreBindingsAtRuntime()
 	{
+		var shutdownMode = Application.Current.ShutdownMode;
+		Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+		var reduceMotion = ReduxWindowBehavior.ReduceMotion;
+		var backgroundEffects = ReduxWindowBehavior.BackgroundEffectsDisabled;
+		ReduxWindowBehavior.ConfigureAccessibility(true, backgroundEffects);
+		var pageLink = new NexusManualLinkDialog("https://mod.io/g/baldursgate3/m/example");
+		var modioLink = new ModioManualLinkDialog("https://mod.io/g/baldursgate3/m/example");
+		ReduxThemeService.Apply(pageLink.Resources, ReduxThemeType.ReduxDark);
+		ReduxThemeService.Apply(modioLink.Resources, ReduxThemeType.ReduxDark);
 		var nexusDownloads = new ReduxNexusDownloadsWindow();
 		ReduxThemeService.Apply(nexusDownloads.Resources, ReduxThemeType.ReduxDark);
 		var installReview = new ReduxInstallReviewWindow(null!,
@@ -392,7 +597,9 @@ public sealed class InteractionBehaviorTests
 				0)),
 			nexusDownloads,
 			installReview,
-			deleteFiles
+			deleteFiles,
+			pageLink,
+			modioLink
 		};
 
 		try
@@ -402,6 +609,23 @@ public sealed class InteractionBehaviorTests
 				window.Measure(new Size(860, 700));
 				window.Arrange(new Rect(0, 0, 860, 700));
 				window.UpdateLayout();
+			}
+			RegressionAssert.Equal("https://mod.io/g/baldursgate3/m/example", pageLink.ModPageLink);
+			foreach (var width in new[] { 520d, 440d })
+			{
+				foreach (var dialog in new Window[] { pageLink, modioLink })
+				{
+					dialog.WindowStartupLocation = WindowStartupLocation.Manual;
+					dialog.Left = -15000;
+					dialog.Top = -15000;
+					dialog.ShowActivated = false;
+					dialog.Width = width;
+					if (!dialog.IsVisible) dialog.Show();
+					dialog.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ContextIdle);
+					dialog.UpdateLayout();
+					var name = dialog == pageLink ? "source-link-unified" : "source-link-upstream-modio";
+					WpfRenderCapture.CaptureIfRequested(dialog, $"{name}-{width:0}");
+				}
 			}
 
 			var sharedWindowTemplate = (ControlTemplate)nexusDownloads.FindResource("ReduxWindowTemplate");
@@ -450,6 +674,8 @@ public sealed class InteractionBehaviorTests
 			{
 				window.Close();
 			}
+			Application.Current.ShutdownMode = shutdownMode;
+			ReduxWindowBehavior.ConfigureAccessibility(reduceMotion, backgroundEffects);
 		}
 	}
 

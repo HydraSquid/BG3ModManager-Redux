@@ -308,7 +308,7 @@
 				<StackPanel>
 					<TextBlock FontSize="{DynamicResource Redux.FontSize.20}" FontWeight="{DynamicResource Redux.FontWeight.Title}" Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="Download Manager" />
 					<TextBlock Margin="0,5,0,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}" TextWrapping="Wrap"
-						Text="NXM downloads and local packages stay here until you install them. Intake never activates, reorders, or syncs mods." />
+						Text="Download and review NXM or local packages before installing." />
 				</StackPanel>
 				<StackPanel Grid.Row="1" Margin="0,12,0,10" Orientation="Horizontal">
 					<Button x:Name="InstallAllButton" Margin="0,0,7,0" Click="InstallAllButton_Click" Style="{StaticResource ReduxSuccessActionButtonStyle}"
@@ -369,7 +369,7 @@
 								ItemTemplate="{StaticResource DownloadItemTemplate}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
 							<TextBlock x:Name="InstalledEmptyText" HorizontalAlignment="Center" VerticalAlignment="Center"
 								Foreground="{DynamicResource ReduxTextMutedBrush}" TextAlignment="Center" TextWrapping="Wrap"
-								Text="Installed downloads will appear here.&#x0a;Clearing history never uninstalls content." />
+								Text="Installed downloads will appear here." />
 						</Grid>
 					</TabItem>
 					<TabItem Header="Archives">
@@ -397,7 +397,7 @@
 									ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
 								<TextBlock x:Name="ArchivesEmptyText" HorizontalAlignment="Center" VerticalAlignment="Center"
 									Foreground="{DynamicResource ReduxTextMutedBrush}" TextAlignment="Center" TextWrapping="Wrap"
-									Text="No install packages are retained.&#x0a;Archive retention is optional and can be enabled in Preferences." />
+									Text="No install packages are retained." />
 							</Grid>
 						</Grid>
 					</TabItem>

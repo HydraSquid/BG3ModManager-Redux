@@ -19,7 +19,7 @@ internal sealed class InstallerPackageTests
 {
 	private static readonly string[] RequiredFiles =
 	{
-		"BG3ModManager.exe", "BG3ModManager.dll",
+		"Redux.exe", "Redux.dll",
 		"Updater/ReduxUpdater.exe", "Updater/ReduxUpdater.dll",
 		"Updater/ReduxUpdater.deps.json", "Updater/ReduxUpdater.runtimeconfig.json"
 	};
@@ -32,7 +32,7 @@ internal sealed class InstallerPackageTests
 		using var package = service.DownloadAndPrepareAsync(Manifest(bytes), null, CancellationToken.None)
 			.GetAwaiter().GetResult();
 
-		RegressionAssert.True(File.Exists(Path.Combine(package.PayloadDirectory, "BG3ModManager.exe")));
+		RegressionAssert.True(File.Exists(Path.Combine(package.PayloadDirectory, "Redux.exe")));
 		RegressionAssert.Equal(RequiredFiles.Length + 1, package.Inventory.Files.Count);
 	}
 

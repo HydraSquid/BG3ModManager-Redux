@@ -22,6 +22,19 @@ public static class ReduxMessageBox
 		MessageBoxImage icon = MessageBoxImage.None, MessageBoxResult defaultResult = MessageBoxResult.None) =>
 		Show(Application.Current?.MainWindow, text, caption, button, icon, defaultResult);
 
+	public static MessageBoxResult ShowWithLabels(Window owner, string text, string caption, MessageBoxButton button,
+		MessageBoxImage icon, MessageBoxResult defaultResult,
+		params (MessageBoxResult Result, string Label)[] labels)
+	{
+		var window = new ReduxMessageBoxWindow(owner, text, caption, button, icon, defaultResult);
+		foreach (var (result, label) in labels)
+		{
+			window.SetButtonLabel(result, label);
+		}
+		ReduxWindowBehavior.ShowDialogWithOwnerBackdrop(window, owner);
+		return window.Result;
+	}
+
 	/// <summary>
 	/// Same as Show, but with extra action buttons (e.g. "Copy to Clipboard") alongside the
 	/// standard result buttons. Extra actions run their callback without closing the dialog.

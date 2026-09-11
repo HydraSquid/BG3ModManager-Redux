@@ -74,10 +74,10 @@ FORBIDDEN_SUFFIXES = {
 }
 
 REQUIRED_FILES = {
-	Path("BG3ModManager.exe"),
-	Path("BG3ModManager.dll"),
-	Path("BG3ModManager.deps.json"),
-	Path("BG3ModManager.runtimeconfig.json"),
+	Path("Redux.exe"),
+	Path("Redux.dll"),
+	Path("Redux.deps.json"),
+	Path("Redux.runtimeconfig.json"),
 	Path("_Lib/LSLib.dll"),
 	Path("_Lib/LSLibNative.dll"),
 	Path("_Lib/Ijwhost.dll"),
@@ -113,6 +113,16 @@ def prepare_publish_directory() -> None:
 		if child.is_dir() and child.name.lower() in USER_STATE_DIRECTORIES:
 			remove_path(child)
 	remove_path(PUBLISH_DIR / RELEASE_INVENTORY_NAME)
+	# AssemblyName changed for alpha.15. Never let stale pre-rename runtime files leak into a
+	# package when publishing over an existing output directory.
+	for legacy_runtime_name in (
+		"BG3ModManager.exe",
+		"BG3ModManager.dll",
+		"BG3ModManager.deps.json",
+		"BG3ModManager.runtimeconfig.json",
+		"BG3ModManager.pdb",
+	):
+		remove_path(PUBLISH_DIR / legacy_runtime_name)
 	# UpdaterPayload is an MSBuild intermediate. Only the curated Updater directory is shipped.
 	remove_path(PUBLISH_DIR / "UpdaterPayload")
 	for stale_updater_root_file in PUBLISH_DIR.glob("ReduxUpdater.*"):
@@ -128,9 +138,9 @@ def prepare_publish_directory() -> None:
 			raise SystemExit(f"Required distribution document is missing: {source}")
 		shutil.copy2(source, destination)
 
-	# Combine the readable attribution summary and every complete dependency license into one
-	# Markdown document. Individual source files remain in the repository for provenance and
-	# maintenance, while packaged builds expose one unambiguous third-party document.
+	# Combine the readable attribution summary and the full license texts retained in this
+	# repository into one Markdown document. Individual source files remain in the repository for
+	# provenance and maintenance, while packaged builds expose one unambiguous third-party document.
 	notice_source = ROOT / "licenses" / "Third-Party-Notices.md"
 	if not notice_source.is_file():
 		raise SystemExit(f"Required third-party notice is missing: {notice_source}")
@@ -138,8 +148,9 @@ def prepare_publish_directory() -> None:
 	remove_path(PUBLISH_DIR / "THIRD-PARTY-LICENSES.txt")
 	license_sections = [
 		notice_source.read_bytes().rstrip(b"\r\n")
-		+ b"\r\n\r\n# Complete Third-Party License Terms\r\n"
-		+ b"\r\nThe complete text of each bundled dependency license follows.\r\n"
+		+ b"\r\n\r\n# Retained Third-Party License Texts\r\n"
+		+ b"\r\nThe full text of each license file retained in this repository follows. "
+		+ b"See the inventory above for every packaged runtime project and its upstream terms.\r\n"
 	]
 	for license_name in THIRD_PARTY_LICENSE_FILES:
 		source = ROOT / "licenses" / license_name
@@ -290,10 +301,39 @@ def write_release_inventory(files: list[Path]) -> None:
 
 
 def internal_version(display_version: str) -> str:
-	match = re.fullmatch(r"0\.1\.0-alpha\.([1-9][0-9]*)", display_version)
+	match = re.fullmatch(
+		r"0\.1\.0-alpha\.([1-9][0-9]*)(?:\.([1-9][0-9]*)(?:\.([1-9][0-9]*))?)?",
+		display_version,
+	)
 	if not match:
-		raise SystemExit("Publish versions must use the 0.1.0-alpha.N format.")
-	return f"0.1.0.{match.group(1)}"
+		raise SystemExit(
+			"Publish versions must use the 0.1.0-alpha.N, 0.1.0-alpha.N.H, "
+			"or 0.1.0-alpha.N.H.M format."
+		)
+	alpha = int(match.group(1))
+	hotfix = match.group(2)
+	maintenance = match.group(3)
+	if maintenance is not None:
+		maintenance_number = int(maintenance)
+		if maintenance_number >= 100:
+			raise SystemExit("Maintenance release components must be between 1 and 99.")
+		encoded_revision = (int(hotfix) * 100) + maintenance_number
+		if encoded_revision > 65535:
+			raise SystemExit("The encoded maintenance version exceeds the supported internal range.")
+		return f"0.1.{alpha}.{encoded_revision}"
+	if hotfix is not None:
+		hotfix_number = int(hotfix)
+		# Alpha.16.1 through alpha.16.3 retain their already-published flat revisions.
+		if alpha == 16 and hotfix_number <= 3:
+			return f"0.1.{alpha}.{hotfix_number}"
+		encoded_revision = hotfix_number * 100
+		if encoded_revision > 65535:
+			raise SystemExit("The encoded hotfix version exceeds the supported internal range.")
+		return f"0.1.{alpha}.{encoded_revision}"
+	# Alpha.15 and alpha.16 were published before the hotfix-aware mapping existed.
+	if alpha in (15, 16):
+		return f"0.1.0.{alpha}"
+	return f"0.1.{alpha}.0"
 
 
 def sha256(path: Path) -> str:

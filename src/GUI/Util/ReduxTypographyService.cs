@@ -51,6 +51,30 @@ public static class ReduxTypographyService
 		}
 	}
 
+	public static void Apply(ResourceDictionary resources, DivinityModManagerSettings settings)
+	{
+		if (settings == null) return;
+		var selection = ResolveSelection(settings);
+		Apply(resources, selection.Font, selection.CustomReference);
+	}
+
+	public static (ReduxTypographyFont Font, string CustomReference) ResolveSelection(
+		DivinityModManagerSettings settings)
+	{
+		if (settings == null) return (ReduxTypographyFont.Manrope, String.Empty);
+
+		var customTheme = ReduxThemeService.GetActiveTheme(settings);
+		if (customTheme != null)
+			return (customTheme.TypographyFont, customTheme.CustomTypographyFont ?? String.Empty);
+
+		return settings.UseThemeDefaultTypography
+			? (GetThemeDefault(settings.ColorTheme), String.Empty)
+			: (settings.TypographyFont, settings.CustomTypographyFont ?? String.Empty);
+	}
+
+	public static ReduxTypographyFont GetThemeDefault(ReduxThemeType theme) =>
+		theme == ReduxThemeType.Parchment ? ReduxTypographyFont.SegoeUI : ReduxTypographyFont.Manrope;
+
 	public static FontFamily ResolveFontFamily(ReduxTypographyFont selection, string customReference = "")
 	{
 		if (!Enum.IsDefined(selection)) selection = ReduxTypographyFont.Manrope;

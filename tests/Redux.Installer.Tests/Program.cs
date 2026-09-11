@@ -14,6 +14,7 @@ internal static class Program
 		var checks = new List<(string Name, Action Run)>
 		{
 			(nameof(manifest.ExactPublicAlphaManifestIsAccepted), manifest.ExactPublicAlphaManifestIsAccepted),
+			(nameof(manifest.HotfixAwarePublicAlphaManifestIsAccepted), manifest.HotfixAwarePublicAlphaManifestIsAccepted),
 			(nameof(manifest.DuplicateAndUnknownManifestPropertiesAreRejected), manifest.DuplicateAndUnknownManifestPropertiesAreRejected),
 			(nameof(manifest.ManifestCannotRedirectSetupOutsideOfficialVersionedRelease), manifest.ManifestCannotRedirectSetupOutsideOfficialVersionedRelease),
 			(nameof(package.VerifiedReleaseIsPreparedWithoutChangingAnInstallLocation), package.VerifiedReleaseIsPreparedWithoutChangingAnInstallLocation),
@@ -22,9 +23,13 @@ internal static class Program
 			(nameof(environment.DesktopRuntimeDetectionRequiresTheX64VersionEightFamily), environment.DesktopRuntimeDetectionRequiresTheX64VersionEightFamily),
 			(nameof(environment.RecommendedPerUserDestinationIsWritableAndOutsideTheGame), environment.RecommendedPerUserDestinationIsWritableAndOutsideTheGame),
 			(nameof(environment.GameDirectoryAndNonemptyFoldersAreRejected), environment.GameDirectoryAndNonemptyFoldersAreRejected),
+			(nameof(environment.CurrentAndLegacyRuntimeNamesAreRecognizedAsExistingInstalls), environment.CurrentAndLegacyRuntimeNamesAreRecognizedAsExistingInstalls),
 			(nameof(environment.RuntimeDownloadAcceptsOnlyMicrosoftX64DesktopRuntimeAssets), environment.RuntimeDownloadAcceptsOnlyMicrosoftX64DesktopRuntimeAssets),
 			(nameof(transaction.FreshInstallCommitsReviewedFilesAndAnIndependentUninstaller), transaction.FreshInstallCommitsReviewedFilesAndAnIndependentUninstaller),
 			(nameof(transaction.IntegrationFailureRollsBackTheFreshApplicationDirectory), transaction.IntegrationFailureRollsBackTheFreshApplicationDirectory),
+			(nameof(transaction.ExistingInstallUpdatesOwnedFilesAndPreservesUserContent), transaction.ExistingInstallUpdatesOwnedFilesAndPreservesUserContent),
+			(nameof(transaction.FailedExistingUpdateRestoresOwnedFilesAndPreservesUserContent), transaction.FailedExistingUpdateRestoresOwnedFilesAndPreservesUserContent),
+			(nameof(transaction.ExistingUpdateRefusesToReplaceAnUnownedCollision), transaction.ExistingUpdateRefusesToReplaceAnUnownedCollision),
 			(nameof(transaction.UninstallRemovesOnlyReleaseFilesAndPreservesUserContent), transaction.UninstallRemovesOnlyReleaseFilesAndPreservesUserContent),
 			(nameof(transaction.CleanUninstallDoesNotMistakeTheRunningUninstallerForUserContent), transaction.CleanUninstallDoesNotMistakeTheRunningUninstallerForUserContent)
 		};

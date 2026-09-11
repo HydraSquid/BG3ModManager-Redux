@@ -64,10 +64,6 @@ jobs:
             exit $LASTEXITCODE
           }
 
-      - name: Build and test standalone web installer
-        shell: pwsh
-        run: .\Build-Installer.ps1 -Configuration Release -RunTests
-
       - name: Build and validate Publish package
         shell: pwsh
         run: |
@@ -107,8 +103,8 @@ jobs:
           try {
             $entries = $archive.Entries.FullName
             foreach ($required in @(
-              'BG3ModManager.exe',
-              'BG3ModManager.dll',
+              'Redux.exe',
+              'Redux.dll',
               'Redux-Release-Files.json',
               'Updater/ReduxUpdater.exe',
               'Updater/ReduxUpdater.dll',
@@ -148,3 +144,12 @@ jobs:
           finally {
             $archive.Dispose()
           }
+
+      - name: Upload portable test build
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: Redux-portable-${{ github.ref_name }}-${{ github.run_number }}
+          path: BG3ModManager-Redux_v*.zip
+          if-no-files-found: error
+          retention-days: 7

@@ -180,7 +180,9 @@
 							Text="Your game load order will not change until you apply these changes." />
 					</StackPanel>
 					<StackPanel Grid.Column="1" Orientation="Horizontal">
-						<Button MinWidth="88" Content="Cancel" IsCancel="True" Style="{StaticResource ReduxSecondaryActionButtonStyle}" Click="CancelButton_Click" />
+						<Button MinWidth="88" IsCancel="True" Style="{StaticResource ReduxSecondaryActionButtonStyle}" Click="CancelButton_Click">
+							<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Close}" /><TextBlock Text="Cancel" /></StackPanel>
+						</Button>
 						<Button MinWidth="148" Margin="8,0,0,0" IsDefault="True" Style="{StaticResource ReduxPrimaryActionButtonStyle}" Click="ExportButton_Click">
 							<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,7,0" Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 								Foreground="{DynamicResource ReduxAccentForegroundBrush}" StrokeData="{StaticResource Redux.Icon.Check}" />

@@ -28,6 +28,7 @@ public class ModioCacheHandler : IExternalModCacheHandler<ModioCachedData>
 
 		var candidates = mods
 			.Where(mod => !mod.ModioData.HasMetadata
+				&& mod.ModioData.MetadataOrigin != ModioMetadataOrigin.ManualUnlinked
 				&& !HasAuthoritativeNexusAssociation(mod)
 				&& (mod.ModioData.MetadataOrigin == ModioMetadataOrigin.Manual
 						&& !String.IsNullOrWhiteSpace(mod.ModioData.NameId)
@@ -56,9 +57,9 @@ public class ModioCacheHandler : IExternalModCacheHandler<ModioCachedData>
 				if (isManual && !String.IsNullOrWhiteSpace(manualNameId))
 				{
 					DivinityApp.Log($"Requesting manually linked mod.io metadata for '{mod.DisplayName}'.");
-					data = await ModioDataLoader.LoadModDataByNameIdAsync(
+					data = await ModioDataLoader.LoadModDataByProjectReferenceAsync(
 						mod,
-						manualNameId,
+						new ModioDataLoader.ModioProjectReference(null, manualNameId),
 						APIKey,
 						cancellationToken);
 				}
@@ -106,10 +107,16 @@ public class ModioCacheHandler : IExternalModCacheHandler<ModioCachedData>
 
 	public static bool IsCachedAssociationCompatible(DivinityModData mod, ModioModData data)
 	{
-		if (mod == null || data == null || HasAuthoritativeNexusAssociation(mod))
+		if (mod == null || data == null)
 		{
 			return false;
 		}
+
+		// An unlink is a durable preference, not provider metadata that another
+		// explicit association may discard during cache reconciliation.
+		if (data.MetadataOrigin == ModioMetadataOrigin.ManualUnlinked) return true;
+
+		if (HasAuthoritativeNexusAssociation(mod)) return false;
 
 		if (data.MetadataOrigin == ModioMetadataOrigin.Manual)
 		{
@@ -135,7 +142,9 @@ public class ModioCacheHandler : IExternalModCacheHandler<ModioCachedData>
 	}
 
 	private static bool HasAuthoritativeNexusAssociation(DivinityModData mod) =>
-		mod?.NexusModsData?.MetadataOrigin is NexusMetadataOrigin.Manual
+		mod?.NexusModsData?.HasMetadata == true
+		&& mod.NexusModsData.MetadataOrigin is NexusMetadataOrigin.Manual
+			or NexusMetadataOrigin.BundledProvenance
 			or NexusMetadataOrigin.NexusArchiveImport
 			or NexusMetadataOrigin.ReduxBundleImport;
 }

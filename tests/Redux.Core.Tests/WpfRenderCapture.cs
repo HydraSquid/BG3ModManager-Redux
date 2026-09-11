@@ -23,9 +23,9 @@ internal static class WpfRenderCapture
 		var resources = new ResourceDictionary();
 		foreach (var uri in new[]
 		{
-			"/BG3ModManager;component/Themes/Typography.xaml",
-			"/BG3ModManager;component/Themes/Light.xaml",
-			"/BG3ModManager;component/Themes/Dark.xaml",
+			"/Redux;component/Themes/Typography.xaml",
+			"/Redux;component/Themes/Light.xaml",
+			"/Redux;component/Themes/Dark.xaml",
 			"/AdonisUI.ClassicTheme;component/Resources.xaml"
 		})
 			resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri(uri, UriKind.Relative) });
@@ -37,7 +37,7 @@ internal static class WpfRenderCapture
 		var resources = new ResourceDictionary();
 		resources.MergedDictionaries.Add(new ResourceDictionary
 		{
-			Source = new Uri("/BG3ModManager;component/Themes/MainResourceDictionary.xaml", UriKind.Relative)
+			Source = new Uri("/Redux;component/Themes/MainResourceDictionary.xaml", UriKind.Relative)
 		});
 		return resources;
 	}

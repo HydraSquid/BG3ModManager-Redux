@@ -279,6 +279,36 @@ internal sealed class ModHealthTests
 		RegressionAssert.Equal(ModHealthSeverity.Warning, mismatchFinding.Severity);
 	}
 
+	public void ScriptExtenderFindingsUseOnlyTheDedicatedRowIndicator()
+	{
+		var mod = CreateMod("extender", "Extender Mod", isActive: true);
+		var extenderFinding = new ModHealthFinding(
+			ModHealthFindingCode.ScriptExtenderUnavailable,
+			ModHealthSeverity.Error,
+			"Script Extender unavailable",
+			"Script Extender is required.");
+		var dependencyFinding = new ModHealthFinding(
+			ModHealthFindingCode.InactiveDependency,
+			ModHealthSeverity.Warning,
+			"Dependency inactive",
+			"Enable the dependency.");
+
+		var extenderOnly = new ModHealthSnapshot(mod, new[] { extenderFinding });
+		RegressionAssert.True(extenderOnly.NeedsAttention);
+		RegressionAssert.True(extenderOnly.HasErrors);
+		RegressionAssert.False(extenderOnly.NeedsNonExtenderAttention);
+		RegressionAssert.False(extenderOnly.HasNonExtenderErrors);
+		RegressionAssert.Equal(0, extenderOnly.NonExtenderAttentionFindings.Count);
+
+		var mixed = new ModHealthSnapshot(mod, new[] { extenderFinding, dependencyFinding });
+		RegressionAssert.True(mixed.NeedsNonExtenderAttention);
+		RegressionAssert.False(mixed.HasNonExtenderErrors);
+		RegressionAssert.Equal(1, mixed.NonExtenderAttentionFindings.Count);
+		RegressionAssert.Equal(
+			ModHealthFindingCode.InactiveDependency,
+			mixed.NonExtenderAttentionFindings[0].Code);
+	}
+
 	public void ForceLoadedVariantsRemainInformationalAndReadOnly()
 	{
 		var alwaysLoaded = CreateMod("always", "Always Loaded", isActive: true);
@@ -306,7 +336,7 @@ internal sealed class ModHealthTests
 		RegressionAssert.True(installed.All(mod => mod.IsActive));
 	}
 
-	public void LocalOnlyPresentationSuppressesProviderFindingsWithoutDeletingMetadata()
+	public void ModioMetadataDoesNotImplyAHealthWarning()
 	{
 		var mod = CreateMod("modio", "mod.io Mod", isActive: true);
 		mod.ModioData = new ModioModData
@@ -317,21 +347,10 @@ internal sealed class ModHealthTests
 		};
 		var analyzer = new ModHealthAnalyzer();
 
-		var linkedSnapshot = FindSnapshot(
+		var snapshot = FindSnapshot(
 			analyzer.AnalyzeAll(new[] { mod }, new[] { mod }),
 			mod.UUID);
-		RegressionAssert.True(HasFinding(
-			linkedSnapshot,
-			ModHealthFindingCode.ModioManagedSource));
-
-		mod.OnlineMetadataEnabled = false;
-		var localSnapshot = FindSnapshot(
-			analyzer.AnalyzeAll(new[] { mod }, new[] { mod }),
-			mod.UUID);
-
-		RegressionAssert.False(HasFinding(
-			localSnapshot,
-			ModHealthFindingCode.ModioManagedSource));
+		RegressionAssert.Equal(0, snapshot.WarningCount);
 		RegressionAssert.True(mod.ModioData.HasMetadata);
 	}
 
@@ -349,56 +368,6 @@ internal sealed class ModHealthTests
 
 		var active = FindSnapshot(analyzer.AnalyzeAll(new[] { mcm }, new[] { mcm }), mcm.UUID);
 		RegressionAssert.False(HasFinding(active, ModHealthFindingCode.McmNotActive));
-	}
-
-	public void ModioWarningExplainsSteamCloudPersistence()
-	{
-		var mod = CreateMod("modio-cache", "mod.io Mod", isActive: true);
-		mod.ModioData = new ModioModData
-		{
-			ModId = 67890,
-			Name = "Linked mod.io project",
-			MetadataOrigin = ModioMetadataOrigin.NativePackage
-		};
-
-		var snapshot = FindSnapshot(new ModHealthAnalyzer().AnalyzeAll(new[] { mod }, new[] { mod }), mod.UUID);
-		var finding = snapshot.Findings.Single(item => item.Code == ModHealthFindingCode.ModioManagedSource);
-		RegressionAssert.Contains(finding.Message, "Steam Cloud");
-		RegressionAssert.Contains(finding.Message, "unsubscribe");
-	}
-
-	public void DisablingModioWarningsHidesOnlyThatFinding()
-	{
-		var mod = CreateMod("modio-suppressed", "mod.io Mod", isActive: true);
-		mod.ModioData = new ModioModData
-		{
-			ModId = 54321,
-			Name = "Linked mod.io project",
-			MetadataOrigin = ModioMetadataOrigin.NativePackage
-		};
-		// An unrelated finding proves the suppression is targeted rather than blanket.
-		mod.IsForceLoaded = true;
-
-		var analyzer = new ModHealthAnalyzer();
-		var installed = new[] { mod };
-
-		var normal = FindSnapshot(analyzer.AnalyzeAll(installed, installed), mod.UUID);
-		RegressionAssert.True(HasFinding(normal, ModHealthFindingCode.ModioManagedSource));
-
-		var suppressed = FindSnapshot(
-			analyzer.AnalyzeAll(installed, installed, enableLoadOrderAdvisor: false, disableModioWarnings: true),
-			mod.UUID);
-
-		RegressionAssert.False(HasFinding(suppressed, ModHealthFindingCode.ModioManagedSource));
-
-		// Everything else survives: other findings, and the mod.io metadata itself.
-		foreach (var finding in normal.Findings.Where(item => item.Code != ModHealthFindingCode.ModioManagedSource))
-		{
-			RegressionAssert.True(HasFinding(suppressed, finding.Code));
-		}
-
-		RegressionAssert.True(mod.OnlineMetadataEnabled);
-		RegressionAssert.True(mod.ModioData.HasMetadata);
 	}
 
 	private static RegressionModData CreateMod(string uuid, string name, bool isActive)

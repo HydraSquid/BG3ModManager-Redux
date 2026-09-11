@@ -168,7 +168,7 @@ public static class ReduxUpdateTransaction
 			files.Add(relativePath);
 		}
 		if (!unique.Contains(InventoryFileName)
-			|| !unique.Contains("BG3ModManager.exe")
+			|| !unique.Contains("Redux.exe")
 			|| !unique.Contains("Updater/ReduxUpdater.exe"))
 			throw new InvalidDataException("The Redux release inventory is missing required application files.");
 
@@ -196,7 +196,7 @@ public static class ReduxUpdateTransaction
 		_ = Path.GetFullPath(request.ResultPath);
 		if (String.IsNullOrWhiteSpace(request.DisplayVersion))
 			throw new InvalidDataException("The update request does not identify its release.");
-		if (!String.Equals(NormalizeRelativeFilePath(request.RelaunchRelativePath), "BG3ModManager.exe", StringComparison.OrdinalIgnoreCase))
+		if (!String.Equals(NormalizeRelativeFilePath(request.RelaunchRelativePath), "Redux.exe", StringComparison.OrdinalIgnoreCase))
 			throw new InvalidDataException("The update request has an unsupported relaunch target.");
 	}
 

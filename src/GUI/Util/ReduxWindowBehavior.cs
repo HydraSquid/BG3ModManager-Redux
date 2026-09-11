@@ -15,6 +15,13 @@ using WpfScreenHelper;
 
 namespace DivinityModManager.Util;
 
+public enum ReduxPreferredPopupPlacement
+{
+	Default,
+	BelowRightward,
+	BesideRightward
+}
+
 /// <summary>
 /// Freeze-safe opacity animation that preserves existing visual-state triggers
 /// and snaps to their destination under Reduce Motion.
@@ -247,6 +254,18 @@ public static class ReduxWindowBehavior
 	public static void SetManagedPopupAnimation(DependencyObject element, PopupAnimation value) =>
 		element.SetValue(ManagedPopupAnimationProperty, value);
 
+	public static readonly DependencyProperty PreferredPopupPlacementProperty = DependencyProperty.RegisterAttached(
+		"PreferredPopupPlacement",
+		typeof(ReduxPreferredPopupPlacement),
+		typeof(ReduxWindowBehavior),
+		new PropertyMetadata(ReduxPreferredPopupPlacement.Default, PreferredPopupPlacementPropertyChanged));
+
+	public static ReduxPreferredPopupPlacement GetPreferredPopupPlacement(DependencyObject element) =>
+		(ReduxPreferredPopupPlacement)element.GetValue(PreferredPopupPlacementProperty);
+
+	public static void SetPreferredPopupPlacement(DependencyObject element, ReduxPreferredPopupPlacement value) =>
+		element.SetValue(PreferredPopupPlacementProperty, value);
+
 	public static readonly DependencyProperty ManageContextMenuMotionProperty = DependencyProperty.RegisterAttached(
 		"ManageContextMenuMotion",
 		typeof(bool),
@@ -307,6 +326,98 @@ public static class ReduxWindowBehavior
 		}
 
 		ApplyManagedPopupMotion(popup);
+	}
+
+	private static void PreferredPopupPlacementPropertyChanged(
+		DependencyObject dependencyObject,
+		DependencyPropertyChangedEventArgs e)
+	{
+		ApplyPreferredPopupPlacement(
+			dependencyObject,
+			(ReduxPreferredPopupPlacement)e.NewValue);
+	}
+
+	private static void ApplyPreferredPopupPlacement(
+		DependencyObject dependencyObject,
+		ReduxPreferredPopupPlacement placement)
+	{
+		CustomPopupPlacementCallback callback = placement switch
+		{
+			ReduxPreferredPopupPlacement.BelowRightward => GetBelowRightwardPlacements,
+			ReduxPreferredPopupPlacement.BesideRightward => GetBesideRightwardPlacements,
+			_ => null
+		};
+
+		switch (dependencyObject)
+		{
+			case Popup popup:
+				popup.CustomPopupPlacementCallback = callback;
+				if (callback != null)
+				{
+					popup.Placement = PlacementMode.Custom;
+				}
+				break;
+			case ContextMenu contextMenu:
+				contextMenu.CustomPopupPlacementCallback = callback;
+				if (callback != null)
+				{
+					contextMenu.Placement = PlacementMode.Custom;
+				}
+				break;
+		}
+	}
+
+	public static CustomPopupPlacement[] GetBelowRightwardPlacements(
+		Size popupSize,
+		Size targetSize,
+		Point offset) =>
+	[
+		// Align the popup's left edge to the target first, so ordinary menus grow
+		// toward the right. The remaining candidates are deliberate screen-edge
+		// fallbacks rather than the system-wide left-handed menu preference.
+		new CustomPopupPlacement(
+			new Point(offset.X, targetSize.Height + offset.Y),
+			PopupPrimaryAxis.Horizontal),
+		new CustomPopupPlacement(
+			new Point(targetSize.Width - popupSize.Width + offset.X, targetSize.Height + offset.Y),
+			PopupPrimaryAxis.Horizontal),
+		new CustomPopupPlacement(
+			new Point(offset.X, -popupSize.Height - offset.Y),
+			PopupPrimaryAxis.Horizontal),
+		new CustomPopupPlacement(
+			new Point(targetSize.Width - popupSize.Width + offset.X, -popupSize.Height - offset.Y),
+			PopupPrimaryAxis.Horizontal)
+	];
+
+	public static CustomPopupPlacement[] GetBesideRightwardPlacements(
+		Size popupSize,
+		Size targetSize,
+		Point offset) =>
+	[
+		new CustomPopupPlacement(
+			new Point(targetSize.Width + offset.X, offset.Y),
+			PopupPrimaryAxis.Vertical),
+		new CustomPopupPlacement(
+			new Point(-popupSize.Width - offset.X, offset.Y),
+			PopupPrimaryAxis.Vertical)
+	];
+
+	public static void OpenRightwardDropDown(
+		ContextMenu contextMenu,
+		FrameworkElement placementTarget,
+		double verticalOffset = 0)
+	{
+		if (contextMenu == null || placementTarget == null)
+		{
+			return;
+		}
+
+		contextMenu.PlacementTarget = placementTarget;
+		contextMenu.HorizontalOffset = 0;
+		contextMenu.VerticalOffset = verticalOffset;
+		SetPreferredPopupPlacement(contextMenu, ReduxPreferredPopupPlacement.BelowRightward);
+		ApplyPreferredPopupPlacement(contextMenu, ReduxPreferredPopupPlacement.BelowRightward);
+		contextMenu.IsOpen = true;
 	}
 
 	private static void ManageContextMenuMotionPropertyChanged(

@@ -8,6 +8,15 @@ namespace DivinityModManager.Util;
 /// </summary>
 public static class VisualDividerDragPolicy
 {
+	public static bool ContainsVisualDivider(IEnumerable<DivinityModData> items)
+	{
+		ArgumentNullException.ThrowIfNull(items);
+		return items.Any(item => item?.IsVisualDivider == true);
+	}
+
+	public static bool CanDropOnPane(IEnumerable<DivinityModData> items, bool destinationActive) =>
+		destinationActive || !ContainsVisualDivider(items);
+
 	public static IReadOnlyList<DivinityModData> ResolveDragItems(
 		IEnumerable<DivinityModData> visualItems,
 		DivinityModData sourceItem,

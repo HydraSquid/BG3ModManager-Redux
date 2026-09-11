@@ -415,7 +415,7 @@
 				AllowsTransparency="True"
 				Focusable="False"
 				IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
-				Placement="Right"
+				util:ReduxWindowBehavior.PreferredPopupPlacement="BesideRightward"
 				util:ReduxWindowBehavior.ManagedPopupAnimation="Fade">
 				<Grid Margin="4">
 					<Border
@@ -513,7 +513,7 @@
 				AllowsTransparency="True"
 				Focusable="False"
 				IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
-				Placement="Bottom"
+				util:ReduxWindowBehavior.PreferredPopupPlacement="BelowRightward"
 				util:ReduxWindowBehavior.ManagedPopupAnimation="Slide">
 				<!-- Margin keeps rounded antialiased chrome inside the native popup bounds at fractional DPI. -->
 				<Grid Margin="4">
@@ -675,6 +675,15 @@
 		<GradientStop Offset="0" Color="#FF05C2D8" />
 		<GradientStop Offset="1" Color="#C005C2D8" />
 	</LinearGradientBrush>
+	<!-- Discord's brand blue is reserved for its support link's semantic menu hover. -->
+	<LinearGradientBrush x:Key="Redux.Pill.Discord.Background" StartPoint="0,0" EndPoint="1,0">
+		<GradientStop Offset="0" Color="#3E5865F2" />
+		<GradientStop Offset="1" Color="#1E5865F2" />
+	</LinearGradientBrush>
+	<LinearGradientBrush x:Key="Redux.Pill.Discord.Border" StartPoint="0,0" EndPoint="1,0">
+		<GradientStop Offset="0" Color="#FF5865F2" />
+		<GradientStop Offset="1" Color="#C05865F2" />
+	</LinearGradientBrush>
 	<!--  Warning tint for chips/buttons; ReduxAccentSoftBrush/ReduxSuccessSoftBrush have hand-tuned per-theme colors, warning does not yet, so this derives from the semantic warning color instead.  -->
 	<SolidColorBrush x:Key="ReduxWarningSoftBrush" Color="{DynamicResource ReduxWarningColor}" Opacity="0.14" />
 
@@ -780,6 +789,8 @@
 	<!-- Lucide vector icons, normalized to Lucide's native 24x24 view box. -->
 	<!-- Curated fantasy/category glyphs. Keep these readable at 12-16px. -->
 	<PathGeometry x:Key="Redux.Icon.Shirt" Figures="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z" />
+	<!-- Monochrome Redux brand mark, normalized from redux-star.svg to the shared 24x24 icon canvas. -->
+	<PathGeometry x:Key="Redux.Icon.ReduxStar" Figures="M12 1.266 C12.352 6.492 13.898 10.406 22.313 12 C13.898 13.594 12.352 17.508 12 22.734 C11.648 17.508 10.102 13.594 1.688 12 C10.102 10.406 11.648 6.492 12 1.266 Z" />
 	<GeometryGroup x:Key="Redux.Icon.Sparkles">
 		<PathGeometry Figures="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" />
 		<PathGeometry Figures="M20 2v4" />
@@ -825,8 +836,7 @@
 		<PathGeometry Figures="m21.5 11.5-1.914-1.914A2 2 0 0 1 19 8.172v-.344a2 2 0 0 0-.586-1.414l-1.657-1.657A6 6 0 0 0 12.516 3H9l1.243 1.243A6 6 0 0 1 12 8.485V10l2 2h1.172a2 2 0 0 1 1.414.586L18.5 14.5" />
 	</GeometryGroup>
 	<GeometryGroup x:Key="Redux.Icon.Book">
-		<PathGeometry Figures="M12 7v14" />
-		<PathGeometry Figures="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />
+		<PathGeometry Figures="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20" />
 	</GeometryGroup>
 	<GeometryGroup x:Key="Redux.Icon.Eye">
 		<PathGeometry Figures="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
@@ -1108,6 +1118,8 @@
 	<PathGeometry x:Key="Redux.Icon.ChevronLeftStroke" Figures="m15 18-6-6 6-6" />
 	<PathGeometry x:Key="Redux.Icon.ChevronRightStroke" Figures="m9 18 6-6-6-6" />
 	<PathGeometry x:Key="Redux.Icon.Heart" Figures="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" />
+	<!-- Native 24px geometry adapted from the supplied transparent Discord mark. -->
+	<PathGeometry x:Key="Redux.Icon.Discord" Figures="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.211.375-.445.865-.608 1.25a36.89 36.89 0 0 0-5.487 0c-.164-.394-.406-.875-.618-1.25a.077.077 0 0 0-.078-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.028C.533 9.046-.319 13.58.099 18.058a.082.082 0 0 0 .031.056c2.053 1.508 4.041 2.423 5.993 3.03a.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 12.19 12.19 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.011c3.928 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .079.01c.12.099.246.198.373.292a.077.077 0 0 1-.007.128c-.598.343-1.22.644-1.873.891a.077.077 0 0 0-.041.107c.361.698.772 1.363 1.225 1.993a.076.076 0 0 0 .084.029c1.961-.607 3.95-1.522 6.002-3.03a.077.077 0 0 0 .032-.055c.5-5.177-.838-9.674-3.549-13.661a.061.061 0 0 0-.031-.028zM8.02 15.331c-1.183 0-2.157-1.086-2.157-2.419s.956-2.419 2.157-2.419c1.211 0 2.176 1.095 2.157 2.419 0 1.333-.956 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.086-2.157-2.419s.955-2.419 2.157-2.419c1.211 0 2.176 1.095 2.157 2.419 0 1.333-.946 2.419-2.157 2.419z" />
 	<GeometryGroup x:Key="Redux.Icon.GameController">
 		<PathGeometry Figures="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z" />
 		<LineGeometry StartPoint="6,11" EndPoint="10,11" />
@@ -1375,10 +1387,143 @@
 		<PathGeometry Figures="M12 7v14" />
 		<PathGeometry Figures="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />
 	</GeometryGroup>
-	<GeometryGroup x:Key="Redux.Icon.WandSparkles">
-		<PathGeometry Figures="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72" />
-		<PathGeometry Figures="m14 7 3 3" /><PathGeometry Figures="M5 6v4" /><PathGeometry Figures="M19 14v4" />
-		<PathGeometry Figures="M10 2v2" /><PathGeometry Figures="M7 8H3" /><PathGeometry Figures="M21 16h-4" /><PathGeometry Figures="M11 3H9" />
+	<GeometryGroup x:Key="Redux.Icon.Backpack">
+		<PathGeometry Figures="M4 10a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
+		<PathGeometry Figures="M8 10h8" /><PathGeometry Figures="M8 18h8" />
+		<PathGeometry Figures="M8 22v-6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v6" />
+		<PathGeometry Figures="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.Coins">
+		<PathGeometry Figures="M13.744 17.736a6 6 0 1 1-7.48-7.48" />
+		<PathGeometry Figures="M15 6h1v4" /><PathGeometry Figures="m6.134 14.768.866-.5 2 3.464" />
+		<EllipseGeometry Center="16,8" RadiusX="6" RadiusY="6" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.Footprints">
+		<PathGeometry Figures="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z" />
+		<PathGeometry Figures="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z" />
+		<PathGeometry Figures="M16 17h4" /><PathGeometry Figures="M4 13h4" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.TentTree">
+		<EllipseGeometry Center="4,4" RadiusX="2" RadiusY="2" />
+		<PathGeometry Figures="m14 5 3-3 3 3" /><PathGeometry Figures="m14 10 3-3 3 3" />
+		<PathGeometry Figures="M17 14V2" /><PathGeometry Figures="M17 14H7l-5 8h20Z" />
+		<PathGeometry Figures="M8 14v8" /><PathGeometry Figures="m9 14 5 8" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.Trees">
+		<PathGeometry Figures="M10 10v.2A3 3 0 0 1 8.9 16H5a3 3 0 0 1-1-5.8V10a3 3 0 0 1 6 0Z" />
+		<PathGeometry Figures="M7 16v6" /><PathGeometry Figures="M13 19v3" />
+		<PathGeometry Figures="M12 19h8.3a1 1 0 0 0 .7-1.7L18 14h.3a1 1 0 0 0 .7-1.7L16 9h.2a1 1 0 0 0 .8-1.7L13 3l-1.4 1.5" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.MountainSnow">
+		<PathGeometry Figures="m8 3 4 8 5-5 5 15H2L8 3z" />
+		<PathGeometry Figures="M4.14 15.08c2.62-1.57 5.24-1.43 7.86.42 2.74 1.94 5.49 2 8.23.19" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.ShipWheel">
+		<EllipseGeometry Center="12,12" RadiusX="8" RadiusY="8" />
+		<PathGeometry Figures="M12 2v7.5" /><PathGeometry Figures="m19 5-5.23 5.23" />
+		<PathGeometry Figures="M22 12h-7.5" /><PathGeometry Figures="m19 19-5.23-5.23" />
+		<PathGeometry Figures="M12 14.5V22" /><PathGeometry Figures="M10.23 13.77 5 19" />
+		<PathGeometry Figures="M9.5 12H2" /><PathGeometry Figures="M10.23 10.23 5 5" />
+		<EllipseGeometry Center="12,12" RadiusX="2.5" RadiusY="2.5" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.LockKeyhole">
+		<EllipseGeometry Center="12,16" RadiusX="1" RadiusY="1" />
+		<RectangleGeometry Rect="3,10,18,12" RadiusX="2" RadiusY="2" />
+		<PathGeometry Figures="M7 10V7a5 5 0 0 1 10 0v3" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.DoorOpen">
+		<PathGeometry Figures="M10 21H2" /><PathGeometry Figures="M10 3H7a2 2 0 0 0-2 2v16" />
+		<PathGeometry Figures="M14 12h.01" />
+		<PathGeometry Figures="M19 21V5a2 2 0 0 0-1.675-1.974l-6.163-1.013A1 1 0 0 0 10 3v18a1 1 0 0 0 1.124.992z" />
+		<PathGeometry Figures="M22 21h-3" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.Languages">
+		<PathGeometry Figures="m5 8 6 6" /><PathGeometry Figures="m4 14 6-6 2-3" />
+		<PathGeometry Figures="M2 5h12" /><PathGeometry Figures="M7 2h1" />
+		<PathGeometry Figures="m22 22-5-10-5 10" /><PathGeometry Figures="M14 18h6" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.Accessibility">
+		<EllipseGeometry Center="16,4" RadiusX="1" RadiusY="1" />
+		<PathGeometry Figures="m18 19 1-7-6 1" /><PathGeometry Figures="m5 8 3-3 5.5 3-2.36 3.5" />
+		<PathGeometry Figures="M4.24 14.5a5 5 0 0 0 6.88 6" /><PathGeometry Figures="M13.76 17.5a5 5 0 0 0-6.88-6" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.CodeXml">
+		<PathGeometry Figures="m18 16 4-4-4-4" /><PathGeometry Figures="m6 8-4 4 4 4" />
+		<PathGeometry Figures="m14.5 4-5 16" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.Plug">
+		<PathGeometry Figures="M12 22v-5" /><PathGeometry Figures="M15 8V2" />
+		<PathGeometry Figures="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z" />
+		<PathGeometry Figures="M9 8V2" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.Workflow">
+		<RectangleGeometry Rect="3,3,8,8" RadiusX="2" RadiusY="2" />
+		<PathGeometry Figures="M7 11v4a2 2 0 0 0 2 2h4" />
+		<RectangleGeometry Rect="13,13,8,8" RadiusX="2" RadiusY="2" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.Clock">
+		<EllipseGeometry Center="12,12" RadiusX="10" RadiusY="10" />
+		<PathGeometry Figures="M12 6v6h4" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.CalendarDays">
+		<PathGeometry Figures="M8 2v3" /><PathGeometry Figures="M16 2v3" />
+		<RectangleGeometry Rect="3,3,18,18" RadiusX="2" RadiusY="2" />
+		<PathGeometry Figures="M3 9h18" /><PathGeometry Figures="M8 13h.01" />
+		<PathGeometry Figures="M12 13h.01" /><PathGeometry Figures="M16 13h.01" />
+		<PathGeometry Figures="M8 17h.01" /><PathGeometry Figures="M12 17h.01" /><PathGeometry Figures="M16 17h.01" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.Search">
+		<PathGeometry Figures="m21 21-4.34-4.34" />
+		<EllipseGeometry Center="11,11" RadiusX="8" RadiusY="8" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.SlidersHorizontal">
+		<PathGeometry Figures="M10 5H3" /><PathGeometry Figures="M12 19H3" />
+		<PathGeometry Figures="M14 3v4" /><PathGeometry Figures="M16 17v4" />
+		<PathGeometry Figures="M21 12h-9" /><PathGeometry Figures="M21 19h-5" />
+		<PathGeometry Figures="M21 5h-7" /><PathGeometry Figures="M8 10v4" /><PathGeometry Figures="M8 12H3" />
+	</GeometryGroup>
+	<PathGeometry x:Key="Redux.Icon.MousePointer" Figures="M4.037 4.688a.495.495 0 0 1 .651-.651l16 6.5a.5.5 0 0 1-.063.947l-6.124 1.58a2 2 0 0 0-1.438 1.435l-1.579 6.126a.5.5 0 0 1-.947.063z" />
+	<GeometryGroup x:Key="Redux.Icon.Layers">
+		<PathGeometry Figures="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" />
+		<PathGeometry Figures="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" />
+		<PathGeometry Figures="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.Bird">
+		<PathGeometry Figures="M16 7h.01" /><PathGeometry Figures="M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20" />
+		<PathGeometry Figures="m20 7 2 .5-2 .5" /><PathGeometry Figures="M10 18v3" /><PathGeometry Figures="M14 17.75V21" />
+		<PathGeometry Figures="M7 18a6 6 0 0 0 3.84-10.61" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.Ghost">
+		<PathGeometry Figures="M15 10v1" /><PathGeometry Figures="M9 10v1" />
+		<PathGeometry Figures="M7.528 20.472a1.6 1.6 0 0 1 2.277 0l1.057 1.056a1.6 1.6 0 0 0 2.276 0l1.057-1.056a1.6 1.6 0 0 1 2.277 0l1.114 1.114a1.4 1.4 0 0 0 2.414-1V10a8 8 0 0 0-16 0v10.586a1.4 1.4 0 0 0 2.414 1z" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.LandPlot">
+		<PathGeometry Figures="m12 8 6-3-6-3v10" />
+		<PathGeometry Figures="m8 11.99-5.5 3.14a1 1 0 0 0 0 1.74l8.5 4.86a2 2 0 0 0 2 0l8.5-4.86a1 1 0 0 0 0-1.74L16 12" />
+		<PathGeometry Figures="m6.49 12.85 11.02 6.3" /><PathGeometry Figures="M17.51 12.85 6.5 19.15" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.Route">
+		<EllipseGeometry Center="6,19" RadiusX="3" RadiusY="3" />
+		<PathGeometry Figures="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15" />
+		<EllipseGeometry Center="18,5" RadiusX="3" RadiusY="3" />
+	</GeometryGroup>
+	<PathGeometry x:Key="Redux.Icon.Shell" Figures="M14 11a2 2 0 1 1-4 0 4 4 0 0 1 8 0 6 6 0 0 1-12 0 8 8 0 0 1 16 0 10 10 0 1 1-20 0 11.93 11.93 0 0 1 2.42-7.22 2 2 0 1 1 3.16 2.44" />
+	<GeometryGroup x:Key="Redux.Icon.VenetianMask">
+		<PathGeometry Figures="M18 11c-1.5 0-2.5.5-3 2" /><PathGeometry Figures="M6 11c1.5 0 2.5.5 3 2" />
+		<PathGeometry Figures="M4 6a2 2 0 0 0-2 2v4a5 5 0 0 0 5 5 8 8 0 0 1 5 2 8 8 0 0 1 5-2 5 5 0 0 0 5-5V8a2 2 0 0 0-2-2h-3a8 8 0 0 0-5 2 8 8 0 0 0-5-2z" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.NotebookTabs">
+		<PathGeometry Figures="M2 6h4" /><PathGeometry Figures="M2 10h4" /><PathGeometry Figures="M2 14h4" /><PathGeometry Figures="M2 18h4" />
+		<RectangleGeometry Rect="4,2,16,20" RadiusX="2" RadiusY="2" />
+		<PathGeometry Figures="M15 2v20" /><PathGeometry Figures="M15 7h5" /><PathGeometry Figures="M15 12h5" /><PathGeometry Figures="M15 17h5" />
+	</GeometryGroup>
+	<GeometryGroup x:Key="Redux.Icon.Boxes">
+		<PathGeometry Figures="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z" />
+		<PathGeometry Figures="m7 16.5-4.74-2.85" /><PathGeometry Figures="m7 16.5 5-3" /><PathGeometry Figures="M7 16.5v5.17" />
+		<PathGeometry Figures="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z" />
+		<PathGeometry Figures="m17 16.5-5-3" /><PathGeometry Figures="m17 16.5 4.74-2.85" /><PathGeometry Figures="M17 16.5v5.17" />
+		<PathGeometry Figures="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z" />
+		<PathGeometry Figures="M12 8 7.26 5.15" /><PathGeometry Figures="m12 8 4.74-2.85" /><PathGeometry Figures="M12 13.5V8" />
 	</GeometryGroup>
 	<Style TargetType="{x:Type controls:ReduxIcon}">
 		<Setter Property="Width" Value="18" />
@@ -1433,6 +1578,7 @@
 			<Trigger Property="IconKey" Value="palette"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.ColorPalette}" /></Trigger>
 			<Trigger Property="IconKey" Value="shirt"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Shirt}" /></Trigger>
 			<Trigger Property="IconKey" Value="sparkles"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Sparkles}" /></Trigger>
+			<Trigger Property="IconKey" Value="redux-star"><Setter Property="Data" Value="{StaticResource Redux.Icon.ReduxStar}" /></Trigger>
 			<Trigger Property="IconKey" Value="shield"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Shield}" /></Trigger>
 			<Trigger Property="IconKey" Value="flask"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Flask}" /></Trigger>
 			<Trigger Property="IconKey" Value="skull"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Skull}" /></Trigger>
@@ -1516,7 +1662,37 @@
 			<Trigger Property="IconKey" Value="circle-minus"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.CircleMinus}" /></Trigger>
 			<Trigger Property="IconKey" Value="scroll-text"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.ScrollText}" /></Trigger>
 			<Trigger Property="IconKey" Value="book-open"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.BookOpen}" /></Trigger>
-			<Trigger Property="IconKey" Value="wand-sparkles"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.WandSparkles}" /></Trigger>
+			<!-- Compatibility alias for themes saved before the duplicate wand entry was removed. -->
+			<Trigger Property="IconKey" Value="wand-sparkles"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.ColorWand}" /></Trigger>
+			<Trigger Property="IconKey" Value="backpack"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Backpack}" /></Trigger>
+			<Trigger Property="IconKey" Value="coins"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Coins}" /></Trigger>
+			<Trigger Property="IconKey" Value="footprints"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Footprints}" /></Trigger>
+			<Trigger Property="IconKey" Value="tent"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.TentTree}" /></Trigger>
+			<Trigger Property="IconKey" Value="trees"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Trees}" /></Trigger>
+			<Trigger Property="IconKey" Value="mountain"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.MountainSnow}" /></Trigger>
+			<Trigger Property="IconKey" Value="ship-wheel"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.ShipWheel}" /></Trigger>
+			<Trigger Property="IconKey" Value="lock"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.LockKeyhole}" /></Trigger>
+			<Trigger Property="IconKey" Value="door-open"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.DoorOpen}" /></Trigger>
+			<Trigger Property="IconKey" Value="languages"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Languages}" /></Trigger>
+			<Trigger Property="IconKey" Value="accessibility"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Accessibility}" /></Trigger>
+			<Trigger Property="IconKey" Value="code"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.CodeXml}" /></Trigger>
+			<Trigger Property="IconKey" Value="plug"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Plug}" /></Trigger>
+			<Trigger Property="IconKey" Value="workflow"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Workflow}" /></Trigger>
+			<Trigger Property="IconKey" Value="clock"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Clock}" /></Trigger>
+			<Trigger Property="IconKey" Value="calendar"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.CalendarDays}" /></Trigger>
+			<Trigger Property="IconKey" Value="search"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Search}" /></Trigger>
+			<Trigger Property="IconKey" Value="sliders"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.SlidersHorizontal}" /></Trigger>
+			<Trigger Property="IconKey" Value="mouse-pointer"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.MousePointer}" /></Trigger>
+			<Trigger Property="IconKey" Value="layers"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Layers}" /></Trigger>
+			<Trigger Property="IconKey" Value="bird"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Bird}" /></Trigger>
+			<Trigger Property="IconKey" Value="ghost"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Ghost}" /></Trigger>
+			<Trigger Property="IconKey" Value="land-plot"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.LandPlot}" /></Trigger>
+			<Trigger Property="IconKey" Value="route"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Route}" /></Trigger>
+			<Trigger Property="IconKey" Value="shell"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Shell}" /></Trigger>
+			<Trigger Property="IconKey" Value="mask"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.VenetianMask}" /></Trigger>
+			<Trigger Property="IconKey" Value="notebook"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.NotebookTabs}" /></Trigger>
+			<Trigger Property="IconKey" Value="boxes"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Boxes}" /></Trigger>
+			<Trigger Property="IconKey" Value="upload"><Setter Property="StrokeData" Value="{StaticResource Redux.Icon.CloudUpload}" /></Trigger>
 		</Style.Triggers>
 	</Style>
 	<!-- Apply explicitly to decorative icons that have an adjacent text label. Icon-only
@@ -2029,6 +2205,7 @@
 	<conv:StringToGradientBrushConverter x:Key="StringToGradientBrushConverter" />
 	<conv:StringToLinearBrushConverter x:Key="StringToLinearBrushConverter" />
 	<conv:UriToBitmapImageConverter x:Key="UriToBitmapImageConverter" />
+	<conv:FilePathToBitmapImageConverter x:Key="FilePathToBitmapImageConverter" />
 	<conv:ModToDisplayNameConverter x:Key="ModToDisplayNameConverter" />
 	<conv:AvailableWidthConverter x:Key="AvailableWidthConverter" />
 	<Style x:Key="ReduxProgressBarStyle" TargetType="{x:Type ProgressBar}">
@@ -3912,13 +4089,13 @@
 				<Style TargetType="{x:Type Border}">
 					<Setter Property="BorderBrush" Value="{DynamicResource ReduxWarningBrush}" />
 					<Style.Triggers>
-						<DataTrigger Binding="{Binding HealthSnapshot.HasErrors}" Value="True">
+						<DataTrigger Binding="{Binding HealthSnapshot.HasNonExtenderErrors}" Value="True">
 							<Setter Property="BorderBrush" Value="{DynamicResource ReduxErrorBrush}" />
 						</DataTrigger>
 					</Style.Triggers>
 				</Style>
 			</Border.Style>
-			<ItemsControl ItemsSource="{Binding HealthSnapshot.AttentionFindings}"
+			<ItemsControl ItemsSource="{Binding HealthSnapshot.NonExtenderAttentionFindings}"
 				ItemTemplate="{StaticResource ReduxStatusFindingTemplate}" />
 		</Border>
 	</DataTemplate>
@@ -4051,7 +4228,7 @@
 							<DataTrigger Binding="{Binding HasInvalidUUIDVisibility}" Value="Visible">
 								<Setter Property="Visibility" Value="Visible" />
 							</DataTrigger>
-							<DataTrigger Binding="{Binding HealthSnapshot.NeedsAttention}" Value="True">
+							<DataTrigger Binding="{Binding HealthSnapshot.NeedsNonExtenderAttention}" Value="True">
 								<Setter Property="Visibility" Value="Visible" />
 							</DataTrigger>
 							<DataTrigger Binding="{Binding ToolkitIconVisibility}" Value="Visible">
@@ -4191,10 +4368,10 @@
 								<Setter Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" />
 								<Setter Property="Visibility" Value="Collapsed" />
 								<Style.Triggers>
-									<DataTrigger Binding="{Binding HealthSnapshot.NeedsAttention}" Value="True">
+									<DataTrigger Binding="{Binding HealthSnapshot.NeedsNonExtenderAttention}" Value="True">
 										<Setter Property="Visibility" Value="Visible" />
 									</DataTrigger>
-									<DataTrigger Binding="{Binding HealthSnapshot.HasErrors}" Value="True">
+									<DataTrigger Binding="{Binding HealthSnapshot.HasNonExtenderErrors}" Value="True">
 										<Setter Property="StrokeData" Value="{StaticResource Redux.Icon.Warning}" />
 										<Setter Property="Foreground" Value="{DynamicResource ReduxErrorBrush}" />
 									</DataTrigger>
@@ -4401,13 +4578,13 @@
 	<DataTemplate x:Key="NexusPlatformIconTemplate">
 		<Image Width="16" Height="16"
 			RenderOptions.BitmapScalingMode="HighQuality"
-			Source="/BG3ModManager;component/Resources/Icons/Platforms/nexus.png"
+			Source="/Redux;component/Resources/Icons/Platforms/nexus.png"
 			Stretch="Uniform" />
 	</DataTemplate>
 	<DataTemplate x:Key="ModioPlatformIconTemplate">
 		<Image Width="16" Height="16"
 			RenderOptions.BitmapScalingMode="HighQuality"
-			Source="/BG3ModManager;component/Resources/Icons/Platforms/modio.png"
+			Source="/Redux;component/Resources/Icons/Platforms/modio.png"
 			Stretch="Uniform" />
 	</DataTemplate>
 	<DataTemplate x:Key="GithubPlatformIconTemplate">
@@ -4415,7 +4592,7 @@
 			Background="{DynamicResource ReduxGithubIconBrush}"
 			RenderOptions.BitmapScalingMode="HighQuality">
 			<Border.OpacityMask>
-				<ImageBrush ImageSource="/BG3ModManager;component/Resources/Icons/Platforms/github.png"
+				<ImageBrush ImageSource="/Redux;component/Resources/Icons/Platforms/github.png"
 					Stretch="Uniform" />
 			</Border.OpacityMask>
 		</Border>

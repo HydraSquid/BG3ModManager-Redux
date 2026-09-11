@@ -18,41 +18,6 @@ public interface IHistoryViewModel
 
 public static class HistoryViewModelExtensions
 {
-	public static void ChangeListWithHistory<T>(this IHistoryViewModel vm, IList<T> source, IList<T> oldValue, IList<T> newValue)
-	{
-		if (vm.History != null)
-		{
-			void undo() => source = oldValue;
-			void redo() => source = newValue;
-			vm.History.Snapshot(undo, redo);
-			source = newValue;
-		}
-	}
-
-	public static void AddWithHistory<T>(this IHistoryViewModel vm, IList<T> source, T item)
-	{
-		if (vm.History != null)
-		{
-			int index = source.Count;
-			void redo() => source.Insert(index, item);
-			void undo() => source.RemoveAt(index);
-			vm.History.Snapshot(undo, redo);
-			redo();
-		}
-	}
-
-	public static void RemoveWithHistory<T>(this IHistoryViewModel vm, IList<T> source, T item)
-	{
-		if (vm.History != null)
-		{
-			int index = source.IndexOf(item);
-			void redo() => source.RemoveAt(index);
-			void undo() => source.Insert(index, item);
-			vm.History.Snapshot(undo, redo);
-			redo();
-		}
-	}
-
 	public static void CreateSnapshot(this IHistoryViewModel vm, Action undo, Action redo)
 	{
 		vm.History?.Snapshot(undo, redo);

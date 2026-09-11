@@ -118,7 +118,7 @@ public partial class ReduxFileOverlapWindow : AdonisUI.Controls.AdonisWindow
 		AffectedPackageCountText.Text = _result.AffectedPackageCount.ToString();
 		ScanStatusText.Text = BuildStatusText(_result);
 		SearchTextBox.IsEnabled = true;
-		ScanActionButton.Content = "Close";
+		ScanActionButtonText.Text = "Close";
 		SetEmptyStateIcon("Redux.Icon.CircleCheck", "ReduxSuccessBrush");
 		RefreshFilter();
 	}
@@ -132,7 +132,7 @@ public partial class ReduxFileOverlapWindow : AdonisUI.Controls.AdonisWindow
 		EmptyStateTitle.Text = "Inspection cancelled";
 		EmptyStateDescription.Text = "No files or load-order data were changed.";
 		ScanStatusText.Text = "Cancelled";
-		ScanActionButton.Content = "Close";
+		ScanActionButtonText.Text = "Close";
 		ScanActionButton.IsEnabled = true;
 		SetEmptyStateIcon("Redux.Icon.CloseCircle", "ReduxTextMutedBrush");
 	}
@@ -148,7 +148,7 @@ public partial class ReduxFileOverlapWindow : AdonisUI.Controls.AdonisWindow
 			? "See the Redux log for details."
 			: message;
 		ScanStatusText.Text = "Inspection failed";
-		ScanActionButton.Content = "Close";
+		ScanActionButtonText.Text = "Close";
 		ScanActionButton.IsEnabled = true;
 		SetEmptyStateIcon("Redux.Icon.CloseCircle", "ReduxErrorBrush");
 	}

@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Windows;
 
 using DivinityModManager;
@@ -21,7 +22,9 @@ namespace Redux.Core.Tests;
 public sealed class SourceAssociationTests
 {
 	private const string ReviewedModuleUuid = "069e5871-efe8-44bb-b02a-fe957df5ae0e";
-	private const string CommunityModuleUuid = "26922ba9-6018-5252-075d-7ff2ba6ed879";
+	private const string CommunityModuleUuid = "67fbbd53-7c7d-4cfa-9409-6d737b4d92a9";
+	private const string AmbiguousProviderUuid = "26922ba9-6018-5252-075d-7ff2ba6ed879";
+	private const string CommunityModioUuid = "8c7d3408-a746-5022-348b-1635e14af044";
 
 	public void ReviewedModuleUuidResolvesItsProject()
 	{
@@ -38,22 +41,116 @@ public sealed class SourceAssociationTests
 		var match = ReduxModDatabaseService.TryResolveModuleUuid(CommunityModuleUuid);
 
 		RegressionAssert.True(match != null);
-		RegressionAssert.Equal(366L, match!.ModId);
+		RegressionAssert.Equal(1933L, match!.ModId);
 		RegressionAssert.Equal(ReduxOfflineMatchKind.CommunityIdentity, match.Kind);
+	}
+
+	public void ReviewedLegacyNexusModsResolveTheirCorrectProjects()
+	{
+		var unlockLevelCurve = ReduxModDatabaseService.TryResolveModuleUuid("d903677e-f24b-48ec-ab20-98dcc116a371");
+		var unlockLevelCurve5ePatch = ReduxModDatabaseService.TryResolveModuleUuid("cf0b4eed-8b58-4981-8ab8-bf210d4db97b");
+		var immersiveUi = ReduxModDatabaseService.TryResolveModuleUuid("293739c4-617c-438b-b9f0-1dbbfe142f81");
+
+		RegressionAssert.Equal(377L, unlockLevelCurve?.ModId ?? 0);
+		RegressionAssert.Equal(377L, unlockLevelCurve5ePatch?.ModId ?? 0);
+		RegressionAssert.Equal(1279L, immersiveUi?.ModId ?? 0);
+		RegressionAssert.Equal(ReduxOfflineMatchKind.ModuleIdentity, unlockLevelCurve!.Kind);
+		RegressionAssert.Equal(ReduxOfflineMatchKind.ModuleIdentity, unlockLevelCurve5ePatch!.Kind);
+		RegressionAssert.Equal(ReduxOfflineMatchKind.ModuleIdentity, immersiveUi!.Kind);
+	}
+
+	public void ExactNexusFilesUseDistinctPackageTitlesWithoutReplacingTheProjectTitle()
+	{
+		var unofficial = ReduxModDatabaseService.TryResolveFile(4597, 69812);
+		var official = ReduxModDatabaseService.TryResolveFile(4597, 88943);
+		RegressionAssert.True(unofficial != null);
+		RegressionAssert.True(official != null);
+
+		var unofficialMod = CreateMod();
+		unofficialMod.NexusModsEnabled = true;
+		unofficialMod.NexusModsData.Update(unofficial!.CreateMetadata(unofficialMod.UUID));
+		var officialMod = CreateMod();
+		officialMod.NexusModsEnabled = true;
+		officialMod.NexusModsData.Update(official!.CreateMetadata(officialMod.UUID));
+
+		RegressionAssert.Equal("Better Inventory UI (with Mark Books as Read support)", unofficialMod.Metadata.Title);
+		RegressionAssert.Equal("Better Inventory UI (with Mark Books as Read support)", officialMod.Metadata.Title);
+		RegressionAssert.Equal("Addon for Better Inventory UI (unofficial)", unofficialMod.Metadata.PackageTitle);
+		RegressionAssert.Equal("Addon for Better Inventory UI (official)", officialMod.Metadata.PackageTitle);
+	}
+
+	public void ModioManualLinkParserAcceptsOnlyBg3Projects()
+	{
+		RegressionAssert.True(ModioDataLoader.TryParseBg3ProjectReference(
+			"https://mod.io/g/baldursgate3/m/example-project", out var slug, out _));
+		RegressionAssert.Equal("example-project", slug.NameId);
+		RegressionAssert.True(ModioDataLoader.TryParseBg3ProjectReference("12345", out var numeric, out _));
+		RegressionAssert.Equal(12345L, numeric.ProjectId!.Value);
+		RegressionAssert.False(ModioDataLoader.TryParseBg3ProjectReference(
+			"https://mod.io/g/skyrim/m/example-project", out _, out _));
+		RegressionAssert.False(ModioDataLoader.TryParseBg3ProjectReference(
+			"https://example.com/g/baldursgate3/m/example-project", out _, out _));
+	}
+
+	public void ManualModioAssociationSurvivesCacheRoundTrip()
+	{
+		var mod = CreateMod();
+		var cache = new ModioCachedData();
+		cache.Mods[mod.UUID] = new ModioModData
+		{
+			UUID = mod.UUID,
+			ModId = 12345,
+			Name = "Manually linked mod.io project",
+			MetadataOrigin = ModioMetadataOrigin.Manual
+		};
+
+		var cached = RoundTrip(cache).Mods[mod.UUID];
+		RegressionAssert.True(cached.HasAssociation);
+		RegressionAssert.True(ModioCacheHandler.IsCachedAssociationCompatible(mod, cached));
+		mod.ModioData.Update(cached);
+		RegressionAssert.Equal(ModioMetadataOrigin.Manual, mod.ModioData.MetadataOrigin);
+		RegressionAssert.True(mod.ModioData.HasMetadata);
 	}
 
 	public void CommunityIdentityRequiresTheInstalledPackageNameToAgree()
 	{
 		var mod = CreateMod();
 		mod.UUID = CommunityModuleUuid;
-		mod.Name = "ImpUI (ImprovedUI)";
-		mod.Folder = "ImpUI_P8_Fork_26922ba9-6018-5252-075d-7ff2ba6ed879";
+		mod.Name = "CompatibilityFramework";
+		mod.Folder = "SubclassCompatibilityFramework";
 
 		var match = ReduxModDatabaseService.TryResolveIdentity(mod);
 
 		RegressionAssert.True(match != null);
-		RegressionAssert.Equal(366L, match!.ModId);
+		RegressionAssert.Equal(1933L, match!.ModId);
 		RegressionAssert.Equal(ReduxOfflineMatchKind.CommunityIdentity, match.Kind);
+	}
+
+	public void CrossProviderCatalogNameRemainsUnresolved()
+	{
+		var mod = CreateMod();
+		mod.UUID = AmbiguousProviderUuid;
+		mod.Name = "ImpUI (ImprovedUI)";
+		mod.Folder = "ImpUI_P8_Fork_26922ba9-6018-5252-075d-7ff2ba6ed879";
+
+		RegressionAssert.True(ReduxModDatabaseService.TryResolveIdentity(mod) == null);
+		RegressionAssert.True(ReduxModDatabaseService.TryResolveModioIdentity(mod) == null);
+	}
+
+	public void ProviderExclusiveModioCatalogIdentityResolvesConservatively()
+	{
+		var mod = CreateMod();
+		mod.UUID = CommunityModioUuid;
+		mod.Name = "AddonBetterInventoryUI";
+		mod.Folder = "AddonBetterInventoryUI_8c7d3408-a746-5022-348b-1635e14af044";
+
+		var match = ReduxModDatabaseService.TryResolveModioIdentity(mod);
+
+		RegressionAssert.True(match != null);
+		RegressionAssert.Equal(4180899L, match!.ModId);
+		var metadata = match.CreateMetadata(mod.UUID);
+		RegressionAssert.Equal(ModioMetadataOrigin.BundledProvenance, metadata.MetadataOrigin);
+		RegressionAssert.Contains(metadata.ProfileUrl, "/g/baldursgate3/m/");
 	}
 
 	public void CommunityUuidDoesNotRelabelAnUnrelatedLocalPackage()
@@ -202,6 +299,66 @@ public sealed class SourceAssociationTests
 		RegressionAssert.Equal(link.PageUrl, mod.Metadata.SourcePageUrl);
 	}
 
+	public void ManualModioUrlIsNotEligibleForAutomaticCatalogAssociation()
+	{
+		var mod = CreateMod();
+		RegressionAssert.True(ModPageLinkParser.TryParseBg3(
+			"https://mod.io/g/baldursgate3/m/item-and-spell-bug-fixes", out var link, out _));
+
+		ReduxLoadOrderSourceService.ApplyManualPageLink(mod, link);
+
+		RegressionAssert.False(ShouldApplyAutomaticModioCatalogAssociation(mod));
+	}
+
+	public void ImportedNexusAssociationClearsManualModioCacheBeforeReload()
+	{
+		using var watcher = WpfRenderCapture.RegisterNoOpFileWatcherService();
+		var viewModel = new MainWindowViewModel();
+		viewModel.Settings.LocalOnlyMode = false;
+		RegressionAssert.True(viewModel.Modules.SourceIntegrationsEnabled);
+		var mod = CreateMod();
+		RegressionAssert.True(ModPageLinkParser.TryParseBg3(
+			"https://mod.io/g/baldursgate3/m/item-and-spell-bug-fixes", out var link, out _));
+		ReduxLoadOrderSourceService.ApplyManualPageLink(mod, link);
+		viewModel.UpdateHandler.Modio.CacheData.Mods[mod.UUID] = mod.ModioData;
+
+		var archiveMatch = ReduxModDatabaseService.TryResolveModuleUuid(ReviewedModuleUuid);
+		RegressionAssert.True(archiveMatch != null);
+		var applied = ApplyImportedNexusAssociation(viewModel, mod, new NexusModFileVersionData(), archiveMatch);
+
+		RegressionAssert.True(applied);
+		RegressionAssert.False(mod.ModioData.HasAssociation);
+		RegressionAssert.False(viewModel.UpdateHandler.Modio.CacheData.Mods.ContainsKey(mod.UUID));
+
+		var reloadedModioCache = RoundTrip(viewModel.UpdateHandler.Modio.CacheData);
+		RegressionAssert.False(reloadedModioCache.Mods.ContainsKey(mod.UUID));
+		var reloaded = CreateMod();
+		var reloadedNexus = RoundTrip(viewModel.UpdateHandler.Nexus.CacheData).Mods[mod.UUID];
+		RegressionAssert.True(NexusModsCacheHandler.IsCachedAssociationCompatible(reloaded, reloadedNexus));
+		reloaded.NexusModsData.Update(reloadedNexus);
+		RegressionAssert.Equal(NexusMetadataOrigin.NexusArchiveImport, reloaded.NexusModsData.MetadataOrigin);
+		RegressionAssert.Equal(ModSourceType.NEXUSMODS, reloaded.Metadata.SourceType);
+	}
+
+	public void UnknownImportedArchivePreservesManualModioSource()
+	{
+		using var watcher = WpfRenderCapture.RegisterNoOpFileWatcherService();
+		var viewModel = new MainWindowViewModel();
+		viewModel.Settings.LocalOnlyMode = false;
+		RegressionAssert.True(viewModel.Modules.SourceIntegrationsEnabled);
+		var mod = CreateMod();
+		RegressionAssert.True(ModPageLinkParser.TryParseBg3(
+			"https://mod.io/g/baldursgate3/m/item-and-spell-bug-fixes", out var link, out _));
+		ReduxLoadOrderSourceService.ApplyManualPageLink(mod, link);
+		viewModel.UpdateHandler.Modio.CacheData.Mods[mod.UUID] = mod.ModioData;
+
+		var applied = ApplyImportedNexusAssociation(viewModel, mod, new NexusModFileVersionData());
+
+		RegressionAssert.False(applied);
+		RegressionAssert.True(mod.ModioData.HasAssociation);
+		RegressionAssert.True(viewModel.UpdateHandler.Modio.CacheData.Mods.ContainsKey(mod.UUID));
+	}
+
 	public void MatchingNexusCreatorAndUploaderUseOneLinkedCreatorLabel()
 	{
 		var mod = CreateMod();
@@ -251,14 +408,14 @@ public sealed class SourceAssociationTests
 		RegressionAssert.Equal("Native mod.io project", mod.Metadata.Title);
 	}
 
-	public void NativePublishHandleWinsOverAutomaticNexusMetadataWithoutAnApiKey()
+	public void NativePublishHandleWinsOverCreatorManifestWithoutAnApiKey()
 	{
 		var mod = CreateMod();
 		mod.PublishHandle = 987654;
 		mod.NexusModsData.ModId = 3;
 		mod.NexusModsData.Name = "Inferred Nexus project";
 		mod.NexusModsData.IsUpdated = true;
-		mod.NexusModsData.MetadataOrigin = NexusMetadataOrigin.BundledProvenance;
+		mod.NexusModsData.MetadataOrigin = NexusMetadataOrigin.CreatorManifest;
 
 		RegressionAssert.Equal(ModSourceType.MODIO, mod.Metadata.SourceType);
 		RegressionAssert.Equal("Local module", mod.Metadata.Title);
@@ -303,6 +460,111 @@ public sealed class SourceAssociationTests
 		mod.NexusModsData.MetadataOrigin = NexusMetadataOrigin.NexusArchiveImport;
 
 		RegressionAssert.Equal(ModSourceType.MODIO, mod.Metadata.SourceType);
+	}
+
+	public void ReviewedNexusDatabaseMatchWinsOverNativeModioMetadata()
+	{
+		var mod = CreateMod();
+		mod.NexusModsEnabled = true;
+		mod.NexusModsData.Update(new NexusModsModData
+		{
+			UUID = mod.UUID,
+			ModId = 23751,
+			Name = "Reviewed Nexus project",
+			IsUpdated = true,
+			MetadataOrigin = NexusMetadataOrigin.BundledProvenance,
+			OfflineMatchKind = ReduxOfflineMatchKind.ModuleIdentity
+		});
+		var staleModio = new ModioModData
+		{
+			UUID = mod.UUID,
+			ModId = 6197684,
+			Name = "Cross-published mod.io project",
+			MetadataOrigin = ModioMetadataOrigin.NativePackage
+		};
+		mod.ModioData.Update(staleModio);
+
+		RegressionAssert.Equal(ModSourceType.NEXUSMODS, mod.Metadata.SourceType);
+		RegressionAssert.Equal("Reviewed Nexus project", mod.Metadata.Title);
+		RegressionAssert.False(ModioCacheHandler.IsCachedAssociationCompatible(mod, staleModio));
+	}
+
+	public void ManualModioUnlinkSurvivesCacheRoundTrip()
+	{
+		var mod = CreateMod();
+		mod.ModioData.Update(new ModioModData
+		{
+			UUID = mod.UUID,
+			ModId = 6197684,
+			Name = "Previously linked mod.io project",
+			MetadataOrigin = ModioMetadataOrigin.NativePackage
+		});
+		mod.ModioData.MarkManuallyUnlinked();
+
+		var cache = new ModioCachedData();
+		cache.Mods[mod.UUID] = mod.ModioData;
+		var reloaded = RoundTrip(cache).Mods[mod.UUID];
+
+		RegressionAssert.False(reloaded.HasMetadata);
+		RegressionAssert.Equal(ModioMetadataOrigin.ManualUnlinked, reloaded.MetadataOrigin);
+		RegressionAssert.True(ModioCacheHandler.IsCachedAssociationCompatible(CreateMod(), reloaded));
+	}
+
+	public void ManualModioAssociationWinsOverBundledNexusMetadata()
+	{
+		var mod = CreateMod();
+		mod.NexusModsEnabled = true;
+		mod.NexusModsData.Update(new NexusModsModData
+		{
+			UUID = mod.UUID,
+			ModId = 23751,
+			Name = "Automatically matched Nexus project",
+			IsUpdated = true,
+			MetadataOrigin = NexusMetadataOrigin.BundledProvenance
+		});
+		mod.ModioData.Update(new ModioModData
+		{
+			UUID = mod.UUID,
+			NameId = "manually-linked-project",
+			ProfileUrl = "https://mod.io/g/baldursgate3/m/manually-linked-project",
+			MetadataOrigin = ModioMetadataOrigin.Manual
+		});
+
+		RegressionAssert.Equal(ModSourceType.MODIO, mod.Metadata.SourceType);
+		RegressionAssert.Equal("https://mod.io/g/baldursgate3/m/manually-linked-project", mod.Metadata.SourcePageUrl);
+	}
+
+	public void ManualModioUnlinkRemainsCachedWithExplicitNexusAssociation()
+	{
+		var mod = CreateMod();
+		mod.NexusModsData.Update(new NexusModsModData
+		{
+			UUID = mod.UUID,
+			ModId = 23751,
+			IsUpdated = true,
+			MetadataOrigin = NexusMetadataOrigin.NexusArchiveImport
+		});
+		var unlinked = new ModioModData { UUID = mod.UUID };
+		unlinked.MarkManuallyUnlinked();
+
+		RegressionAssert.True(ModioCacheHandler.IsCachedAssociationCompatible(mod, unlinked));
+	}
+
+	public void ManualNexusUnlinkRemainsCachedWithManualModioAssociation()
+	{
+		var mod = CreateMod();
+		mod.ModioData.Update(new ModioModData
+		{
+			UUID = mod.UUID,
+			NameId = "manually-linked-project",
+			ProfileUrl = "https://mod.io/g/baldursgate3/m/manually-linked-project",
+			MetadataOrigin = ModioMetadataOrigin.Manual
+		});
+		var unlinked = new NexusModsModData { UUID = mod.UUID };
+		unlinked.ResetSourceAssociation();
+		unlinked.MetadataOrigin = NexusMetadataOrigin.ManualUnlinked;
+
+		RegressionAssert.True(NexusModsCacheHandler.IsCachedAssociationCompatible(mod, unlinked));
 	}
 
 	public void NexusArchiveImportWinsOverNativeModioMetadata()
@@ -552,6 +814,7 @@ public sealed class SourceAssociationTests
 			MetadataOrigin = ModioMetadataOrigin.Manual
 		};
 
+		RegressionAssert.False(cached.HasAssociation);
 		RegressionAssert.False(ModioCacheHandler.IsCachedAssociationCompatible(mod, cached));
 	}
 
@@ -777,6 +1040,28 @@ public sealed class SourceAssociationTests
 			throw new InvalidOperationException("Cache round-trip returned null.");
 		}
 		return result;
+	}
+
+	private static bool ShouldApplyAutomaticModioCatalogAssociation(DivinityModData mod)
+	{
+		var method = typeof(MainWindowViewModel).GetMethod(
+			"ShouldApplyAutomaticModioCatalogAssociation",
+			BindingFlags.Static | BindingFlags.NonPublic);
+		RegressionAssert.True(method != null);
+		return (bool)method!.Invoke(null, new object[] { mod })!;
+	}
+
+	private static bool ApplyImportedNexusAssociation(
+		MainWindowViewModel viewModel,
+		DivinityModData mod,
+		NexusModFileVersionData fileNameInfo,
+		ReduxModDatabaseMatch archiveMatch = null)
+	{
+		var method = typeof(MainWindowViewModel).GetMethod(
+			"ApplyImportedNexusAssociation",
+			BindingFlags.Instance | BindingFlags.NonPublic);
+		RegressionAssert.True(method != null);
+		return (bool)method!.Invoke(viewModel, new object[] { mod, fileNameInfo, archiveMatch })!;
 	}
 
 	private static DivinityModData CreateMod() => new RegressionModData

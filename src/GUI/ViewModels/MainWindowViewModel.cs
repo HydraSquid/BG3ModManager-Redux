@@ -45,6 +45,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 using ZstdSharp;
 
@@ -104,9 +105,11 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	[Reactive] public bool IsInitialized { get; private set; }
 	private const string StartupLoadOrderWarningKey = "load-order-mod-warning";
 	private const string StartupRestoreLoadOrderPromptKey = "restore-reset-load-order";
+	private const string StartupElevationWarningKey = "process-elevation-warning";
 	private const string QuickSaveOrderName = "Current Order";
 	private const string ProviderCredentialFileName = "provider-credentials.dat";
 	private readonly StartupNotificationQueue _startupNotifications = new();
+	private int _elevationWarningScheduled;
 	private readonly SemaphoreSlim _nxmActivationGate = new(1, 1);
 	private readonly HashSet<string> _acquiredPackageInspections = new(StringComparer.Ordinal);
 	private NxmDownloadManager _nxmDownloadManager;
@@ -413,6 +416,10 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	private readonly SerialDisposable _allModUpdatesRefreshTask = new();
 	private readonly SerialDisposable _nexusMetadataRefreshTask = new();
 	private readonly SerialDisposable _modioMetadataRefreshTask = new();
+	private readonly SerialDisposable _manualSourceAssociationTasks = new()
+	{
+		Disposable = new CompositeDisposable()
+	};
 	private int _modUpdateRefreshGeneration;
 
 	#endregion
@@ -462,8 +469,9 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			mod.NexusModsData?.MetadataOrigin is NexusMetadataOrigin.Manual
 				or NexusMetadataOrigin.ManualUnlinked
 				or NexusMetadataOrigin.ReduxBundleImport ||
-			mod.ModioData?.MetadataOrigin is ModioMetadataOrigin.Manual
-				or ModioMetadataOrigin.ReduxBundleImport))
+			mod.ModioData?.MetadataOrigin is ModioMetadataOrigin.ReduxBundleImport
+				or ModioMetadataOrigin.Manual
+				or ModioMetadataOrigin.ManualUnlinked))
 		{
 			mod.NexusModsData.ResetSourceAssociation();
 			mod.ModioData = new ModioModData { UUID = mod.UUID };
@@ -899,7 +907,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 	private INxmAssociationService CreateNxmAssociationService(string ownerId = null) => new NxmAssociationService(
 		new NxmRegistryStore(), ownerId ?? Settings.NxmAssociationOwnerId,
-		Environment.ProcessPath ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BG3ModManager.exe"));
+		Environment.ProcessPath ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Redux.exe"));
 
 	public Task PauseNxmDownloadAsync(NxmDownloadItem item) => item == null || _nxmDownloadManager == null
 		? Task.CompletedTask : _nxmDownloadManager.PauseAsync(item.Id);
@@ -2253,9 +2261,15 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			if (IsInitialized) SaveSettings();
 		});
 
-		Settings.WhenAnyValue(x => x.TypographyFont, x => x.CustomTypographyFont).ObserveOn(RxApp.MainThreadScheduler).Subscribe((selection) =>
+		Settings.WhenAnyValue(
+			x => x.ColorTheme,
+			x => x.ActiveCustomThemeId,
+			x => x.TypographyFont,
+			x => x.CustomTypographyFont,
+			x => x.UseThemeDefaultTypographyPreference)
+			.ObserveOn(RxApp.MainThreadScheduler).Subscribe((_) =>
 		{
-			ReduxTypographyService.Apply(Application.Current.Resources, selection.Item1, selection.Item2);
+			ReduxTypographyService.Apply(Application.Current.Resources, Settings);
 			if (IsInitialized) SaveSettings();
 		});
 
@@ -2909,6 +2923,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 		_nexusMetadataRefreshTask.Disposable = null;
 		_modioMetadataRefreshTask.Disposable = null;
+		_manualSourceAssociationTasks.Disposable = new CompositeDisposable();
 
 		if (hadModUpdateRefresh)
 		{
@@ -3286,6 +3301,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		}
 
 		IsLoadingOrder = true;
+		using var loadingState = Disposable.Create(() => IsLoadingOrder = false);
 
 		var currentOrder = new DivinityLoadOrder()
 		{
@@ -3380,7 +3396,6 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				DivinityApp.Log($"Error setting next load order:\n{ex}");
 			}
 		}
-		IsLoadingOrder = false;
 	}
 
 	private string CreatePakImportTemporaryPath(string finalPath)
@@ -3547,6 +3562,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				{
 					var builtinMods = DivinityApp.IgnoredMods.Items.SafeToDictionary(x => x.Folder, x => x);
 					MainProgressToken = new CancellationTokenSource();
+					var nexusAssociationChanged = false;
 					foreach (var f in fileList)
 					{
 						var previousCount = result.Mods.Count;
@@ -3560,7 +3576,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 								Success = true
 							};
 							foreach (var imported in result.Mods.Skip(previousCount))
-								ApplyImportedNexusAssociation(imported, exactSource, null);
+								nexusAssociationChanged |= ApplyImportedNexusAssociation(imported, exactSource, null);
 						}
 					}
 
@@ -3577,6 +3593,9 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 							await UpdateHandler.Nexus.SaveCacheAsync(false, Version.ToString(), MainProgressToken.Token);
 						}
 					}
+
+					if (nexusAssociationChanged)
+						await PersistImportedNexusAssociationCachesAsync(MainProgressToken.Token, "the selected files");
 				}
 				catch (Exception ex)
 				{
@@ -4218,8 +4237,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				var databaseCandidates = loadedUserMods
 					.Where(mod => mod.NexusModsData.ModId < DivinityApp.NEXUSMODS_MOD_ID_START
 						&& mod.NexusModsData.MetadataOrigin != NexusMetadataOrigin.ManualUnlinked
-						&& mod.PublishHandle == 0
-						&& mod.ModioData?.HasAssociation != true)
+						&& mod.ModioData?.MetadataOrigin is not ModioMetadataOrigin.Manual
+							and not ModioMetadataOrigin.ReduxBundleImport)
 					.ToList();
 
 				foreach (var mod in databaseCandidates)
@@ -4262,6 +4281,30 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 					}, RxApp.MainThreadScheduler);
 
 					cacheChanged = true;
+				}
+
+				var modioDatabaseMatches = loadedUserMods
+					.Where(ShouldApplyAutomaticModioCatalogAssociation)
+					.Select(mod => (Mod: mod, Match: ReduxModDatabaseService.TryResolveModioIdentity(mod)))
+					.Where(candidate => candidate.Match != null)
+					.ToList();
+
+				if (modioDatabaseMatches.Count > 0)
+				{
+					var modioCatalogChanged = false;
+					await Observable.Start(() =>
+					{
+						ThrowIfSourceMetadataRefreshCanceled(cancellationToken);
+						foreach (var (mod, match) in modioDatabaseMatches)
+						{
+							if (!ShouldApplyAutomaticModioCatalogAssociation(mod)) continue;
+							mod.ModioData.Update(match.CreateMetadata(mod.UUID));
+							UpdateHandler.Modio.CacheData.Mods[mod.UUID] = mod.ModioData;
+							modioCatalogChanged = true;
+							DivinityApp.Log($"Matched '{mod.FileName}' to mod.io project {match.ModId} using Redux's conservative VOLO catalog identity.");
+						}
+					}, RxApp.MainThreadScheduler);
+					cacheChanged |= modioCatalogChanged;
 				}
 
 				var missingMetadata = loadedUserMods
@@ -4348,6 +4391,18 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		return changed;
 	}
 
+	private static bool ShouldApplyAutomaticModioCatalogAssociation(DivinityModData mod)
+	{
+		if (mod == null) return false;
+		return mod.PublishHandle <= 0
+			&& !mod.NexusModsData.HasMetadata
+			&& !mod.ModioData.HasMetadata
+			&& !mod.ModioData.HasAssociation
+			&& mod.ModioData.MetadataOrigin is not ModioMetadataOrigin.Manual
+				and not ModioMetadataOrigin.ReduxBundleImport
+				and not ModioMetadataOrigin.ManualUnlinked;
+	}
+
 	private bool ApplyCreatorManifestNexusAssociations(IEnumerable<DivinityModData> mods)
 	{
 		var changed = false;
@@ -4419,7 +4474,10 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		return changed;
 	}
 
-	public async Task<string> TryManuallyLinkModPageAsync(DivinityModData mod, string linkOrId)
+	public async Task<string> TryManuallyLinkModPageAsync(
+		DivinityModData mod,
+		string linkOrId,
+		bool replaceAuthoritativeSource = false)
 	{
 		if (!Modules.SourceIntegrationsEnabled)
 		{
@@ -4434,28 +4492,86 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			return error;
 		}
 
-		ReduxLoadOrderSourceService.ApplyManualPageLink(mod, link);
+		var hasAuthoritativeNexus = mod.NexusModsData?.MetadataOrigin is NexusMetadataOrigin.Manual
+			or NexusMetadataOrigin.NexusArchiveImport
+			or NexusMetadataOrigin.ReduxBundleImport;
+		var hasExplicitModio = mod.ModioData?.MetadataOrigin is ModioMetadataOrigin.Manual
+			or ModioMetadataOrigin.ReduxBundleImport;
+		if (link.SourceType == ModSourceType.MODIO && hasAuthoritativeNexus && !replaceAuthoritativeSource)
+		{
+			return "Confirm that you want to replace the current Nexus Mods source before linking a mod.io page.";
+		}
+		if (link.SourceType == ModSourceType.NEXUSMODS && hasExplicitModio && !replaceAuthoritativeSource)
+		{
+			return "Confirm that you want to replace the current mod.io source before linking a Nexus Mods page.";
+		}
+
 		if (link.SourceType == ModSourceType.NEXUSMODS)
 		{
-			var bundledProject = ReduxModDatabaseService.TryResolveProject(link.ProjectId);
-			if (bundledProject != null)
-			{
-				var linkedMetadata = bundledProject.CreateMetadata(mod.UUID);
-				linkedMetadata.MetadataOrigin = NexusMetadataOrigin.Manual;
-				linkedMetadata.OfflineMatchKind = ReduxOfflineMatchKind.Unknown;
-				mod.NexusModsData.Update(linkedMetadata);
-			}
-			UpdateHandler.Modio.CacheData.Mods.Remove(mod.UUID);
-			UpdateHandler.Nexus.CacheData.Mods[mod.UUID] = mod.NexusModsData;
+			ApplyManualNexusLink(mod, link.ProjectId);
 		}
 		else
 		{
-			UpdateHandler.Nexus.CacheData.Mods.Remove(mod.UUID);
+			ReduxLoadOrderSourceService.ApplyManualPageLink(mod, link);
+			UpdateHandler.Nexus.CacheData.Mods[mod.UUID] = mod.NexusModsData;
 			UpdateHandler.Modio.CacheData.Mods[mod.UUID] = mod.ModioData;
 		}
 		return await SaveAndRefreshManualSourceAssociationAsync(mod, link.SourceType, true)
 			? null
 			: "The mod page changed for this session, but Redux could not save the association. Check the log and try again.";
+	}
+
+	public bool TryManuallyLinkNexusMod(
+		DivinityModData mod,
+		string linkOrId,
+		out string error,
+		bool replaceModio = false)
+	{
+		error = null;
+		if (!Modules.SourceIntegrationsEnabled)
+		{
+			error = "Mod-page linking is unavailable while online mod information is disabled.";
+			return false;
+		}
+		if (mod == null)
+		{
+			error = "No mod was selected.";
+			return false;
+		}
+		if (!ModPageLinkParser.TryParseBg3(linkOrId, out var link, out error)
+			|| link.SourceType != ModSourceType.NEXUSMODS)
+		{
+			error ??= "Paste a Baldur's Gate 3 Nexus Mods page URL, for example https://www.nexusmods.com/baldursgate3/mods/125.";
+			return false;
+		}
+		if (mod.Metadata.SourceType == ModSourceType.MODIO && !replaceModio)
+		{
+			error = "Confirm that you want to replace the current mod.io source before linking a Nexus Mods page.";
+			return false;
+		}
+
+		ApplyManualNexusLink(mod, link.ProjectId);
+		SaveAndRefreshManualNexusAssociation(mod, refreshLiveMetadata: true, modioCacheChanged: true);
+		return true;
+	}
+
+	private void ApplyManualNexusLink(DivinityModData mod, long projectId)
+	{
+		ReduxLoadOrderSourceService.ApplyManualPageLink(mod, new ModPageLinkTarget(
+			ModSourceType.NEXUSMODS,
+			projectId,
+			String.Empty,
+			String.Format(DivinityApp.NEXUSMODS_MOD_URL, projectId)));
+		var bundledProject = ReduxModDatabaseService.TryResolveProject(projectId);
+		if (bundledProject != null)
+		{
+			var linkedMetadata = bundledProject.CreateMetadata(mod.UUID);
+			linkedMetadata.MetadataOrigin = NexusMetadataOrigin.Manual;
+			linkedMetadata.OfflineMatchKind = ReduxOfflineMatchKind.Unknown;
+			mod.NexusModsData.Update(linkedMetadata);
+		}
+		UpdateHandler.Modio.CacheData.Mods.Remove(mod.UUID);
+		UpdateHandler.Nexus.CacheData.Mods[mod.UUID] = mod.NexusModsData;
 	}
 
 	public async Task<bool> UnlinkModPageAsync(DivinityModData mod)
@@ -4470,11 +4586,138 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		}
 		else if (sourceType == ModSourceType.MODIO)
 		{
-			mod.ModioData = new ModioModData { UUID = mod.UUID };
-			UpdateHandler.Modio.CacheData.Mods.Remove(mod.UUID);
+			mod.ModioData.MarkManuallyUnlinked();
+			UpdateHandler.Modio.CacheData.Mods[mod.UUID] = mod.ModioData;
 		}
 		else return false;
 		return await SaveAndRefreshManualSourceAssociationAsync(mod, sourceType, false);
+	}
+
+	public async Task<(bool Success, string Error)> TryManuallyLinkModioModAsync(
+		DivinityModData mod,
+		string linkOrId,
+		bool replaceAuthoritativeNexus = false)
+	{
+		if (!Modules.SourceIntegrationsEnabled)
+		{
+			return (false, "Mod-page linking is unavailable while online mod information is disabled.");
+		}
+		if (mod == null)
+		{
+			return (false, "No mod was selected.");
+		}
+		var hasAuthoritativeNexus = mod.NexusModsData?.MetadataOrigin is NexusMetadataOrigin.Manual
+			or NexusMetadataOrigin.NexusArchiveImport
+			or NexusMetadataOrigin.ReduxBundleImport;
+		if (hasAuthoritativeNexus && !replaceAuthoritativeNexus)
+		{
+			return (false, "This package has an explicit Nexus Mods source. Unlink that source before linking a mod.io page.");
+		}
+
+		if (String.IsNullOrWhiteSpace(Settings.ModioAPIKey))
+		{
+			if (!ModPageLinkParser.TryParseBg3(linkOrId, out var pageLink, out var parseError)
+				|| pageLink.SourceType != ModSourceType.MODIO)
+			{
+				return (false, parseError ?? "Paste a Baldur's Gate 3 mod.io page URL.");
+			}
+			var error = await TryManuallyLinkModPageAsync(mod, linkOrId, replaceAuthoritativeNexus);
+			return String.IsNullOrWhiteSpace(error) ? (true, null) : (false, error);
+		}
+
+		if (!ModioDataLoader.TryParseBg3ProjectReference(linkOrId, out var reference, out var referenceError))
+		{
+			return (false, referenceError);
+		}
+
+		try
+		{
+			var linkedMetadata = await ModioDataLoader.LoadModDataByProjectReferenceAsync(
+				mod, reference, Settings.ModioAPIKey, CancellationToken.None);
+			if (linkedMetadata == null)
+			{
+				return (false, "Redux could not verify that mod.io page as a Baldur's Gate 3 mod. The existing source link was not changed.");
+			}
+
+			linkedMetadata.MetadataOrigin = ModioMetadataOrigin.Manual;
+			mod.NexusModsData.ResetSourceAssociation();
+			mod.NexusModsData.MetadataOrigin = NexusMetadataOrigin.ManualUnlinked;
+			mod.ModioData.ResetSourceAssociation();
+			mod.ModioData.Update(linkedMetadata);
+			UpdateHandler.Nexus.CacheData.Mods[mod.UUID] = mod.NexusModsData;
+			UpdateHandler.Modio.CacheData.Mods[mod.UUID] = mod.ModioData;
+			var nexusSaved = await UpdateHandler.Nexus.SaveCacheAsync(false, Version.ToString(), CancellationToken.None);
+			var modioSaved = await UpdateHandler.Modio.SaveCacheAsync(false, Version.ToString(), CancellationToken.None);
+			if (!nexusSaved || !modioSaved)
+			{
+				return (false, "The verified page changed for this session, but Redux could not save the association. Check the log and try again.");
+			}
+			ScheduleRefreshModCategories();
+			return (true, null);
+		}
+		catch (Exception ex)
+		{
+			DivinityApp.Log($"Failed to verify the manual mod.io association for '{mod.FileName}':\n{ex}");
+			return (false, "Redux could not reach mod.io to verify that page. The existing source link was not changed.");
+		}
+	}
+
+	public async Task UnlinkModioModAsync(DivinityModData mod)
+	{
+		if (!Modules.SourceIntegrationsEnabled || mod?.ModioData?.HasAssociation != true) return;
+		mod.ModioData.MarkManuallyUnlinked();
+		UpdateHandler.Modio.CacheData.Mods[mod.UUID] = mod.ModioData;
+		await UpdateHandler.Modio.SaveCacheAsync(false, Version.ToString(), CancellationToken.None);
+		ScheduleRefreshModCategories();
+	}
+
+	private void SaveAndRefreshManualNexusAssociation(
+		DivinityModData mod,
+		bool refreshLiveMetadata,
+		bool modioCacheChanged = false)
+	{
+		var sourceTaskLifetime = _manualSourceAssociationTasks.Disposable as CompositeDisposable;
+		var scheduledTask = RxApp.TaskpoolScheduler.ScheduleAsync(async (_, cancellationToken) =>
+		{
+			try
+			{
+				ThrowIfSourceMetadataRefreshCanceled(cancellationToken);
+				if (refreshLiveMetadata && !String.IsNullOrWhiteSpace(Settings.NexusModsAPIKey))
+				{
+					await UpdateHandler.Nexus.Update(new[] { mod }, cancellationToken);
+					ThrowIfSourceMetadataRefreshCanceled(cancellationToken);
+					mod.NexusModsData.MetadataOrigin = NexusMetadataOrigin.Manual;
+					UpdateHandler.Nexus.CacheData.Mods[mod.UUID] = mod.NexusModsData;
+				}
+				ThrowIfSourceMetadataRefreshCanceled(cancellationToken);
+				await UpdateHandler.Nexus.SaveCacheAsync(false, Version.ToString(), cancellationToken);
+				if (modioCacheChanged)
+				{
+					await UpdateHandler.Modio.SaveCacheAsync(false, Version.ToString(), cancellationToken);
+				}
+			}
+			catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested || !Modules.SourceIntegrationsEnabled)
+			{
+				DivinityApp.Log($"Canceled the manual Nexus Mods association refresh for '{mod.FileName}'.");
+			}
+			catch (Exception ex)
+			{
+				DivinityApp.Log($"Failed to save the manual Nexus Mods association for '{mod.FileName}':\n{ex}");
+			}
+			finally
+			{
+				RxApp.MainThreadScheduler.Schedule(() =>
+				{
+					if (Modules.SourceIntegrationsEnabled) ScheduleRefreshModCategories();
+				});
+			}
+		});
+		if (sourceTaskLifetime == null)
+		{
+			scheduledTask.Dispose();
+			return;
+		}
+		scheduledTask.DisposeWith(sourceTaskLifetime);
 	}
 
 	private async Task<bool> SaveAndRefreshManualSourceAssociationAsync(
@@ -4507,18 +4750,12 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			}
 
 			ThrowIfSourceMetadataRefreshCanceled(cancellationToken);
-			bool primarySaved;
-			bool competingSaved;
-			if (sourceType == ModSourceType.MODIO)
-			{
-				primarySaved = await UpdateHandler.Modio.SaveCacheAsync(false, Version.ToString(), cancellationToken);
-				competingSaved = await UpdateHandler.Nexus.SaveCacheAsync(false, Version.ToString(), cancellationToken);
-			}
-			else
-			{
-				primarySaved = await UpdateHandler.Nexus.SaveCacheAsync(false, Version.ToString(), cancellationToken);
-				competingSaved = await UpdateHandler.Modio.SaveCacheAsync(false, Version.ToString(), cancellationToken);
-			}
+			var primarySaved = sourceType == ModSourceType.MODIO
+				? await UpdateHandler.Modio.SaveCacheAsync(false, Version.ToString(), cancellationToken)
+				: await UpdateHandler.Nexus.SaveCacheAsync(false, Version.ToString(), cancellationToken);
+			var competingSaved = sourceType == ModSourceType.MODIO
+				? await UpdateHandler.Nexus.SaveCacheAsync(false, Version.ToString(), cancellationToken)
+				: await UpdateHandler.Modio.SaveCacheAsync(false, Version.ToString(), cancellationToken);
 			return primarySaved && competingSaved;
 		}
 		catch (OperationCanceledException) when (!Modules.SourceIntegrationsEnabled)
@@ -4624,6 +4861,11 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		{
 			return;
 		}
+		if (onlyIfUnseen && Window?.SettingsWindow?.IsVisible == true)
+		{
+			DeferFirstRunWelcomeUntilPreferencesClose();
+			return;
+		}
 
 		var welcomeWindow = new ReduxOnboardingWindow(Window, Settings);
 		ReduxWindowBehavior.ShowDialogWithOwnerBackdrop(welcomeWindow, Window);
@@ -4656,6 +4898,32 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 		if (SaveSettings() && welcomeWindow.ApplyChanges)
 			ApplyNxmAssociationPreference(welcomeWindow.SelectedNxmAssociationEnabled);
+	}
+
+	private bool _firstRunWelcomeIsDeferred;
+
+	private void DeferFirstRunWelcomeUntilPreferencesClose()
+	{
+		if (_firstRunWelcomeIsDeferred || Window?.SettingsWindow == null)
+		{
+			return;
+		}
+
+		_firstRunWelcomeIsDeferred = true;
+		void OnPreferencesVisibilityChanged(object sender, DependencyPropertyChangedEventArgs args)
+		{
+			if (args.NewValue is not false)
+			{
+				return;
+			}
+
+			Window.SettingsWindow.IsVisibleChanged -= OnPreferencesVisibilityChanged;
+			_firstRunWelcomeIsDeferred = false;
+			Window.Dispatcher.BeginInvoke(
+				() => ShowReduxWelcome(onlyIfUnseen: true),
+				DispatcherPriority.ContextIdle);
+		}
+		Window.SettingsWindow.IsVisibleChanged += OnPreferencesVisibilityChanged;
 	}
 
 	private async Task CheckForEmptyOrderAsync(IScheduler sch, CancellationToken token)
@@ -6154,27 +6422,60 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			return false;
 		}
 
+		if (archiveMatch != null)
+		{
+			var metadata = archiveMatch.CreateMetadata(mod.UUID);
+			metadata.MetadataOrigin = NexusMetadataOrigin.NexusArchiveImport;
+			ClearCompetingModioAssociation(mod);
+			mod.NexusModsData.Update(metadata);
+			UpdateHandler.Nexus.CacheData.Mods[mod.UUID] = mod.NexusModsData;
+			DivinityApp.Log($"Matched imported archive to Nexus Mods project {archiveMatch.ModId} using Redux offline match '{archiveMatch.Kind}'.");
+			return true;
+		}
+
 		if (fileNameInfo.Success)
 		{
 			// The archive name is direct Nexus provenance. Preserve that source choice
 			// even when the PAK also carries a native mod.io PublishHandle.
-			mod.ModioData = new ModioModData { UUID = mod.UUID };
-			UpdateHandler.Modio.CacheData.Mods.Remove(mod.UUID);
+			ClearCompetingModioAssociation(mod);
 			mod.NexusModsData.SetModVersion(fileNameInfo);
 			mod.NexusModsData.MetadataOrigin = NexusMetadataOrigin.NexusArchiveImport;
 			UpdateHandler.Nexus.CacheData.Mods[mod.UUID] = mod.NexusModsData;
 			return true;
 		}
 
-		if (archiveMatch != null
-			&& ReduxLoadOrderSourceService.ShouldApplyImportedNexusAssociation(mod, false))
+		return false;
+	}
+
+	private void ClearCompetingModioAssociation(DivinityModData mod)
+	{
+		mod.ModioData = new ModioModData { UUID = mod.UUID };
+		UpdateHandler.Modio.CacheData.Mods.Remove(mod.UUID);
+	}
+
+	private async Task<bool> PersistImportedNexusAssociationCachesAsync(CancellationToken cancellationToken, string sourceName)
+	{
+		try
 		{
-			mod.NexusModsData.Update(archiveMatch.CreateMetadata(mod.UUID));
-			UpdateHandler.Nexus.CacheData.Mods[mod.UUID] = mod.NexusModsData;
-			DivinityApp.Log($"Matched imported archive to Nexus Mods project {archiveMatch.ModId} using Redux offline match '{archiveMatch.Kind}'.");
-			return true;
+			var nexusSaved = await UpdateHandler.Nexus.SaveCacheAsync(false, Version.ToString(), cancellationToken);
+			var modioSaved = await UpdateHandler.Modio.SaveCacheAsync(false, Version.ToString(), cancellationToken);
+			if (nexusSaved && modioSaved) return true;
+			DivinityApp.Log($"Imported Nexus source association for '{sourceName}' could not be saved to every provider cache.");
+		}
+		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+		{
+			DivinityApp.Log($"Canceled persistence of the imported Nexus source association for '{sourceName}'.");
+			return false;
+		}
+		catch (Exception ex)
+		{
+			DivinityApp.Log($"Could not persist the imported Nexus source association for '{sourceName}': {ex.GetType().Name}");
 		}
 
+		RxApp.MainThreadScheduler.Schedule(() => ShowAlert(
+			"The package imported, but Redux could not save every source association cache.",
+			AlertType.Warning,
+			25));
 		return false;
 	}
 
@@ -6320,10 +6621,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				}
 
 				if (nexusAssociationChanged && success)
-				{
-					//Still save cache from imported zips, even if we aren't updating
-					await UpdateHandler.Nexus.SaveCacheAsync(false, Version.ToString(), MainProgressToken.Token);
-				}
+					await PersistImportedNexusAssociationCachesAsync(cts, filePath);
 
 				IncreaseMainProgressValue(taskStepAmount);
 			}
@@ -6452,10 +6750,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				}
 
 				if (nexusAssociationChanged && success)
-				{
-					//Still save cache from imported zips, even if we aren't updating
-					await UpdateHandler.Nexus.SaveCacheAsync(false, Version.ToString(), MainProgressToken.Token);
-				}
+					await PersistImportedNexusAssociationCachesAsync(cts, archivePath);
 
 				IncreaseMainProgressValue(taskStepAmount);
 			}
@@ -7901,25 +8196,44 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		RxApp.TaskpoolScheduler.ScheduleAsync(async (sch, token) =>
 		{
 			await RefreshAsync(sch, token);
-			if(ProcessHelper.IsCurrentProcessAdmin())
-			{
-				if(!Settings.Confirmations.DisableAdminModeWarning)
-				{
-					RxApp.MainThreadScheduler.Schedule(() =>
-					{
-						var result = ReduxMessageBox.Show(Window,
-						"BG3MM is currently running as an administrator, which can lead to issues.\nPlease restart BG3MM in non-admin mode.\nClick Cancel to disable this warning in the future.",
-						"Process Elevation Warning",
-						MessageBoxButton.OKCancel, MessageBoxImage.Warning, MessageBoxResult.OK);
-						if(result == MessageBoxResult.Cancel)
-						{
-							Settings.Confirmations.DisableAdminModeWarning = true;
-							SaveSettings();
-						}
-					});
-				}
-			}
+			ScheduleProcessElevationWarning();
 		});
+	}
+
+	private void ScheduleProcessElevationWarning()
+	{
+		var elevation = ProcessHelper.GetCurrentProcessElevation();
+		var errorDetail = elevation.Win32Error == 0 ? String.Empty : $", Win32 error {elevation.Win32Error}";
+		DivinityApp.Log($"Process elevation check: {elevation.State} (Windows TokenElevation{errorDetail}).");
+		if (!ProcessElevationWarningPolicy.ShouldShow(elevation, Settings.Confirmations.DisableAdminModeWarning)
+			|| !ProcessElevationWarningPolicy.TryMarkScheduled(ref _elevationWarningScheduled))
+		{
+			return;
+		}
+
+		RxApp.MainThreadScheduler.Schedule(() => ShowWhenMainWindowReady(StartupElevationWarningKey, () =>
+		{
+			if (Settings.Confirmations.DisableAdminModeWarning) return;
+			var result = ReduxMessageBox.ShowWithLabels(Window,
+				"Windows reports that Redux is running with administrator privileges. Redux does not request elevation, but it can inherit it from an elevated launcher or a Windows compatibility setting.\n\nRunning elevated can interfere with drag and drop and can change file or child-process behavior. Close Redux and start it normally unless elevated access is intentional.",
+				"Redux Is Running as Administrator",
+				MessageBoxButton.YesNo,
+				MessageBoxImage.Warning,
+				MessageBoxResult.No,
+				(MessageBoxResult.Yes, "Don't show again"),
+				(MessageBoxResult.No, "Close"));
+			if (result != MessageBoxResult.Yes) return;
+
+			if (!ProcessElevationWarningPolicy.TryPersistSuppression(Settings.Confirmations, SaveSettings))
+			{
+				ReduxMessageBox.Show(Window,
+					"Redux could not save this preference, so the administrator warning will remain enabled for the next launch.",
+					"Preference Not Saved",
+					MessageBoxButton.OK,
+					MessageBoxImage.Error,
+					MessageBoxResult.OK);
+			}
+		}));
 	}
 
 	public bool AutoChangedOrder { get; set; }
@@ -10483,7 +10797,6 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		var activeMods = ActiveMods.ToArray();
 		var duplicateMods = _lastDetectedDuplicateMods?.ToArray();
 		var loadOrderGuidanceEnabled = Modules.LoadOrderGuidanceEnabled;
-		var disableModioWarnings = Settings.DisableModioWarnings;
 		IReadOnlyList<ModHealthSnapshot> computedSnapshots;
 		await _modHealthAnalysisLock.WaitAsync();
 		try
@@ -10493,8 +10806,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				installedMods,
 				activeMods,
 				duplicateMods,
-				loadOrderGuidanceEnabled,
-				disableModioWarnings));
+				loadOrderGuidanceEnabled));
 		}
 		catch (Exception ex)
 		{
@@ -10783,6 +11095,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		_allModUpdatesRefreshTask.DisposeWith(Disposables);
 		_nexusMetadataRefreshTask.DisposeWith(Disposables);
 		_modioMetadataRefreshTask.DisposeWith(Disposables);
+		_manualSourceAssociationTasks.DisposeWith(Disposables);
 		ModHealthSnapshots = new ReadOnlyObservableCollection<ModHealthSnapshot>(_modHealthSnapshotItems);
 		ActiveDiagnosticAttentionSnapshots = new ReadOnlyObservableCollection<ModHealthSnapshot>(_activeDiagnosticAttentionItems);
 		ActiveDiagnosticFindingGroups = new ReadOnlyObservableCollection<ModDiagnosticFindingGroupViewModel>(_activeDiagnosticFindingGroupItems);
@@ -11200,12 +11513,6 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			.ObserveOn(RxApp.MainThreadScheduler)
 			.Subscribe(_ => ScheduleModHealthRefresh());
 
-		// Toggling the mod.io notice re-runs analysis so the toolbar and drawer update at once.
-		this.WhenAnyValue(x => x.Settings.DisableModioWarnings)
-			.Skip(1)
-			.ObserveOn(RxApp.MainThreadScheduler)
-			.Subscribe(_ => ScheduleModHealthRefresh());
-
 		modsConnection.Filter(x => x.IsUserMod).Bind(out _userMods).Subscribe();
 		modsConnection.AutoRefresh(x => x.CanAddToLoadOrder).Filter(x => x.CanAddToLoadOrder).Bind(out addonMods).Subscribe();
 		modsConnection.AutoRefresh(x => x.ForceAllowInLoadOrder)
@@ -11367,15 +11674,18 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 		Keys.SpeakActiveModOrder.AddAction(() =>
 		{
+			bool spoken;
 			if (ActiveMods.Count > 0)
 			{
 				var text = string.Join(", ", ActiveMods.Select(x => x.DisplayName));
-				Services.ScreenReader.Speak($"{ActiveMods.Count} mods in the active order, including:\n{text}", true);
+				spoken = Services.ScreenReader.TrySpeak($"{ActiveMods.Count} mods in the active order, including:\n{text}", true);
 			}
 			else
 			{
-				Services.ScreenReader.Speak($"Zero mods are active.", true);
+				spoken = Services.ScreenReader.TrySpeak("Zero mods are active.", true);
 			}
+			if (!spoken)
+				ShowAlert("Redux could not start screen-reader or Windows speech output. Review the log for details.", AlertType.Warning, 20);
 		});
 
 		Keys.StopSpeaking.AddAction(() =>

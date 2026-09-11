@@ -133,7 +133,9 @@
 							Content="Don't show this review for clean packages" Visibility="Collapsed" />
 					</StackPanel>
 					<StackPanel Grid.Column="1" Orientation="Horizontal">
-						<Button x:Name="CancelButton" MinWidth="86" Style="{StaticResource ReduxSecondaryActionButtonStyle}" IsCancel="True" Click="CancelButton_Click" Content="Cancel" />
+						<Button x:Name="CancelButton" MinWidth="86" Style="{StaticResource ReduxSecondaryActionButtonStyle}" IsCancel="True" Click="CancelButton_Click">
+							<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Close}" /><TextBlock Text="Cancel" /></StackPanel>
+						</Button>
 						<Button x:Name="InstallButton" MinWidth="112" Margin="8,0,0,0" Style="{StaticResource ReduxPrimaryActionButtonStyle}"
 							IsDefault="True" Click="InstallButton_Click">
 							<StackPanel Orientation="Horizontal">

@@ -19,14 +19,14 @@ public sealed class ReduxUpdateTransactionTests
 			var backup = Path.Combine(root, "backup");
 			WriteRelease(target, new Dictionary<string, string>
 			{
-				["BG3ModManager.exe"] = "old app",
+				["Redux.exe"] = "old app",
 				["Updater/ReduxUpdater.exe"] = "old updater",
 				["obsolete.dll"] = "obsolete"
 			});
 			File.WriteAllText(Path.Combine(target, "Settings.json"), "user settings");
 			WriteRelease(staged, new Dictionary<string, string>
 			{
-				["BG3ModManager.exe"] = "new app",
+				["Redux.exe"] = "new app",
 				["Updater/ReduxUpdater.exe"] = "new updater",
 				["new.dll"] = "new file"
 			});
@@ -34,7 +34,7 @@ public sealed class ReduxUpdateTransactionTests
 			var result = ReduxUpdateTransaction.Apply(Request(target, staged, backup));
 
 			RegressionAssert.True(result.Succeeded);
-			RegressionAssert.Equal("new app", File.ReadAllText(Path.Combine(target, "BG3ModManager.exe")));
+			RegressionAssert.Equal("new app", File.ReadAllText(Path.Combine(target, "Redux.exe")));
 			RegressionAssert.True(File.Exists(Path.Combine(target, "new.dll")));
 			RegressionAssert.False(File.Exists(Path.Combine(target, "obsolete.dll")));
 			RegressionAssert.Equal("user settings", File.ReadAllText(Path.Combine(target, "Settings.json")));
@@ -55,14 +55,14 @@ public sealed class ReduxUpdateTransactionTests
 			var backup = Path.Combine(root, "backup");
 			var files = new Dictionary<string, string>
 			{
-				["BG3ModManager.exe"] = "old app",
+				["Redux.exe"] = "old app",
 				["locked.dll"] = "old locked",
 				["Updater/ReduxUpdater.exe"] = "old updater"
 			};
 			WriteRelease(target, files);
 			WriteRelease(staged, new Dictionary<string, string>
 			{
-				["BG3ModManager.exe"] = "new app",
+				["Redux.exe"] = "new app",
 				["locked.dll"] = "new locked",
 				["Updater/ReduxUpdater.exe"] = "new updater"
 			});
@@ -70,7 +70,7 @@ public sealed class ReduxUpdateTransactionTests
 			using var locked = new FileStream(Path.Combine(target, "locked.dll"), FileMode.Open, FileAccess.Read, FileShare.Read);
 			RegressionAssert.Throws<Exception>(() => ReduxUpdateTransaction.Apply(Request(target, staged, backup)));
 
-			RegressionAssert.Equal("old app", File.ReadAllText(Path.Combine(target, "BG3ModManager.exe")));
+			RegressionAssert.Equal("old app", File.ReadAllText(Path.Combine(target, "Redux.exe")));
 			RegressionAssert.Equal("old updater", File.ReadAllText(Path.Combine(target, "Updater", "ReduxUpdater.exe")));
 		}
 		finally
@@ -88,19 +88,19 @@ public sealed class ReduxUpdateTransactionTests
 			var staged = Path.Combine(root, "staged");
 			WriteRelease(target, new Dictionary<string, string>
 			{
-				["BG3ModManager.exe"] = "old app",
+				["Redux.exe"] = "old app",
 				["Updater/ReduxUpdater.exe"] = "old updater"
 			});
 			WriteRelease(staged, new Dictionary<string, string>
 			{
-				["BG3ModManager.exe"] = "new app",
+				["Redux.exe"] = "new app",
 				["Updater/ReduxUpdater.exe"] = "new updater",
 				["Data/Downloads/private.zip"] = "user data"
 			});
 
 			RegressionAssert.Throws<InvalidDataException>(() =>
 				ReduxUpdateTransaction.Apply(Request(target, staged, Path.Combine(root, "backup"))));
-			RegressionAssert.Equal("old app", File.ReadAllText(Path.Combine(target, "BG3ModManager.exe")));
+			RegressionAssert.Equal("old app", File.ReadAllText(Path.Combine(target, "Redux.exe")));
 		}
 		finally
 		{
@@ -117,7 +117,7 @@ public sealed class ReduxUpdateTransactionTests
 		BackupDirectory = backup,
 		ResultPath = Path.Combine(Path.GetDirectoryName(target)!, "result.json"),
 		DisplayVersion = "0.1.0-alpha.15",
-		RelaunchRelativePath = "BG3ModManager.exe"
+		RelaunchRelativePath = "Redux.exe"
 	};
 
 	private static void WriteRelease(string root, IReadOnlyDictionary<string, string> files)

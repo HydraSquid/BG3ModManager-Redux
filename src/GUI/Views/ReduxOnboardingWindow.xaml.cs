@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
 
 using WpfScreenHelper;
 
@@ -26,8 +27,6 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 	private bool _accessibilityPreviewActive;
 	private bool _nxmAssociationChoiceAvailable = true;
 	private bool _isInitializing = true;
-	private double _availableHeight = 780;
-
 	public bool WasResolved { get; private set; }
 	public bool ApplyChanges { get; private set; }
 	public ReduxThemeType SelectedTheme => ReduxDarkThemeCard.IsChecked == true
@@ -58,6 +57,7 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 		_initialReduceMotion = settings?.ReduceMotion == true;
 		_initialDisableBackgroundEffects = settings?.DisableBackgroundEffects == true;
 		ApplyAdaptiveDefaultSize(owner);
+		Loaded += (_, _) => Dispatcher.BeginInvoke(ClampToCurrentWorkArea, DispatcherPriority.Loaded);
 
 		if (owner?.IsLoaded == true)
 		{
@@ -100,11 +100,29 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 	private void ApplyAdaptiveDefaultSize(Window owner)
 	{
 		var workArea = owner != null ? Screen.FromWindow(owner).WorkingArea : SystemParameters.WorkArea;
-		var targetWidth = Math.Clamp(workArea.Width * 0.44, 720, 780);
-		_availableHeight = Math.Max(MinHeight, workArea.Height - 48);
-		Width = Math.Max(MinWidth, Math.Min(targetWidth, workArea.Width - 48));
-		MaxHeight = _availableHeight;
-		SizeToContent = SizeToContent.Height;
+		const double workAreaMargin = 48;
+		var availableWidth = Math.Max(320, workArea.Width - workAreaMargin);
+		var availableHeight = Math.Max(320, workArea.Height - workAreaMargin);
+
+		// Keep the footer in the arranged window instead of relying on SizeToContent to
+		// clip a fixed-size dialog. On constrained/scaled displays the body ScrollViewer
+		// absorbs the reduction while the actions remain visible and keyboard reachable.
+		MinWidth = Math.Min(MinWidth, availableWidth);
+		MinHeight = Math.Min(MinHeight, availableHeight);
+		MaxWidth = Math.Max(MinWidth, Math.Min(MaxWidth, availableWidth));
+		MaxHeight = Math.Max(MinHeight, Math.Min(MaxHeight, availableHeight));
+		Width = Math.Clamp(Math.Clamp(workArea.Width * 0.44, 700, 780), MinWidth, MaxWidth);
+		Height = Math.Clamp(Math.Clamp(workArea.Height * 0.82, 620, 760), MinHeight, MaxHeight);
+		SizeToContent = SizeToContent.Manual;
+	}
+
+	private void ClampToCurrentWorkArea()
+	{
+		var workArea = Screen.FromWindow(this).WorkingArea;
+		var renderedWidth = ActualWidth > 0 ? ActualWidth : Width;
+		var renderedHeight = ActualHeight > 0 ? ActualHeight : Height;
+		Left = Math.Clamp(Left, workArea.Left, Math.Max(workArea.Left, workArea.Right - renderedWidth));
+		Top = Math.Clamp(Top, workArea.Top, Math.Max(workArea.Top, workArea.Bottom - renderedHeight));
 	}
 
 	private void ThemeCard_Click(object sender, RoutedEventArgs e)

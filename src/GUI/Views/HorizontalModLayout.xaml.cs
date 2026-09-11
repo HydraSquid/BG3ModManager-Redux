@@ -2,6 +2,8 @@
 using DivinityModManager.Converters;
 using DivinityModManager.Models;
 using DivinityModManager.Models.Health;
+using DivinityModManager.Models.Modio;
+using DivinityModManager.Models.NexusMods;
 using DivinityModManager.Util;
 using DivinityModManager.Util.ScreenReader;
 using DivinityModManager.ViewModels;
@@ -515,6 +517,15 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			return;
 		}
 
+		if (ReferenceEquals(listView, InactiveModsListView) &&
+			ViewModel.DragHandler?.IsDraggingVisualDivider == true)
+		{
+			ClearModListDropIndicator();
+			e.Effects = DragDropEffects.None;
+			e.Handled = true;
+			return;
+		}
+
 		if (_modListDropIndicatorOwner != null && _modListDropIndicatorOwner != listView)
 			ClearModListDropIndicator();
 
@@ -545,6 +556,16 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 	{
 		if (e.Data.GetDataPresent(typeof(ModCategoryFilterItem)))
 		{
+			ClearModListDropIndicator();
+			e.Effects = DragDropEffects.None;
+			e.Handled = true;
+			return;
+		}
+
+		if (ReferenceEquals(sender, InactiveModsListView) &&
+			ViewModel.DragHandler?.IsDraggingVisualDivider == true)
+		{
+			ViewModel.DragHandler.CompleteDragTracking();
 			ClearModListDropIndicator();
 			e.Effects = DragDropEffects.None;
 			e.Handled = true;
@@ -1271,7 +1292,13 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		ReduxThemeService.Apply(dialog.Resources, ViewModel.Settings.ColorTheme,
 			ReduxThemeService.GetActiveTheme(ViewModel.Settings), ViewModel.Settings.UsesGeneratedGradients);
 		if (dialog.ShowDialog() != true) return;
-		var error = await ViewModel.TryManuallyLinkModPageAsync(mod, dialog.ModPageLink);
+		var replaceSource = ModPageLinkParser.TryParseBg3(dialog.ModPageLink, out var requestedPage, out _)
+			&& mod.Metadata.SourceType != ModSourceType.NONE
+			&& mod.Metadata.SourceType != requestedPage.SourceType;
+		if (replaceSource && ShowCategoryMessage(
+			$"Replace the current {mod.Metadata.SourceLabel} source for '{mod.DisplayName}' with this mod page?\n\nThe installed package and load order will not change.",
+			"Change Mod Source", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+		var error = await ViewModel.TryManuallyLinkModPageAsync(mod, dialog.ModPageLink, replaceSource);
 		if (!String.IsNullOrWhiteSpace(error))
 		{
 			ShowCategoryMessage(error, "Link Mod Page", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -2513,6 +2540,32 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 	private void ModDetailsGridSplitter_DragCompleted(object sender, DragCompletedEventArgs e)
 	{
 		Dispatcher.BeginInvoke(new Action(RememberExpandedModDetailsHeight));
+	}
+
+	private async void ShowManualModioLinkDialog(DivinityModData mod)
+	{
+		var replaceNexus = mod.NexusModsData?.MetadataOrigin is NexusMetadataOrigin.Manual
+			or NexusMetadataOrigin.NexusArchiveImport
+			or NexusMetadataOrigin.ReduxBundleImport;
+		if (replaceNexus)
+		{
+			var confirmation = ShowCategoryMessage(
+				$"Replace the current Nexus Mods source for '{mod.DisplayName}' with a verified mod.io page?\n\nRedux will keep the current Nexus association unless the mod.io page verifies successfully. The installed package and load order will not change.",
+				"Change Mod Source", MessageBoxButton.YesNo, MessageBoxImage.Question);
+			if (confirmation != MessageBoxResult.Yes) return;
+		}
+
+		var currentLink = mod.ModioData?.HasMetadata == true ? mod.ModioData.SourcePageUrl : null;
+		var dialog = new ModioManualLinkDialog(currentLink) { Owner = Window.GetWindow(this) };
+		ReduxThemeService.Apply(dialog.Resources, ViewModel.Settings.ColorTheme,
+			ReduxThemeService.GetActiveTheme(ViewModel.Settings), ViewModel.Settings.UsesGeneratedGradients);
+		if (dialog.ShowDialog() != true) return;
+
+		var result = await ViewModel.TryManuallyLinkModioModAsync(mod, dialog.ModioLink, replaceNexus);
+		if (!result.Success)
+		{
+			ShowCategoryMessage(result.Error, "Link mod.io Project", MessageBoxButton.OK, MessageBoxImage.Information);
+		}
 	}
 
 	private async void UpdateOverrideModsLayout(bool hasAlwaysLoadedMods, bool isExpanded)

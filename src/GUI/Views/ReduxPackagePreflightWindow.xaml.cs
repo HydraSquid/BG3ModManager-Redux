@@ -99,7 +99,7 @@ public partial class ReduxPackagePreflightWindow : AdonisUI.Controls.AdonisWindo
 		finally
 		{
 			_active = false;
-			ScanActionButton.Content = "Close";
+			ScanActionButtonText.Text = "Close";
 			ScanActionButton.IsEnabled = true;
 		}
 	}

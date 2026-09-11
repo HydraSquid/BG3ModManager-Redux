@@ -549,6 +549,21 @@ public partial class MainViewControl : MainViewControlViewBase
 			};
 			reportBugMenuItem.Click += (_, _) => ProcessHelper.TryOpenUrl(DivinityApp.URL_REDUX_BUG_REPORT);
 			helpMenuItem.Items.Add(reportBugMenuItem);
+			var discordMenuItem = new MenuItem
+			{
+				Header = "Join the Redux Discord...",
+				ToolTip = "Open the Redux community Discord server.",
+				Icon = ReduxIcon.FromResource("Redux.Icon.Discord")
+			};
+			discordMenuItem.SetResourceReference(
+				ReduxMenuItemExtension.SemanticHoverBrushProperty,
+				"Redux.Pill.Discord.Background");
+			discordMenuItem.SetResourceReference(
+				ReduxMenuItemExtension.SemanticRailBrushProperty,
+				"Redux.Pill.Discord.Border");
+			ReduxMenuItemExtension.SetUseSemanticHover(discordMenuItem, true);
+			discordMenuItem.Click += (_, _) => ProcessHelper.TryOpenUrl(DivinityApp.URL_REDUX_DISCORD);
+			helpMenuItem.Items.Add(discordMenuItem);
 			helpMenuItem.Items.Add(new Separator());
 			var creditsMenu = new MenuItem
 			{
@@ -866,10 +881,7 @@ public partial class MainViewControl : MainViewControlViewBase
 	private void OrderActionsButton_Click(object sender, RoutedEventArgs e)
 	{
 		if (sender is not Button { ContextMenu: { } menu } button) return;
-		menu.PlacementTarget = button;
-		menu.Placement = PlacementMode.Bottom;
-		menu.VerticalOffset = 4;
-		menu.IsOpen = true;
+		ReduxWindowBehavior.OpenRightwardDropDown(menu, button, 4);
 	}
 
 	private readonly Dictionary<string, string> _shortcutButtonBindings = new()
@@ -1096,13 +1108,10 @@ public partial class MainViewControl : MainViewControlViewBase
 		if (button.ContextMenu is not { } menu || menu.IsOpen)
 			return;
 
-		menu.PlacementTarget = button;
-		menu.Placement = PlacementMode.Bottom;
 		// Small gap so the popup reads as its own surface instead of welding onto the
 		// status chrome. Crossing it cannot collapse the button: MouseLeave defers to
 		// ContextMenu.IsOpen.
-		menu.VerticalOffset = 4;
-		menu.IsOpen = true;
+		ReduxWindowBehavior.OpenRightwardDropDown(menu, button, 4);
 	}
 
 	private void ToolbarModDiagnosticsMenu_Opened(object sender, RoutedEventArgs e)

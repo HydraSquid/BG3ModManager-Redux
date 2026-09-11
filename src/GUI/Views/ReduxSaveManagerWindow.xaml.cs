@@ -1,4 +1,5 @@
 using DivinityModManager.AppServices;
+using DivinityModManager.Converters;
 using DivinityModManager.Util;
 using DivinityModManager.ViewModels;
 
@@ -196,13 +197,28 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 		if (result != MessageBoxResult.Yes) return;
 		try
 		{
+			// The preview converter closes its stream immediately. Evict the decoded
+			// image as well so a later import using this folder name cannot reuse it.
+			FilePathToBitmapImageConverter.EvictTree(selected.FolderPath);
 			FileSystem.DeleteDirectory(selected.FolderPath, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
 			RefreshSaves();
+		}
+		catch (IOException ex) when (IsSharingViolation(ex))
+		{
+			ShowMessage(
+				"Another program is using this save. Close Baldur's Gate 3 and any save or cloud-sync tools, then try again.",
+				"Delete Save", MessageBoxImage.Error);
 		}
 		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or OperationCanceledException)
 		{
 			ShowMessage(ex.Message, "Delete Save", MessageBoxImage.Error);
 		}
+	}
+
+	private static bool IsSharingViolation(IOException exception)
+	{
+		var errorCode = exception.HResult & 0xFFFF;
+		return errorCode is 32 or 33;
 	}
 
 	private void OpenFolderButton_Click(object sender, RoutedEventArgs e)

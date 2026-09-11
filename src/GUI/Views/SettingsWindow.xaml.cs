@@ -116,7 +116,6 @@ public partial class SettingsWindow : SettingsWindowBase
 		new("Optional features",
 			"Control source linking and experimental load-order guidance. Core diagnostics remain active.",
 			nameof(DivinityModManagerSettings.LocalOnlyMode),
-			nameof(DivinityModManagerSettings.DisableModioWarnings),
 			nameof(DivinityModManagerSettings.EnableLoadOrderAdvisor)),
 		new("Metadata services",
 			"Add optional provider keys for source details and update information.",
@@ -217,9 +216,14 @@ public partial class SettingsWindow : SettingsWindowBase
 	{
 		if (sender is RadioButton { Tag: ReduxThemeType theme })
 		{
+			var useThemeDefaultTypography = ViewModel.Settings.UseThemeDefaultTypography;
 			ViewModel.Settings.ActiveCustomThemeId = String.Empty;
-			ViewModel.Settings.TypographyFont = ReduxTypographyFont.Manrope;
-			ViewModel.Settings.CustomTypographyFont = String.Empty;
+			if (useThemeDefaultTypography)
+			{
+				ViewModel.Settings.UseThemeDefaultTypography = true;
+				ViewModel.Settings.TypographyFont = ReduxTypographyService.GetThemeDefault(theme);
+				ViewModel.Settings.CustomTypographyFont = String.Empty;
+			}
 			ViewModel.Settings.TextSize = ReduxTextSize.Default;
 			ViewModel.Settings.UsesGeneratedGradients = theme != ReduxThemeType.Parchment;
 			ReduxThemeService.ApplyBuiltInCategoryPresentation(ViewModel.Settings, theme);
@@ -264,11 +268,12 @@ public partial class SettingsWindow : SettingsWindowBase
 		_updatingTypographySelection = true;
 		var choices = ReduxCustomFontService.GetChoices();
 		TypographyComboBox.ItemsSource = choices;
-		var customReference = preferredCustomReference ?? ViewModel?.Settings?.CustomTypographyFont ?? String.Empty;
+		var effectiveSelection = ReduxTypographyService.ResolveSelection(ViewModel?.Settings);
+		var customReference = preferredCustomReference ?? effectiveSelection.CustomReference;
 		var selected = !String.IsNullOrWhiteSpace(customReference)
 			? choices.FirstOrDefault(choice => choice.CustomReference.Equals(customReference, StringComparison.OrdinalIgnoreCase))
 			: null;
-		selected ??= choices.FirstOrDefault(choice => !choice.IsCustom && choice.BuiltInFont == (ViewModel?.Settings?.TypographyFont ?? ReduxTypographyFont.Manrope));
+		selected ??= choices.FirstOrDefault(choice => !choice.IsCustom && choice.BuiltInFont == effectiveSelection.Font);
 		selected ??= choices.First(choice => choice.BuiltInFont == ReduxTypographyFont.Manrope && !choice.IsCustom);
 		TypographyComboBox.SelectedItem = selected;
 		DeleteCustomFontButton.IsEnabled = selected.IsCustom;
@@ -278,6 +283,7 @@ public partial class SettingsWindow : SettingsWindowBase
 	private void TypographyComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
 	{
 		if (_updatingTypographySelection || ViewModel?.Settings == null || TypographyComboBox.SelectedItem is not ReduxFontChoice choice) return;
+		ViewModel.Settings.UseThemeDefaultTypography = false;
 		ViewModel.Settings.CustomTypographyFont = choice.IsCustom ? choice.CustomReference : String.Empty;
 		ViewModel.Settings.TypographyFont = choice.IsCustom ? ReduxTypographyFont.Manrope : choice.BuiltInFont;
 		DeleteCustomFontButton.IsEnabled = choice.IsCustom;
@@ -325,8 +331,9 @@ public partial class SettingsWindow : SettingsWindowBase
 
 		if (ViewModel.Settings.CustomTypographyFont.Equals(choice.CustomReference, StringComparison.OrdinalIgnoreCase))
 		{
+			ViewModel.Settings.UseThemeDefaultTypography = true;
 			ViewModel.Settings.CustomTypographyFont = String.Empty;
-			ViewModel.Settings.TypographyFont = ReduxTypographyFont.Manrope;
+			ViewModel.Settings.TypographyFont = ReduxTypographyService.GetThemeDefault(ViewModel.Settings.ColorTheme);
 		}
 		foreach (var theme in ViewModel.Settings.CustomThemes.Where(theme =>
 			theme.CustomTypographyFont.Equals(choice.CustomReference, StringComparison.OrdinalIgnoreCase)))
@@ -366,6 +373,7 @@ public partial class SettingsWindow : SettingsWindowBase
 		CustomThemeComboBox.ItemsSource = ViewModel.Settings.CustomThemes;
 		var activeTheme = ReduxThemeService.GetActiveTheme(ViewModel.Settings);
 		CustomThemeComboBox.SelectedItem = activeTheme;
+		CurrentThemeNameText.Text = activeTheme?.Name ?? ViewModel.Settings.ColorTheme.GetDescription();
 		GeneratedGradientsCheckBox.IsChecked = activeTheme?.UsesGeneratedGradients
 			?? ViewModel.Settings.UsesGeneratedGradients;
 		var hasSelection = CustomThemeComboBox.SelectedItem is ReduxCustomTheme;
@@ -374,7 +382,7 @@ public partial class SettingsWindow : SettingsWindowBase
 		DuplicateCustomThemeButton.IsEnabled = hasSelection;
 		ExportCustomThemeButton.IsEnabled = hasSelection;
 		CustomThemeStatusText.Text = activeTheme != null
-			? $"Active custom theme · {activeTheme.BaseTheme.GetDescription()} · {ReduxCustomFontService.GetDisplayName(activeTheme.TypographyFont, activeTheme.CustomTypographyFont)} · {activeTheme.TextSize.GetDescription()} text"
+			? $"Active custom theme · {activeTheme.Name} · {ReduxCustomFontService.GetDisplayName(activeTheme.TypographyFont, activeTheme.CustomTypographyFont)} · {activeTheme.TextSize.GetDescription()} text"
 			: ViewModel.Settings.CustomThemes.Count == 0
 				? "No custom themes yet. Create one from the current built-in palette."
 				: "Choose a custom theme above, or keep using a built-in theme.";
@@ -390,6 +398,7 @@ public partial class SettingsWindow : SettingsWindowBase
 
 	private void ActivateCustomTheme(ReduxCustomTheme theme)
 	{
+		ViewModel.Settings.UseThemeDefaultTypography = true;
 		ViewModel.Settings.ActiveCustomThemeId = theme.Id;
 		ViewModel.Settings.ColorTheme = theme.BaseTheme;
 		ViewModel.Settings.TypographyFont = theme.TypographyFont;
@@ -407,6 +416,7 @@ public partial class SettingsWindow : SettingsWindowBase
 		var previousTheme = ViewModel.Settings.ColorTheme;
 		var previousFont = ViewModel.Settings.TypographyFont;
 		var previousCustomFont = ViewModel.Settings.CustomTypographyFont;
+		var previousUseThemeDefaultTypography = ViewModel.Settings.UseThemeDefaultTypographyPreference;
 		var previousTextSize = ViewModel.Settings.TextSize;
 		var mainWindow = MainWindow.Self;
 		var dialog = new CustomThemeEditorWindow(workingTheme)
@@ -436,6 +446,7 @@ public partial class SettingsWindow : SettingsWindowBase
 			if (!accepted)
 			{
 				MainWindow.Self.MainView.UpdateColorTheme(previousTheme);
+				ViewModel.Settings.UseThemeDefaultTypographyPreference = previousUseThemeDefaultTypography;
 				ReduxTypographyService.Apply(Application.Current.Resources, previousFont, previousCustomFont);
 				ReduxTypographyService.ApplyTextSize(Application.Current.Resources, previousTextSize);
 			}
@@ -450,8 +461,9 @@ public partial class SettingsWindow : SettingsWindowBase
 
 	private void CreateCustomTheme_Click(object sender, RoutedEventArgs e)
 	{
+		var effectiveTypography = ReduxTypographyService.ResolveSelection(ViewModel.Settings);
 		var working = ReduxThemeService.CreateFromBase("My Custom Theme", ViewModel.Settings.ColorTheme,
-			ViewModel.Settings.TypographyFont, ViewModel.Settings.TextSize, ViewModel.Settings.CustomTypographyFont,
+			effectiveTypography.Font, ViewModel.Settings.TextSize, effectiveTypography.CustomReference,
 			ViewModel.Settings.UseCategoryColorsForInteractions, ViewModel.Settings.ShowCategoryIconsInPills,
 			ViewModel.Settings.UseCategoryColorsForSidebarText,
 			ViewModel.Settings.UseIconsOnly);
@@ -494,7 +506,8 @@ public partial class SettingsWindow : SettingsWindowBase
 		if (selected.Id.Equals(ViewModel.Settings.ActiveCustomThemeId, StringComparison.OrdinalIgnoreCase))
 		{
 			ViewModel.Settings.ActiveCustomThemeId = String.Empty;
-			ViewModel.Settings.TypographyFont = ReduxTypographyFont.Manrope;
+			ViewModel.Settings.UseThemeDefaultTypography = true;
+			ViewModel.Settings.TypographyFont = ReduxTypographyService.GetThemeDefault(ViewModel.Settings.ColorTheme);
 			ViewModel.Settings.CustomTypographyFont = String.Empty;
 			ViewModel.Settings.TextSize = ReduxTextSize.Default;
 			ReduxThemeService.ApplyBuiltInCategoryPresentation(ViewModel.Settings, ViewModel.Settings.ColorTheme);
@@ -905,9 +918,7 @@ public partial class SettingsWindow : SettingsWindowBase
 		GameLaunchParamsMainButton.Events().Click.Subscribe(e =>
 		{
 			var menu = GameLaunchParamsMainButton.ContextMenu;
-			menu.PlacementTarget = GameLaunchParamsMainButton;
-			menu.Placement = PlacementMode.Bottom;
-			menu.IsOpen = true;
+			ReduxWindowBehavior.OpenRightwardDropDown(menu, GameLaunchParamsMainButton);
 		});
 
 		this.Bind(ViewModel, vm => vm.Settings.GameLaunchParams, view => view.GameLaunchParamsTextBox.Text);

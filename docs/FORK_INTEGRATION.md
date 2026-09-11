@@ -1,23 +1,22 @@
-# Fork integration: alpha.15
+# Fork integration: alpha.16.3.3
 
-This integration starts at circleainn's `363a1da` (alpha.15) and selectively
-retains behavior from HydraSquid's `d6be4e3`. It was prepared on
-`integration/upstream-alpha15`. The fork's earlier history is retained through
-a merge, while the integrated tree uses the newer upstream implementations
-plus the differences below.
+This integration merges circleainn's `04be3a4b` (alpha.16.3.3 plus documentation)
+into the existing HydraSquid fork. The earlier alpha.15 integration and its
+history remain intact. Downloads toolbar polish and NXM takeover were committed
+before this merge; the integrated tree retains the differences below.
 
 ## Retained fork differences
 
 | Area | Integration |
 | --- | --- |
-| Downloads workspace | Embedded Inbox, History, and Archives pane using upstream's current download services, with action icons, semantic button colors, and the existing Enable/Disable/Repair NXM Links control; standalone window remains the fallback. |
+| Downloads workspace | Embedded Inbox, History, and Archives pane using upstream's current download services, grouped actions, semantic button colors, and Enable/Disable/Repair/Takeover NXM controls; standalone window remains the fallback. |
 | Selection | Explicit selected-only install/removal, Select All, and virtualized selection synchronization. |
 | Dependency batches | Selected prerequisites are ordered before dependents; missing/old requirements and cycles block affected packages. Failed prerequisites suppress their dependents. |
 | Dependency assistance | UUID-based installed/bundled/download matches, reviewed source links, and Copy UUID without name-based guessing. |
 | PAK installation | Stage and validate all archive packages before committing; roll back all destination changes on failure. Sibling packages satisfy each other's declared requirements. |
 | Layout | Adjacent-only pane resizing with responsive sizing and persisted Downloads visibility/width. Override Mods has a height-resize handle, minimum list heights, and a chosen height retained across collapse/expand during the session. Downloads uses the shared pane-header arrow. |
 | Themes | Theme-aware alternating table rows, retaining upstream's current fonts, palettes, gradients, and transitions. |
-| Sources | Manual BG3 mod.io and Nexus page links with persisted provenance; native mod.io identity blocks automatic Nexus inference. |
+| Sources | Unified BG3 mod.io and Nexus page linking without a mandatory API key; explicit manual choices and persistent unlinks survive cache reload. Reviewed upstream catalog provenance may outrank incidental native mod.io identity; weaker creator-manifest guesses do not. |
 | Activation/shutdown | Restore activation after offscreen startup; require successful settings and queue persistence before closing. |
 | Native compatibility | Read BG3 ProductVersion rather than FileVersion; recognize validated legacy native ownership records. |
 
@@ -30,6 +29,8 @@ plus the differences below.
 
 The embedded Downloads pane supports explicit confirmed NXM-handler takeover from
 upstream alpha.16.3.3, including restoration of the prior handler when disabled.
+The fork also resolves the saved non-BG3 forwarding destination through previous
+Redux registrations, avoiding a forwarding-loop rejection after takeover.
 Its toolbar groups local intake, install, pause/resume, and removal, with Select all
 on its own line.
 
@@ -39,6 +40,12 @@ currently exposed there; their restoration remains a follow-up. Dependency revie
 is available through **Dependencies**.
 
 ## Runtime compatibility
+
+- The application now uses upstream's `Redux.exe` executable and `Redux` WPF
+  assembly name. Existing NXM ownership can be repaired after an approved deployment.
+- Upstream application-update checks remain disabled in this fork: the upstream
+  public-alpha channel distributes binaries without these retained workflows.
+  The updated manifest/version parsing and package safeguards are retained.
 
 - Queue schema remains backward-readable. Intact completed legacy files missing
   an archive hash receive a SHA-256 hash during reconciliation. Existing hashes

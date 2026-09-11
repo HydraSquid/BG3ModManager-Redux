@@ -8,16 +8,17 @@
 		<AssemblyTitle>BG3 Mod Manager Redux Setup</AssemblyTitle>
 		<Product>BG3 Mod Manager Redux Setup</Product>
 		<Description>Standalone web installer for BG3 Mod Manager Redux</Description>
-		<AssemblyVersion>0.1.0.15</AssemblyVersion>
-		<FileVersion>0.1.0.15</FileVersion>
-		<Version>0.1.0-alpha.15</Version>
-		<InformationalVersion>0.1.0-alpha.15</InformationalVersion>
+		<AssemblyVersion>0.1.16.303</AssemblyVersion>
+		<FileVersion>0.1.16.303</FileVersion>
+		<Version>0.1.0-alpha.16.3.3</Version>
+		<InformationalVersion>0.1.0-alpha.16.3.3</InformationalVersion>
+		<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
 		<PlatformTarget>x64</PlatformTarget>
 		<Platforms>x64</Platforms>
 		<Configurations>Debug;Release</Configurations>
 		<OutputPath>$(MSBuildProjectDirectory)\..\..\bin\InstallerPayload\$(Configuration)\</OutputPath>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-		<ApplicationIcon>..\GUI\BG3ModManager.ico</ApplicationIcon>
+		<ApplicationIcon>..\GUI\Redux.ico</ApplicationIcon>
 		<Nullable>enable</Nullable>
 		<LangVersion>latest</LangVersion>
 		<DebugType Condition="'$(Configuration)' == 'Debug'">full</DebugType>
@@ -33,7 +34,7 @@
 	<ItemGroup>
 		<EmbeddedResource Include="$(PkgNewtonsoft_Json)\lib\net45\Newtonsoft.Json.dll"
 			LogicalName="ReduxInstaller.Dependencies.Newtonsoft.Json.dll" />
-		<Resource Include="..\GUI\BG3ModManager.ico" Link="Resources\BG3ModManager.ico" />
+		<Resource Include="..\GUI\Redux.ico" Link="Resources\Redux.ico" />
 		<Resource Include="..\GUI\Resources\Fonts\Manrope-Regular.ttf" Link="Resources\Fonts\Manrope-Regular.ttf" />
 		<Resource Include="..\GUI\Resources\Fonts\Manrope-SemiBold.ttf" Link="Resources\Fonts\Manrope-SemiBold.ttf" />
 		<EmbeddedResource Include="..\..\LICENSE" Link="Legal\LICENSE.txt" />

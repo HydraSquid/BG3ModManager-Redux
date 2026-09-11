@@ -86,8 +86,8 @@
 				</Grid.ColumnDefinitions>
 				<controls:ReduxIcon Width="20" Height="20"
 				    VerticalAlignment="Center"
-				    Foreground="{DynamicResource ReduxTextPrimaryBrush}"
-				    StrokeData="{StaticResource Redux.Icon.Sparkles}" />
+				    Foreground="{DynamicResource ReduxAccentBrush}"
+				    Data="{StaticResource Redux.Icon.ReduxStar}" />
 				<TextBlock Grid.Column="1" Margin="9,0,0,0"
 				    VerticalAlignment="Center"
 				    FontSize="{DynamicResource Redux.FontSize.13}"

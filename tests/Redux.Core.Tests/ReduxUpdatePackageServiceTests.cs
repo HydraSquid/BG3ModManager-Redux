@@ -19,8 +19,8 @@ public sealed class ReduxUpdatePackageServiceTests
 {
 	private static readonly string[] RequiredFiles =
 	{
-		"BG3ModManager.exe",
-		"BG3ModManager.dll",
+		"Redux.exe",
+		"Redux.dll",
 		"Redux-Release-Files.json",
 		"Updater/ReduxUpdater.exe",
 		"Updater/ReduxUpdater.dll",
@@ -40,7 +40,7 @@ public sealed class ReduxUpdatePackageServiceTests
 			var prepared = service.DownloadAndStageAsync(DecisionFor(archive)).GetAwaiter().GetResult();
 
 			RegressionAssert.True(Directory.Exists(prepared.StagedDirectory));
-			RegressionAssert.True(File.Exists(Path.Combine(prepared.StagedDirectory, "BG3ModManager.exe")));
+			RegressionAssert.True(File.Exists(Path.Combine(prepared.StagedDirectory, "Redux.exe")));
 			RegressionAssert.Equal(RequiredFiles.Length, prepared.Inventory.Files.Count);
 		}
 		finally

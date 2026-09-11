@@ -249,9 +249,10 @@
 						Foreground="{DynamicResource ReduxTextMutedBrush}"
 						TextTrimming="CharacterEllipsis" />
 					<Button x:Name="ScanActionButton" Grid.Column="1" MinWidth="84" Margin="14,0,0,0"
-						Content="Cancel"
 						Style="{StaticResource ReduxSecondaryActionButtonStyle}"
-						Click="CloseButton_Click" />
+						Click="CloseButton_Click">
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Close}" /><TextBlock x:Name="ScanActionButtonText" Text="Cancel" /></StackPanel>
+					</Button>
 				</Grid>
 			</Grid>
 		</Border>

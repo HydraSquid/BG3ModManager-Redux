@@ -187,6 +187,19 @@ internal sealed class ReduxModuleStateTests
 		RegressionAssert.False(ReferenceEquals(accent, resources["ReduxAccentPillBackground"]));
 	}
 
+	public void CustomThemePreviewRefreshesEveryOpenEditorResourceScope()
+	{
+		var theme = ReduxThemeService.CreateFromBase("Live editor", ReduxThemeType.ReduxDark);
+		var editorResources = new ResourceDictionary();
+		var pickerResources = new ResourceDictionary();
+		theme.AccentColor = "#4A78D0";
+
+		ReduxThemeService.PreviewColors(theme, editorResources, pickerResources, editorResources);
+
+		AssertResourceColor(editorResources, "ReduxAccentColor", Color.FromRgb(0x4A, 0x78, 0xD0));
+		AssertResourceColor(pickerResources, "ReduxAccentColor", Color.FromRgb(0x4A, 0x78, 0xD0));
+	}
+
 	public void RepeatedThemeApplicationReusesTheLoadedColorScheme()
 	{
 		var resources = new ResourceDictionary();
@@ -235,7 +248,7 @@ internal sealed class ReduxModuleStateTests
 		var actionResources = new ResourceDictionary
 		{
 			Source = new Uri(
-				"pack://application:,,,/BG3ModManager;component/Themes/MainResourceDictionary.xaml",
+				"pack://application:,,,/Redux;component/Themes/MainResourceDictionary.xaml",
 				UriKind.Absolute)
 		};
 		var resources = new ResourceDictionary();
@@ -296,7 +309,7 @@ internal sealed class ReduxModuleStateTests
 		var sharedResources = new ResourceDictionary
 		{
 			Source = new Uri(
-				"pack://application:,,,/BG3ModManager;component/Themes/MainResourceDictionary.xaml",
+				"pack://application:,,,/Redux;component/Themes/MainResourceDictionary.xaml",
 				UriKind.Absolute)
 		};
 		var resources = new ResourceDictionary();

@@ -3,19 +3,136 @@
 This file summarizes user-visible Redux releases. The issue tracker and Git history remain the
 source for individual implementation details.
 
-## 0.1.0-alpha.15 — public-alpha candidate
+## Unreleased
 
-- Public installation, migration, rollback, removal, privacy, support, contribution, security, and
-  release-maintenance documentation.
-- Strict public-alpha update-channel checks with quiet background scheduling and explicit release
-  presentation.
-- Verified application update staging, release-owned file inventories, restart-based replacement,
-  transaction rollback, and post-update status reporting.
+No additional changes are queued after alpha.16.3.3.
+
+## 0.1.0-alpha.16.3.3 — silent public-alpha maintenance release
+
+- Let users deliberately reassociate NXM links with the current Redux when an older Redux install
+  or another marked handler owns the Windows registration, while preserving the previous handler.
+- Simplified repetitive Download Manager guidance.
+- Corrected the current-theme summary to show an active custom theme's own name.
+- Added the Redux star to the built-in icon library and used its theme-aware monochrome form on the
+  startup screen.
+- Gave the NXM reassociation action the same Nexus source styling used elsewhere in Redux.
+
+## 0.1.0-alpha.16.3.2 — silent public-alpha maintenance release
+
+- Prevented separators from being dragged into Inactive Mods.
+- Cleared the insertion line immediately when Inactive Mods rejects a separator drag or drop.
+
+## 0.1.0-alpha.16.3.1 — silent public-alpha maintenance release
+
+### Fixed
+
+- Removed the generic mod.io health warning because a linked source page does not prove that the
+  installed package is subscribed through the in-game manager or managed by Steam Cloud.
+- Added maintenance-release versions such as `.16.3.1` across the updater and Nexus publication
+  contract, including deterministic ordering between their parent and the next hotfix.
+
+## 0.1.0-alpha.16.3 — public-alpha hotfix
+
+### Fixed
+
+- Prevented an incidental mod.io `PublishHandle` from overriding a reviewed Nexus match when Redux
+  is introduced to an existing mod installation.
+- Added symmetric source controls: explicit Nexus/mod.io labels, persistent mod.io unlinking, and a
+  **Change Source to Nexus Mods** action for mods currently displaying mod.io metadata.
+- Expanded Redux's offline source catalog while refusing cross-provider and
+  same-provider name collisions instead of guessing.
+- Added conservative bundled mod.io recognition that requires a matching UUID and exact package
+  name, folder, or filename and never overrides native or manually selected provenance.
+
+## 0.1.0-alpha.16.2 — public-alpha hotfix
+
+### Fixed
+
+- Preserved the exact selected Nexus file name in the mod list when several files belong to the
+  same Nexus page, while retaining the shared project title in source details.
+- Added manual mod.io source linking, replacement, and clearing with URL/ID validation and explicit
+  confirmation when replacing an existing Nexus link.
+
+### Distribution
+
+- Simplified public releases to one portable ZIP shared byte-for-byte by GitHub Releases and Nexus
+  Mods. The separate Setup artifact is no longer part of future public releases.
+- Added a protected Nexus Mods publishing workflow that downloads the approved GitHub release ZIP,
+  refuses duplicate versions, uploads through Nexus Mods' official action, and records the resulting
+  file-version ID.
+
+## 0.1.0-alpha.16.1 — public-alpha hotfix
+
+### Fixed
+
+- Added an explicit public-alpha hotfix version contract (`alpha.N.H`) so corrected builds can be
+  delivered through the updater without pretending to be a new feature alpha or replacing existing
+  release bytes.
+- Prevented an exceptional load-order rebuild during Sync—such as one involving legacy separator
+  PAK state—from leaving Save, keyboard shortcuts, menus, and drag-and-drop permanently disabled.
+
+### Distribution
+
+- Setup now updates or repairs its existing registered Redux installation using verified,
+  inventory-scoped replacement and rollback while preserving settings and other user content.
+
+## 0.1.0-alpha.16 — public-alpha hotfix
+
+### Fixed
+
+- Welcome Setup now stays within the available desktop work area, can be resized, and keeps its
+  navigation actions reachable on common laptop displays and non-default scaling.
+- Screen-reader speech now uses the bundled Tolk bridge directly and falls back to Windows SAPI
+  when the optional CrossSpeak wrapper is unavailable.
+- The elevated-process warning now uses the process token's actual elevation state, appears once
+  per startup, and provides working **Close** and **Don't show again** actions.
+- Top-bar menus, toolbar dropdowns, nested submenus, and combo boxes now prefer rightward placement,
+  with left/up placement retained only when required by a screen edge.
+- Cancelling the first-run BG3 folder picker no longer lets Welcome Setup overlap Preferences;
+  onboarding waits until Preferences has fully closed.
+
+### Distribution
+
+- Enabled Redux's verified public-alpha update checks now that the moving channel is live.
+- Added short-lived CI artifacts for both the portable application and standalone Setup so release
+  candidates come from the same tested commit.
+
+## 0.1.0-alpha.15 — public alpha
+
+### Distribution and identity
+
 - Separate lightweight web Setup for verified fresh installation, .NET 8 prerequisite handling,
   per-user shortcuts, and inventory-scoped removal that preserves unlisted content.
+- Strict public-alpha update-channel checks with quiet background scheduling, explicit release
+  presentation, verified staging, restart-based replacement, transaction rollback, and post-update
+  status reporting.
+- Release-owned file inventories that keep application updates separate from settings, saved
+  orders, downloads, retained archives, logs, backups, and user-created content.
+- The desktop runtime is now `Redux.exe` / `Redux.dll`; Setup and Windows continue to present the
+  installed product as **BG3 Mod Manager Redux**, and Setup recognizes legacy private-alpha
+  installations that still contain `BG3ModManager.exe`.
+- New transparent Redux star application icon and consistent product identity across the app,
+  installer, repository, documentation, and public showcase materials.
+- Direct Redux Discord access from the application and public project navigation.
 
-Alpha.15 has not been published yet. Its update channel remains disabled until the exact candidate
-artifacts and channel manifest are available and verified.
+### Refined
+
+- App-wide button and modal consistency, including current semantic styling, action icons, close
+  affordances, and disabled states in Preferences, category/separator editors, and manager windows.
+- Load Order History styling now matches the current Redux review and organizer surfaces.
+- Custom Theme Editor and color-picker shells now participate in live background-color previews.
+- Expanded, deduplicated built-in category icon library and Segoe UI as Parchment's default font.
+- Override Mods once again has a usable vertical resize grip after its visual refresh.
+- Public installation, migration, rollback, removal, privacy, support, contribution, security,
+  release, brand, community, architecture, and FAQ documentation.
+
+### Fixed
+
+- Save Game Manager deletion no longer keeps the selected save locked by its own thumbnail preview.
+- Game-directory mod detection again evaluates the configured live game directory instead of an
+  unrelated showcase path.
+- Script Extender requirements use one dedicated row indicator and one complete diagnostic detail,
+  removing duplicate or incomplete warning tooltips.
 
 ## 0.1.0-alpha.14 — private alpha
 

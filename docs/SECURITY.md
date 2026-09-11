@@ -2,8 +2,8 @@
 
 ## Supported versions
 
-Only the newest published Redux alpha receives security fixes. Older private test builds and source
-snapshots are unsupported once a newer build is available.
+Only the newest published Redux public alpha receives security fixes. Older public alphas, private
+test builds, and source snapshots are unsupported once a newer build is available.
 
 ## Report a vulnerability
 
@@ -11,9 +11,10 @@ Do not open a public issue for a vulnerability that could expose credentials, ov
 outside an intended destination, execute untrusted content, bypass archive validation, or disclose
 private user data.
 
-Use GitHub's private vulnerability-reporting feature when it is available for this repository. If
-private reporting is unavailable, contact the maintainer through a private channel listed on the
-official Redux project pages and include only the information needed to reproduce the problem.
+Use GitHub's [private vulnerability-reporting form](https://github.com/circleainn/BG3ModManager-Redux/security/advisories/new).
+If GitHub does not make that form available to you, contact the maintainer through a private
+channel listed on the official Redux project pages and include only the information needed to
+reproduce the problem.
 
 Please include:
 
@@ -42,8 +43,6 @@ release contents before launching its updater. The updater runs outside the inst
 for Redux to exit, and mutates only paths declared by the new or previously installed release
 inventory. Unlisted local files are outside its ownership boundary.
 
-Standalone Setup uses that same fixed official public-alpha channel but remains a separate,
-fresh-install-only bootstrapper. It bounds and strictly parses the channel document, verifies the
-portable archive's declared length and SHA-256 digest, rejects unsafe or unowned paths, and commits
-through isolated staging. If the x64 .NET 8 Desktop Runtime is missing, Setup accepts only the
-official Microsoft runtime download and verifies its Authenticode signature before execution.
+Public releases are distributed as portable ZIPs. Fresh installations are explicit extractions into
+a user-chosen writable folder; no public bootstrapper receives authority to choose or register an
+installation path. The retained installer source is outside the current public distribution surface.

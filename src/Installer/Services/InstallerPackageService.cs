@@ -37,7 +37,7 @@ internal sealed class InstallerPackageService : IDisposable
 	};
 	private static readonly string[] RequiredFiles =
 	{
-		"BG3ModManager.exe", "BG3ModManager.dll", InventoryFileName,
+		"Redux.exe", "Redux.dll", InventoryFileName,
 		"Updater/ReduxUpdater.exe", "Updater/ReduxUpdater.dll",
 		"Updater/ReduxUpdater.deps.json", "Updater/ReduxUpdater.runtimeconfig.json"
 	};

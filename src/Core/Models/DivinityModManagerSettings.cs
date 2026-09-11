@@ -60,6 +60,7 @@ public enum ReduxTextSize
 public class DivinityModManagerSettings : ReactiveObject
 {
 	private bool? _useGeneratedGradients;
+	private bool? _useThemeDefaultTypography;
 
 	[SettingsEntry("Game Data folder", "The game's Data folder, used when loading editor projects. Example: Baldur's Gate 3/Data.")]
 	[DataMember, Reactive] public string GameDataPath { get; set; }
@@ -168,6 +169,32 @@ public class DivinityModManagerSettings : ReactiveObject
 
 	[DefaultValue("")]
 	[DataMember, Reactive] public string CustomTypographyFont { get; set; } = String.Empty;
+
+	[DataMember(Name = "UseThemeDefaultTypography", EmitDefaultValue = false)]
+	public bool? UseThemeDefaultTypographyPreference
+	{
+		get => _useThemeDefaultTypography;
+		set
+		{
+			if (_useThemeDefaultTypography == value) return;
+			this.RaiseAndSetIfChanged(ref _useThemeDefaultTypography, value);
+			this.RaisePropertyChanged(nameof(UseThemeDefaultTypography));
+		}
+	}
+
+	/// <summary>
+	/// Missing values from earlier settings infer the old Manrope value as the
+	/// theme default while preserving every non-default or imported font choice.
+	/// An explicit false value also lets a user deliberately choose Manrope for
+	/// Parchment without that choice being mistaken for an inherited default.
+	/// </summary>
+	[IgnoreDataMember]
+	public bool UseThemeDefaultTypography
+	{
+		get => UseThemeDefaultTypographyPreference
+			?? (String.IsNullOrWhiteSpace(CustomTypographyFont) && TypographyFont == ReduxTypographyFont.Manrope);
+		set => UseThemeDefaultTypographyPreference = value;
+	}
 
 	[DefaultValue(ReduxTextSize.Default)]
 	[SettingsEntry("Text size", "Choose an interface text size.", HideFromUI = true)]
@@ -389,7 +416,7 @@ public class DivinityModManagerSettings : ReactiveObject
 	}
 
 	[DefaultValue(false)]
-	[SettingsEntry("Disable mod.io warnings", "Hide the warning that BG3 or Steam Cloud may restore mod.io files, including cached files after unsubscribing. Online mod information is unaffected.")]
+	// Retained only so settings written by earlier public-alpha builds deserialize without migration errors.
 	[DataMember, Reactive] public bool DisableModioWarnings { get; set; }
 
 	[DefaultValue(false)]
@@ -471,6 +498,7 @@ public class DivinityModManagerSettings : ReactiveObject
 		ColorTheme = 0;
 		TypographyFont = 0;
 		TextSize = 0;
+		UseThemeDefaultTypographyPreference = null;
 	}
 
 	[OnDeserialized]

@@ -2045,6 +2045,7 @@
 						HideHeader="True"
 						ItemContainerStyle="{StaticResource DivinityModDataListItem}"
 						LinkedHeaderListView="{Binding ElementName=ActiveModsListView}"
+						ScrollViewer.VerticalScrollBarVisibility="Auto"
 						View="{DynamicResource HeaderlessModGridView}">
 						<c:ModListView.ContextMenu><ContextMenu /></c:ModListView.ContextMenu>
 					</c:ModListView>

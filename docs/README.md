@@ -9,8 +9,10 @@ quick picture of Redux.
 | I want to… | Start here |
 |:--|:--|
 | Understand Redux as a user | [Project README](../README.md) |
+| See the current release state and roadmap | [Project status and roadmap](PROJECT_STATUS.md) |
 | Install, update, move, roll back, or remove Redux | [Installation and updates](INSTALLATION.md) |
 | Verify or recover a public-alpha release | [Public-alpha releases and update recovery](PUBLIC_ALPHA_RELEASES.md) |
+| Find a concise answer to a common question | [Frequently asked questions](FAQ.md) |
 | Fix a startup, path, download, or sync problem | [Troubleshooting](TROUBLESHOOTING.md) |
 | Understand what Redux stores or sends | [Privacy and local data](PRIVACY_AND_DATA.md) |
 | Ask for help or report a problem | [Support](SUPPORT.md) |
@@ -21,6 +23,7 @@ quick picture of Redux.
 | Understand native and root-level install safeguards | [Changes from upstream](CHANGES_FROM_UPSTREAM.md#game-directory-mod-management) |
 | Understand NXM handling and download safeguards | [Changes from upstream](CHANGES_FROM_UPSTREAM.md#nexus-mod-manager-downloads) |
 | Add stable provider identity to a PAK | [Creator manifest](REDUX_CREATOR_MANIFEST.md) |
+| Understand the codebase and safety boundaries | [Architecture](ARCHITECTURE.md) |
 
 ## Author and maintainer references
 
@@ -31,6 +34,14 @@ quick picture of Redux.
 - [Contribution guide](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
 - [Changelog](CHANGELOG.md)
+- [Alpha.16.3.3 release notes](releases/0.1.0-alpha.16.3.3.md)
+- [Alpha.16.3.2 release notes](releases/0.1.0-alpha.16.3.2.md)
+- [Alpha.16.3.1 release notes](releases/0.1.0-alpha.16.3.1.md)
+- [Alpha.16.3 release notes](releases/0.1.0-alpha.16.3.md)
+- [Alpha.16.2 release notes](releases/0.1.0-alpha.16.2.md)
+- [Alpha.16.1 release notes](releases/0.1.0-alpha.16.1.md)
+- [Alpha.16 release notes](releases/0.1.0-alpha.16.md)
+- [Alpha.15 release notes](releases/0.1.0-alpha.15.md)
 
 ## Terms used throughout the docs
 

@@ -62,10 +62,12 @@ public class ModListDragHandler : DefaultDragHandler
 	private IDragInfo _lastDragInfo;
 
 	private IDisposable _stopDraggingFallbackTask;
+	public bool IsDraggingVisualDivider { get; private set; }
 
 	private void StopDragTracking()
 	{
 		_viewModel.IsDragging = false;
+		IsDraggingVisualDivider = false;
 		_stopDraggingFallbackTask?.Dispose();
 		_stopDraggingFallbackTask = null;
 
@@ -97,6 +99,7 @@ public class ModListDragHandler : DefaultDragHandler
 
 	public override void StartDrag(IDragInfo dragInfo)
 	{
+		IsDraggingVisualDivider = false;
 		if (dragInfo != null)
 		{
 			_lastDragInfo = dragInfo;
@@ -137,6 +140,8 @@ public class ModListDragHandler : DefaultDragHandler
 			}
 			if (dragInfo.Data != null)
 			{
+				IsDraggingVisualDivider = dragInfo.Data is IEnumerable<DivinityModData> draggedItems &&
+					VisualDividerDragPolicy.ContainsVisualDivider(draggedItems);
 				_viewModel.IsDragging = true;
 				ScheduleStopDraggingFallback();
 			}

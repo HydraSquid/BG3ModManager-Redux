@@ -13,7 +13,8 @@ public enum ModioMetadataOrigin
 	CreatorManifest = 2,
 	ReduxBundleImport = 3,
 	Manual = 4,
-	ManualUnlinked = 5
+	ManualUnlinked = 5,
+	BundledProvenance = 6
 }
 
 /// <summary>

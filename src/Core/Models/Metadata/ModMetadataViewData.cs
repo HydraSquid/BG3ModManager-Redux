@@ -132,6 +132,7 @@ public sealed class ModMetadataViewData : ReactiveObject
 			{
 				ModioMetadataOrigin.Manual => "Manually linked from mod.io",
 				ModioMetadataOrigin.ReduxBundleImport => "Linked from an imported Redux modlist",
+				ModioMetadataOrigin.BundledProvenance => "Matched by Redux's bundled mod database",
 				_ => $"Automatically linked from {SourceLabel}"
 			}
 		: "Local package metadata";

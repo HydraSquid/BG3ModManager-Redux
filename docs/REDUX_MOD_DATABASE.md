@@ -33,9 +33,9 @@ always outrank automatic database matches.
 
 Redux keeps evidence collections in one database rather than treating Nexus and mod.io as competing
 databases. Provider provenance is attached to a resolved association, which prevents a package from
-being relabelled merely because another ecosystem uses a similar name. The current bundled project
-and fingerprint records are Nexus-focused; native mod.io identity and cached provider metadata flow
-through their own corroborated source pipeline.
+being relabelled merely because another ecosystem uses a similar name. Exact artifact fingerprints
+remain Nexus-focused. Provider-exclusive VOLO catalog matches can supply community candidates for
+either Nexus or mod.io, but only with UUID and exact local-name corroboration at runtime.
 
 ## Database map
 
@@ -43,10 +43,12 @@ through their own corroborated source pipeline.
 |:--|:--|
 | `schemaVersion` | Supported database contract. Unknown versions fail closed. |
 | `projects` | Reviewed Nexus project name, authors, aliases, category, and image metadata. |
+| `modioProjects` | Provider-exclusive mod.io listing metadata imported from VOLO. |
 | `exactPakFingerprints` | Exact installed PAK size and xxHash64 mapped to a project and optional file ID. |
 | `exactArchiveFingerprints` | Exact archive size and MD5 mapped to a project, file ID, and logical filename. |
 | `moduleIdentities` | Reviewed UUID-to-project identities that are safe without extra name corroboration. |
 | `communityModuleIdentities` | Broader UUID candidates that require exact package-name, folder, or filename corroboration. |
+| `communityModioIdentities` | Provider-exclusive mod.io UUID candidates with the same runtime corroboration requirement. |
 | `loadOrderEntries` | UUID-keyed names, groups, dependency facts, load-after rules, requirements, and evidence counts. |
 | `orderingGroups` | Named placement groups and their explicit `after` relationships. |
 | `dependencyNameAliases` | Exact normalized dependency names mapped to differently named module UUIDs. |
@@ -116,6 +118,25 @@ selected batch is validated and replaced atomically.
 Exact PAK evidence requires a verified Nexus project ID. Redux preserves a known Nexus file ID and
 records `-1` when a modern archive name does not expose one. Report acceptance does not promote a
 community UUID into the reviewed `moduleIdentities` collection.
+
+## Synchronize VOLO catalogs
+
+VOLO's masterlist supplies package UUIDs and names; its provider catalogs supply Nexus and mod.io
+listing metadata. Those sources do not contain an authoritative UUID-to-provider join, so Redux
+creates only exact, unique, provider-exclusive community candidates. A name found on both
+providers, a same-provider collision, and every fuzzy match remain unresolved for review.
+
+```powershell
+dotnet run --project tools/ReduxModDatabaseTool -- sync-volo `
+  --masterlist "C:\VOLO\masterlist\bg3-masterlist.json" `
+  --nexus-catalog "C:\VOLO\nexus\catalog.json" `
+  --modio-catalog "C:\VOLO\modio\catalog.json" `
+  --review-output "C:\Temp\redux-volo-review.json"
+```
+
+Review the counts and ambiguity report, then repeat with `--write`. The tool atomically updates the
+database, removes stale community guesses now known to be cross-provider ambiguous, and validates
+provider references and counts before replacing the file.
 
 For one local artifact, use the guarded fingerprint/add workflow:
 

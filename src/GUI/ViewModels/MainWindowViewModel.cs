@@ -4018,6 +4018,30 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 					cacheChanged = true;
 				}
 
+				var modioDatabaseMatches = loadedUserMods
+					.Where(mod => mod.PublishHandle <= 0
+						&& !mod.NexusModsData.HasMetadata
+						&& !mod.ModioData.HasMetadata
+						&& mod.ModioData.MetadataOrigin != ModioMetadataOrigin.ManualUnlinked)
+					.Select(mod => (Mod: mod, Match: ReduxModDatabaseService.TryResolveModioIdentity(mod)))
+					.Where(candidate => candidate.Match != null)
+					.ToList();
+
+				if (modioDatabaseMatches.Count > 0)
+				{
+					await Observable.Start(() =>
+					{
+						ThrowIfSourceMetadataRefreshCanceled(cancellationToken);
+						foreach (var (mod, match) in modioDatabaseMatches)
+						{
+							mod.ModioData.Update(match.CreateMetadata(mod.UUID));
+							UpdateHandler.Modio.CacheData.Mods[mod.UUID] = mod.ModioData;
+							DivinityApp.Log($"Matched '{mod.FileName}' to mod.io project {match.ModId} using Redux's conservative VOLO catalog identity.");
+						}
+					}, RxApp.MainThreadScheduler);
+					cacheChanged = true;
+				}
+
 				var missingMetadata = loadedUserMods
 					.Where(mod => mod.NexusModsData.ModId >= DivinityApp.NEXUSMODS_MOD_ID_START
 						&& (String.IsNullOrWhiteSpace(mod.NexusModsData.Name)

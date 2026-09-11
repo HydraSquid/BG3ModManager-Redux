@@ -1,5 +1,6 @@
 using DivinityModManager.Models;
 using DivinityModManager.Models.NexusMods;
+using DivinityModManager.Models.Modio;
 using DivinityModManager.Util;
 
 using Newtonsoft.Json;
@@ -119,6 +120,21 @@ public static class ReduxModDatabaseService
 			: null;
 	}
 
+	/// <summary>
+	/// Resolves a conservative mod.io candidate. These records are deliberately
+	/// separate from Nexus records, and the catalog sync omits names present on
+	/// both providers so Redux never guesses between storefronts.
+	/// </summary>
+	public static ReduxModioDatabaseMatch TryResolveModioIdentity(DivinityModData mod)
+	{
+		if (mod == null || String.IsNullOrWhiteSpace(mod.UUID)) return null;
+		if (!_index.Value.CommunityModioModulesByUuid.TryGetValue(mod.UUID.Trim(), out var identity)
+			|| !CommunityModioIdentityMatches(mod, identity)
+			|| !_index.Value.ModioProjectsById.TryGetValue(identity.ModId, out var project))
+			return null;
+		return new ReduxModioDatabaseMatch(project);
+	}
+
 	private static bool CommunityIdentityMatches(DivinityModData mod, ReduxModuleIdentity identity)
 	{
 		var knownNames = new[] { identity.Name, identity.Folder }
@@ -135,6 +151,20 @@ public static class ReduxModDatabaseService
 			.Select(Normalize)
 			.Where(value => value.Length > 0)
 			.ToHashSet(StringComparer.Ordinal);
+		var localAuthor = Normalize(mod.Author);
+		return localAuthor.Length == 0 || knownAuthors.Count == 0 || knownAuthors.Contains(localAuthor);
+	}
+
+	private static bool CommunityModioIdentityMatches(DivinityModData mod, ReduxModioModuleIdentity identity)
+	{
+		var knownNames = new[] { identity.Name, identity.Folder }
+			.Concat(identity.Aliases ?? new List<string>())
+			.Select(Normalize).Where(value => value.Length >= 4).ToHashSet(StringComparer.Ordinal);
+		var localNames = new[] { mod.Name, mod.DisplayName, mod.Folder, Path.GetFileNameWithoutExtension(mod.FileName) }
+			.Select(Normalize).Where(value => value.Length >= 4);
+		if (!localNames.Any(knownNames.Contains)) return false;
+		var knownAuthors = (identity.Authors ?? new List<string>()).Select(Normalize)
+			.Where(value => value.Length > 0).ToHashSet(StringComparer.Ordinal);
 		var localAuthor = Normalize(mod.Author);
 		return localAuthor.Length == 0 || knownAuthors.Count == 0 || knownAuthors.Contains(localAuthor);
 	}
@@ -243,10 +273,12 @@ public static class ReduxModDatabaseService
 	{
 		public static ReduxModDatabaseIndex Empty { get; } = new(new ReduxModDatabase());
 		public Dictionary<long, ReduxProjectRecord> ProjectsById { get; }
+		public Dictionary<long, ReduxModioProjectRecord> ModioProjectsById { get; }
 		public Dictionary<long, Dictionary<string, ReduxPakFingerprint>> PaksBySize { get; }
 		public Dictionary<long, Dictionary<string, ReduxArchiveFingerprint>> ArchivesBySize { get; }
 		public Dictionary<string, ReduxModuleIdentity> ModulesByUuid { get; }
 		public Dictionary<string, ReduxModuleIdentity> CommunityModulesByUuid { get; }
+		public Dictionary<string, ReduxModioModuleIdentity> CommunityModioModulesByUuid { get; }
 		public Dictionary<string, HashSet<long>> ProjectIdsByAlias { get; } = new(StringComparer.Ordinal);
 		public Dictionary<long, HashSet<string>> ProjectAuthors { get; } = new();
 		public Dictionary<(long ModId, long FileId), IReduxFingerprint> FingerprintsByFile { get; }
@@ -256,6 +288,7 @@ public static class ReduxModDatabaseService
 		public ReduxModDatabaseIndex(ReduxModDatabase database)
 		{
 			ProjectsById = (database.Projects ?? new()).Where(p => p.ModId > 0).GroupBy(p => p.ModId).ToDictionary(g => g.Key, g => g.First());
+			ModioProjectsById = (database.ModioProjects ?? new()).Where(p => p.ModId > 0).GroupBy(p => p.ModId).ToDictionary(g => g.Key, g => g.First());
 			PaksBySize = UniqueFingerprintIndex(database.ExactPakFingerprints, item => item.Size, item => item.Hash);
 			ArchivesBySize = UniqueFingerprintIndex(database.ExactArchiveFingerprints, item => item.Size, item => item.Md5?.ToLowerInvariant());
 			FingerprintsByFile = (database.ExactArchiveFingerprints ?? new List<ReduxArchiveFingerprint>())
@@ -269,6 +302,11 @@ public static class ReduxModDatabaseService
 				.Where(m => !String.IsNullOrWhiteSpace(m.Uuid) && String.Equals(m.MatchBasis, "community-exact-name", StringComparison.Ordinal))
 				.GroupBy(m => m.Uuid, StringComparer.OrdinalIgnoreCase)
 				.Where(group => group.Select(m => m.ModId).Distinct().Count() == 1 && !ModulesByUuid.ContainsKey(group.Key))
+				.ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+			CommunityModioModulesByUuid = (database.CommunityModioIdentities ?? new())
+				.Where(m => !String.IsNullOrWhiteSpace(m.Uuid) && String.Equals(m.MatchBasis, "community-exact-name", StringComparison.Ordinal))
+				.GroupBy(m => m.Uuid, StringComparer.OrdinalIgnoreCase)
+				.Where(group => group.Select(m => m.ModId).Distinct().Count() == 1)
 				.ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
 			var reviewedProjectIds = (database.ExactPakFingerprints ?? new()).Select(item => item.ModId)
 				.Concat((database.ExactArchiveFingerprints ?? new()).Select(item => item.ModId))
@@ -332,9 +370,33 @@ public sealed class ReduxModDatabaseMatch
 	}
 }
 
+public sealed class ReduxModioDatabaseMatch
+{
+	private const long Bg3ModioGameId = 6715;
+	public ReduxModioProjectRecord Project { get; }
+	public long ModId => Project.ModId;
+	internal ReduxModioDatabaseMatch(ReduxModioProjectRecord project) => Project = project;
+
+	public ModioModData CreateMetadata(string uuid) => new()
+	{
+		UUID = uuid,
+		ModId = Project.ModId,
+		GameId = Bg3ModioGameId,
+		NameId = Project.NameId,
+		Name = Project.Name,
+		ProfileUrl = $"https://mod.io/g/baldursgate3/m/{Project.NameId}",
+		DateUpdated = Project.DateUpdated,
+		SubmittedBy = new ModioUserData { Username = Project.Author, DisplayName = Project.Author },
+		Tags = (Project.Tags ?? new List<string>()).Select(tag => new ModioTagData { Name = tag, LocalizedName = tag }).ToList(),
+		MetadataOrigin = ModioMetadataOrigin.BundledProvenance
+	};
+}
+
 internal interface IReduxFingerprint { long ModId { get; } long FileId { get; } string LogicalFileName { get; } string Name { get; } string Author { get; } string Version { get; } string PictureUrl { get; } }
-internal sealed class ReduxModDatabase { [JsonProperty("schemaVersion")] public int SchemaVersion { get; set; } [JsonProperty("projects")] public List<ReduxProjectRecord> Projects { get; set; } = new(); [JsonProperty("exactPakFingerprints")] public List<ReduxPakFingerprint> ExactPakFingerprints { get; set; } = new(); [JsonProperty("exactArchiveFingerprints")] public List<ReduxArchiveFingerprint> ExactArchiveFingerprints { get; set; } = new(); [JsonProperty("moduleIdentities")] public List<ReduxModuleIdentity> ModuleIdentities { get; set; } = new(); [JsonProperty("communityModuleIdentities")] public List<ReduxModuleIdentity> CommunityModuleIdentities { get; set; } = new(); }
+internal sealed class ReduxModDatabase { [JsonProperty("schemaVersion")] public int SchemaVersion { get; set; } [JsonProperty("projects")] public List<ReduxProjectRecord> Projects { get; set; } = new(); [JsonProperty("modioProjects")] public List<ReduxModioProjectRecord> ModioProjects { get; set; } = new(); [JsonProperty("exactPakFingerprints")] public List<ReduxPakFingerprint> ExactPakFingerprints { get; set; } = new(); [JsonProperty("exactArchiveFingerprints")] public List<ReduxArchiveFingerprint> ExactArchiveFingerprints { get; set; } = new(); [JsonProperty("moduleIdentities")] public List<ReduxModuleIdentity> ModuleIdentities { get; set; } = new(); [JsonProperty("communityModuleIdentities")] public List<ReduxModuleIdentity> CommunityModuleIdentities { get; set; } = new(); [JsonProperty("communityModioIdentities")] public List<ReduxModioModuleIdentity> CommunityModioIdentities { get; set; } = new(); }
 public sealed class ReduxProjectRecord { [JsonProperty("modId")] public long ModId { get; set; } [JsonProperty("name")] public string Name { get; set; } [JsonProperty("authors")] public List<string> Authors { get; set; } = new(); [JsonProperty("uploadedBy")] public string UploadedBy { get; set; } [JsonProperty("aliases")] public List<string> Aliases { get; set; } = new(); [JsonProperty("categories")] public List<string> Categories { get; set; } = new(); [JsonProperty("pictureUrl")] public string PictureUrl { get; set; } }
+public sealed class ReduxModioProjectRecord { [JsonProperty("modId")] public long ModId { get; set; } [JsonProperty("nameId")] public string NameId { get; set; } [JsonProperty("name")] public string Name { get; set; } [JsonProperty("author")] public string Author { get; set; } [JsonProperty("aliases")] public List<string> Aliases { get; set; } = new(); [JsonProperty("tags")] public List<string> Tags { get; set; } = new(); [JsonProperty("dateUpdated")] public long DateUpdated { get; set; } }
 internal sealed class ReduxPakFingerprint : IReduxFingerprint { [JsonProperty("hash")] public string Hash { get; set; } [JsonProperty("size")] public long Size { get; set; } [JsonProperty("modId")] public long ModId { get; set; } [JsonProperty("fileId")] public long FileId { get; set; } [JsonProperty("logicalFileName")] public string LogicalFileName { get; set; } [JsonProperty("name")] public string Name { get; set; } [JsonProperty("author")] public string Author { get; set; } [JsonProperty("version")] public string Version { get; set; } [JsonProperty("pictureUrl")] public string PictureUrl { get; set; } }
 internal sealed class ReduxArchiveFingerprint : IReduxFingerprint { [JsonProperty("md5")] public string Md5 { get; set; } [JsonProperty("size")] public long Size { get; set; } [JsonProperty("modId")] public long ModId { get; set; } [JsonProperty("fileId")] public long FileId { get; set; } [JsonProperty("logicalFileName")] public string LogicalFileName { get; set; } [JsonProperty("name")] public string Name { get; set; } [JsonProperty("author")] public string Author { get; set; } [JsonProperty("version")] public string Version { get; set; } public string PictureUrl => null; }
 internal sealed class ReduxModuleIdentity { [JsonProperty("uuid")] public string Uuid { get; set; } [JsonProperty("modId")] public long ModId { get; set; } [JsonProperty("name")] public string Name { get; set; } [JsonProperty("folder")] public string Folder { get; set; } [JsonProperty("aliases")] public List<string> Aliases { get; set; } = new(); [JsonProperty("authors")] public List<string> Authors { get; set; } = new(); [JsonProperty("matchBasis")] public string MatchBasis { get; set; } }
+internal sealed class ReduxModioModuleIdentity { [JsonProperty("uuid")] public string Uuid { get; set; } [JsonProperty("modId")] public long ModId { get; set; } [JsonProperty("name")] public string Name { get; set; } [JsonProperty("folder")] public string Folder { get; set; } [JsonProperty("aliases")] public List<string> Aliases { get; set; } = new(); [JsonProperty("authors")] public List<string> Authors { get; set; } = new(); [JsonProperty("matchBasis")] public string MatchBasis { get; set; } }

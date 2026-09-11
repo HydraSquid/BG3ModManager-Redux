@@ -21,7 +21,9 @@ namespace Redux.Core.Tests;
 public sealed class SourceAssociationTests
 {
 	private const string ReviewedModuleUuid = "069e5871-efe8-44bb-b02a-fe957df5ae0e";
-	private const string CommunityModuleUuid = "26922ba9-6018-5252-075d-7ff2ba6ed879";
+	private const string CommunityModuleUuid = "67fbbd53-7c7d-4cfa-9409-6d737b4d92a9";
+	private const string AmbiguousProviderUuid = "26922ba9-6018-5252-075d-7ff2ba6ed879";
+	private const string CommunityModioUuid = "8c7d3408-a746-5022-348b-1635e14af044";
 
 	public void ReviewedModuleUuidResolvesItsProject()
 	{
@@ -38,8 +40,22 @@ public sealed class SourceAssociationTests
 		var match = ReduxModDatabaseService.TryResolveModuleUuid(CommunityModuleUuid);
 
 		RegressionAssert.True(match != null);
-		RegressionAssert.Equal(366L, match!.ModId);
+		RegressionAssert.Equal(1933L, match!.ModId);
 		RegressionAssert.Equal(ReduxOfflineMatchKind.CommunityIdentity, match.Kind);
+	}
+
+	public void ReviewedLegacyNexusModsResolveTheirCorrectProjects()
+	{
+		var unlockLevelCurve = ReduxModDatabaseService.TryResolveModuleUuid("d903677e-f24b-48ec-ab20-98dcc116a371");
+		var unlockLevelCurve5ePatch = ReduxModDatabaseService.TryResolveModuleUuid("cf0b4eed-8b58-4981-8ab8-bf210d4db97b");
+		var immersiveUi = ReduxModDatabaseService.TryResolveModuleUuid("293739c4-617c-438b-b9f0-1dbbfe142f81");
+
+		RegressionAssert.Equal(377L, unlockLevelCurve?.ModId ?? 0);
+		RegressionAssert.Equal(377L, unlockLevelCurve5ePatch?.ModId ?? 0);
+		RegressionAssert.Equal(1279L, immersiveUi?.ModId ?? 0);
+		RegressionAssert.Equal(ReduxOfflineMatchKind.ModuleIdentity, unlockLevelCurve!.Kind);
+		RegressionAssert.Equal(ReduxOfflineMatchKind.ModuleIdentity, unlockLevelCurve5ePatch!.Kind);
+		RegressionAssert.Equal(ReduxOfflineMatchKind.ModuleIdentity, immersiveUi!.Kind);
 	}
 
 	public void ExactNexusFilesUseDistinctPackageTitlesWithoutReplacingTheProjectTitle()
@@ -98,14 +114,41 @@ public sealed class SourceAssociationTests
 	{
 		var mod = CreateMod();
 		mod.UUID = CommunityModuleUuid;
-		mod.Name = "ImpUI (ImprovedUI)";
-		mod.Folder = "ImpUI_P8_Fork_26922ba9-6018-5252-075d-7ff2ba6ed879";
+		mod.Name = "CompatibilityFramework";
+		mod.Folder = "SubclassCompatibilityFramework";
 
 		var match = ReduxModDatabaseService.TryResolveIdentity(mod);
 
 		RegressionAssert.True(match != null);
-		RegressionAssert.Equal(366L, match!.ModId);
+		RegressionAssert.Equal(1933L, match!.ModId);
 		RegressionAssert.Equal(ReduxOfflineMatchKind.CommunityIdentity, match.Kind);
+	}
+
+	public void CrossProviderCatalogNameRemainsUnresolved()
+	{
+		var mod = CreateMod();
+		mod.UUID = AmbiguousProviderUuid;
+		mod.Name = "ImpUI (ImprovedUI)";
+		mod.Folder = "ImpUI_P8_Fork_26922ba9-6018-5252-075d-7ff2ba6ed879";
+
+		RegressionAssert.True(ReduxModDatabaseService.TryResolveIdentity(mod) == null);
+		RegressionAssert.True(ReduxModDatabaseService.TryResolveModioIdentity(mod) == null);
+	}
+
+	public void ProviderExclusiveModioCatalogIdentityResolvesConservatively()
+	{
+		var mod = CreateMod();
+		mod.UUID = CommunityModioUuid;
+		mod.Name = "AddonBetterInventoryUI";
+		mod.Folder = "AddonBetterInventoryUI_8c7d3408-a746-5022-348b-1635e14af044";
+
+		var match = ReduxModDatabaseService.TryResolveModioIdentity(mod);
+
+		RegressionAssert.True(match != null);
+		RegressionAssert.Equal(4180899L, match!.ModId);
+		var metadata = match.CreateMetadata(mod.UUID);
+		RegressionAssert.Equal(ModioMetadataOrigin.BundledProvenance, metadata.MetadataOrigin);
+		RegressionAssert.Contains(metadata.ProfileUrl, "/g/baldursgate3/m/");
 	}
 
 	public void CommunityUuidDoesNotRelabelAnUnrelatedLocalPackage()

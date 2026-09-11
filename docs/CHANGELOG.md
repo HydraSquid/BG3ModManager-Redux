@@ -5,12 +5,23 @@ source for individual implementation details.
 
 ## Unreleased
 
+No additional changes are queued after the alpha.16.3 release candidate.
+
+## 0.1.0-alpha.16.3 — pending public-alpha hotfix
+
 ### Fixed
 
 - Prevented an incidental mod.io `PublishHandle` from overriding a reviewed Nexus match when Redux
   is introduced to an existing mod installation.
 - Added symmetric source controls: explicit Nexus/mod.io labels, persistent mod.io unlinking, and a
   **Change Source to Nexus Mods** action for mods currently displaying mod.io metadata.
+- Synchronized Redux's offline source catalog with VOLO while refusing cross-provider and
+  same-provider name collisions instead of guessing.
+- Added conservative bundled mod.io recognition that requires a matching UUID and exact package
+  name, folder, or filename and never overrides native or manually selected provenance.
+
+This release is prepared but is not public until its immutable portable ZIP, GitHub release, Nexus
+upload, and public-alpha update manifest have all passed the release gates.
 
 ## 0.1.0-alpha.16.2 — public-alpha hotfix
 

@@ -3,7 +3,7 @@
 <img src="docs/assets/nexus-description/00-redux-header.png#gh-dark-mode-only" alt="Baldur's Gate 3 Mod Manager Redux" width="100%">
 <img src="docs/assets/nexus-description/00-redux-header-light.png#gh-light-mode-only" alt="Baldur's Gate 3 Mod Manager Redux" width="100%">
 
-[![Current build](https://img.shields.io/badge/build-0.1.0--alpha.16.3.3-9A7BFF?style=flat-square)](https://github.com/circleainn/BG3ModManager-Redux/releases)
+[![Current build](https://img.shields.io/badge/build-0.1.0--alpha.16.3.4-9A7BFF?style=flat-square)](https://github.com/circleainn/BG3ModManager-Redux/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-4F86F7?style=flat-square)](#requirements-and-alpha-status)
 [![License](https://img.shields.io/badge/license-MIT-42A66F?style=flat-square)](LICENSE)
 [![Support on Ko-fi](https://img.shields.io/badge/Support-Ko--fi-FF5E5B?style=flat-square&logo=ko-fi&logoColor=white)](https://ko-fi.com/circleain)
@@ -41,7 +41,7 @@ approved archive, and Redux's built-in updater uses that archive for existing in
 4. Run `Redux.exe`. On first launch, review the detected game and profile paths before
    installing or syncing anything.
 
-`0.1.0-alpha.16.3.3` is the current public-alpha release. The updater acts only when the official
+`0.1.0-alpha.16.3.4` is the current public-alpha release. The updater acts only when the official
 public-alpha channel points to a newer, fully published package. You can also update manually by
 backing up the Redux folder and extracting the complete newer archive over it. Release archives
 exclude runtime state such as `Data`, `_Logs`, caches, downloads, retained archives, and backups.
@@ -66,8 +66,8 @@ uninstall guidance.
 <hr>
 
 1. **Install and inspect.** Drop a supported package anywhere on the main Redux window. Its unified
-   install target inspects and routes the package; ordinary PAK mods always enter Inactive Mods
-   after Redux previews new installs, updates, same-version replacements, and possible downgrades.
+   install target inspects and routes the package. New PAK mods enter Inactive Mods, while updates
+   retain the installed mod's active or inactive state and load-order position.
 2. **Organize without losing intent.** Assign categories, create separators, move mods, and use
    <kbd>Ctrl</kbd> + <kbd>Z</kbd> / <kbd>Ctrl</kbd> + <kbd>Y</kbd> for reversible edits.
 3. **Save deliberately.** Working changes do not overwrite the selected saved order until **Save**

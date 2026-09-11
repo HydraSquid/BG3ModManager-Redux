@@ -5,7 +5,19 @@ source for individual implementation details.
 
 ## Unreleased
 
-No additional changes are queued after alpha.16.3.3.
+No additional changes are queued after alpha.16.3.4.
+
+## 0.1.0-alpha.16.3.4 — silent public-alpha maintenance release
+
+### Fixed
+
+- Kept an installed PAK mod's active or inactive state and load-order position when updating it
+  through Download Manager. Newly installed mods still enter Inactive Mods.
+- Made **Don't show again** on the administrator warning persist after restarting Redux.
+
+### Changed
+
+- Nexus uploads now include a short list of changes taken from the matching GitHub release notes.
 
 ## 0.1.0-alpha.16.3.3 — silent public-alpha maintenance release
 

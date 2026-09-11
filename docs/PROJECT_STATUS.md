@@ -10,8 +10,7 @@ proposals.
 |:--|:--|
 | Product | Baldur's Gate 3 Mod Manager Redux |
 | Short name | Redux |
-| Tagline | **Bring order to the chaos.** |
-| Release line | `0.1.0-alpha.16.3.3` |
+| Release line | `0.1.0-alpha.16.3.4` |
 | Lifecycle | Public alpha |
 | Platform | Windows 10/11 x64 |
 | Runtime | .NET 8 Desktop Runtime |
@@ -22,11 +21,11 @@ proposals.
 The private-alpha stabilization milestone is complete. Alpha.15 established the first public-alpha
 baseline, alpha.16 delivered its focused startup, accessibility, and window-behavior fixes, and
 alpha.16.1 corrected Sync recovery and was the final release to experiment with a separate Setup.
-Alpha.16.2 fixes public reports about Nexus file names and mod.io source correction, and begins the
-single portable ZIP workflow shared by GitHub Releases and Nexus Mods. Those services
-are authoritative for the current artifact availability. The release gate
-below applies
-whenever a build is prepared for publication. The public-alpha
+Alpha.16.2 fixed public reports about Nexus file names and mod.io source correction and began the
+single portable ZIP workflow shared by GitHub Releases and Nexus Mods. The alpha.16.3 maintenance
+line has continued with source recognition, drag-and-drop, NXM association, update placement, and
+warning-preference fixes. Those services are authoritative for the current artifact availability.
+The release gate below applies whenever a build is prepared for publication. The public-alpha
 milestone remains open for launch feedback, stabilization, and later alpha releases; it is not a
 one-build milestone.
 
@@ -48,7 +47,7 @@ one-build milestone.
 
 See [Changes from upstream](CHANGES_FROM_UPSTREAM.md) for the durable feature boundary and the
 [changelog](CHANGELOG.md) for release-specific detail. Current release copy is in the
-[alpha.16.3.3 release notes](releases/0.1.0-alpha.16.3.3.md).
+[alpha.16.3.4 release notes](releases/0.1.0-alpha.16.3.4.md).
 
 ## Public launch gate
 

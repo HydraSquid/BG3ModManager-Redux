@@ -85,6 +85,70 @@ jobs:
           md5="$(md5sum "$asset_path" | awk '{print $1}')"
           size="$(stat --format='%s' "$asset_path")"
           release_url="$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json url --jq '.url')"
+          release_body_path="$RUNNER_TEMP/redux-nexus/release-notes.md"
+          gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json body --jq '.body // ""' > "$release_body_path"
+
+          nexus_description="$(python3 - "$release_body_path" "$version" "$release_url" <<'PY'
+          import re
+          import sys
+          from pathlib import Path
+
+          body = Path(sys.argv[1]).read_text(encoding="utf-8")
+          version = sys.argv[2]
+          release_url = sys.argv[3]
+          allowed_sections = ("fixed", "changed", "added", "improved", "highlights", "security", "what's new")
+          items = []
+          current = None
+          include_section = False
+
+          def clean(value):
+              value = re.sub(r"\[([^]]+)]\([^)]+\)", r"\1", value)
+              value = value.replace("**", "").replace("__", "").replace("`", "")
+              return re.sub(r"\s+", " ", value).strip()
+
+          def finish_item():
+              global current
+              if current:
+                  item = clean(current)
+                  if item:
+                      items.append(item[:240].rstrip())
+              current = None
+
+          for raw_line in body.splitlines():
+              line = raw_line.strip()
+              heading = re.match(r"^##\s+(.+?)\s*$", line)
+              if heading:
+                  finish_item()
+                  title = clean(heading.group(1)).lower()
+                  include_section = title.startswith(allowed_sections)
+                  continue
+              if line.startswith("#"):
+                  finish_item()
+                  include_section = False
+                  continue
+              bullet = re.match(r"^[-*]\s+(.+)$", line)
+              if include_section and bullet:
+                  finish_item()
+                  current = bullet.group(1)
+                  continue
+              if include_section and current and line and not line.startswith("<!--"):
+                  current += " " + line
+
+          finish_item()
+          items = items[:5]
+
+          if not items:
+              paragraphs = [clean(part) for part in re.split(r"\n\s*\n", body)
+                            if part.strip() and not part.lstrip().startswith(("#", "<!--"))]
+              if paragraphs:
+                  items = [paragraphs[0][:320].rstrip()]
+
+          lines = [f"What's new in Redux {version}:", ""]
+          lines.extend(f"- {item}" for item in items)
+          lines.extend(["", f"Full release notes: {release_url}"])
+          print("\n".join(lines))
+          PY
+          )"
 
           {
             echo "tag=$tag"
@@ -95,6 +159,9 @@ jobs:
             echo "md5=$md5"
             echo "size=$size"
             echo "release_url=$release_url"
+            echo 'nexus_description<<REDUX_NEXUS_DESCRIPTION'
+            echo "$nexus_description"
+            echo 'REDUX_NEXUS_DESCRIPTION'
           } >> "$GITHUB_OUTPUT"
 
           {
@@ -105,6 +172,10 @@ jobs:
             echo "- Size: \`$size\` bytes"
             echo "- SHA-256: \`$sha256\`"
             echo "- MD5: \`$md5\`"
+            echo
+            echo '#### Nexus file description'
+            echo
+            echo "$nexus_description"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Refuse a duplicate Nexus version
@@ -136,7 +207,7 @@ jobs:
           filename: ${{ steps.release.outputs.asset_path }}
           version: ${{ steps.release.outputs.version }}
           display_name: Redux ${{ steps.release.outputs.version }} - Portable
-          description: The same portable Redux archive published and verified on GitHub.
+          description: ${{ steps.release.outputs.nexus_description }}
           category: main
           archive_existing_version: true
           primary_mod_manager_download: false

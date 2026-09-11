@@ -84,7 +84,8 @@ SHA-256 digest.
 1. Publish the immutable versioned GitHub release with the tested portable ZIP.
 2. Download the ZIP from GitHub and repeat its size, hash, contents, and launch checks.
 3. Approve the protected `nexus-production` deployment. The release workflow downloads the GitHub
-   asset and submits those exact bytes through Nexus Mods' official upload action.
+   asset and submits those exact bytes through Nexus Mods' official upload action. The Nexus file
+   description includes a short list of changes generated from the matching GitHub release notes.
 4. Record the returned Nexus file-version ID and verify the Nexus entry matches the GitHub version,
    filename, and archive.
 5. Confirm the manifest's versioned artifact and release-notes URLs work anonymously.

@@ -28,6 +28,11 @@ plus the differences below.
 - Current mod-table selection reconciliation, load-order persistence, advisor, save manager, installer, and updater.
 - Current public documentation, release version, bundled mod database, and branding.
 
+The embedded Downloads pane supports explicit confirmed NXM-handler takeover from
+upstream alpha.16.3.3, including restoration of the prior handler when disabled.
+Its toolbar groups local intake, install, pause/resume, and removal, with Select all
+on its own line.
+
 The embedded Downloads pane retains upstream's card presentation. The old fork's
 dedicated **Download Again** and **Details / Inspect Failure** actions are not
 currently exposed there; their restoration remains a follow-up. Dependency review

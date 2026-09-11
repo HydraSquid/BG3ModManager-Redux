@@ -63,12 +63,12 @@ internal sealed class NxmDownloadsPaneTests
 			var association = (Button)pane.FindName("AssociationButton");
 			WpfRenderCapture.AssertFullyWithin(association, pane);
 			var status = viewModel.GetNxmAssociationStatus();
-			RegressionAssert.Equal(status.Success && status.Status != NxmAssociationStatus.OwnedByAnotherHandler, association.IsEnabled);
+			RegressionAssert.Equal(status.Success, association.IsEnabled);
 			RegressionAssert.Equal(status.Status switch
 			{
 				NxmAssociationStatus.Owned => "Disable NXM Links...",
 				NxmAssociationStatus.NeedsRepair => "Repair NXM Links...",
-				NxmAssociationStatus.OwnedByAnotherHandler => "NXM Links Managed Elsewhere",
+				NxmAssociationStatus.OwnedByAnotherHandler => "Use Redux for NXM Links...",
 				_ => "Enable NXM Links..."
 			}, ((TextBlock)pane.FindName("AssociationText")).Text);
 

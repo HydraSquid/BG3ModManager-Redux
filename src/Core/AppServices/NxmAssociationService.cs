@@ -6,6 +6,7 @@ public interface INxmAssociationService
 {
 	NxmAssociationResult GetStatus();
 	NxmAssociationResult Enable();
+	NxmAssociationResult TakeOver();
 	NxmAssociationResult Repair();
 	NxmAssociationResult Disable();
 }
@@ -78,11 +79,30 @@ public sealed class NxmAssociationService : INxmAssociationService
 		if (status.Status == NxmAssociationStatus.OwnedByAnotherHandler)
 			return new NxmAssociationResult(false, status.Status, "Another Redux installation or application changed the marked association.", status.CurrentHandler);
 
+		return ReplaceCurrentAssociation(status);
+	}
+
+	public NxmAssociationResult TakeOver()
+	{
+		var status = GetStatus();
+		if (!status.Success) return status;
+		if (status.Status == NxmAssociationStatus.Owned) return status;
+		if (status.Status == NxmAssociationStatus.NeedsRepair) return Repair();
+		if (status.Status != NxmAssociationStatus.OwnedByAnotherHandler)
+			return Enable();
+
+		return ReplaceCurrentAssociation(status);
+	}
+
+	private NxmAssociationResult ReplaceCurrentAssociation(NxmAssociationResult status)
+	{
 		var userKey = _store.ReadUserKey();
 		var effectiveKey = userKey ?? _store.ReadMachineKey();
-		var backup = new NxmAssociationBackup(userKey != null, userKey, effectiveKey?.GetString(CommandSubkey, ""));
 		try
 		{
+			// Keep the complete registration for Disable, but bypass other Redux
+			// processes when forwarding non-BG3 links (their loop guard rejects hops).
+			var backup = new NxmAssociationBackup(userKey != null, userKey, ResolveForwardingCommand(effectiveKey));
 			_store.WriteBackup(_ownerId, backup);
 			_store.WriteUserKey(CreateOwnedKey(_ownerId, _executablePath));
 			return GetStatus();
@@ -97,6 +117,30 @@ public sealed class NxmAssociationService : INxmAssociationService
 					: "Windows could not update or restore the Nexus link association. Check the Windows default-app setting.",
 				status.CurrentHandler);
 		}
+	}
+
+	private string ResolveForwardingCommand(NxmRegistryKeySnapshot key)
+	{
+		var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		while (key != null)
+		{
+			var command = key.GetString(CommandSubkey, "");
+			var owner = key.GetString("", OwnerValueName);
+			var executable = key.GetString("", ExecutableValueName);
+			if (!Guid.TryParseExact(owner, "D", out _)
+				|| String.IsNullOrWhiteSpace(executable)
+				|| !String.Equals(command, BuildCommand(executable), StringComparison.OrdinalIgnoreCase))
+				return command;
+			if (!visited.Add(owner)) return null;
+			var previous = _store.ReadBackup(owner);
+			if (previous == null) return null;
+			// A previous takeover may already have flattened its forwarding chain.
+			if (previous.UserKey == null || !String.Equals(previous.PreviousCommand,
+				previous.UserKey.GetString(CommandSubkey, ""), StringComparison.OrdinalIgnoreCase))
+				return previous.PreviousCommand;
+			key = previous.UserKey;
+		}
+		return null;
 	}
 
 	public NxmAssociationResult Repair()

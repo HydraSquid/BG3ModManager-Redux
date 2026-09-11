@@ -1,6 +1,7 @@
 #nullable disable
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 using Microsoft.Win32;
@@ -80,6 +81,50 @@ internal sealed class NxmAssociationTests
 		RegressionAssert.False(service.Repair().Success);
 		RegressionAssert.False(service.Disable().Success);
 		RegressionAssert.Equal("other-owner", store.UserKey.GetString("", NxmAssociationService.OwnerValueName));
+	}
+
+	public void DifferentReduxInstallationCanBeReassociatedByExplicitTakeover()
+	{
+		var previous = NxmAssociationService.CreateOwnedKey("22222222-2222-2222-2222-222222222222", @"D:\Old Redux\BG3ModManager.exe");
+		var store = new MemoryNxmRegistryStore { UserKey = previous.Clone() };
+		var service = new NxmAssociationService(store, Owner, Executable);
+		RegressionAssert.False(service.Enable().Success);
+		var result = service.TakeOver();
+		RegressionAssert.True(result.Success);
+		RegressionAssert.Equal(NxmAssociationStatus.Owned, result.Status);
+		RegressionAssert.Equal(NxmAssociationService.BuildCommand(Executable), store.UserKey.GetString(@"shell\open\command", ""));
+		RegressionAssert.True(service.Disable().Success);
+		RegressionAssert.Equal(previous.GetString(@"shell\open\command", ""), store.UserKey.GetString(@"shell\open\command", ""));
+		RegressionAssert.Equal(previous.GetString("", NxmAssociationService.OwnerValueName), store.UserKey.GetString("", NxmAssociationService.OwnerValueName));
+	}
+
+	public void TakeoverPreservesNonBg3ForwardingAndRestoresPreviousRedux()
+	{
+		var target = Path.Combine(Environment.SystemDirectory, "notepad.exe");
+		var command = $"\"{target}\" \"%1\"";
+		var store = new MemoryNxmRegistryStore { UserKey = Handler(command, "original") };
+		var first = new NxmAssociationService(store, "22222222-2222-2222-2222-222222222222", @"D:\Old Redux\BG3ModManager.exe");
+		RegressionAssert.True(first.Enable().Success);
+		var service = new NxmAssociationService(store, Owner, Executable);
+		RegressionAssert.True(service.TakeOver().Success);
+		RegressionAssert.Equal(command, store.Backup.PreviousCommand);
+		RegressionAssert.True(NxmPreviousHandlerForwarder.TryCreateStartInfo(store.Backup.PreviousCommand,
+			"nxm://skyrim/mods/42/files/99", Executable, out var info, out _));
+		RegressionAssert.Equal(target, info.FileName);
+		RegressionAssert.True(service.Disable().Success);
+		RegressionAssert.Equal(NxmAssociationStatus.Owned, first.GetStatus().Status);
+		RegressionAssert.True(first.Disable().Success);
+		RegressionAssert.Equal(command, store.UserKey.GetString(@"shell\open\command", ""));
+	}
+
+	public void FailedTakeoverRestoresMarkedHandler()
+	{
+		var previous = NxmAssociationService.CreateOwnedKey("22222222-2222-2222-2222-222222222222", @"D:\Old Redux\BG3ModManager.exe");
+		var store = new MemoryNxmRegistryStore { UserKey = previous.Clone(), FailNextUserWrite = true };
+		var service = new NxmAssociationService(store, Owner, Executable);
+		RegressionAssert.False(service.TakeOver().Success);
+		RegressionAssert.Equal(previous.GetString(@"shell\open\command", ""), store.UserKey.GetString(@"shell\open\command", ""));
+		RegressionAssert.Equal(null, store.Backup);
 	}
 
 	public void RegistrySnapshotPreservesValueKindsAndSubkeys()
@@ -210,6 +255,7 @@ internal sealed class NxmAssociationTests
 		public NxmRegistryKeySnapshot UserKey { get; set; }
 		public NxmRegistryKeySnapshot MachineKey { get; set; }
 		public NxmAssociationBackup Backup { get; set; }
+		private readonly Dictionary<string, NxmAssociationBackup> _backups = new();
 		public bool FailNextUserWrite { get; set; }
 
 		public NxmRegistryKeySnapshot ReadUserKey() => UserKey?.Clone();
@@ -225,8 +271,8 @@ internal sealed class NxmAssociationTests
 			UserKey = key?.Clone();
 		}
 		public void DeleteUserKey() => UserKey = null;
-		public NxmAssociationBackup ReadBackup(string ownerId) => Backup?.DeepCopy();
-		public void WriteBackup(string ownerId, NxmAssociationBackup backup) => Backup = backup?.DeepCopy();
-		public void DeleteBackup(string ownerId) => Backup = null;
+		public NxmAssociationBackup ReadBackup(string ownerId) => _backups.TryGetValue(ownerId, out var backup) ? backup.DeepCopy() : null;
+		public void WriteBackup(string ownerId, NxmAssociationBackup backup) => _backups[ownerId] = Backup = backup.DeepCopy();
+		public void DeleteBackup(string ownerId) { _backups.Remove(ownerId); Backup = null; }
 	}
 }

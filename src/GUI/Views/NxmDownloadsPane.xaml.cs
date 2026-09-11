@@ -163,7 +163,7 @@ public partial class NxmDownloadsPane : UserControl
 		{
 			NxmAssociationStatus.Owned => "Disable NXM Links...",
 			NxmAssociationStatus.NeedsRepair => "Repair NXM Links...",
-			NxmAssociationStatus.OwnedByAnotherHandler => "NXM Links Managed Elsewhere",
+			NxmAssociationStatus.OwnedByAnotherHandler => "Use Redux for NXM Links...",
 			_ => "Enable NXM Links..."
 		};
 		AssociationIcon.SetResourceReference(Controls.ReduxIcon.StrokeDataProperty,
@@ -172,9 +172,10 @@ public partial class NxmDownloadsPane : UserControl
 		{
 			NxmAssociationStatus.Owned => "DownloadDestructiveActionButton",
 			NxmAssociationStatus.NeedsRepair => "DownloadWarningActionButton",
+			NxmAssociationStatus.OwnedByAnotherHandler => "DownloadNexusActionButton",
 			_ => "DownloadNexusActionButton"
 		});
-		AssociationButton.IsEnabled = status.Success && status.Status != NxmAssociationStatus.OwnedByAnotherHandler;
+		AssociationButton.IsEnabled = status.Success;
 		AssociationButton.ToolTip = status.Message;
 	}
 

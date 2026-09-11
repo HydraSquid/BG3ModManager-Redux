@@ -2,6 +2,8 @@
 
 These images are the code-rendered section dividers used by the public BG3 Mod Manager Redux Nexus Mods description.
 
+`00-redux-header.png` is the matching top-of-page wordmark: the Redux star, white product name, and purple `Redux` accent.
+
 - Canvas: 1400 × 100 transparent PNG
 - Typography: Manrope
 - Style: centered Manrope section titles between two balanced neutral hairlines

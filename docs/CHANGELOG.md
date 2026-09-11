@@ -5,6 +5,13 @@ source for individual implementation details.
 
 ## Unreleased
 
+### Fixed
+
+- Prevented an incidental mod.io `PublishHandle` from overriding a reviewed Nexus match when Redux
+  is introduced to an existing mod installation.
+- Added symmetric source controls: explicit Nexus/mod.io labels, persistent mod.io unlinking, and a
+  **Change Source to Nexus Mods** action for mods currently displaying mod.io metadata.
+
 ## 0.1.0-alpha.16.2 — public-alpha hotfix
 
 ### Fixed

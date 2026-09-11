@@ -26,9 +26,10 @@ public sealed class ModMetadataViewData : ReactiveObject
 		{
 			if (!_mod.OnlineMetadataEnabled) return null;
 
-			// Explicit Nexus choices and Nexus archive provenance are authoritative
-			// even when the PAK also carries a native mod.io PublishHandle.
+			// A reviewed Nexus database match or explicit Nexus provenance is
+			// authoritative even when the same PAK carries a mod.io PublishHandle.
 			if (_mod.NexusModsData?.MetadataOrigin is NexusMetadataOrigin.Manual
+					or NexusMetadataOrigin.BundledProvenance
 					or NexusMetadataOrigin.NexusArchiveImport
 					or NexusMetadataOrigin.ReduxBundleImport
 				&& _mod.NexusModsData.HasMetadata)

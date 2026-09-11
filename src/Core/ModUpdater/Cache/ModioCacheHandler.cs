@@ -28,6 +28,7 @@ public class ModioCacheHandler : IExternalModCacheHandler<ModioCachedData>
 
 		var candidates = mods
 			.Where(mod => !mod.ModioData.HasMetadata
+				&& mod.ModioData.MetadataOrigin != ModioMetadataOrigin.ManualUnlinked
 				&& !HasAuthoritativeNexusAssociation(mod)
 				&& (mod.PublishHandle > 0
 					|| mod.NexusModsData.MetadataOrigin != NexusMetadataOrigin.ManualUnlinked
@@ -109,7 +110,9 @@ public class ModioCacheHandler : IExternalModCacheHandler<ModioCachedData>
 	}
 
 	private static bool HasAuthoritativeNexusAssociation(DivinityModData mod) =>
-		mod?.NexusModsData?.MetadataOrigin is NexusMetadataOrigin.Manual
+		mod?.NexusModsData?.HasMetadata == true
+		&& mod.NexusModsData.MetadataOrigin is NexusMetadataOrigin.Manual
+			or NexusMetadataOrigin.BundledProvenance
 			or NexusMetadataOrigin.NexusArchiveImport
 			or NexusMetadataOrigin.ReduxBundleImport;
 }

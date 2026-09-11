@@ -1071,38 +1071,48 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			{
 				var changeModioItem = new MenuItem
 				{
-					Header = "Change Linked mod.io Page...",
+					Header = "Change mod.io Page...",
 					Icon = ReduxIcon.FromResource("Redux.Icon.LinkStroke", true, "Redux.Pill.Modio.Border")
 				};
 				ApplySemanticMenuHover(changeModioItem, "Redux.Pill.Modio.Background", "Redux.Pill.Modio.Border");
 				changeModioItem.Click += (_, _) => ShowManualModioLinkDialog(mod);
 				sourceMenu.Items.Add(changeModioItem);
 
-				if (mod.ModioData?.MetadataOrigin == ModioMetadataOrigin.Manual)
+				if (mod.ModioData?.HasMetadata == true)
 				{
 					sourceMenu.Items.Add(new Separator());
 					var clearModioItem = new MenuItem
 					{
-						Header = "Clear Manual mod.io Link",
+						Header = "Unlink mod.io Page",
 						Icon = ReduxIcon.FromResource("Redux.Icon.UnlinkStroke", true, "ReduxErrorBrush")
 					};
 					ApplySemanticMenuHover(clearModioItem, "ReduxErrorPillBackground", "ReduxErrorBrush");
 					clearModioItem.Click += async (_, _) =>
 					{
 						var result = ShowCategoryMessage(
-							$"Clear the manual mod.io source link from '{mod.DisplayName}'?\n\nThe installed package and its load-order position will not be changed.",
-							"Clear mod.io Link", MessageBoxButton.YesNo, MessageBoxImage.Question);
+							$"Remove the mod.io source link from '{mod.DisplayName}'?\n\nRedux will remember this choice so it is not linked again automatically. The installed package and its load-order position will not be changed.",
+							"Unlink mod.io Page", MessageBoxButton.YesNo, MessageBoxImage.Question);
 						if (result == MessageBoxResult.Yes) await ViewModel.UnlinkModioModAsync(mod);
 					};
 					sourceMenu.Items.Add(clearModioItem);
 				}
+
+				sourceMenu.Items.Add(new Separator());
+				var nexusLinkItem = new MenuItem
+				{
+					Header = "Change Source to Nexus Mods...",
+					Icon = ReduxIcon.FromResource("Redux.Icon.LinkStroke", true, "Redux.Pill.Nexus.Border")
+				};
+				ApplySemanticMenuHover(nexusLinkItem, "Redux.Pill.Nexus.Background", "Redux.Pill.Nexus.Border");
+				nexusLinkItem.Click += (_, _) => ShowManualNexusLinkDialog(mod);
+				sourceMenu.Items.Add(nexusLinkItem);
 			}
 			else
 			{
 				var hasNexusLink = mod.NexusModsData?.ModId >= DivinityApp.NEXUSMODS_MOD_ID_START;
 				var linkItem = new MenuItem
 				{
-					Header = hasNexusLink ? "Change Linked Mod Page..." : "Link Mod Page...",
+					Header = hasNexusLink ? "Change Nexus Mods Page..." : "Link Nexus Mods Page...",
 					Icon = ReduxIcon.FromResource("Redux.Icon.LinkStroke", true, "Redux.Pill.Nexus.Border")
 				};
 				ApplySemanticMenuHover(linkItem, "Redux.Pill.Nexus.Background", "Redux.Pill.Nexus.Border");
@@ -1113,7 +1123,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 					sourceMenu.Items.Add(new Separator());
 					var unlinkItem = new MenuItem
 					{
-						Header = "Unlink Mod Page",
+						Header = "Unlink Nexus Mods Page",
 						Icon = ReduxIcon.FromResource("Redux.Icon.UnlinkStroke", true, "ReduxErrorBrush")
 					};
 					ApplySemanticMenuHover(unlinkItem, "ReduxErrorPillBackground", "ReduxErrorBrush");
@@ -1121,7 +1131,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 					{
 						var result = ShowCategoryMessage(
 							$"Remove the Nexus Mods source link from '{mod.DisplayName}'?\n\nThe installed package and its load-order position will not be changed.",
-							"Unlink Mod Page", MessageBoxButton.YesNo, MessageBoxImage.Question);
+							"Unlink Nexus Mods Page", MessageBoxButton.YesNo, MessageBoxImage.Question);
 						if (result == MessageBoxResult.Yes) ViewModel.UnlinkNexusMod(mod);
 					};
 					sourceMenu.Items.Add(unlinkItem);
@@ -1297,6 +1307,15 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 
 	private void ShowManualNexusLinkDialog(DivinityModData mod)
 	{
+		var replaceModio = mod.Metadata.SourceType == ModSourceType.MODIO;
+		if (replaceModio)
+		{
+			var confirmation = ShowCategoryMessage(
+				$"Replace the current mod.io source for '{mod.DisplayName}' with a Nexus Mods page?\n\nRedux will keep the current mod.io association unless the Nexus page is accepted. The installed package and load order will not change.",
+				"Change Mod Source", MessageBoxButton.YesNo, MessageBoxImage.Question);
+			if (confirmation != MessageBoxResult.Yes) return;
+		}
+
 		var currentLink = mod.NexusModsData?.ModId >= DivinityApp.NEXUSMODS_MOD_ID_START
 			? mod.NexusModsData.SourcePageUrl
 			: null;
@@ -1304,7 +1323,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		ReduxThemeService.Apply(dialog.Resources, ViewModel.Settings.ColorTheme,
 			ReduxThemeService.GetActiveTheme(ViewModel.Settings), ViewModel.Settings.UsesGeneratedGradients);
 		if (dialog.ShowDialog() != true) return;
-		if (!ViewModel.TryManuallyLinkNexusMod(mod, dialog.NexusLink, out var error))
+		if (!ViewModel.TryManuallyLinkNexusMod(mod, dialog.NexusLink, out var error, replaceModio))
 		{
 			ShowCategoryMessage(error, "Link Nexus Mods Project", MessageBoxButton.OK, MessageBoxImage.Information);
 		}

@@ -117,6 +117,8 @@ internal static class Program
 			(nameof(source.MatchingNexusCreatorAndUploaderUseOneLinkedCreatorLabel), source.MatchingNexusCreatorAndUploaderUseOneLinkedCreatorLabel),
 			(nameof(source.ManualNexusAssociationWinsOverCachedModioMetadata), source.ManualNexusAssociationWinsOverCachedModioMetadata),
 			(nameof(source.CachedModioMetadataWinsOverAutomaticNexusMetadata), source.CachedModioMetadataWinsOverAutomaticNexusMetadata),
+			(nameof(source.ReviewedNexusDatabaseMatchWinsOverNativeModioMetadata), source.ReviewedNexusDatabaseMatchWinsOverNativeModioMetadata),
+			(nameof(source.ManualModioUnlinkSurvivesCacheRoundTrip), source.ManualModioUnlinkSurvivesCacheRoundTrip),
 			(nameof(source.NexusArchiveImportWinsOverNativeModioMetadata), source.NexusArchiveImportWinsOverNativeModioMetadata),
 			(nameof(source.NexusArchiveCacheBlocksNativeModioDiscoveryAfterRestart), source.NexusArchiveCacheBlocksNativeModioDiscoveryAfterRestart),
 			(nameof(source.ReduxBundleNexusLinkOverridesOnlyWhenExplicitlyApplied), source.ReduxBundleNexusLinkOverridesOnlyWhenExplicitlyApplied),

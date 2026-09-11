@@ -262,6 +262,54 @@ public sealed class SourceAssociationTests
 		RegressionAssert.Equal("Native mod.io project", mod.Metadata.Title);
 	}
 
+	public void ReviewedNexusDatabaseMatchWinsOverNativeModioMetadata()
+	{
+		var mod = CreateMod();
+		mod.NexusModsEnabled = true;
+		mod.NexusModsData.Update(new NexusModsModData
+		{
+			UUID = mod.UUID,
+			ModId = 23751,
+			Name = "Reviewed Nexus project",
+			IsUpdated = true,
+			MetadataOrigin = NexusMetadataOrigin.BundledProvenance,
+			OfflineMatchKind = ReduxOfflineMatchKind.ModuleIdentity
+		});
+		var staleModio = new ModioModData
+		{
+			UUID = mod.UUID,
+			ModId = 6197684,
+			Name = "Cross-published mod.io project",
+			MetadataOrigin = ModioMetadataOrigin.NativePackage
+		};
+		mod.ModioData.Update(staleModio);
+
+		RegressionAssert.Equal(ModSourceType.NEXUSMODS, mod.Metadata.SourceType);
+		RegressionAssert.Equal("Reviewed Nexus project", mod.Metadata.Title);
+		RegressionAssert.False(ModioCacheHandler.IsCachedAssociationCompatible(mod, staleModio));
+	}
+
+	public void ManualModioUnlinkSurvivesCacheRoundTrip()
+	{
+		var mod = CreateMod();
+		mod.ModioData.Update(new ModioModData
+		{
+			UUID = mod.UUID,
+			ModId = 6197684,
+			Name = "Previously linked mod.io project",
+			MetadataOrigin = ModioMetadataOrigin.NativePackage
+		});
+		mod.ModioData.MarkManuallyUnlinked();
+
+		var cache = new ModioCachedData();
+		cache.Mods[mod.UUID] = mod.ModioData;
+		var reloaded = RoundTrip(cache).Mods[mod.UUID];
+
+		RegressionAssert.False(reloaded.HasMetadata);
+		RegressionAssert.Equal(ModioMetadataOrigin.ManualUnlinked, reloaded.MetadataOrigin);
+		RegressionAssert.True(ModioCacheHandler.IsCachedAssociationCompatible(CreateMod(), reloaded));
+	}
+
 	public void NexusArchiveImportWinsOverNativeModioMetadata()
 	{
 		var mod = CreateMod();

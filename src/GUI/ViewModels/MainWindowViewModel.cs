@@ -470,7 +470,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				or NexusMetadataOrigin.ManualUnlinked
 				or NexusMetadataOrigin.ReduxBundleImport ||
 			mod.ModioData?.MetadataOrigin is ModioMetadataOrigin.ReduxBundleImport
-				or ModioMetadataOrigin.Manual))
+				or ModioMetadataOrigin.Manual
+				or ModioMetadataOrigin.ManualUnlinked))
 		{
 			mod.NexusModsData.ResetSourceAssociation();
 			mod.ModioData = new ModioModData { UUID = mod.UUID };
@@ -3971,7 +3972,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				var databaseCandidates = loadedUserMods
 					.Where(mod => mod.NexusModsData.ModId < DivinityApp.NEXUSMODS_MOD_ID_START
 						&& mod.NexusModsData.MetadataOrigin != NexusMetadataOrigin.ManualUnlinked
-						&& mod.ModioData?.HasMetadata != true)
+						&& mod.ModioData?.MetadataOrigin is not ModioMetadataOrigin.Manual
+							and not ModioMetadataOrigin.ReduxBundleImport)
 					.ToList();
 
 				foreach (var mod in databaseCandidates)
@@ -4170,7 +4172,11 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		return changed;
 	}
 
-	public bool TryManuallyLinkNexusMod(DivinityModData mod, string linkOrId, out string error)
+	public bool TryManuallyLinkNexusMod(
+		DivinityModData mod,
+		string linkOrId,
+		out string error,
+		bool replaceModio = false)
 	{
 		error = null;
 		if (!Modules.SourceIntegrationsEnabled)
@@ -4183,9 +4189,9 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			error = "No mod was selected.";
 			return false;
 		}
-		if (mod.Metadata.SourceType == ModSourceType.MODIO)
+		if (mod.Metadata.SourceType == ModSourceType.MODIO && !replaceModio)
 		{
-			error = "This package identifies itself as a mod.io mod, so its link cannot be replaced with a Nexus Mods page.";
+			error = "Confirm that you want to replace the current mod.io source before linking a Nexus Mods page.";
 			return false;
 		}
 
@@ -4211,9 +4217,14 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		// necessarily the Nexus uploading account and must not create a profile link.
 		linkedMetadata.MetadataOrigin = NexusMetadataOrigin.Manual;
 		linkedMetadata.OfflineMatchKind = ReduxOfflineMatchKind.Unknown;
+		if (replaceModio)
+		{
+			mod.ModioData.ResetSourceAssociation();
+			UpdateHandler.Modio.CacheData.Mods.Remove(mod.UUID);
+		}
 		mod.NexusModsData.Update(linkedMetadata);
 		UpdateHandler.Nexus.CacheData.Mods[mod.UUID] = mod.NexusModsData;
-		SaveAndRefreshManualNexusAssociation(mod, true);
+		SaveAndRefreshManualNexusAssociation(mod, true, replaceModio);
 		return true;
 	}
 
@@ -4288,15 +4299,17 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 	public async Task UnlinkModioModAsync(DivinityModData mod)
 	{
-		if (!Modules.SourceIntegrationsEnabled || mod?.ModioData?.MetadataOrigin != ModioMetadataOrigin.Manual) return;
-		mod.ModioData.ResetSourceAssociation();
-		UpdateHandler.Modio.CacheData.Mods.Remove(mod.UUID);
+		if (!Modules.SourceIntegrationsEnabled || mod?.ModioData?.HasMetadata != true) return;
+		mod.ModioData.MarkManuallyUnlinked();
+		UpdateHandler.Modio.CacheData.Mods[mod.UUID] = mod.ModioData;
 		await UpdateHandler.Modio.SaveCacheAsync(false, Version.ToString(), CancellationToken.None);
 		ScheduleRefreshModCategories();
-		LoadModioMetadataBackground();
 	}
 
-	private void SaveAndRefreshManualNexusAssociation(DivinityModData mod, bool refreshLiveMetadata)
+	private void SaveAndRefreshManualNexusAssociation(
+		DivinityModData mod,
+		bool refreshLiveMetadata,
+		bool modioCacheChanged = false)
 	{
 		var sourceTaskLifetime = _manualSourceAssociationTasks.Disposable as CompositeDisposable;
 		var scheduledTask = RxApp.TaskpoolScheduler.ScheduleAsync(async (_, cancellationToken) =>
@@ -4312,6 +4325,10 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				}
 				ThrowIfSourceMetadataRefreshCanceled(cancellationToken);
 				await UpdateHandler.Nexus.SaveCacheAsync(false, Version.ToString(), cancellationToken);
+				if (modioCacheChanged)
+				{
+					await UpdateHandler.Modio.SaveCacheAsync(false, Version.ToString(), cancellationToken);
+				}
 			}
 			catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested || !Modules.SourceIntegrationsEnabled)
 			{

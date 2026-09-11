@@ -12,7 +12,8 @@ public enum ModioMetadataOrigin
 	NativePackage = 1,
 	CreatorManifest = 2,
 	ReduxBundleImport = 3,
-	Manual = 4
+	Manual = 4,
+	ManualUnlinked = 5
 }
 
 /// <summary>
@@ -150,6 +151,13 @@ public class ModioModData : IExternalModMetadata
 		Media = null;
 		ModFile = null;
 		Tags = new List<ModioTagData>();
+		RaiseAllPropertiesChanged();
+	}
+
+	public void MarkManuallyUnlinked()
+	{
+		ResetSourceAssociation();
+		MetadataOrigin = ModioMetadataOrigin.ManualUnlinked;
 		RaiseAllPropertiesChanged();
 	}
 

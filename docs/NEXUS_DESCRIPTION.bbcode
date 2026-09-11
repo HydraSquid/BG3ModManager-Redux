@@ -1,7 +1,13 @@
 [center][img]https://raw.githubusercontent.com/circleainn/BG3ModManager-Redux/main/docs/assets/nexus-description/00-redux-header.png?v=ae09fac[/img][/center]
 [center][url=https://github.com/circleainn/BG3ModManager-Redux][b]GitHub & Documentation[/b][/url] • [url=https://discord.gg/rJJF89vqFZ][b]Discord[/b][/url][/center]
 
-[left]A community fork of [url=https://github.com/LaughingLeader/BG3ModManager]LaughingLeader's BG3 Mod Manager[/url], with a redesigned interface and a much larger set of tools for organizing and managing BG3 mods.[/left]
+[left]A community fork of [url=https://github.com/LaughingLeader/BG3ModManager]LaughingLeader's BG3 Mod Manager[/url], with a redesigned interface and a much larger set of tools for organizing, reviewing, and maintaining BG3 mods.[/left]
+
+[quote][b]Already using BG3 Mod Manager?[/b]
+
+Redux is a continuation of the manager you already know, not a separate mod format or a tool that takes ownership of your setup. It reads the same BG3 profiles, Mods folder, and load orders. You do not need to reinstall your mods or rebuild your order just to try it.
+
+Opening Redux does not rewrite your load order. Changes remain in the editor until you choose to save them, and the game is not updated until you separately review and use [b]Sync Load Order to Game[/b]. Keep a backup of anything important, especially during public alpha, but simply trying Redux should not wipe or replace your existing setup.[/quote]
 
 [quote][color=#F0B44D][b]Redux is currently in public alpha.[/b][/color]
 
@@ -28,19 +34,30 @@ Important actions also stay separate:
 
 Redux is meant to give you more information and better tools without quietly making those decisions for you.
 
+[b]What Redux is for[/b]
+
+Redux is especially useful if your mod list has outgrown a single long column, if you maintain different campaign orders, or if you want to understand a package before installing or moving it. It brings organization, source information, warnings, history, downloads, saves, and supported game-directory mods into one application while keeping the important steps visible and separate.
+
+[b]What Redux is not[/b]
+
+It is not a modpack, an automatic compatibility patcher, or a service that uploads your setup. It does not include other authors' mods, and it cannot guarantee that two mods will work together. Mod-page instructions and author requirements still come first.
+
 [center][img]https://raw.githubusercontent.com/circleainn/BG3ModManager-Redux/main/docs/assets/nexus-description/02-main-features.png?v=3275e4e[/img][/center]
 
 [list]
-[*][b]Categories[/b] — custom names, colors, icons, descriptions, filters, ordering, and multiple categories per mod.[/*]
-[*][b]Separators[/b] — named, colored, collapsible sections directly inside Active Mods.[/*]
-[*][b]Selected Mod Drawer[/b] — descriptions, requirements, files, changelogs, warnings, source information, and personal notes without leaving the main window.[/*]
-[*][b]Load Order Tools[/b] — compare saved orders, review history, create restore points, and undo or redo supported changes.[/*]
-[*][b]Download Manager[/b] — local packages and optional Nexus Mod Manager downloads in one inbox.[/*]
-[*][b]Package Archive Library[/b] — optionally keep verified install packages so you can use them again later.[/*]
-[*][b]Save Game Manager[/b] — campaign grouping, thumbnails and metadata where available, imports, and safer deletion.[/*]
-[*][b]Game-Directory Mod Manager[/b] — safer installation and removal for supported Script Extender, native, and root-level mods.[/*]
+[*][b]Categories[/b] — give mods custom names, colors, icons, descriptions, and multiple category assignments, then filter the workspace without changing the real load order.[/*]
+[*][b]Separators[/b] — build named, colored, collapsible sections directly inside Active Mods. Separators keep their membership and move with the mods inside them.[/*]
+[*][b]Selected Mod Drawer[/b] — inspect descriptions, requirements, package files, changelogs, warnings, source information, and personal notes without leaving the main window.[/*]
+[*][b]Load Order Tools[/b] — maintain named orders, compare two saved orders, review history, create restore points, and undo or redo supported changes.[/*]
+[*][b]Safer Syncing[/b] — review what will activate, deactivate, or move before Redux writes the chosen order to BG3.[/*]
+[*][b]Download Manager[/b] — keep local packages and optional Nexus Mod Manager downloads in one persistent inbox, with progress, pause, retry, and package review.[/*]
+[*][b]Package Archive Library[/b] — optionally retain verified install packages for later use without mixing them into download history.[/*]
+[*][b]Save Game Manager[/b] — browse saves by campaign, view thumbnails and metadata where available, import supported packages, and send normal deletions to the Recycle Bin.[/*]
+[*][b]Game-Directory Mod Manager[/b] — review installation and removal for supported Script Extender, native, and root-level mods without mixing them into the PAK load order.[/*]
 [*][b]Mod Diagnostics[/b] — read-only checks for dependencies, conflicts, UUID problems, Script Extender requirements, overrides, and other issues Redux can detect.[/*]
-[*][b]Load Order Advisor[/b] — optional experimental guidance with a preview before any changes are applied.[/*]
+[*][b]Load Order Advisor[/b] — optional experimental guidance that previews suggested organization before anything is applied. It does not replace mod-author instructions.[/*]
+[*][b]Modlist Import & Export[/b] — share a saved order and selected Redux organization data without bundling PAK files, saves, API keys, or private paths.[/*]
+[*][b]Package Inspector[/b] — inspect supported PAKs, archives, saves, and native layouts before installing them.[/*]
 [*][b]Themes & Accessibility[/b] — Redux Dark, Redux Light, Parchment, custom themes, imported fonts, text sizing, Reduce Motion, configurable shortcuts, background controls, and more.[/*]
 [/list]
 
@@ -58,6 +75,8 @@ Separators create persistent sections inside Active Mods and can be collapsed wi
 
 [b]Categories, separators, colors, icons, and notes are never written into [i]modsettings.lsx[/i].[/b]
 
+The main workspace also includes a resizable mod drawer, configurable columns, category filters, and unified selection between Active and Inactive Mods. This keeps useful context close to the list instead of sending you through several unrelated windows or browser tabs.
+
 [center][img]https://raw.githubusercontent.com/circleainn/BG3ModManager-Redux/main/docs/assets/nexus-description/04-saving-and-syncing.png?v=3275e4e[/img][/center]
 
 Redux treats the order you are currently editing, the Redux order you have saved, and the order currently written to BG3 as separate states.
@@ -67,6 +86,8 @@ Redux treats the order you are currently editing, the Redux order you have saved
 [b]Sync Load Order to Game[/b] separately previews and writes the reviewed order to Baldur's Gate 3.
 
 Load Order History, restore points, Undo/Redo, and warnings about outside changes make it easier to experiment without losing your work.
+
+Redux also keeps different campaign setups manageable through named saved orders and comparisons. If BG3 or another manager changes the game file after Redux last saw it, Redux warns you instead of blindly undoing over the newer file.
 
 [center][img]https://raw.githubusercontent.com/circleainn/BG3ModManager-Redux/main/docs/assets/nexus-description/05-downloads.png?v=3275e4e[/img][/center]
 
@@ -81,6 +102,8 @@ Redux checks each package and sends it to the right place:
 [/list]
 
 Installing a normal PAK does not automatically activate, reorder, save, or sync it.
+
+Before installation, Redux distinguishes new mods from updates, same-version replacements, and possible downgrades. Ambiguous, malformed, mixed, or unsupported packages stay blocked for review instead of being guessed into a destination.
 
 [center][img]https://raw.githubusercontent.com/circleainn/BG3ModManager-Redux/main/docs/assets/nexus-description/06-save-game-manager.png?v=3275e4e[/img][/center]
 
@@ -117,6 +140,8 @@ You review the changes before applying them.
 Applying a preview creates an unsaved, undoable edit. It does not automatically save or sync the result.
 
 [b]The Advisor is not a universal compatibility solver.[/b] Always follow mod-author instructions when available.
+
+Diagnostics and the Advisor are separate on purpose: diagnostics report facts Redux can detect, while the Advisor offers optional organization guidance. You can use diagnostics without enabling automated suggestions.
 
 [center][img]https://raw.githubusercontent.com/circleainn/BG3ModManager-Redux/main/docs/assets/nexus-description/09-themes-and-personalization.png?v=3275e4e[/img][/center]
 

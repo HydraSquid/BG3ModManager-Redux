@@ -382,8 +382,6 @@ manifest is unavailable. Imported fonts and PNG icons remain the user's responsi
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Users and testers | Recover from common startup, path, download, and sync problems |
 | [Privacy and local data](docs/PRIVACY_AND_DATA.md) | Everyone | Understand stored data, network requests, logs, and safe sharing |
 | [Changes from upstream](docs/CHANGES_FROM_UPSTREAM.md) | Users and contributors | Understand what Redux retains and changes |
-| [Product and brand guide](docs/PRODUCT_AND_BRAND.md) | Maintainers and creators | Keep naming, messaging, identity, and screenshots consistent |
-| [Community and publishing](docs/COMMUNITY_AND_PUBLISHING.md) | Maintainers and moderators | Coordinate GitHub, Nexus Mods, the website, Discord, and launch messaging |
 | [Architecture](docs/ARCHITECTURE.md) | Contributors | Understand project boundaries, major components, and validation paths |
 | [Optional features](docs/REDUX_OPTIONAL_MODULES.md) | Contributors | Understand feature boundaries and safety rules |
 | [Redux mod database](docs/REDUX_MOD_DATABASE.md) | Contributors and maintainers | Recognition, advisor knowledge, and reports |

@@ -23,8 +23,6 @@ quick picture of Redux.
 | Understand native and root-level install safeguards | [Changes from upstream](CHANGES_FROM_UPSTREAM.md#game-directory-mod-management) |
 | Understand NXM handling and download safeguards | [Changes from upstream](CHANGES_FROM_UPSTREAM.md#nexus-mod-manager-downloads) |
 | Add stable provider identity to a PAK | [Creator manifest](REDUX_CREATOR_MANIFEST.md) |
-| Write product copy or prepare screenshots | [Product and brand guide](PRODUCT_AND_BRAND.md) |
-| Coordinate GitHub, Nexus Mods, the website, or Discord | [Community and publishing](COMMUNITY_AND_PUBLISHING.md) |
 | Understand the codebase and safety boundaries | [Architecture](ARCHITECTURE.md) |
 
 ## Author and maintainer references

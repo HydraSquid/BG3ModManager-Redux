@@ -5,7 +5,12 @@ source for individual implementation details.
 
 ## Unreleased
 
-No additional changes are queued after alpha.16.3.1.
+No additional changes are queued after alpha.16.3.2.
+
+## 0.1.0-alpha.16.3.2 — silent public-alpha maintenance release
+
+- Prevented separators from being dragged into Inactive Mods.
+- Cleared the insertion line immediately when Inactive Mods rejects a separator drag or drop.
 
 ## 0.1.0-alpha.16.3.1 — silent public-alpha maintenance release
 

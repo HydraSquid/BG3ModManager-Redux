@@ -272,6 +272,7 @@ internal static class Program
 			(nameof(automaticCategories.UnknownProviderTaxonomyFallsBackToPackageKeywords), automaticCategories.UnknownProviderTaxonomyFallsBackToPackageKeywords),
 			(nameof(automaticCategories.DisabledProviderCategoryFallsBackToAnEnabledCategory), automaticCategories.DisabledProviderCategoryFallsBackToAnEnabledCategory),
 			(nameof(visualDividerDrag.NormalModDragNeverIncludesASelectedDivider), visualDividerDrag.NormalModDragNeverIncludesASelectedDivider),
+			(nameof(visualDividerDrag.InactivePaneRejectsSeparatorPayloadBeforeShowingDropFeedback), visualDividerDrag.InactivePaneRejectsSeparatorPayloadBeforeShowingDropFeedback),
 			(nameof(visualDividerDrag.ExpandedDividerDragContainsOnlyItsMarker), visualDividerDrag.ExpandedDividerDragContainsOnlyItsMarker),
 			(nameof(visualDividerDrag.CollapsedDividerDragStartsWithLightweightMarker), visualDividerDrag.CollapsedDividerDragStartsWithLightweightMarker),
 			(nameof(visualDividerDrag.CollapsedSeparatorPayloadCarriesOnlyItsSealedMembers), visualDividerDrag.CollapsedSeparatorPayloadCarriesOnlyItsSealedMembers),

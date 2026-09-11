@@ -9,6 +9,18 @@ namespace Redux.Core.Tests;
 
 public sealed class VisualDividerDragPolicyTests
 {
+	public void InactivePaneRejectsSeparatorPayloadBeforeShowingDropFeedback()
+	{
+		var divider = CreateDivider("section", collapsed: false);
+		var mod = CreateMod("ordinary-mod");
+
+		RegressionAssert.True(VisualDividerDragPolicy.ContainsVisualDivider(new[] { divider }));
+		RegressionAssert.False(VisualDividerDragPolicy.ContainsVisualDivider(new[] { mod }));
+		RegressionAssert.False(VisualDividerDragPolicy.CanDropOnPane(new[] { divider }, destinationActive: false));
+		RegressionAssert.True(VisualDividerDragPolicy.CanDropOnPane(new[] { divider }, destinationActive: true));
+		RegressionAssert.True(VisualDividerDragPolicy.CanDropOnPane(new[] { mod }, destinationActive: false));
+	}
+
 	public void NormalModDragNeverIncludesASelectedDivider()
 	{
 		var divider = CreateDivider("first", collapsed: false);

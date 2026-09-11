@@ -11,7 +11,7 @@ proposals.
 | Product | Baldur's Gate 3 Mod Manager Redux |
 | Short name | Redux |
 | Tagline | **Bring order to the chaos.** |
-| Release line | `0.1.0-alpha.16.3.1` |
+| Release line | `0.1.0-alpha.16.3.2` |
 | Lifecycle | Public alpha |
 | Platform | Windows 10/11 x64 |
 | Runtime | .NET 8 Desktop Runtime |
@@ -48,7 +48,7 @@ one-build milestone.
 
 See [Changes from upstream](CHANGES_FROM_UPSTREAM.md) for the durable feature boundary and the
 [changelog](CHANGELOG.md) for release-specific detail. Current release copy is in the
-[alpha.16.3.1 release notes](releases/0.1.0-alpha.16.3.1.md).
+[alpha.16.3.2 release notes](releases/0.1.0-alpha.16.3.2.md).
 
 ## Public launch gate
 

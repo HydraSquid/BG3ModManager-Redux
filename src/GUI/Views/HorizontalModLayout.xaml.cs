@@ -516,6 +516,15 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			return;
 		}
 
+		if (ReferenceEquals(listView, InactiveModsListView) &&
+			ViewModel.DragHandler?.IsDraggingVisualDivider == true)
+		{
+			ClearModListDropIndicator();
+			e.Effects = DragDropEffects.None;
+			e.Handled = true;
+			return;
+		}
+
 		if (_modListDropIndicatorOwner != null && _modListDropIndicatorOwner != listView)
 			ClearModListDropIndicator();
 
@@ -546,6 +555,16 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 	{
 		if (e.Data.GetDataPresent(typeof(ModCategoryFilterItem)))
 		{
+			ClearModListDropIndicator();
+			e.Effects = DragDropEffects.None;
+			e.Handled = true;
+			return;
+		}
+
+		if (ReferenceEquals(sender, InactiveModsListView) &&
+			ViewModel.DragHandler?.IsDraggingVisualDivider == true)
+		{
+			ViewModel.DragHandler.CompleteDragTracking();
 			ClearModListDropIndicator();
 			e.Effects = DragDropEffects.None;
 			e.Handled = true;

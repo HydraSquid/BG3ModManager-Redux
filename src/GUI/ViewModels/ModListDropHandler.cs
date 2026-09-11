@@ -2,6 +2,7 @@
 
 using DivinityModManager.Models;
 using DivinityModManager.Controls;
+using DivinityModManager.Util;
 using GongSolutions.Wpf.DragDrop;
 using GongSolutions.Wpf.DragDrop.Utilities;
 
@@ -100,7 +101,9 @@ public class ModListDropHandler : DefaultDropHandler
 		if (dropInfo.Effects != DragDropEffects.None && dropInfo.DropTargetAdorner == DropTargetAdorners.Insert)
 			dropInfo.DropTargetAdorner = null;
 		if (ReferenceEquals(dropInfo.TargetCollection, _viewModel.DisplayInactiveMods) &&
-			ExtractData(dropInfo.Data).OfType<DivinityModData>().Any(item => item.IsVisualDivider))
+			!VisualDividerDragPolicy.CanDropOnPane(
+				ExtractData(dropInfo.Data).OfType<DivinityModData>(),
+				destinationActive: false))
 		{
 			dropInfo.Effects = DragDropEffects.None;
 			dropInfo.DropTargetAdorner = null;
@@ -150,7 +153,7 @@ public class ModListDropHandler : DefaultDropHandler
 				ReduxDropFeedback.SetStableInsertIndex(target, -1);
 			var destinationActive = ReferenceEquals(dropInfo.TargetCollection, _viewModel.DisplayActiveMods);
 			var visualData = ExtractData(dropInfo.Data).OfType<DivinityModData>().ToList();
-			if (!destinationActive && visualData.Any(item => item.IsVisualDivider)) return;
+			if (!VisualDividerDragPolicy.CanDropOnPane(visualData, destinationActive)) return;
 			_viewModel.ApplyVisualModListDrop(visualData, destinationActive, insertIndex);
 			RxApp.MainThreadScheduler.Schedule(TimeSpan.FromMilliseconds(20), () =>
 				_viewModel.Layout.SelectMods(visualData));

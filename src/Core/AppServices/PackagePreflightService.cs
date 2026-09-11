@@ -106,8 +106,7 @@ public static class PackagePreflightService
 			.AnalyzeAll(
 				analysisSet,
 				analysisSet,
-				enableLoadOrderAdvisor: false,
-				disableModioWarnings: true)
+				enableLoadOrderAdvisor: false)
 			.First(result => ReferenceEquals(result.Mod, mod));
 		var findings = snapshot.Findings
 			.Where(finding => finding.Code is not

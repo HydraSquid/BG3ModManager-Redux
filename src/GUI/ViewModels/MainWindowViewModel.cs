@@ -10376,7 +10376,6 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		var activeMods = ActiveMods.ToArray();
 		var duplicateMods = _lastDetectedDuplicateMods?.ToArray();
 		var loadOrderGuidanceEnabled = Modules.LoadOrderGuidanceEnabled;
-		var disableModioWarnings = Settings.DisableModioWarnings;
 		IReadOnlyList<ModHealthSnapshot> computedSnapshots;
 		await _modHealthAnalysisLock.WaitAsync();
 		try
@@ -10386,8 +10385,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				installedMods,
 				activeMods,
 				duplicateMods,
-				loadOrderGuidanceEnabled,
-				disableModioWarnings));
+				loadOrderGuidanceEnabled));
 		}
 		catch (Exception ex)
 		{
@@ -11090,12 +11088,6 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			.Subscribe(_ => ScheduleModHealthRefresh());
 
 		this.WhenAnyValue(x => x.Settings.DebugModeEnabled, x => x.Modules.ModDiagnosticsEnabled, x => x.Modules.LoadOrderGuidanceEnabled)
-			.Skip(1)
-			.ObserveOn(RxApp.MainThreadScheduler)
-			.Subscribe(_ => ScheduleModHealthRefresh());
-
-		// Toggling the mod.io notice re-runs analysis so the toolbar and drawer update at once.
-		this.WhenAnyValue(x => x.Settings.DisableModioWarnings)
 			.Skip(1)
 			.ObserveOn(RxApp.MainThreadScheduler)
 			.Subscribe(_ => ScheduleModHealthRefresh());

@@ -116,7 +116,6 @@ public partial class SettingsWindow : SettingsWindowBase
 		new("Optional features",
 			"Control source linking and experimental load-order guidance. Core diagnostics remain active.",
 			nameof(DivinityModManagerSettings.LocalOnlyMode),
-			nameof(DivinityModManagerSettings.DisableModioWarnings),
 			nameof(DivinityModManagerSettings.EnableLoadOrderAdvisor)),
 		new("Metadata services",
 			"Add optional provider keys for source details and update information.",

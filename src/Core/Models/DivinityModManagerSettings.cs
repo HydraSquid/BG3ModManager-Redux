@@ -410,7 +410,7 @@ public class DivinityModManagerSettings : ReactiveObject
 	}
 
 	[DefaultValue(false)]
-	[SettingsEntry("Disable mod.io warnings", "Hide the warning that BG3 or Steam Cloud may restore mod.io files, including cached files after unsubscribing. Online mod information is unaffected.")]
+	// Retained only so settings written by earlier public-alpha builds deserialize without migration errors.
 	[DataMember, Reactive] public bool DisableModioWarnings { get; set; }
 
 	[DefaultValue(false)]

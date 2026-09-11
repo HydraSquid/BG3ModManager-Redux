@@ -5,7 +5,10 @@ source for individual implementation details.
 
 ## Unreleased
 
-No additional changes are queued after alpha.16.3.
+### Fixed
+
+- Removed the generic mod.io health warning because a linked source page does not prove that the
+  installed package is subscribed through the in-game manager or managed by Steam Cloud.
 
 ## 0.1.0-alpha.16.3 — public-alpha hotfix
 

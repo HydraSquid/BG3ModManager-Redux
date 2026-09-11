@@ -1,10 +1,7 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/00-redux-header.png">
-  <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/00-redux-header-light.png">
-  <img src="docs/assets/nexus-description/00-redux-header-light.png" alt="Baldur's Gate 3 Mod Manager Redux" width="100%">
-</picture>
+<img src="docs/assets/nexus-description/00-redux-header.png#gh-dark-mode-only" alt="Baldur's Gate 3 Mod Manager Redux" width="100%">
+<img src="docs/assets/nexus-description/00-redux-header-light.png#gh-light-mode-only" alt="Baldur's Gate 3 Mod Manager Redux" width="100%">
 
 [![Current build](https://img.shields.io/badge/build-0.1.0--alpha.16.3.3-9A7BFF?style=flat-square)](https://github.com/circleainn/BG3ModManager-Redux/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-4F86F7?style=flat-square)](#requirements-and-alpha-status)
@@ -55,11 +52,8 @@ See [Installation, updates, and removal](docs/INSTALLATION.md) for safe migratio
 uninstall guidance.
 
 <a id="redux-at-a-glance"></a>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/02-main-features.png">
-  <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/02-main-features-light.png">
-  <img src="docs/assets/nexus-description/02-main-features-light.png" alt="Redux at a glance" width="100%">
-</picture>
+<img src="docs/assets/nexus-description/02-main-features.png#gh-dark-mode-only" alt="Redux at a glance" width="100%">
+<img src="docs/assets/nexus-description/02-main-features-light.png#gh-light-mode-only" alt="Redux at a glance" width="100%">
 
 | Organize | Review | Personalize |
 |:--|:--|:--|
@@ -85,11 +79,8 @@ uninstall guidance.
 <hr>
 
 <a id="categories-separators-and-mod-details"></a>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/03-organization.png">
-  <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/03-organization-light.png">
-  <img src="docs/assets/nexus-description/03-organization-light.png" alt="Categories, separators, and mod details" width="100%">
-</picture>
+<img src="docs/assets/nexus-description/03-organization.png#gh-dark-mode-only" alt="Categories, separators, and mod details" width="100%">
+<img src="docs/assets/nexus-description/03-organization-light.png#gh-light-mode-only" alt="Categories, separators, and mod details" width="100%">
 
 - Automatic and custom categories with names, descriptions, colors, icons, ordering, and filtering.
 - Up to three visible category assignments per mod.
@@ -105,11 +96,8 @@ Categories, separators, and notes are Redux presentation data. They never enter 
 `modsettings.lsx`.
 
 <a id="diagnostics-and-load-order-advisor"></a>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/08-diagnostics-and-load-order-advisor.png">
-  <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/08-diagnostics-and-load-order-advisor-light.png">
-  <img src="docs/assets/nexus-description/08-diagnostics-and-load-order-advisor-light.png" alt="Diagnostics and Load Order Advisor" width="100%">
-</picture>
+<img src="docs/assets/nexus-description/08-diagnostics-and-load-order-advisor.png#gh-dark-mode-only" alt="Diagnostics and Load Order Advisor" width="100%">
+<img src="docs/assets/nexus-description/08-diagnostics-and-load-order-advisor-light.png#gh-light-mode-only" alt="Diagnostics and Load Order Advisor" width="100%">
 
 Mod Diagnostics is built into Redux. It brings facts already detected by BG3MM's package parser—
 including dependencies, UUID problems, overrides, Mod Fixer behavior, and Script Extender
@@ -130,11 +118,8 @@ Applying it creates one undoable, unsaved edit, and individual recommendations c
 restored later.
 
 <a id="safer-load-order-changes"></a>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/04-saving-and-syncing.png">
-  <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/04-saving-and-syncing-light.png">
-  <img src="docs/assets/nexus-description/04-saving-and-syncing-light.png" alt="Safer saving and syncing" width="100%">
-</picture>
+<img src="docs/assets/nexus-description/04-saving-and-syncing.png#gh-dark-mode-only" alt="Safer saving and syncing" width="100%">
+<img src="docs/assets/nexus-description/04-saving-and-syncing-light.png#gh-light-mode-only" alt="Safer saving and syncing" width="100%">
 
 - Explicit working state with an unsaved indicator and close protection.
 - Named order creation, renaming, deletion, comparison, and history.
@@ -146,11 +131,8 @@ restored later.
   another manager.
 
 <a id="save-game-manager"></a>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/06-save-game-manager.png">
-  <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/06-save-game-manager-light.png">
-  <img src="docs/assets/nexus-description/06-save-game-manager-light.png" alt="Save Game Manager" width="100%">
-</picture>
+<img src="docs/assets/nexus-description/06-save-game-manager.png#gh-dark-mode-only" alt="Save Game Manager" width="100%">
+<img src="docs/assets/nexus-description/06-save-game-manager-light.png#gh-light-mode-only" alt="Save Game Manager" width="100%">
 
 Open **Tools > Save Game Manager...** or use the **Saves** toolbar group. Redux groups story
 saves by campaign and shows available thumbnails, dates, sizes, and difficulty metadata. Honour
@@ -167,11 +149,8 @@ require confirmation, and deletion uses the Windows Recycle Bin.
 > backups, and remember that Steam Cloud may restore files removed locally.
 
 <a id="game-directory-mod-manager"></a>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/07-game-directory-mods.png">
-  <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/07-game-directory-mods-light.png">
-  <img src="docs/assets/nexus-description/07-game-directory-mods-light.png" alt="Game-Directory Mod Manager" width="100%">
-</picture>
+<img src="docs/assets/nexus-description/07-game-directory-mods.png#gh-dark-mode-only" alt="Game-Directory Mod Manager" width="100%">
+<img src="docs/assets/nexus-description/07-game-directory-mods-light.png#gh-light-mode-only" alt="Game-Directory Mod Manager" width="100%">
 
 Open **Tools > Game-Directory Mod Manager...**, its **Mods & Campaign** toolbar shortcut, or
 **Quick Access** to review supported native and root-level mods that install beside BG3 rather than
@@ -214,11 +193,8 @@ the ownership record.
 > of manually deleting Redux-owned files.
 
 <a id="download-manager"></a>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/05-downloads.png">
-  <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/05-downloads-light.png">
-  <img src="docs/assets/nexus-description/05-downloads-light.png" alt="Download Manager" width="100%">
-</picture>
+<img src="docs/assets/nexus-description/05-downloads.png#gh-dark-mode-only" alt="Download Manager" width="100%">
+<img src="docs/assets/nexus-description/05-downloads-light.png#gh-light-mode-only" alt="Download Manager" width="100%">
 
 **Download Manager** is Redux's shared intake inbox for local packages and optional Nexus Mod
 Manager downloads. Add a package from the window or drop supported PAK, LSV, ZIP, 7z, RAR, TAR, or
@@ -322,11 +298,8 @@ they are never imported into the bundled database automatically. The full trust 
 model is documented in the [Redux mod database guide](docs/REDUX_MOD_DATABASE.md).
 
 <a id="themes-and-accessibility"></a>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexus-description/09-themes-and-personalization.png">
-  <source media="(prefers-color-scheme: light)" srcset="docs/assets/nexus-description/09-themes-and-personalization-light.png">
-  <img src="docs/assets/nexus-description/09-themes-and-personalization-light.png" alt="Themes and accessibility" width="100%">
-</picture>
+<img src="docs/assets/nexus-description/09-themes-and-personalization.png#gh-dark-mode-only" alt="Themes and accessibility" width="100%">
+<img src="docs/assets/nexus-description/09-themes-and-personalization-light.png#gh-light-mode-only" alt="Themes and accessibility" width="100%">
 
 - Redux Dark, Redux Light, Parchment, and importable custom themes.
 - Solid semantic action colors or theme-generated gradients.

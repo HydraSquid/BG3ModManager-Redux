@@ -1,4 +1,4 @@
-# Public-alpha releases and update recovery
+# Release process and update recovery
 
 This page documents Redux's public release contract so maintainers, contributors, and users can
 verify what the in-app updater is allowed to download. It does not replace testing
@@ -6,14 +6,15 @@ the exact files published on GitHub and Nexus Mods.
 
 ## Release artifacts
 
-`0.1.0-alpha.15` was the first Redux public-alpha version; `0.1.0-alpha.16.3.3` is the current
+`0.1.0-alpha.15` was the first Redux public-alpha version; `0.1.0-alpha.16.3.5` is the current
 maintenance release.
 Each public alpha has an immutable version and a matching Git tag such as
 `v0.1.0-alpha.16.2`. A correction to an already-published alpha uses a hotfix suffix such as
 `0.1.0-alpha.16.1`, then `.16.2`; a quiet correction to one of those hotfixes may add a maintenance
-suffix such as `.16.3.1`. These versions do not replace earlier release files. The next planned
-alpha remains `0.1.0-alpha.17`. Starting with alpha.16.2, the public artifact
-set contains:
+suffix such as `.16.3.1`. These versions do not replace earlier release files. Choose the next
+version during release preparation from the announcement and compatibility rules below; a local
+archive or experimental build does not reserve a public version. Starting with alpha.16.2, the
+public artifact set contains:
 
 - `BG3ModManager-Redux_v0.1.0-alpha.N[.H[.M]].zip`, the versioned portable application; and
 - release notes for that exact version.
@@ -37,9 +38,9 @@ exact byte length and SHA-256 digest.
 The updater compares a four-part numeric internal version. Alpha.15 and alpha.16 retain their
 published legacy values (`0.1.0.15` and `0.1.0.16`), and alpha.16.1 through alpha.16.3 retain their
 original flat revisions. Maintenance-aware releases encode `.H.M` as revision `H × 100 + M`, so
-`.16.3.1` uses `0.1.16.301`, `.16.3.2` uses `0.1.16.302`, `.16.3.3` uses `0.1.16.303`, and `.16.4`
-uses `0.1.16.400`. This keeps maintenance releases ordered before the next announced hotfix without
-changing an already-published version.
+`.16.3.1` uses `0.1.16.301`, `.16.3.2` uses `0.1.16.302`, `.16.3.3` uses `0.1.16.303`,
+`.16.3.4` uses `0.1.16.304`, and `.16.4` uses `0.1.16.400`. This keeps maintenance releases ordered
+before the next announced hotfix without changing an already-published version.
 
 Compatibility matters during the transition: the already-published alpha.15 and alpha.16 clients
 only parse the original `alpha.N` form, so they cannot discover a dotted hotfix automatically. The
@@ -54,10 +55,10 @@ install of `.16.3.1`. Once a maintenance-aware build is installed, later three-c
 are ordered and updated normally.
 
 Two-component releases (`.16.4`, `.16.5`, `.16.6`) are announced releases. Three-component releases
-(`.16.3.1`, `.16.3.2`, `.16.3.3`, `.16.4.1`) are silent maintenance releases and must include
-`<!-- redux:no-announce -->` in their GitHub notes. The helper bot still records a silent release but
-does not post or ping. The release remains a normal published GitHub release, is marked Latest,
-uploads to Nexus Mods, and moves the public-alpha channel like any other release.
+(`.16.3.1`, `.16.3.2`, `.16.3.3`, `.16.3.4`, `.16.4.1`) are silent maintenance releases and must
+include `<!-- redux:no-announce -->` in their GitHub notes. The helper bot still records a silent
+release but does not post or ping. The release remains a normal published GitHub release, is marked
+Latest, uploads to Nexus Mods, and moves the public-alpha channel like any other release.
 
 ## Prepare a candidate
 
@@ -84,7 +85,8 @@ SHA-256 digest.
 1. Publish the immutable versioned GitHub release with the tested portable ZIP.
 2. Download the ZIP from GitHub and repeat its size, hash, contents, and launch checks.
 3. Approve the protected `nexus-production` deployment. The release workflow downloads the GitHub
-   asset and submits those exact bytes through Nexus Mods' official upload action.
+   asset and submits those exact bytes through Nexus Mods' official upload action. The Nexus file
+   description includes a short list of changes generated from the matching GitHub release notes.
 4. Record the returned Nexus file-version ID and verify the Nexus entry matches the GitHub version,
    filename, and archive.
 5. Confirm the manifest's versioned artifact and release-notes URLs work anonymously.

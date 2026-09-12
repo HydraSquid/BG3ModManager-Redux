@@ -1,7 +1,10 @@
 using DivinityModManager.Models;
+using DivinityModManager.Extensions;
 using DivinityModManager.Util;
 
 using Newtonsoft.Json;
+
+using ReactiveUI.Fody.Helpers;
 
 using System;
 using System.Collections.Generic;
@@ -160,6 +163,17 @@ public sealed class SettingsMaintenanceTests
 
 		RegressionAssert.True(ProcessElevationWarningPolicy.TryPersistSuppression(confirmations, () => true));
 		RegressionAssert.True(confirmations.DisableAdminModeWarning);
+	}
+
+	public void ElevationWarningSuppressionIsRestoredIntoLiveSettings()
+	{
+		var saved = new DivinityModManagerSettings();
+		saved.Confirmations.DisableAdminModeWarning = true;
+		var live = new DivinityModManagerSettings();
+
+		live.SetFrom<DivinityModManagerSettings, ReactiveAttribute>(saved);
+
+		RegressionAssert.True(live.Confirmations.DisableAdminModeWarning);
 	}
 
 	public void CurrentWindowsProcessElevationCanBeReadFromItsToken()

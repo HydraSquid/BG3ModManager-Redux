@@ -71,9 +71,10 @@ public partial class App : Application
 		EventManager.RegisterClassHandler(typeof(Window), Window.PreviewMouseDownEvent, new MouseButtonEventHandler(OnPreviewMouseDown));
 		EventManager.RegisterClassHandler(typeof(Window), Keyboard.PreviewKeyDownEvent, new KeyEventHandler(OnPreviewKeyDown));
 
+		var protocolStartup = !_pendingNxmActivations.IsEmpty;
 		var startupWindow = new ReduxStartupWindow();
 		MainWindow = startupWindow;
-		startupWindow.Show();
+		if (!protocolStartup) startupWindow.Show();
 
 		// Let the compact startup surface render before constructing the much larger
 		// main visual tree. The main window still drives the existing initialization
@@ -83,7 +84,7 @@ public partial class App : Application
 			// Building MainWindow occupies the UI thread for much longer than the splash
 			// entrance lasts, and an animation whose clock runs while no frames are being
 			// presented is never seen. Let the entrance finish before that work starts.
-			await startupWindow.PlayEntranceAsync();
+			if (!protocolStartup) await startupWindow.PlayEntranceAsync();
 
 			var mainWindow = new MainWindow();
 			mainWindow.PrepareForStartup();
@@ -103,6 +104,18 @@ public partial class App : Application
 				revealStarted = true;
 				mainWindow.ViewModel.PropertyChanged -= initializedHandler;
 				await mainWindow.PrepareVisualTreeForRevealAsync();
+				if (protocolStartup && !mainWindow.ViewModel.Settings.BringNxmDownloadsToFront)
+				{
+					// Restore the real bounds while hidden, then expose only a taskbar entry.
+					mainWindow.Hide();
+					mainWindow.RevealAfterStartup();
+					mainWindow.WindowState = WindowState.Minimized;
+					mainWindow.Show();
+					startupWindow.Close();
+					mainWindow.ViewModel.NotifyMainWindowReady();
+					mainWindow.ViewModel.ShowReduxWelcome(onlyIfUnseen: true);
+					return;
+				}
 				// Crossfade the prepared main surface with the splash. Both top-level
 				// windows stay opaque; only their WPF content roots animate. Main starts
 				// only slightly transparent -- its window background is opaque, so a low
@@ -115,7 +128,8 @@ public partial class App : Application
 
 				await Task.WhenAll(
 					ReduxWindowBehavior.AnimateEntranceAsync(mainWindow, StartupRevealOpacity, StartupRevealDuration),
-					startupWindow.CloseWithTransitionAsync());
+					protocolStartup ? Task.CompletedTask : startupWindow.CloseWithTransitionAsync());
+				if (protocolStartup) startupWindow.Close();
 
 				mainWindow.Activate();
 				await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ContextIdle);
@@ -128,7 +142,7 @@ public partial class App : Application
 			mainWindow.Show();
 			DrainNxmActivations();
 			startupWindow.Owner = mainWindow;
-			startupWindow.Activate();
+			if (!protocolStartup) startupWindow.Activate();
 		}));
 	}
 
@@ -139,6 +153,7 @@ public partial class App : Application
 			if (MainWindow is Views.MainWindow mainWindow
 				&& mainWindow.ViewModel.Settings.BringNxmDownloadsToFront)
 			{
+				mainWindow.ShowActivated = true;
 				if (mainWindow.WindowState == WindowState.Minimized) mainWindow.WindowState = WindowState.Normal;
 				mainWindow.Show();
 				mainWindow.Activate();

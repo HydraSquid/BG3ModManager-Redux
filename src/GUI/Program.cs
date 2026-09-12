@@ -111,9 +111,20 @@ internal class Program
 			}
 		}
 
-		using var activationCoordinator = NxmActivationCoordinator.CreateForExecutable(executablePath);
+		using var activationCoordinator = NxmActivationCoordinator.CreateForUser(DivinityApp.REDUX_FORK_INSTANCE_NAME);
 		if (initialNxmLink != null
 			&& activationCoordinator.TryForwardAsync(initialNxmLink, TimeSpan.FromSeconds(3)).GetAwaiter().GetResult()) return;
+
+		// Upstream keeps its own lock/channel; comparison copies must never receive its links.
+		using var instanceGuard = new ReduxInstanceGuard(DivinityApp.REDUX_FORK_INSTANCE_NAME);
+		if (!instanceGuard.TryAcquire())
+		{
+			if (initialNxmLink != null && activationCoordinator.TryForwardAsync(initialNxmLink, TimeSpan.FromSeconds(3)).GetAwaiter().GetResult()) return;
+			System.Windows.MessageBox.Show("This Redux fork is already running. Close the other fork window before opening this copy."
+				+ (initialNxmLink == null ? "" : "\n\nThe download link was not delivered. After choosing which copy to keep open, click Mod Manager Download on Nexus again."),
+				"Redux Is Already Running", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+			return;
+		}
 
 		var pendingActivations = new ConcurrentQueue<string>();
 		if (initialNxmLink != null) pendingActivations.Enqueue(initialNxmLink);

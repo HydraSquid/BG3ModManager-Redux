@@ -471,6 +471,19 @@ internal sealed class NxmDownloadManagerTests
 		RegressionAssert.Contains(item.InstallActionToolTip, "active or inactive state");
 	}
 
+	public void FreshPakInstallExplainsThatUpdatesKeepTheirPlacement()
+	{
+		var item = new NxmDownloadItem
+		{
+			State = NxmDownloadState.Downloaded,
+			DetectedDestination = "Inactive Mods"
+		};
+
+		RegressionAssert.Equal("Install", item.InstallActionText);
+		RegressionAssert.Contains(item.InstallActionToolTip, "New mods go to Inactive Mods");
+		RegressionAssert.Contains(item.InstallActionToolTip, "Updates preserve");
+	}
+
 	public void DownloadAgainPreservesTheArchiveAndUsesFreshAuthorizationWhenRequired()
 	{
 		foreach (var requiresAuthorization in new[] { false, true })

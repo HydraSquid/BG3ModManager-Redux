@@ -13,6 +13,7 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,6 +21,42 @@ namespace Redux.Core.Tests;
 
 internal sealed class NexusDownloadedModImporterTests
 {
+	public void SameVersionImportPreservesActiveAndInactivePositionsWithoutSavingOrders()
+	{
+		using var watcher = WpfRenderCapture.RegisterNoOpFileWatcherService();
+		foreach (var active in new[] { true, false })
+		{
+			using var fixture = new ImportFixture();
+			var vm = new MainWindowViewModel();
+			vm.Settings.LocalOnlyMode = true;
+			var before = Mod("Before");
+			var existing = Mod("Existing");
+			var after = Mod("After");
+			existing.IsActive = active;
+			existing.Index = 1;
+			var models = (SourceCache<DivinityModData, string>)typeof(MainWindowViewModel)
+				.GetField("mods", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(vm)!;
+			models.AddOrUpdate(new DivinityModData[] { before, existing, after });
+			var list = active ? vm.ActiveMods : vm.InactiveMods;
+			list.AddRange(new DivinityModData[] { before, existing, after });
+			var orderPath = Path.Combine(fixture.ModsDirectory, "SavedOrder.json");
+			File.WriteAllText(orderPath, "saved-order-must-not-change");
+			var order = new DivinityLoadOrder { FilePath = orderPath, Order = [before.ToOrderEntry(), existing.ToOrderEntry(), after.ToOrderEntry()] };
+			vm.ModOrderList.Add(order);
+			var replacement = Mod("Replacement");
+			replacement.UUID = existing.UUID;
+			RegressionAssert.Equal(existing.Version.VersionInt, replacement.Version.VersionInt);
+			typeof(MainWindowViewModel).GetMethod("AddImportedMod", BindingFlags.Instance | BindingFlags.NonPublic)!
+				.Invoke(vm, new object?[] { replacement, null });
+			RegressionAssert.Equal(active, replacement.IsActive);
+			RegressionAssert.Equal(1, replacement.Index);
+			RegressionAssert.Equal(3, list.Count);
+			RegressionAssert.True(ReferenceEquals(before, list[0]) && ReferenceEquals(replacement, list[1]) && ReferenceEquals(after, list[2]));
+			RegressionAssert.Equal(existing.UUID, order.Order[1].UUID);
+			RegressionAssert.Equal("saved-order-must-not-change", File.ReadAllText(orderPath));
+		}
+	}
+
 	public void ValidationFailureLeavesInstalledFilesUntouched()
 	{
 		using var fixture = new ImportFixture();

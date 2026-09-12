@@ -15,10 +15,11 @@ namespace DivinityModManager;
 
 public static class DivinityApp
 {
-	public const string REDUX_DISPLAY_VERSION = "0.1.0-alpha.16.3.3";
-	public const string REDUX_INTERNAL_VERSION = "0.1.16.303";
+	public const string REDUX_DISPLAY_VERSION = "0.1.0-alpha.16.3.5";
+	public const string REDUX_INTERNAL_VERSION = "0.1.16.305";
 	// Keep this fork from offering upstream binaries that omit its retained workflows.
 	public static readonly bool REDUX_UPDATE_CHECKS_ENABLED = false;
+	public const string REDUX_FORK_INSTANCE_NAME = "HydraSquid.BG3ModManagerRedux";
 
 	public const string DIR_DATA = "Data\\";
 	public const string URL_REPO = @"https://github.com/LaughingLeader/BG3ModManager";

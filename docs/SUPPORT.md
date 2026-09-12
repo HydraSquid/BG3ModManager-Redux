@@ -37,7 +37,7 @@ commitments.
 
 - Report BG3 game defects to Larian Studios.
 - Report mod-specific gameplay or compatibility problems to that mod's author.
-- Report Script Extender defects to its project when the failure is outside Redux's installer or
+- Report Script Extender defects to its project when the failure is outside Redux's management or
   presentation workflow.
 - Report Nexus Mods or mod.io account/service problems to the relevant provider.
 

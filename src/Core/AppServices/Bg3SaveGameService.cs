@@ -139,7 +139,7 @@ public static class Bg3SaveGameService
 				}
 			}
 		}
-		catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or JsonException)
+		catch (Exception ex) when (ex is IOException or InvalidDataException or NotAPackageException or UnauthorizedAccessException or JsonException)
 		{
 			// Save metadata is optional presentation data. A damaged or temporarily locked
 			// package remains visible in the manager without a difficulty badge.
@@ -326,7 +326,9 @@ public static class Bg3SaveGameService
 				var entryPath = entry.Key.Replace('\\', '/');
 				var entryParent = entryPath.Contains('/') ? entryPath[..entryPath.LastIndexOf('/')] : String.Empty;
 				return entryParent.Equals(parent, StringComparison.OrdinalIgnoreCase)
-					&& SupportedExtensions.Contains(Path.GetExtension(entry.Key));
+					&& SupportedExtensions.Contains(Path.GetExtension(entry.Key))
+					&& (!String.IsNullOrEmpty(parentName) && !parentName.Equals("Story", StringComparison.OrdinalIgnoreCase)
+						|| Path.GetFileNameWithoutExtension(entryPath).Equals(Path.GetFileNameWithoutExtension(lsvName), StringComparison.OrdinalIgnoreCase));
 			}).ToArray();
 			groups.Add(new ArchiveSaveGroup(destinationName, entries));
 		}

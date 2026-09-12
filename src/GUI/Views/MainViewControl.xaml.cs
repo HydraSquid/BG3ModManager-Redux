@@ -46,6 +46,7 @@ public partial class MainViewControl : MainViewControlViewBase
 	private IDisposable _toolbarVisibilitySubscription;
 	private IDisposable _modDiagnosticsStatusSubscription;
 	private IDisposable _saveIconStateSubscription;
+	private IDisposable _downloadStatusSubscription;
 	private double _toolbarExpandedHeight;
 	private int _toolbarAnimationVersion;
 	private bool _toolbarOverflowActive;
@@ -1640,6 +1641,21 @@ public partial class MainViewControl : MainViewControlViewBase
 
 		this.BindCommand(ViewModel, vm => vm.Keys.ImportMod.Command, view => view.ImportModButton);
 		this.BindCommand(ViewModel, vm => vm.Keys.Save.Command, view => view.SaveButton);
+		_downloadStatusSubscription?.Dispose();
+		_downloadStatusSubscription = ViewModel.WhenAnyValue(vm => vm.DownloadManagerStatus)
+			.DistinctUntilChanged().ObserveOn(RxApp.MainThreadScheduler)
+			.Subscribe(status =>
+			{
+				DownloadManagerToolbarIcon.SetResourceReference(Control.ForegroundProperty, status switch
+				{
+					"Ready" => "ReduxSuccessBrush",
+					"Warning" => "ReduxWarningBrush",
+					"Error" => "ReduxErrorBrush",
+					_ => "ReduxIconBrush"
+				});
+				DownloadManagerToolbarButton.ToolTip = ViewModel.DownloadManagerStatusText;
+				System.Windows.Automation.AutomationProperties.SetName(DownloadManagerToolbarButton, ViewModel.DownloadManagerStatusText);
+			});
 		_saveIconStateSubscription?.Dispose();
 		_saveIconStateSubscription = ViewModel
 			.WhenAnyValue(vm => vm.HasUnsavedLoadOrderChanges)

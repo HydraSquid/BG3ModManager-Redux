@@ -120,6 +120,7 @@ public static class ReduxWindowBehavior
 
 	private sealed class AnimatedCloseState
 	{
+		public bool IsAttached { get; set; }
 		public bool IsClosing { get; set; }
 		public bool BypassAnimation { get; set; }
 	}
@@ -1127,6 +1128,8 @@ public static class ReduxWindowBehavior
 	{
 		AttachAdaptiveSizing(window, workAreaMargin);
 		var state = AnimatedCloseStates.GetOrCreateValue(window);
+		if (state.IsAttached) return;
+		state.IsAttached = true;
 		PrepareEntrance(window);
 		window.Loaded += (_, _) =>
 		{
@@ -1363,10 +1366,15 @@ public static class ReduxWindowBehavior
 
 	private static void AnimateDialogClosing(Window window, AnimatedCloseState state, CancelEventArgs e)
 	{
-		if (state.BypassAnimation || !window.IsVisible || !ShouldAnimateOpacity) return;
+		if (state.BypassAnimation || e.Cancel) return;
+		if (state.IsClosing)
+		{
+			e.Cancel = true;
+			return;
+		}
+		if (!window.IsVisible || !ShouldAnimateOpacity) return;
 
 		e.Cancel = true;
-		if (state.IsClosing) return;
 		state.IsClosing = true;
 		var result = window.DialogResult;
 		AnimateExit(window, () =>
@@ -1510,6 +1518,8 @@ public static class ReduxWindowBehavior
 		};
 		animation.Completed += (_, _) =>
 		{
+			// Removing the clock exposes the base value immediately, so commit zero first.
+			target.Opacity = 0;
 			target.BeginAnimation(UIElement.OpacityProperty, null);
 			try
 			{

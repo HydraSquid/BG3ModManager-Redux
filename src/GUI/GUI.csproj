@@ -15,9 +15,9 @@
 		<AssemblyName>Redux</AssemblyName>
 		<AssemblyTitle>Baldur's Gate 3 Mod Manager Redux</AssemblyTitle>
 
-		<AssemblyVersion>0.1.16.303</AssemblyVersion>
-		<FileVersion>0.1.16.303</FileVersion>
-		<InformationalVersion>0.1.0-alpha.16.3.3</InformationalVersion>
+		<AssemblyVersion>0.1.16.305</AssemblyVersion>
+		<FileVersion>0.1.16.305</FileVersion>
+		<InformationalVersion>0.1.0-alpha.16.3.5</InformationalVersion>
 		<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
 
 		<Product>Baldur's Gate 3 Mod Manager Redux</Product>
@@ -183,5 +183,11 @@
 	
 	<Target Name="RunBuildRelease" AfterTargets="SetupLibFolder" Condition="'$(Configuration)' == 'Publish'">
 		<Exec Command="&quot;$(PythonExecutable)&quot; &quot;BuildRelease.py&quot; &quot;$(InformationalVersion)&quot;" WorkingDirectory="$(SolutionDir)" />
+	</Target>
+
+	<!-- Separate process name for comparison with upstream's Redux.exe process guard.
+	     This is the same apphost loading Redux.dll, not a second implementation. -->
+	<Target Name="CopyForkComparisonLauncher" AfterTargets="Build" BeforeTargets="RunBuildRelease">
+		<Copy SourceFiles="$(OutputPath)Redux.exe" DestinationFiles="$(OutputPath)ReduxFork.exe" SkipUnchangedFiles="true" />
 	</Target>
 </Project>

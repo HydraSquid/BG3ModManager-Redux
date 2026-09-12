@@ -46,7 +46,7 @@ public sealed class ReduxUpdatePackageService
 	};
 	private static readonly TimeSpan DownloadTimeout = TimeSpan.FromMinutes(10);
 	private static readonly Regex TransactionDirectoryPattern = new(
-		@"^0\.1\.0-alpha\.[1-9][0-9]*-[a-f0-9]{32}$",
+		@"^0\.1\.0-alpha\.[1-9][0-9]*(\.[1-9][0-9]*){0,2}-[a-f0-9]{32}$",
 		RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
 	private readonly HttpClient _client;

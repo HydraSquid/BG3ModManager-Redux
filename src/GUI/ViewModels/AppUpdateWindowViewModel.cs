@@ -84,7 +84,9 @@ public partial class AppUpdateWindowViewModel : ReactiveObject
 				IsChecking = true;
 				CanConfirm = false;
 				CanSkip = false;
-				UpdateDescription = "Checking the Redux public-alpha channel...";
+				UpdateDescription = "Checking for updates...";
+				UpdateChangelogView = String.Empty;
+				SkipButtonText = "Close";
 			});
 
 			var decision = await _updates.CheckAsync(DivinityApp.REDUX_INTERNAL_VERSION, cancellationToken);
@@ -140,21 +142,21 @@ public partial class AppUpdateWindowViewModel : ReactiveObject
 				SkipButtonText = "Later";
 				CanConfirm = true;
 				IsVisible = true;
-				if (showAlerts) main?.ShowAlert("A Redux update is available.", AlertType.Success, 20);
+
 				break;
 			case ReduxUpdateAvailability.InstalledVersionIsNewer:
 				CheckState = ReduxUpdateCheckState.InstalledVersionIsNewer;
 				UpdateDescription = $"This Redux build is newer than the published {decision.Manifest.DisplayVersion} release.";
 				CanConfirm = false;
 				IsVisible = showAlerts;
-				if (showAlerts) main?.ShowAlert("This Redux build is newer than the published update channel.", AlertType.Info, 20);
+
 				break;
 			default:
 				CheckState = ReduxUpdateCheckState.UpToDate;
 				UpdateDescription = $"Redux {DivinityApp.REDUX_DISPLAY_VERSION} is up to date.";
 				CanConfirm = false;
 				IsVisible = showAlerts;
-				if (showAlerts) main?.ShowAlert("Redux is up to date.", AlertType.Info, 15);
+
 				break;
 		}
 	}
@@ -164,10 +166,10 @@ public partial class AppUpdateWindowViewModel : ReactiveObject
 		CheckState = ReduxUpdateCheckState.Failed;
 		HasAvailableUpdate = false;
 		UpdateDescription = message;
-		UpdateChangelogView = "No update was downloaded or applied. You can keep using this Redux installation and try again later.";
+		UpdateChangelogView = "You can keep using Redux and try again later.";
 		CanConfirm = false;
 		IsVisible = showAlerts;
-		if (showAlerts) MainWindow.Self?.ViewModel?.ShowAlert(message, AlertType.Danger, 35);
+
 	}
 
 	private async Task PrepareAndRestartAsync()
@@ -204,7 +206,7 @@ public partial class AppUpdateWindowViewModel : ReactiveObject
 			ConfirmButtonText = "Try Again";
 			CanConfirm = true;
 			IsVisible = true;
-			MainWindow.Self?.ViewModel?.ShowAlert(UpdateDescription, AlertType.Danger, 35);
+
 		}
 		finally
 		{

@@ -150,6 +150,54 @@ public sealed class SaveGameServiceTests
 		});
 	}
 
+	public void CorruptSaveMetadataDoesNotAbortDiscoveryOrChangeFiles()
+	{
+		WithTemporaryDirectory(root =>
+		{
+			var broken = Path.Combine(root, "Tav__Broken");
+			var other = Path.Combine(root, "Tav__Other");
+			Directory.CreateDirectory(broken);
+			Directory.CreateDirectory(other);
+			var brokenPath = Path.Combine(broken, "Broken.lsv");
+			var otherPath = Path.Combine(other, "Other.lsv");
+			var bytes = new byte[128];
+			File.WriteAllBytes(brokenPath, bytes);
+			File.WriteAllText(otherPath, "save-data");
+			var saves = Bg3SaveGameService.Discover(root);
+			RegressionAssert.Equal(2, saves.Count);
+			RegressionAssert.Equal(Bg3SaveDifficulty.Unknown, saves.Single(x => x.SaveFilePath == brokenPath).Difficulty);
+			RegressionAssert.SequenceEqual(bytes, File.ReadAllBytes(brokenPath));
+			RegressionAssert.Equal("save-data", File.ReadAllText(otherPath));
+		});
+	}
+
+	public void LooseArchiveSavesKeepOnlyTheirMatchingFiles()
+	{
+		WithTemporaryDirectory(root =>
+		{
+			foreach (var prefix in new[] { "", "Story/", "Wrapper/Story/" })
+			{
+				var archivePath = Path.Combine(root, Guid.NewGuid() + ".zip");
+				var story = Path.Combine(root, Guid.NewGuid().ToString());
+				using (var archive = ZipFile.Open(archivePath, ZipArchiveMode.Create))
+				{
+					WriteEntry(archive, prefix + "First.lsv", "first");
+					WriteEntry(archive, prefix + "First.WebP", "thumbnail");
+					WriteEntry(archive, prefix + "Second.lsv", "second");
+					WriteEntry(archive, prefix + "Unrelated.webp", "unrelated");
+				}
+				var names = Bg3SaveGameService.Import(archivePath, story, false);
+				RegressionAssert.SequenceEqual(new[] { "Imported__First", "Imported__Second" }, names);
+				RegressionAssert.Equal(2, Directory.GetFiles(Path.Combine(story, names[0])).Length);
+				RegressionAssert.Equal(1, Directory.GetFiles(Path.Combine(story, names[1])).Length);
+				RegressionAssert.Equal("first", File.ReadAllText(Path.Combine(story, names[0], "First.lsv")));
+				RegressionAssert.Equal("second", File.ReadAllText(Path.Combine(story, names[1], "Second.lsv")));
+				RegressionAssert.Throws<IOException>(() => Bg3SaveGameService.Import(archivePath, story, false));
+				RegressionAssert.Equal("first", File.ReadAllText(Path.Combine(story, names[0], "First.lsv")));
+			}
+		});
+	}
+
 	private static void WriteEntry(ZipArchive archive, string name, string contents)
 	{
 		var entry = archive.CreateEntry(name);

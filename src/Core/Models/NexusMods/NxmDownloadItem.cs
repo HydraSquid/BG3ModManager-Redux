@@ -209,6 +209,8 @@ public sealed class NxmDownloadItem : ReactiveObject
 		{
 			var details = new List<string>();
 			details.Add(SourceText);
+			var packageSummary = InspectionSummary.Split(" · ")[0];
+			if (packageSummary.Contains("PAK mod", StringComparison.Ordinal)) details.Add(packageSummary.Replace("PAK mod", "PAK", StringComparison.Ordinal));
 			if (!String.IsNullOrWhiteSpace(Author)) details.Add($"by {Author}");
 			if (!String.IsNullOrWhiteSpace(Version)) details.Add($"v{Version}");
 			if (SizeBytes > 0) details.Add(FormatBytes(SizeBytes));
@@ -222,7 +224,7 @@ public sealed class NxmDownloadItem : ReactiveObject
 		NxmDownloadState.Paused when BytesReceived > 0 => $"{FormatBytes(BytesReceived)} downloaded",
 		NxmDownloadState.RetryWaiting when BytesReceived > 0 => $"{FormatBytes(BytesReceived)} downloaded  ·  retrying shortly",
 		NxmDownloadState.NeedsFreshLink => "Open its Nexus file page to request a fresh Mod Manager Download link.",
-		NxmDownloadState.Downloaded when !String.IsNullOrWhiteSpace(InspectionSummary) => InspectionSummary,
+		NxmDownloadState.Downloaded when !String.IsNullOrWhiteSpace(InspectionSummary) => InspectionSummary.Contains("PAK mod", StringComparison.Ordinal) ? String.Empty : InspectionSummary,
 		NxmDownloadState.Failed or NxmDownloadState.InstallFailed or NxmDownloadState.NeedsReview
 			=> FailureDetails,
 		_ => String.Empty

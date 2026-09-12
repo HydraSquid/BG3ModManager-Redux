@@ -59,6 +59,7 @@ public enum ReduxTextSize
 [DataContract]
 public class DivinityModManagerSettings : ReactiveObject
 {
+	[DataMember, Reactive] public string LastSeenWhatsNewVersion { get; set; } = String.Empty;
 	private bool? _useGeneratedGradients;
 	private bool? _useThemeDefaultTypography;
 
@@ -221,16 +222,16 @@ public class DivinityModManagerSettings : ReactiveObject
 	[DataMember, Reactive] public int NxmActiveDownloadLimit { get; set; } = 3;
 
 	[DefaultValue(true)]
-	[SettingsEntry("Confirm Nexus downloads", "Review Nexus file details before adding a new download to the queue.")]
+	[SettingsEntry("Confirm Nexus downloads", "Legacy preference. Downloads no longer require a routine confirmation.", HideFromUI = true)]
 	[DataMember, Reactive] public bool ConfirmCleanNxmDownloads { get; set; } = true;
 
 	[DefaultValue(true)]
-	[SettingsEntry("Review clean mod installs", "Show the install review for clean, brand-new PAK packages. Updates, replacements, and packages with warnings are always reviewed.")]
+	[SettingsEntry("Review clean mod installs", "Legacy preference. Updates, replacements, and packages with warnings are always reviewed.", HideFromUI = true)]
 	[DataMember, Reactive] public bool ConfirmCleanModInstalls { get; set; } = true;
 
-	[DefaultValue(true)]
-	[SettingsEntry("Bring Nexus downloads forward", "Bring Redux and its Downloads window to the front when Windows sends a Nexus Mod Manager link.")]
-	[DataMember, Reactive] public bool BringNxmDownloadsToFront { get; set; } = true;
+	[DefaultValue(false)]
+	[SettingsEntry("Bring Nexus downloads forward", "Open Download Manager for Nexus links instead of showing a quiet notification. Existing saved choices are preserved.")]
+	[DataMember, Reactive] public bool BringNxmDownloadsToFront { get; set; } = false;
 
 	[DefaultValue(false)]
 	[SettingsEntry("Retain installed package archives", "Keep a deduplicated copy of successfully installed packages for later reinstall. Disabled by default and may use significant disk space.")]

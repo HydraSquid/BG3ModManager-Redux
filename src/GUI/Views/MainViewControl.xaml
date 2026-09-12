@@ -1,4 +1,4 @@
-﻿<local:MainViewControlViewBase x:Class="DivinityModManager.Views.MainViewControl"
+<local:MainViewControlViewBase x:Class="DivinityModManager.Views.MainViewControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:adonisExtensions="clr-namespace:AdonisUI.Extensions;assembly=AdonisUI"
@@ -1302,11 +1302,10 @@
 												ToolTip="{Binding Keys.OpenGameDirectoryModManager.CommandToolTip}">
 												<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Blocks}" />
 											</Button>
-											<Button AutomationProperties.Name="Open Download Manager"
+											<Button x:Name="DownloadManagerToolbarButton" AutomationProperties.Name="Open Download Manager"
 												Command="{Binding Keys.OpenNexusDownloads.Command}"
-												Style="{StaticResource ToolbarUtilityButtonStyle}"
-												ToolTip="{Binding Keys.OpenNexusDownloads.CommandToolTip}">
-												<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.Download}" />
+												Style="{StaticResource ToolbarUtilityButtonStyle}" ToolTip="Open Download Manager">
+												<controls:ReduxIcon x:Name="DownloadManagerToolbarIcon" StrokeData="{StaticResource Redux.Icon.Download}" />
 											</Button>
 										</StackPanel>
 									</Border>
@@ -1380,6 +1379,7 @@
 									Style="{StaticResource ToolbarGroupLabelStyle}"
 									Text="Status" />
 								<StackPanel Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Orientation="Horizontal">
+									<controls:ReduxIcon Margin="0,0,4,0" StrokeData="{StaticResource Redux.Icon.Layers}" Foreground="{DynamicResource ReduxTextSecondaryBrush}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
 									<ComboBox x:Name="OrdersComboBox"
 										Margin="0,0,4,0"
 										MinWidth="146"

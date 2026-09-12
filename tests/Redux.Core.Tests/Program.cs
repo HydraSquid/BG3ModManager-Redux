@@ -16,6 +16,13 @@ internal static class Program
 		// services such as the portable Redux bundle reader/writer.
 		_ = Application.Current ?? new Application();
 
+		var dialogLayout = new DialogLayoutTests();
+		var releaseFlow = new ReleaseFlowTests();
+		var batchInstallUi = new BatchInstallUiTests();
+		var downloadNotification = new DownloadNotificationTests();
+		var processToken = new ProcessTokenTests();
+		var dismissal = new WindowDismissalTests();
+		var placement = new WindowPlacementPolicyTests();
 		var source = new SourceAssociationTests();
 		var manifest = new CreatorManifestValidationTests();
 		var health = new ModHealthTests();
@@ -341,6 +348,19 @@ internal static class Program
 			(nameof(loadOrderOrganizer.PreserveSeparatorsDoesNotAdoptAVisibleRowBelowAClosedSeparator), loadOrderOrganizer.PreserveSeparatorsDoesNotAdoptAVisibleRowBelowAClosedSeparator),
 			(nameof(loadOrderOrganizer.PreserveSeparatorsReportsOnlyMarkersThatActuallyMove), loadOrderOrganizer.PreserveSeparatorsReportsOnlyMarkersThatActuallyMove),
 			(nameof(loadOrderOrganizer.IgnoringOneRelationshipDoesNotSuppressOtherAdvisorKnowledge), loadOrderOrganizer.IgnoringOneRelationshipDoesNotSuppressOtherAdvisorKnowledge),
+			(nameof(dialogLayout.UpdateAndMessageActionsRemainReachableWithLongText), dialogLayout.UpdateAndMessageActionsRemainReachableWithLongText),
+			(nameof(releaseFlow.InstanceGuardExcludesAnotherThreadAndReleasesItsLease), releaseFlow.InstanceGuardExcludesAnotherThreadAndReleasesItsLease),
+			(nameof(releaseFlow.PakCountIsMetadataWithoutRepeatedPlacementInstructions), releaseFlow.PakCountIsMetadataWithoutRepeatedPlacementInstructions),
+			(nameof(batchInstallUi.ToolbarPrioritizesFailuresAndClearsWhenPackagesAreInstalled), batchInstallUi.ToolbarPrioritizesFailuresAndClearsWhenPackagesAreInstalled),
+			(nameof(batchInstallUi.ProgressCannotCloseDuringWorkAndReleasesAfterFailure), batchInstallUi.ProgressCannotCloseDuringWorkAndReleasesAfterFailure),
+			(nameof(downloadNotification.NotificationsReuseTheirWindowWithoutTakingForeground), downloadNotification.NotificationsReuseTheirWindowWithoutTakingForeground),
+			(nameof(processToken.ElevationMatchesExplicitProcessHandleEvenDuringImpersonation), processToken.ElevationMatchesExplicitProcessHandleEvenDuringImpersonation),
+			(nameof(dismissal.ExitKeepsContentTransparentUntilDismissed), dismissal.ExitKeepsContentTransparentUntilDismissed),
+			(nameof(dismissal.RepeatedCloseWaitsForOneDismissalEvenWhenMotionChanges), dismissal.RepeatedCloseWaitsForOneDismissalEvenWhenMotionChanges),
+			(nameof(dismissal.CanceledCloseDoesNotStartExitAnimation), dismissal.CanceledCloseDoesNotStartExitAnimation),
+			(nameof(placement.SavedBoundsRemainVisibleAcrossMonitorChanges), placement.SavedBoundsRemainVisibleAcrossMonitorChanges),
+			(nameof(saveGames.CorruptSaveMetadataDoesNotAbortDiscoveryOrChangeFiles), saveGames.CorruptSaveMetadataDoesNotAbortDiscoveryOrChangeFiles),
+			(nameof(saveGames.LooseArchiveSavesKeepOnlyTheirMatchingFiles), saveGames.LooseArchiveSavesKeepOnlyTheirMatchingFiles),
 			(nameof(saveGames.RecognizesEveryAdvertisedSaveArchiveFormat), saveGames.RecognizesEveryAdvertisedSaveArchiveFormat),
 			(nameof(saveGames.ClassifiesSaveDifficultyFromAuthoritativeRulesetValues), saveGames.ClassifiesSaveDifficultyFromAuthoritativeRulesetValues),
 			(nameof(saveGames.DiscoversSaveMetadataAndMatchingThumbnail), saveGames.DiscoversSaveMetadataAndMatchingThumbnail),

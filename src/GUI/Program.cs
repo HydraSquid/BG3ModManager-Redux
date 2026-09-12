@@ -111,9 +111,19 @@ internal class Program
 			}
 		}
 
-		using var activationCoordinator = NxmActivationCoordinator.CreateForExecutable(executablePath);
+		using var activationCoordinator = NxmActivationCoordinator.CreateForUser();
 		if (initialNxmLink != null
 			&& activationCoordinator.TryForwardAsync(initialNxmLink, TimeSpan.FromSeconds(3)).GetAwaiter().GetResult()) return;
+
+		using var instanceGuard = new ReduxInstanceGuard();
+		if (!instanceGuard.TryAcquire() || ReduxInstanceGuard.HasOlderRunningInstance())
+		{
+			if (initialNxmLink != null && activationCoordinator.TryForwardAsync(initialNxmLink, TimeSpan.FromSeconds(3)).GetAwaiter().GetResult()) return;
+			System.Windows.MessageBox.Show("Redux is already running. Close the other Redux window before opening this copy, even if it is a different version."
+				+ (initialNxmLink == null ? "" : "\n\nThe download link was not delivered. After choosing which copy to keep open, click Mod Manager Download on Nexus again."),
+				"Redux Is Already Running", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+			return;
+		}
 
 		var pendingActivations = new ConcurrentQueue<string>();
 		if (initialNxmLink != null) pendingActivations.Enqueue(initialNxmLink);

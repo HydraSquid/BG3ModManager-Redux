@@ -22,6 +22,7 @@ public partial class ReduxMessageBoxWindow : AdonisUI.Controls.AdonisWindow
 	public ReduxMessageBoxWindow(Window owner, string text, string caption, MessageBoxButton button, MessageBoxImage icon, MessageBoxResult defaultResult)
 	{
 		InitializeComponent();
+		ReduxWindowBehavior.AttachAdaptiveSizing(this);
 
 		if (owner != null && owner.IsLoaded)
 		{

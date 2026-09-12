@@ -5,7 +5,7 @@ to check before changing established behavior. The [changelog](CHANGELOG.md) rec
 the [issue tracker](https://github.com/circleainn/BG3ModManager-Redux/issues) tracks individual
 reports and proposals, and the source and tests remain authoritative for implementation details.
 
-Last reviewed: September 12, 2026, at release commit `9006c652`.
+Last reviewed: September 12, 2026, for `v0.1.0-alpha.16.3.5`.
 
 ## Current release
 
@@ -13,7 +13,7 @@ Last reviewed: September 12, 2026, at release commit `9006c652`.
 |:--|:--|
 | Product | Baldur's Gate 3 Mod Manager Redux |
 | Short name | Redux |
-| Latest version | `0.1.0-alpha.16.3.4` |
+| Latest version | `0.1.0-alpha.16.3.5` |
 | Lifecycle | Public alpha |
 | Supported platform | Windows 10/11 x64 |
 | Required runtime | .NET 8 Desktop Runtime |
@@ -23,8 +23,8 @@ Last reviewed: September 12, 2026, at release commit `9006c652`.
 | Update channel | `public-alpha` |
 | Active milestone | `v0.1.0 – Public Alpha` |
 
-The `dev` and `main` branches and the `v0.1.0-alpha.16.3.4` tag pointed to `9006c652` when this page
-was reviewed. Always verify the live branches and releases before preparing another publication.
+The release tag is `v0.1.0-alpha.16.3.5`. Always verify the live branches and releases before
+preparing another publication.
 
 ## What Redux is
 
@@ -173,7 +173,7 @@ The full publishing and recovery contract is in
 The issue tracker is the live source. At the time of this review, the public reports still needing
 attention were:
 
-- [#112 — Remember Window Position can produce a blank app on the next start](https://github.com/circleainn/BG3ModManager-Redux/issues/112)
+- Remembered window placement and save archive/discovery defects (#112, #114–116) are addressed in alpha.16.3.5.
 - [#95 — Elevation warning can appear unexpectedly](https://github.com/circleainn/BG3ModManager-Redux/issues/95), currently awaiting more reproduction information
 
 Accepted or proposed additions include:

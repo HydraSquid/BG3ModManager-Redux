@@ -185,15 +185,18 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 
 	private void UpdateWindowSettings()
 	{
-		if (!_isPreparingStartup && ViewModel?.Settings?.Loaded == true)
+		if (!_isPreparingStartup && WindowState != WindowState.Minimized && ViewModel?.Settings?.Loaded == true)
 		{
 			var win = ViewModel.Settings.Window;
 			win.Maximized = WindowState == WindowState.Maximized;
 
-			win.X = Left;
-			win.Y = Top;
-			win.Width = Width;
-			win.Height = Height;
+			var bounds = WindowState == WindowState.Normal
+				? new Rect(Left, Top, Width, Height) : RestoreBounds;
+			if (bounds.IsEmpty) return;
+			win.X = bounds.Left;
+			win.Y = bounds.Top;
+			win.Width = bounds.Width;
+			win.Height = bounds.Height;
 
 			win.Screen = Screen.AllScreens.IndexOf(Screen.FromHandle(_hwnd.Handle));
 		}
@@ -472,36 +475,18 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 
 		WindowStartupLocation = WindowStartupLocation.Manual;
 
-		if (win.Maximized)
-		{
-			if (win.Screen > -1)
-			{
-				var screens = Screen.AllScreens.ToArray();
-				if (win.Screen < screens.Length)
-				{
-					var screen = screens[win.Screen];
-					WindowHelper.SetWindowPosition(this, WpfScreenHelper.Enum.WindowPositions.Maximize, screen);
-				}
-			}
-			WindowState = WindowState.Maximized;
-		}
-		else if (win.X > -1 || win.Y > -1 || win.Width > -1 || win.Height > -1)
-		{
-			var winX = win.X;
-			var winY = win.Y;
-			var width = win.Width;
-			var height = win.Height;
-
-			if (width <= 0) win.Width = width = 1440;
-			if (height <= 0) win.Height = height = 900;
-			if (winX < 0) winX = Left;
-			if (winY < 0) winY = Top;
-
-			Width = width;
-			Height = height;
-			Left = winX;
-			Top = winY;
-		}
+		var screens = Screen.AllScreens.ToArray();
+		var fallback = win.Maximized && win.Screen >= 0 && win.Screen < screens.Length
+			? screens[win.Screen].WorkingArea : SystemParameters.WorkArea;
+		var workAreas = win.Maximized ? new[] { fallback } : screens.Select(screen => screen.WorkingArea).ToArray();
+		var bounds = WindowPlacementPolicy.Restore(win, workAreas,
+			fallback, new Size(Width, Height));
+		WindowState = WindowState.Normal;
+		Width = bounds.Width;
+		Height = bounds.Height;
+		Left = bounds.Left;
+		Top = bounds.Top;
+		if (win.Maximized) WindowState = WindowState.Maximized;
 	}
 
 	public void ToggleWindowPositionSaving(bool b)
@@ -944,6 +929,8 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 	private void BringNexusDownloadsToFront()
 	{
 		if (_nexusDownloadsWindow == null) return;
+		ShowActivated = true;
+		_nexusDownloadsWindow.ShowActivated = true;
 		if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
 		Show();
 		Activate();

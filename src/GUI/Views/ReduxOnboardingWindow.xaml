@@ -146,7 +146,7 @@
 									Text="Welcome to BG3 Mod Manager Redux" />
 								<TextBlock Margin="0,4,0,0"
 									Foreground="{DynamicResource ReduxTextSecondaryBrush}"
-									Text="This is an early preview, so features may change or need more work. Choose a starting setup below; you can change everything later in Preferences."
+									Text="Redux is in public alpha. Choose a starting setup below."
 									TextWrapping="Wrap" />
 							</StackPanel>
 						</Grid>
@@ -226,7 +226,7 @@
 								<TextBlock Style="{StaticResource WelcomeSectionTitleStyle}" Text="A quick map of Redux" />
 								<TextBlock Margin="0,3,0,0"
 									Foreground="{DynamicResource ReduxTextMutedBrush}"
-									Text="The essentials stay close at hand; deeper tools remain available when you need them."
+									Text="Start with your mods and load order."
 									TextWrapping="Wrap" />
 								<Grid Margin="0,9,0,0">
 									<Grid.ColumnDefinitions>
@@ -240,7 +240,7 @@
 										<StackPanel>
 											<controls:ReduxIcon Width="17" Height="17" HorizontalAlignment="Left" Foreground="{DynamicResource ReduxAccentHoverBrush}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{DynamicResource Redux.Icon.ReorderStroke}" />
 											<TextBlock Margin="0,7,0,0" Style="{StaticResource WelcomeChoiceTitleStyle}" Text="Arrange with confidence" />
-											<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}" Text="Install mods, organize categories and separators, then undo or redo list changes when needed." />
+											<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}" Text="Install and organize mods with categories, separators, and Undo/Redo." />
 										</StackPanel>
 									</Border>
 									<Border Grid.Column="2" Style="{StaticResource WelcomeFeatureCardStyle}">
@@ -305,7 +305,7 @@
 										<StackPanel Grid.Column="1">
 											<TextBlock Style="{StaticResource WelcomeChoiceTitleStyle}" Text="Keep installed package archives" />
 											<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}"
-												Text="Optional and off by default. Keep verified packages in a deduplicated archive library for reinstalling later. This uses additional disk space and can be changed in Preferences." />
+												Text="Keep verified packages for reinstalling later. Off by default; uses additional disk space." />
 										</StackPanel>
 									</Grid>
 								</CheckBox>
@@ -361,7 +361,7 @@
 											<TextBlock Grid.Column="1"
 												FontSize="{DynamicResource Redux.FontSize.11}"
 												Foreground="{DynamicResource ReduxTextMutedBrush}"
-												Text="Source linking has limitations. Links are most reliable when mods primarily come from one provider, are installed into Redux from their original archives, or are linked manually. Mixing Nexus Mods and mod.io entries is supported, but some links may need to be corrected manually."
+												Text="Nexus Mods and mod.io can be used together. Import original archives for more reliable source links; incorrect links can be corrected manually."
 												TextWrapping="Wrap" />
 										</Grid>
 									</StackPanel>
@@ -383,7 +383,7 @@
 											<controls:ReduxIcon Width="17" Height="17" Margin="0,1,9,0" Foreground="{DynamicResource ReduxAccentHoverBrush}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{DynamicResource Redux.Icon.Flash}" />
 											<StackPanel Grid.Column="1">
 												<TextBlock Style="{StaticResource WelcomeChoiceTitleStyle}" Text="Reduce motion" />
-												<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}" Text="Remove sliding, scaling, smooth scrolling, and animated window or menu transitions while keeping clear interface feedback." />
+												<TextBlock Style="{StaticResource WelcomeChoiceDescriptionStyle}" Text="Turn off movement and animated transitions while keeping clear feedback." />
 											</StackPanel>
 										</Grid>
 									</CheckBox>

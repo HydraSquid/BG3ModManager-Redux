@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 
-using Microsoft.Win32.SafeHandles;
 
 namespace DivinityModManager.Util;
 
@@ -21,12 +19,18 @@ public enum ProcessElevationState
 public readonly record struct ProcessElevationInfo(ProcessElevationState State, int Win32Error = 0)
 {
 	public bool IsElevated => State == ProcessElevationState.Elevated;
+	public int? TokenElevationType { get; init; }
 }
 
 public static partial class ProcessHelper
 {
+	// GetCurrentProcessToken() is an inline Windows SDK helper returning this
+	// pseudo-handle. It always refers to the primary process token, including
+	// while the calling thread impersonates another identity. Do not close it.
+	private static readonly IntPtr CurrentProcessToken = new(-4);
 	private enum TokenInformationClass
 	{
+		TokenElevationType = 18,
 		TokenElevation = 20
 	}
 
@@ -39,11 +43,16 @@ public static partial class ProcessHelper
 	[LibraryImport("advapi32.dll", SetLastError = true)]
 	[return: MarshalAs(UnmanagedType.Bool)]
 	private static partial bool GetTokenInformation(
-		SafeAccessTokenHandle tokenHandle,
+		IntPtr tokenHandle,
 		TokenInformationClass tokenInformationClass,
 		out TokenElevation tokenInformation,
 		uint tokenInformationLength,
 		out uint returnLength);
+
+	[LibraryImport("advapi32.dll", EntryPoint = "GetTokenInformation", SetLastError = true)]
+	[return: MarshalAs(UnmanagedType.Bool)]
+	private static partial bool GetTokenInteger(IntPtr tokenHandle, TokenInformationClass informationClass,
+		out int value, uint size, out uint returnedSize);
 
 	/// <summary>
 	/// Suppresses PlatformNotSupportedException
@@ -161,17 +170,22 @@ public static partial class ProcessHelper
 		if (!OperatingSystem.IsWindows()) return new ProcessElevationInfo(ProcessElevationState.Unknown);
 		try
 		{
-			using var identity = WindowsIdentity.GetCurrent(TokenAccessLevels.Query);
 			var size = (uint)Marshal.SizeOf<TokenElevation>();
-			if (!GetTokenInformation(identity.AccessToken, TokenInformationClass.TokenElevation,
-				out var elevation, size, out _))
+			if (!GetTokenInformation(CurrentProcessToken, TokenInformationClass.TokenElevation,
+				out var elevation, size, out var returnedSize))
 			{
 				return new ProcessElevationInfo(ProcessElevationState.Unknown, Marshal.GetLastWin32Error());
 			}
+			if (returnedSize != size)
+				return new ProcessElevationInfo(ProcessElevationState.Unknown, 13); // ERROR_INVALID_DATA
 
+			// Supplementary diagnostics only: Default/Full/Limited (1/2/3) must not
+			// replace the primary token's actual elevation flag when deciding to warn.
+			int? elevationType = GetTokenInteger(CurrentProcessToken, TokenInformationClass.TokenElevationType,
+				out var type, sizeof(int), out var typeSize) && typeSize == sizeof(int) ? type : null;
 			return new ProcessElevationInfo(elevation.TokenIsElevated != 0
 				? ProcessElevationState.Elevated
-				: ProcessElevationState.Standard);
+				: ProcessElevationState.Standard) { TokenElevationType = elevationType };
 		}
 		catch (Exception ex)
 		{

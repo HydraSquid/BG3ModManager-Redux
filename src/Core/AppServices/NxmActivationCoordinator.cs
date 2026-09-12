@@ -27,6 +27,8 @@ public sealed class NxmActivationCoordinator : IDisposable
 
 	public static NxmActivationCoordinator CreateForExecutable(string executablePath) =>
 		new(executablePath ?? throw new ArgumentNullException(nameof(executablePath)));
+	public static NxmActivationCoordinator CreateForUser() =>
+		new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BG3ModManagerRedux", "shared-instance"));
 
 	public bool StartListening(Func<string, Task> handler)
 	{

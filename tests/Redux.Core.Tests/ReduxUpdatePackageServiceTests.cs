@@ -93,7 +93,17 @@ public sealed class ReduxUpdatePackageServiceTests
 		try
 		{
 			var oldTransaction = Path.Combine(root, "0.1.0-alpha.15-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-			var freshTransaction = Path.Combine(root, "0.1.0-alpha.15-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+			var maintenance = new[] { "16.4", "16.3.4" }.Select(version =>
+				Path.Combine(root, "0.1.0-alpha." + version + "-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")).ToArray();
+			foreach (var path in maintenance)
+			{
+				Directory.CreateDirectory(path);
+				Directory.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddDays(-8));
+			}
+			var malformed = Path.Combine(root, "0.1.0-alpha.16.3.4.5-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+			Directory.CreateDirectory(malformed);
+			Directory.SetLastWriteTimeUtc(malformed, DateTime.UtcNow.AddDays(-8));
+			var freshTransaction = Path.Combine(root, "0.1.0-alpha.16.3.4-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
 			var unrelated = Path.Combine(root, "user-folder");
 			Directory.CreateDirectory(oldTransaction);
 			Directory.CreateDirectory(freshTransaction);
@@ -104,6 +114,8 @@ public sealed class ReduxUpdatePackageServiceTests
 			_ = new ReduxUpdatePackageService(client, root);
 
 			RegressionAssert.False(Directory.Exists(oldTransaction));
+			foreach (var path in maintenance) RegressionAssert.False(Directory.Exists(path));
+			RegressionAssert.True(Directory.Exists(malformed));
 			RegressionAssert.True(Directory.Exists(freshTransaction));
 			RegressionAssert.True(Directory.Exists(unrelated));
 		}

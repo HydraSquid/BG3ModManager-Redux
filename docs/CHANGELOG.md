@@ -3,9 +3,44 @@
 This file summarizes user-visible Redux releases. The issue tracker and Git history remain the
 source for individual implementation details.
 
-## Unreleased
+## 0.1.0-alpha.16.3.5 — silent public-alpha maintenance release
 
-No additional changes are queued after alpha.16.3.4.
+### Changed
+
+- Same-version reinstalls keep their placement and skip the clean-package review. Batch rows
+  describe each package's action, and PAK counts sit with the other download metadata.
+- Show a What's New window with GitHub release notes after an update.
+- Prevent another Redux copy from starting for the same user session, including other versions;
+  NXM links are routed to the running instance when it supports shared activation.
+  Older releases cannot enforce this guard when launched after an updated copy.
+- Show modal package progress throughout Install All, including preparation, and prevent
+  conflicting workspace actions until the batch finishes. Download Manager's toolbar icon uses
+  semantic success, warning, and error colors with explanatory tooltips.
+- Nexus links can start downloads with a small notification without opening Download Manager
+  or taking focus. Quiet handling is the default for new settings; saved foreground preferences
+  are preserved. A quiet NXM launch starts Redux minimized.
+- Download toasts appear above the taskbar for starts and completions, then fade away after
+  four seconds. Click a toast to open Download Manager; reduced motion disables the fades.
+- Remove routine download and clean new-mod installation confirmations. Updates, replacements,
+  and packages requiring review still prompt before installation. Explain missing Nexus setup
+  separately from Windows NXM link association.
+- Simplify the update window with scrolling details and a consistent action footer, and avoid
+  repeating its results in notification banners.
+- Shorten onboarding explanations and let shared confirmation dialogs resize and wrap their
+  actions when space is limited.
+
+### Fixed
+
+- Allow Download Manager to bring a maximized Redux window forward after a quiet startup.
+- Read administrator elevation from the primary process token rather than a possible thread
+  impersonation token, and log the token elevation type to help investigate unexpected warnings.
+- Keep secondary-window content transparent through dismissal and prevent repeated or canceled
+  close requests from starting competing transitions.
+- Restore remembered window bounds on-screen, including monitors to the left of or above the
+  primary display, and recover safely when saved bounds are unusable or a monitor is disconnected.
+- Keep Save Game Manager discovery working when a save has an invalid package signature.
+- Import loose saves from an archive into separate folders with only their matching thumbnails.
+- Clean up eligible abandoned update folders for maintenance versions as well as single-part alphas.
 
 ## 0.1.0-alpha.16.3.4 — silent public-alpha maintenance release
 

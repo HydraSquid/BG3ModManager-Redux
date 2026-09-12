@@ -67,8 +67,26 @@ internal static class Program
 		var forkTableStriping = new ForkTableStripingTests();
 		var downloadsPane = new NxmDownloadsPaneTests();
 		var gameDirectoryManager = new ReduxGameDirectoryModManagerWindowTests();
+		var nexusModUpdates = new NexusModUpdateTests();
 		var tests = new (string Name, Action Run)[]
 		{
+			(nameof(nexusModUpdates.NexusUpdateFollowsReplacementChainInsteadOfNewestOptionalFile), nexusModUpdates.NexusUpdateFollowsReplacementChainInsteadOfNewestOptionalFile),
+			(nameof(nexusModUpdates.NexusUpdateAmbiguousMissingAndCyclicFilesRequireReview), nexusModUpdates.NexusUpdateAmbiguousMissingAndCyclicFilesRequireReview),
+			(nameof(nexusModUpdates.NexusUpdateWeakProjectIdentityCannotClaimAnInstalledFile), nexusModUpdates.NexusUpdateWeakProjectIdentityCannotClaimAnInstalledFile),
+			(nameof(nexusModUpdates.NexusUpdateChecksDeduplicateProjectsAndPaceRequests), nexusModUpdates.NexusUpdateChecksDeduplicateProjectsAndPaceRequests),
+			(nameof(nexusModUpdates.NexusUpdateCacheSurvivesRestartAndReevaluatesInstalledFile), nexusModUpdates.NexusUpdateCacheSurvivesRestartAndReevaluatesInstalledFile),
+			(nameof(nexusModUpdates.NexusUpdateMissingIdentityOrDisabledProviderMakesNoRequests), nexusModUpdates.NexusUpdateMissingIdentityOrDisabledProviderMakesNoRequests),
+			(nameof(nexusModUpdates.NexusUpdateRateLimitStopsOtherProjectsAndSurvivesRestart), nexusModUpdates.NexusUpdateRateLimitStopsOtherProjectsAndSurvivesRestart),
+			(nameof(nexusModUpdates.NexusUpdateFailedRefreshDoesNotClaimCurrentOrEraseCheckTime), nexusModUpdates.NexusUpdateFailedRefreshDoesNotClaimCurrentOrEraseCheckTime),
+			(nameof(nexusModUpdates.NexusUpdateCancellationPersistsAttemptCooldown), nexusModUpdates.NexusUpdateCancellationPersistsAttemptCooldown),
+			(nameof(nexusModUpdates.NexusUpdateLockedCacheCannotStartDuplicateRequests), nexusModUpdates.NexusUpdateLockedCacheCannotStartDuplicateRequests),
+			(nameof(nexusModUpdates.NexusUpdateInvalidCacheShowsWarningWithoutRequests), nexusModUpdates.NexusUpdateInvalidCacheShowsWarningWithoutRequests),
+			(nameof(nexusModUpdates.NexusUpdateSlowCacheWriteCannotConsumeRequestPacing), nexusModUpdates.NexusUpdateSlowCacheWriteCannotConsumeRequestPacing),
+			(nameof(nexusModUpdates.NexusUpdateLongServerBackoffSurvivesRestart), nexusModUpdates.NexusUpdateLongServerBackoffSurvivesRestart),
+			(nameof(nexusModUpdates.NexusFileApiUsesFixedEndpointAndDiscardsUnneededRemoteData), nexusModUpdates.NexusFileApiUsesFixedEndpointAndDiscardsUnneededRemoteData),
+			(nameof(nexusModUpdates.NexusFileApiHonorsRetryAfterAndDoesNotExposeErrorBody), nexusModUpdates.NexusFileApiHonorsRetryAfterAndDoesNotExposeErrorBody),
+			(nameof(nexusModUpdates.NexusFileApiRejectsMalformedAndOversizedResponses), nexusModUpdates.NexusFileApiRejectsMalformedAndOversizedResponses),
+			(nameof(nexusModUpdates.NexusUpdateWindowShowsReviewAndReplacementWithinCompactBounds), nexusModUpdates.NexusUpdateWindowShowsReviewAndReplacementWithinCompactBounds),
 			(nameof(nxmImporter.RegisteredModelFailureRestoresLibraryPlacementOrdersAndSourceCaches), nxmImporter.RegisteredModelFailureRestoresLibraryPlacementOrdersAndSourceCaches),
 			(nameof(nxmImporter.CleanupFailureDoesNotRollbackCommittedFiles), nxmImporter.CleanupFailureDoesNotRollbackCommittedFiles),
 			(nameof(source.NexusImportPersistsManualModioRemovalBeforeReload), source.NexusImportPersistsManualModioRemovalBeforeReload),

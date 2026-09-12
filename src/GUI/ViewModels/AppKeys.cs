@@ -106,7 +106,7 @@ public class AppKeys : ReactiveObject
 	[MenuSettings("File", "Refresh Mods", false, "Rescan the configured Mods folder and refresh the mod lists.")]
 	public Hotkey Refresh { get; private set; } = new Hotkey(Key.F5);
 
-	[MenuSettings("File", "Refresh Mod Updates")]
+	[MenuSettings("File", "Refresh Online Mod Information")]
 	public Hotkey RefreshModUpdates { get; private set; } = new Hotkey(Key.None);
 
 	[MenuSettings("Edit", "Undo Last Action", false,
@@ -196,6 +196,10 @@ public class AppKeys : ReactiveObject
 		false,
 		"Inspect and install local packages or files received through Nexus Mod Manager Download links.")]
 	public Hotkey OpenNexusDownloads { get; private set; } = new Hotkey(Key.None);
+
+	[MenuSettings("Tools", "Check Nexus Mod Updates...", false,
+		"Manually check installed Nexus files for replacements. Project checks are cached for 24 hours.")]
+	public Hotkey CheckNexusModUpdates { get; private set; } = new Hotkey(Key.None);
 
 	[MenuSettings("Go", "Open Mods Folder", false, "Open the configured Baldur's Gate 3 Mods folder.")]
 	public Hotkey OpenModsFolder { get; private set; } = new Hotkey(Key.D1, ModifierKeys.Control);

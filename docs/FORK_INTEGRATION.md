@@ -17,6 +17,7 @@ before this merge; the integrated tree retains the differences below.
 | Layout | Adjacent-only pane resizing with responsive sizing and persisted Downloads visibility/width. Override Mods has a height-resize handle, minimum list heights, and a chosen height retained across collapse/expand during the session. Downloads uses the shared pane-header arrow. |
 | Themes | Theme-aware alternating table rows, retaining upstream's current fonts, palettes, gradients, and transitions. |
 | Sources | Unified BG3 mod.io and Nexus page linking without a mandatory API key; explicit manual choices and persistent unlinks survive cache reload. Reviewed upstream catalog provenance may outrank incidental native mod.io identity; weaker creator-manifest guesses do not. |
+| Nexus updates | Manual, paced file-replacement checks with a 24-hour project cache, rate-limit backoff and conservative file identity. See [manual update checking](FORK_NEXUS_UPDATES.md). |
 | Activation/shutdown | Restore activation after offscreen startup; require successful settings and queue persistence before closing. |
 | Native compatibility | Read BG3 ProductVersion rather than FileVersion; recognize validated legacy native ownership records. |
 

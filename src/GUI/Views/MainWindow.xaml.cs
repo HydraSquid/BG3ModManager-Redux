@@ -872,6 +872,8 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 				ViewModel.WhenAnyValue(x => x.Settings.GameExecutablePath)
 					.Select(_ => ReduxGameDirectoryModManagerWindow.CanOpen(ViewModel)));
 			ViewModel.Keys.OpenNexusDownloads.AddAction(() => _ = OpenNexusDownloadsAsync());
+			ViewModel.Keys.CheckNexusModUpdates.AddAction(() =>
+				ReduxWindowBehavior.ShowDialogWithOwnerBackdrop(new NexusModUpdatesWindow(this, ViewModel), this));
 			ViewModel.Keys.OpenAboutWindow.AddAction(ToggleAboutWindow);
 
 			ViewModel.Keys.ToggleVersionGeneratorWindow.AddAction(() =>

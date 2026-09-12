@@ -3,6 +3,14 @@
 This file summarizes user-visible Redux releases. The issue tracker and Git history remain the
 source for individual implementation details.
 
+## Unreleased
+
+### Changed
+
+- Add subtle alternating table-row backgrounds, including mod lists, using the active theme's
+  text color. Dark, Light, Parchment, and custom themes share the same treatment; hover and
+  selection retain their existing highlights.
+
 ## 0.1.0-alpha.16.3.5 — silent public-alpha maintenance release
 
 ### Changed

@@ -17,6 +17,7 @@ internal static class Program
 		_ = Application.Current ?? new Application();
 
 		var dialogLayout = new DialogLayoutTests();
+		var tableStriping = new TableStripingTests();
 		var releaseFlow = new ReleaseFlowTests();
 		var batchInstallUi = new BatchInstallUiTests();
 		var downloadNotification = new DownloadNotificationTests();
@@ -70,6 +71,8 @@ internal static class Program
 		var releaseVersions = new ReleaseVersionContractTests();
 		var tests = new (string Name, Action Run)[]
 		{
+			(nameof(tableStriping.TableRowsAlternateAcrossBuiltInAndLiveCustomThemes), tableStriping.TableRowsAlternateAcrossBuiltInAndLiveCustomThemes),
+			(nameof(tableStriping.ModRowsAlternateAfterFilteringReorderingAndRecycling), tableStriping.ModRowsAlternateAfterFilteringReorderingAndRecycling),
 			(nameof(releaseVersions.ApplicationAndBinaryVersionsIdentifyTheSameAlphaRelease), releaseVersions.ApplicationAndBinaryVersionsIdentifyTheSameAlphaRelease),
 			(nameof(updateTransaction.TransactionReplacesOwnedFilesAndPreservesUserFiles), updateTransaction.TransactionReplacesOwnedFilesAndPreservesUserFiles),
 			(nameof(updateTransaction.FailedReplacementRollsBackFilesChangedEarlierInTheTransaction), updateTransaction.FailedReplacementRollsBackFilesChangedEarlierInTheTransaction),

@@ -178,6 +178,7 @@ attention were:
 
 Accepted or proposed additions include:
 
+- [#113 — Streamline windows, warnings, and explanatory text](https://github.com/circleainn/BG3ModManager-Redux/issues/113)
 - [#111 — Separators and orders for Inactive Mods](https://github.com/circleainn/BG3ModManager-Redux/issues/111)
 - [#110 — Improve compatibility with Wine and Linux desktops](https://github.com/circleainn/BG3ModManager-Redux/issues/110)
 - [#109 — Manage Override mods when switching saved load orders](https://github.com/circleainn/BG3ModManager-Redux/issues/109)

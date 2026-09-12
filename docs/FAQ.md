@@ -35,9 +35,10 @@ releases are portable-only; they do not create an Installed Apps entry or system
 
 ## Why is the application called `Redux.exe`?
 
-Alpha.15 adopted the short product name for the desktop runtime. Windows shortcuts and Installed
-Apps still use **BG3 Mod Manager Redux**, while the application file is `Redux.exe`. The old
-`BG3ModManager.exe` name belongs to private-alpha builds.
+Alpha.15 adopted the short product name for the desktop runtime. The product and window titles use
+**BG3 Mod Manager Redux**, while the application file is `Redux.exe`. The old
+`BG3ModManager.exe` name belongs to private-alpha builds. Current portable releases do not create
+an Installed Apps entry; one may remain only from a retired Setup build.
 
 ## Can Redux run beside upstream BG3 Mod Manager?
 

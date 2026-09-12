@@ -38,9 +38,6 @@ Release, updater, runtime-name, or packaged-document changes require the complet
 git diff --check
 ```
 
-The retained Setup prototype is not a public artifact. Changes inside `src/Installer` or its tests
-must additionally run `Build-Installer.ps1 -Configuration Release -RunTests`.
-
 The Publish build creates the portable ZIP and update-channel manifest locally; it does not publish
 a GitHub release. Do not commit generated archives, build directories, logs, user settings, or local
 test fixtures.

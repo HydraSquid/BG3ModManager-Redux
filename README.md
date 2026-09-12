@@ -377,13 +377,13 @@ manifest is unavailable. Imported fonts and PNG icons remain the user's responsi
 | Guide | Audience | Purpose |
 |:--|:--|:--|
 | [Documentation index](docs/README.md) | Everyone | Find the right user, author, or maintainer guide |
-| [Project status and roadmap](docs/PROJECT_STATUS.md) | Everyone | See the current public-alpha position, release gate, and planned work |
+| [Current project state](docs/CURRENT_STATE.md) | Everyone | See the current release, settled decisions, known limits, and planned work |
 | [Installation and updates](docs/INSTALLATION.md) | Users | Install, upgrade, move, roll back, or remove Redux safely |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Users and testers | Recover from common startup, path, download, and sync problems |
 | [Privacy and local data](docs/PRIVACY_AND_DATA.md) | Everyone | Understand stored data, network requests, logs, and safe sharing |
 | [Changes from upstream](docs/CHANGES_FROM_UPSTREAM.md) | Users and contributors | Understand what Redux retains and changes |
 | [Architecture](docs/ARCHITECTURE.md) | Contributors | Understand project boundaries, major components, and validation paths |
-| [Optional features](docs/REDUX_OPTIONAL_MODULES.md) | Contributors | Understand feature boundaries and safety rules |
+| [Diagnostics and optional features](docs/REDUX_OPTIONAL_MODULES.md) | Users and contributors | Understand diagnostics, online information, and advisor boundaries |
 | [Redux mod database](docs/REDUX_MOD_DATABASE.md) | Contributors and maintainers | Recognition, advisor knowledge, and reports |
 | [Mod developer tools](docs/MOD_DEVELOPER_TOOLS.md) | Mod authors | Inspect releases before distribution |
 | [Creator manifest](docs/REDUX_CREATOR_MANIFEST.md) | Mod authors | Add a validated source identity to a PAK |

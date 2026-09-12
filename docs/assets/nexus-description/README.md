@@ -1,4 +1,4 @@
-# Nexus description dividers
+# Nexus description artwork
 
 These images are the code-rendered section dividers used by the public BG3 Mod Manager Redux Nexus Mods description.
 

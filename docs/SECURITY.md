@@ -45,4 +45,4 @@ inventory. Unlisted local files are outside its ownership boundary.
 
 Public releases are distributed as portable ZIPs. Fresh installations are explicit extractions into
 a user-chosen writable folder; no public bootstrapper receives authority to choose or register an
-installation path. The retained installer source is outside the current public distribution surface.
+installation path. The retired installer source is not retained in the repository.

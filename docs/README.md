@@ -1,50 +1,53 @@
 # Redux documentation
 
-Use this page to find the smallest guide that answers your question. The main
-[project README](../README.md) is the best starting point for installing, testing, or getting a
-quick picture of Redux.
+The main [project README](../README.md) introduces Redux and its major features. The guides below
+cover installation, troubleshooting, privacy, mod-author tools, and project development in more
+detail.
 
-## Choose a path
+## Using Redux
 
-| I want to… | Start here |
+| Guide | What it covers |
 |:--|:--|
-| Understand Redux as a user | [Project README](../README.md) |
-| See the current release state and roadmap | [Project status and roadmap](PROJECT_STATUS.md) |
-| Install, update, move, roll back, or remove Redux | [Installation and updates](INSTALLATION.md) |
-| Verify or recover a public-alpha release | [Public-alpha releases and update recovery](PUBLIC_ALPHA_RELEASES.md) |
-| Find a concise answer to a common question | [Frequently asked questions](FAQ.md) |
-| Fix a startup, path, download, or sync problem | [Troubleshooting](TROUBLESHOOTING.md) |
-| Understand what Redux stores or sends | [Privacy and local data](PRIVACY_AND_DATA.md) |
-| Ask for help or report a problem | [Support](SUPPORT.md) |
-| See what Redux retains and changes from BG3MM | [Changes from upstream](CHANGES_FROM_UPSTREAM.md) |
-| Understand diagnostics, online information, or the Load Order Advisor | [Feature boundaries](REDUX_OPTIONAL_MODULES.md) |
-| Help improve offline mod recognition | [Redux mod database](REDUX_MOD_DATABASE.md) |
-| Check a PAK or release archive before publishing it | [Mod developer tools](MOD_DEVELOPER_TOOLS.md) |
-| Understand native and root-level install safeguards | [Changes from upstream](CHANGES_FROM_UPSTREAM.md#game-directory-mod-management) |
-| Understand NXM handling and download safeguards | [Changes from upstream](CHANGES_FROM_UPSTREAM.md#nexus-mod-manager-downloads) |
-| Add stable provider identity to a PAK | [Creator manifest](REDUX_CREATOR_MANIFEST.md) |
-| Understand the codebase and safety boundaries | [Architecture](ARCHITECTURE.md) |
+| [Current project state](CURRENT_STATE.md) | Current release, settled decisions, known limits, and planned work |
+| [Installation and updates](INSTALLATION.md) | Install, update, move, roll back, or remove the portable app |
+| [Frequently asked questions](FAQ.md) | Short answers about everyday Redux behavior |
+| [Troubleshooting](TROUBLESHOOTING.md) | Startup, paths, downloads, NXM links, packages, and game sync |
+| [Privacy and local data](PRIVACY_AND_DATA.md) | Stored data, network requests, credentials, logs, and safe sharing |
+| [Support](SUPPORT.md) | Where to ask for help and what to include in a report |
 
-## Author and maintainer references
+## Understanding Redux
 
-- [Creator manifest JSON schema](schemas/redux.mod.schema.json)
-- [Database maintenance CLI and desktop reviewer](../tools/ReduxModDatabaseTool/README.md)
-- [Windows build and regression workflow](../.github/workflows/windows-ci.yml)
-- [Third-party notices](../licenses/Third-Party-Notices.md)
-- [Contribution guide](CONTRIBUTING.md)
-- [Security policy](SECURITY.md)
-- [Changelog](CHANGELOG.md)
-- [Alpha.16.3.4 release notes](releases/0.1.0-alpha.16.3.4.md)
-- [Alpha.16.3.3 release notes](releases/0.1.0-alpha.16.3.3.md)
-- [Alpha.16.3.2 release notes](releases/0.1.0-alpha.16.3.2.md)
-- [Alpha.16.3.1 release notes](releases/0.1.0-alpha.16.3.1.md)
-- [Alpha.16.3 release notes](releases/0.1.0-alpha.16.3.md)
-- [Alpha.16.2 release notes](releases/0.1.0-alpha.16.2.md)
-- [Alpha.16.1 release notes](releases/0.1.0-alpha.16.1.md)
-- [Alpha.16 release notes](releases/0.1.0-alpha.16.md)
-- [Alpha.15 release notes](releases/0.1.0-alpha.15.md)
+| Guide | What it covers |
+|:--|:--|
+| [Changes from BG3 Mod Manager](CHANGES_FROM_UPSTREAM.md) | What Redux keeps, changes, and adds |
+| [Diagnostics and optional features](REDUX_OPTIONAL_MODULES.md) | Mod Diagnostics, online information, and Load Order Advisor boundaries |
+| [Redux mod database](REDUX_MOD_DATABASE.md) | Offline recognition, advisor knowledge, and contribution reports |
+| [Changelog](CHANGELOG.md) | Chronological release history |
 
-## Terms used throughout the docs
+## For mod authors
+
+| Guide | What it covers |
+|:--|:--|
+| [Mod developer tools](MOD_DEVELOPER_TOOLS.md) | Inspect a PAK or release archive before publishing |
+| [Creator manifest](REDUX_CREATOR_MANIFEST.md) | Add validated public source identity to a PAK |
+| [Creator manifest schema](schemas/redux.mod.schema.json) | Machine-readable `redux.mod.json` format |
+
+## For contributors and maintainers
+
+| Guide | What it covers |
+|:--|:--|
+| [Contributing](CONTRIBUTING.md) | Build, test, documentation, and pull-request expectations |
+| [Architecture](ARCHITECTURE.md) | Major components, ownership boundaries, and safe write patterns |
+| [Release process and update recovery](PUBLIC_ALPHA_RELEASES.md) | Versioning, packaging, publishing, verification, and recovery |
+| [Security policy](SECURITY.md) | Supported versions, reporting, and security boundaries |
+| [Third-party notices](../licenses/Third-Party-Notices.md) | Bundled dependencies, licenses, and attribution |
+| [Database tools](../tools/ReduxModDatabaseTool/README.md) | Preview-first database maintenance tools |
+
+Release notes in [`releases/`](releases/) are historical records for specific versions. They may
+describe older distribution methods or limitations that no longer apply. Use the current guides
+above for present-day instructions.
+
+## Terms used in these guides
 
 - **Mod Diagnostics** means the built-in, read-only checks that explain package and dependency
   conditions.
@@ -52,15 +55,11 @@ quick picture of Redux.
 - **Separator** means a Redux visual grouping marker. Separators never enter `modsettings.lsx`.
 - **Redux Modlist** means the portable `.bg3redux` format. It does not contain PAKs or saves.
 - **Contribution report** means a privacy-limited `.bg3redux-report` prepared for database review.
-- **Game-directory mod** means a reviewed native or root-level package installed outside the normal
-  PAK Mods folder and managed through Redux's separate guarded workflow.
-- **Download Manager** means Redux's shared local-package and optional NXM acquisition inbox.
-- **Package Archive Library** means the separate, opt-in, quota-limited store of verified install
-  packages available from Download Manager's Archives tab.
-  Acquisition remains separate from package inspection, installation, activation, ordering, and
-  game sync.
+- **Game-directory mod** means a reviewed native or root-level package managed outside the normal
+  PAK Mods folder.
+- **Download Manager** means the shared local-package and optional NXM acquisition inbox.
+- **Package Archive Library** means the separate, opt-in store of verified installation packages.
 
 > [!IMPORTANT]
-> Review logs, screenshots, and reports before sharing them. Contribution reports are designed to
-> exclude credentials and private paths, but API keys or other private information should never be
-> posted publicly.
+> Review logs, screenshots, and reports before sharing them. Never post API keys, temporary download
+> links, private paths, saves, or somebody else's mod files.

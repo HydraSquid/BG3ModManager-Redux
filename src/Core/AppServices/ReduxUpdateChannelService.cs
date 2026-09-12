@@ -8,8 +8,8 @@ namespace DivinityModManager.AppServices;
 /// <summary>
 /// Reads Redux's fixed public-alpha channel endpoint without blocking application startup.
 /// Parsing, release URL validation, version ordering, and artifact verification remain in
-/// <see cref="ReduxUpdateManifestService"/> so the app and standalone web installer can
-/// share one release contract.
+/// <see cref="ReduxUpdateManifestService"/> so network retrieval stays separate from validation
+/// and package verification.
 /// </summary>
 public sealed class ReduxUpdateChannelService
 {

@@ -1,4 +1,4 @@
-# Public-alpha releases and update recovery
+# Release process and update recovery
 
 This page documents Redux's public release contract so maintainers, contributors, and users can
 verify what the in-app updater is allowed to download. It does not replace testing
@@ -11,9 +11,10 @@ maintenance release.
 Each public alpha has an immutable version and a matching Git tag such as
 `v0.1.0-alpha.16.2`. A correction to an already-published alpha uses a hotfix suffix such as
 `0.1.0-alpha.16.1`, then `.16.2`; a quiet correction to one of those hotfixes may add a maintenance
-suffix such as `.16.3.1`. These versions do not replace earlier release files. The next planned
-alpha remains `0.1.0-alpha.17`. Starting with alpha.16.2, the public artifact
-set contains:
+suffix such as `.16.3.1`. These versions do not replace earlier release files. Choose the next
+version during release preparation from the announcement and compatibility rules below; a local
+archive or experimental build does not reserve a public version. Starting with alpha.16.2, the
+public artifact set contains:
 
 - `BG3ModManager-Redux_v0.1.0-alpha.N[.H[.M]].zip`, the versioned portable application; and
 - release notes for that exact version.

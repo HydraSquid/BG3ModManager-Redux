@@ -10,10 +10,8 @@ not replace code, tests, schemas, or security validation.
 | Desktop application | `src/GUI/GUI.csproj` | WPF windows, controls, themes, interaction, app composition; builds `Redux.exe` / `Redux.dll` |
 | Core | `src/Core/DivinityModManagerCore.csproj` | Models, persistence, package/load-order logic, diagnostics, downloads, native installs, updates |
 | Updater | `src/Updater/ReduxUpdater.csproj` | Narrow out-of-process application-file replacement and rollback |
-| Dormant Setup prototype | `src/Installer/ReduxInstaller.csproj` | Retained install/update prototype; not part of the current portable-only public distribution |
 | Toolbox | `src/Toolbox/Toolbox.csproj` | Retained utility and Script Extender support code |
 | Runtime regression suite | `tests/Redux.Core.Tests` | Executable behavioral checks for core and WPF contracts |
-| Installer regression suite | `tests/Redux.Installer.Tests` | Retained checks for the dormant Setup prototype |
 | Database tools | `tools/ReduxModDatabaseTool*` | Preview-first validation and reviewed offline-database maintenance |
 
 `External/` contains the upstream and vendored dependencies required by the inherited BG3MM/LSLib
@@ -75,8 +73,7 @@ Publish packaging produces one portable ZIP and an inventory of release-owned fi
 updater accepts only the fixed public-alpha channel, strict version/host/path shapes, declared size
 and SHA-256, safe archive paths, and a complete inventory. It runs outside the application folder and
 mutates only new or previously owned application files. Fresh installation remains an explicit
-portable extraction. The retained Setup prototype is not built or published by the current release
-workflow.
+portable extraction. The retired Setup project is no longer part of the repository.
 
 ## UI and theme system
 
@@ -96,8 +93,8 @@ Important presentation rules:
 - complete layout before screenshots or pixel-sensitive assertions.
 
 The application uses WPF pack URIs against the `Redux` assembly. Runtime-name changes must update
-assembly metadata, resource URIs, icon resources, packaging, installer/updater contracts, NXM
-registration tests, and documentation together.
+assembly metadata, resource URIs, icon resources, packaging, updater contracts, NXM registration
+tests, and documentation together.
 
 ## State and ownership boundaries
 
@@ -130,9 +127,6 @@ Common commands from the repository root:
 git diff --check
 ```
 
-If work resumes on the dormant Setup prototype, validate it separately with
-`Build-Installer.ps1 -Configuration Release -RunTests`.
-
 The main build requires Visual Studio managed-desktop, Desktop C++, and C++/CLI components because
 LSLib includes native and managed/native projects. Publish packaging also requires Python 3.
 
@@ -153,7 +147,7 @@ failure, cancellation, restart, and recovery. Release validation must use the ex
 | Saves | `Bg3SaveGameService` and Save Manager UI |
 | Native/root-level mods | `ReduxGameDirectoryInstallService` and its manager UI |
 | Offline identity/advice | database service, bundled JSON, tool, and database docs |
-| Updates or Setup | channel/package/launch services, Updater, Installer, packaging workflow |
+| Application updates | channel/package/launch services, Updater, and packaging workflow |
 | Public messaging | README, changelog, status, brand, community, and FAQ |
 
 ## Non-negotiable invariants

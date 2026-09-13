@@ -204,7 +204,10 @@ public class AppKeys : ReactiveObject
 	public Hotkey OpenGameFolder { get; private set; } = new Hotkey(Key.D2, ModifierKeys.Control);
 
 	[MenuSettings("Go", "Open Script Extender Logs Folder", false, "Open the folder containing Script Extender logs.")]
-	public Hotkey OpenLogsFolder { get; private set; } = new Hotkey(Key.D4, ModifierKeys.Control);
+	public Hotkey OpenLogsFolder { get; private set; } = new Hotkey(Key.D3, ModifierKeys.Control);
+
+	[MenuSettings("Go", "Open Save Games Folder", false, "Open the selected player profile’s save games folder.")]
+	public Hotkey OpenSaveGamesFolder { get; private set; } = new Hotkey(Key.D4, ModifierKeys.Control);
 
 	[MenuSettings("Go", "Launch Game", false, "Launch Baldur's Gate 3 using the configured launch method.")]
 	public Hotkey LaunchGame { get; private set; } = new Hotkey(Key.G, ModifierKeys.Control | ModifierKeys.Shift);

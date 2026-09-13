@@ -47,7 +47,7 @@
 	<!-- Whole-window move, resize, and package-drop feedback should carry the same
 	     visual weight as Redux's internal interaction rails. -->
 	<Thickness x:Key="Redux.WindowInteraction.BorderThickness">3</Thickness>
-	<Thickness x:Key="Redux.Interaction.RowPadding">10,6</Thickness>
+	<Thickness x:Key="Redux.Interaction.RowPadding">8,4</Thickness>
 	<Thickness x:Key="Redux.Interaction.SurfaceMargin">2,1</Thickness>
 	<sys:Double x:Key="Redux.Interaction.HoverBorder">1.5</sys:Double>
 	<sys:Double x:Key="Redux.Interaction.SelectedBorder">2</sys:Double>
@@ -689,6 +689,24 @@
 
 	<!-- Shared secondary-window building blocks. Keep summary metrics and passive
 	     result lists aligned across export review, comparison, and inspection tools. -->
+	<Thickness x:Key="Redux.Manager.ToolbarMargin">0,12,0,4</Thickness>
+	<Thickness x:Key="Redux.Manager.ActionMargin">0,0,7,6</Thickness>
+	<Style x:Key="ReduxWindowHeadingStyle" TargetType="{x:Type TextBlock}">
+		<Setter Property="FontSize" Value="{DynamicResource Redux.FontSize.20}" />
+		<Setter Property="FontWeight" Value="{DynamicResource Redux.FontWeight.Title}" />
+		<Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" />
+		<Setter Property="TextWrapping" Value="Wrap" />
+	</Style>
+	<Style x:Key="ReduxManagerKeyboardFocusStyle" TargetType="{x:Type Control}">
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="{x:Type Control}">
+					<Border Margin="2" BorderThickness="2" BorderBrush="{DynamicResource ReduxAccentBrush}"
+						CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}" IsHitTestVisible="False" />
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
 	<Style x:Key="ReduxDialogSummaryCardStyle" TargetType="{x:Type Border}">
 		<Setter Property="Margin" Value="0,0,8,0" />
 		<Setter Property="Padding" Value="11,9" />
@@ -722,7 +740,7 @@
 			<Setter.Value>
 				<ControlTemplate TargetType="{x:Type TabControl}">
 					<Grid KeyboardNavigation.TabNavigation="Local">
-						<Grid.RowDefinitions><RowDefinition Height="42" /><RowDefinition Height="1" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+						<Grid.RowDefinitions><RowDefinition Height="Auto" MinHeight="36" /><RowDefinition Height="1" /><RowDefinition Height="*" /></Grid.RowDefinitions>
 						<TabPanel Margin="14,2" ClipToBounds="False" IsItemsHost="True" KeyboardNavigation.TabIndex="1" />
 						<Border Grid.Row="1" Height="1" Background="{DynamicResource ReduxBorderBrush}" />
 						<ContentPresenter x:Name="PART_SelectedContentHost" Grid.Row="2" ContentSource="SelectedContent"

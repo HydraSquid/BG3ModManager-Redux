@@ -91,7 +91,9 @@ public class ModListDropHandler : DefaultDropHandler
 			return;
 		}
 
-		if (!_viewModel.AllowDrop)
+		if (!_viewModel.AllowDrop ||
+			(_viewModel.IsInactiveListMetadataSorted && ReferenceEquals(dropInfo.TargetCollection, _viewModel.DisplayInactiveMods)) ||
+			(_viewModel.IsActiveListMetadataSorted && ReferenceEquals(dropInfo.TargetCollection, _viewModel.DisplayActiveMods)))
 		{
 			DivinityApp.Log($"[AllowDrop] IsRefreshing({_viewModel.IsRefreshing}) IsInitialized({_viewModel.IsInitialized}) IsLoadingOrder({_viewModel.IsLoadingOrder})");
 			dropInfo.Effects = DragDropEffects.None;
@@ -130,7 +132,9 @@ public class ModListDropHandler : DefaultDropHandler
 			return;
 		}
 
-		if (!_viewModel.AllowDrop)
+		if (!_viewModel.AllowDrop ||
+			(_viewModel.IsInactiveListMetadataSorted && ReferenceEquals(dropInfo.TargetCollection, _viewModel.DisplayInactiveMods)) ||
+			(_viewModel.IsActiveListMetadataSorted && ReferenceEquals(dropInfo.TargetCollection, _viewModel.DisplayActiveMods)))
 		{
 			return;
 		}

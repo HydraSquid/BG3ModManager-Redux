@@ -2077,7 +2077,7 @@
 					<ColumnDefinition>
 						<ColumnDefinition.Style>
 							<Style TargetType="{x:Type ColumnDefinition}">
-								<Setter Property="Width" Value="8" />
+								<Setter Property="Width" Value="Auto" />
 								<Style.Triggers>
 									<DataTrigger Binding="{Binding IsInactiveModsExpanded}" Value="False">
 										<Setter Property="Width" Value="0" />
@@ -2099,8 +2099,8 @@
 						</ColumnDefinition.Style>
 					</ColumnDefinition>
 				</Grid.ColumnDefinitions>
-				<TextBlock Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource ModSectionTitle}" Text="Inactive Mods"
-					Visibility="{Binding IsInactiveModsExpanded, Converter={StaticResource BoolToVisibilityConverter}}" />
+				<TextBlock Grid.Column="1" Margin="8,0,8,0" Style="{StaticResource ModSectionTitle}" Text="Inactive Mods" Visibility="{Binding IsInactiveModsExpanded, Converter={StaticResource BoolToVisibilityConverter}}"/>
+<Button Grid.Column="5" x:Name="AddInactiveSeparatorButton" Style="{StaticResource ModPaneHeaderActionButtonStyle}" Click="AddInactiveSeparatorButton_Click" ToolTip="Add a separator after the selected inactive mod" AutomationProperties.Name="Add inactive separator" Visibility="{Binding IsInactiveModsExpanded, Converter={StaticResource BoolToVisibilityConverter}}"><c:ReduxIcon Width="14" Height="14" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.AddStroke}"/></Button>
 				<Button Grid.Column="2"
 					Margin="12,0,8,0"
 					Command="{Binding ClearModCategoryFilterCommand}"

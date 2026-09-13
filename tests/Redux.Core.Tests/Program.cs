@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -17,6 +17,8 @@ internal static class Program
 		_ = Application.Current ?? new Application();
 
 		var dialogLayout = new DialogLayoutTests();
+		var whatsNew = new WhatsNewTests();
+		var extenderExport = new ExtenderSettingsExportTests();
 		var releaseFlow = new ReleaseFlowTests();
 		var batchInstallUi = new BatchInstallUiTests();
 		var downloadNotification = new DownloadNotificationTests();
@@ -27,6 +29,7 @@ internal static class Program
 		var manifest = new CreatorManifestValidationTests();
 		var health = new ModHealthTests();
 		var advisorKnowledge = new LoadOrderAdvisorKnowledgeTests();
+		var advisorEvidence = new AdvisorEvidenceTests();
 		var modules = new ReduxModuleStateTests();
 		var bundle = new ReduxBundleTests();
 		var contribution = new ContributionReportPrivacyTests();
@@ -40,6 +43,7 @@ internal static class Program
 		var interactionBehavior = new InteractionBehaviorTests();
 		var automaticCategories = new AutomaticModCategoryTests();
 		var visualDividerDrag = new VisualDividerDragPolicyTests();
+		var inactiveOrder = new InactiveModOrderTests();
 		var visualModSelection = new VisualModSelectionPolicyTests();
 		var settingsMaintenance = new SettingsMaintenanceTests();
 		var smoothLogicalScroll = new SmoothLogicalScrollPolicyTests();
@@ -176,6 +180,15 @@ internal static class Program
 			(nameof(health.ModioMetadataDoesNotImplyAHealthWarning), health.ModioMetadataDoesNotImplyAHealthWarning),
 			(nameof(health.InactiveMcmExplainsItsInGameLoadOrderWarning), health.InactiveMcmExplainsItsInGameLoadOrderWarning),
 			(nameof(advisorKnowledge.BundledKnowledgeIncludesGroupsAliasesAndSubstitutes), advisorKnowledge.BundledKnowledgeIncludesGroupsAliasesAndSubstitutes),
+			(nameof(advisorEvidence.PlacementEvidenceDoesNotClaimCompatibility), advisorEvidence.PlacementEvidenceDoesNotClaimCompatibility),
+			(nameof(dialogLayout.ModlistActionsRemainReachableWithLargeTextAndWarnings), dialogLayout.ModlistActionsRemainReachableWithLargeTextAndWarnings),
+			(nameof(whatsNew.SuppressionIsSavedAndOlderSettingsKeepNotesEnabled), whatsNew.SuppressionIsSavedAndOlderSettingsKeepNotesEnabled),
+			(nameof(extenderExport.AchievementSettingRoundTripsInBothExportModes), extenderExport.AchievementSettingRoundTripsInBothExportModes),
+			(nameof(extenderExport.ExportPreferenceSurvivesReduxRestartAndGameConfigReload), extenderExport.ExportPreferenceSurvivesReduxRestartAndGameConfigReload),
+			(nameof(dialogLayout.PreferencesAndReleaseNotesUseReadableCompactLayouts), dialogLayout.PreferencesAndReleaseNotesUseReadableCompactLayouts),
+			(nameof(dialogLayout.DownloadToolbarActionsRemainVisibleWithLargeText), dialogLayout.DownloadToolbarActionsRemainVisibleWithLargeText),
+			(nameof(dialogLayout.ReviewDialogsKeepActionsReachableWithLargeText), dialogLayout.ReviewDialogsKeepActionsReachableWithLargeText),
+			(nameof(whatsNew.ReleaseMetadataIsHiddenAndCustomBackgroundsHaveReadableText), whatsNew.ReleaseMetadataIsHiddenAndCustomBackgroundsHaveReadableText),
 			(nameof(advisorKnowledge.ExactDependencyAliasesAndSubstitutesResolveInstalledMods), advisorKnowledge.ExactDependencyAliasesAndSubstitutesResolveInstalledMods),
 			(nameof(advisorKnowledge.OfflineDependencyFactsExtendTheExistingAdvisor), advisorKnowledge.OfflineDependencyFactsExtendTheExistingAdvisor),
 			(nameof(advisorKnowledge.AuthorProvidedPlacementExtendsTheExistingAdvisor), advisorKnowledge.AuthorProvidedPlacementExtendsTheExistingAdvisor),
@@ -279,7 +292,11 @@ internal static class Program
 			(nameof(automaticCategories.UnknownProviderTaxonomyFallsBackToPackageKeywords), automaticCategories.UnknownProviderTaxonomyFallsBackToPackageKeywords),
 			(nameof(automaticCategories.DisabledProviderCategoryFallsBackToAnEnabledCategory), automaticCategories.DisabledProviderCategoryFallsBackToAnEnabledCategory),
 			(nameof(visualDividerDrag.NormalModDragNeverIncludesASelectedDivider), visualDividerDrag.NormalModDragNeverIncludesASelectedDivider),
-			(nameof(visualDividerDrag.InactivePaneRejectsSeparatorPayloadBeforeShowingDropFeedback), visualDividerDrag.InactivePaneRejectsSeparatorPayloadBeforeShowingDropFeedback),
+			(nameof(inactiveOrder.SavedInactiveOrderSurvivesRestartAndDiscoveryChanges), inactiveOrder.SavedInactiveOrderSurvivesRestartAndDiscoveryChanges),
+			(nameof(inactiveOrder.InactiveBlockMoveDoesNotChangeActiveOrder), inactiveOrder.InactiveBlockMoveDoesNotChangeActiveOrder),
+			(nameof(inactiveOrder.InactiveControlsLoadAndColumnSortKeepsUnderlyingOrder), inactiveOrder.InactiveControlsLoadAndColumnSortKeepsUnderlyingOrder),
+			(nameof(inactiveOrder.AdvisorIgnoresInactiveOrganization), inactiveOrder.AdvisorIgnoresInactiveOrganization),
+			(nameof(visualDividerDrag.InactivePaneAcceptsSeparatorsAndKeepsClosedBlocksInTheirPane), visualDividerDrag.InactivePaneAcceptsSeparatorsAndKeepsClosedBlocksInTheirPane),
 			(nameof(visualDividerDrag.ExpandedDividerDragContainsOnlyItsMarker), visualDividerDrag.ExpandedDividerDragContainsOnlyItsMarker),
 			(nameof(visualDividerDrag.CollapsedDividerDragStartsWithLightweightMarker), visualDividerDrag.CollapsedDividerDragStartsWithLightweightMarker),
 			(nameof(visualDividerDrag.CollapsedSeparatorPayloadCarriesOnlyItsSealedMembers), visualDividerDrag.CollapsedSeparatorPayloadCarriesOnlyItsSealedMembers),
@@ -369,6 +386,7 @@ internal static class Program
 			(nameof(saveGames.RejectsUnsafeArchivePathsBeforeImport), saveGames.RejectsUnsafeArchivePathsBeforeImport),
 			(nameof(saveGames.ExistingSaveIsPreservedUntilReplacementIsRequested), saveGames.ExistingSaveIsPreservedUntilReplacementIsRequested),
 			(nameof(nativeMods.AtomicReplacementRejectsSourceChangedSinceItsReviewedHash), nativeMods.AtomicReplacementRejectsSourceChangedSinceItsReviewedHash),
+			(nameof(nativeMods.VanillaBinkIsNotAnExternalNativeLoader), nativeMods.VanillaBinkIsNotAnExternalNativeLoader),
 			(nameof(nativeMods.CatalogContainsReviewedNativeProjectsAndGuardedWorkflows), nativeMods.CatalogContainsReviewedNativeProjectsAndGuardedWorkflows),
 			(nameof(nativeMods.ReviewedCameraFingerprintsDistinguishLegacyAndGuiProjects), nativeMods.ReviewedCameraFingerprintsDistinguishLegacyAndGuiProjects),
 			(nameof(nativeMods.ReviewedCatalogFingerprintsCoverEveryKnownDllProject), nativeMods.ReviewedCatalogFingerprintsCoverEveryKnownDllProject),
@@ -425,6 +443,7 @@ internal static class Program
 			(nameof(nxmAssociation.DisableNeverOverwritesAnInterveningHandler), nxmAssociation.DisableNeverOverwritesAnInterveningHandler),
 			(nameof(nxmAssociation.DifferentReduxInstallationCannotRepairOrDisableOwner), nxmAssociation.DifferentReduxInstallationCannotRepairOrDisableOwner),
 			(nameof(nxmAssociation.DifferentReduxInstallationCanBeReassociatedByExplicitTakeover), nxmAssociation.DifferentReduxInstallationCanBeReassociatedByExplicitTakeover),
+			(nameof(nxmAssociation.ChangedCommandWithStaleMarkerCanOnlyBeReclaimedExplicitly), nxmAssociation.ChangedCommandWithStaleMarkerCanOnlyBeReclaimedExplicitly),
 			(nameof(nxmAssociation.RegistrySnapshotPreservesValueKindsAndSubkeys), nxmAssociation.RegistrySnapshotPreservesValueKindsAndSubkeys),
 			(nameof(nxmAssociation.ProductionRegistryStoreRoundTripsOnlyDisposableHkcuPaths), nxmAssociation.ProductionRegistryStoreRoundTripsOnlyDisposableHkcuPaths),
 			(nameof(nxmAssociation.FailedEnableRestoresPriorHandler), nxmAssociation.FailedEnableRestoresPriorHandler),

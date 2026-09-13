@@ -21,7 +21,15 @@ public sealed record ReduxGameDirectoryModListItem(
 {
 	public string Name { get; init; } = Entry.Name;
 	public ReduxGameDirectoryModStatus Status => Entry.Status;
-	public string StatusText => Entry.StatusText;
+	public string StatusText => IsExternalReplacement ? "Backup unavailable" : Status switch
+	{
+		ReduxGameDirectoryModStatus.Managed => "Managed",
+		ReduxGameDirectoryModStatus.External => "Unmanaged",
+		ReduxGameDirectoryModStatus.Changed => "Files changed",
+		ReduxGameDirectoryModStatus.Missing => "Missing files",
+		ReduxGameDirectoryModStatus.RecoveryRequired => "Recovery needed",
+		_ => Entry.StatusText
+	};
 	public bool CanRestore => Entry.CanRestore;
 	public bool CanAdopt => Entry.CanAdopt;
 	public bool IsAdopted => Entry.ArchiveName == "Adopted external installation";
@@ -30,7 +38,7 @@ public sealed record ReduxGameDirectoryModListItem(
 	public string ManagementNote => CanAdopt
 		? "Redux recognizes this exact reviewed DLL. Manage it without changing the installed file."
 		: IsExternalReplacement
-			? "This mod already replaced BG3 files, so Redux has no trusted originals to restore.\nRemove it, verify BG3's files in Steam or GOG, then install it through Redux."
+			? "This Redux installation has no protected original backups. If another Redux copy installed this mod, manage it there. Otherwise, remove it, verify BG3's files in Steam or GOG, then install it through this copy."
 			: Status == ReduxGameDirectoryModStatus.External
 				? "Redux cannot manage this installation because its DLL does not match a reviewed version. Remove it manually before installing a reviewed archive."
 				: Status is ReduxGameDirectoryModStatus.Changed or ReduxGameDirectoryModStatus.Missing
@@ -47,13 +55,18 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 	private readonly Dictionary<long, NexusModsModData> _sourceDetails = new();
 	private readonly CancellationTokenSource _sourceDetailsCancellation = new();
 
-	public ReduxGameDirectoryModManagerWindow(MainWindow owner, MainWindowViewModel viewModel, bool focusScriptExtender = false)
+	public ReduxGameDirectoryModManagerWindow()
 	{
 		InitializeComponent();
-		Owner = owner;
-		_viewModel = viewModel;
 		ReduxWindowBehavior.AttachDialogTransitions(this, 40);
 		ReduxWindowBehavior.AttachRoundedCorners(this);
+	}
+
+	public ReduxGameDirectoryModManagerWindow(MainWindow owner, MainWindowViewModel viewModel, bool focusScriptExtender = false)
+		: this()
+	{
+		Owner = owner;
+		_viewModel = viewModel;
 		ReduxThemeService.Apply(Resources, viewModel.Settings.ColorTheme,
 			ReduxThemeService.GetActiveTheme(viewModel.Settings), viewModel.Settings.UsesGeneratedGradients);
 		_installer = CreateInstaller(viewModel);
@@ -182,6 +195,7 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 
 	private void RefreshList()
 	{
+		_viewModel.RefreshScriptExtenderMissingStatus();
 		try
 		{
 			var entries = _installer.GetInstalledMods().Select(CreateListItem).ToArray();
@@ -389,17 +403,17 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 			if (latestVersion < 0)
 			{
 				SetScriptExtenderAction("Manage Script Extender first", false,
-					"Redux recognizes this installed version. Choose Manage with Redux while release information refreshes.");
+					"Redux recognizes this installed version. Choose Manage while release information refreshes.");
 				return;
 			}
 			if (latestVersion > installedVersion && installedVersion >= 0)
 			{
 				SetScriptExtenderAction("Manage before updating", false,
-					"Choose Manage with Redux first. Redux can then update this older reviewed installation safely.");
+					"Choose Manage first. Redux can then update this older reviewed installation safely.");
 				return;
 			}
 			SetScriptExtenderAction("Script Extender is up to date", false,
-				$"Installed outside Redux{FormatVersion(scriptExtender.Entry.DetectedVersion)}. Choose Manage with Redux if you want Redux to own its removal and future updates.");
+				$"Not managed by this Redux installation{FormatVersion(scriptExtender.Entry.DetectedVersion)}. Choose Manage if you want Redux to own its removal and future updates.");
 			return;
 		}
 		if (latestVersion >= 0 && installedVersion >= latestVersion)

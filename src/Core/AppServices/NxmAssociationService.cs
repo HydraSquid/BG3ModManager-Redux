@@ -46,14 +46,14 @@ public sealed class NxmAssociationService : INxmAssociationService
 
 			if (!TryGetOwnedExecutable(currentCommand, out var registeredExecutable))
 			{
-				return new NxmAssociationResult(false, NxmAssociationStatus.OwnedByAnotherHandler,
+				return new NxmAssociationResult(true, NxmAssociationStatus.OwnedByAnotherHandler,
 					"The NXM command changed after Redux registered it.", currentCommand);
 			}
 			var recordedExecutable = userKey?.GetString("", ExecutableValueName);
 			if (String.IsNullOrWhiteSpace(recordedExecutable) || !Path.IsPathFullyQualified(recordedExecutable)
 				|| !PathsEqual(registeredExecutable, recordedExecutable))
 			{
-				return new NxmAssociationResult(false, NxmAssociationStatus.OwnedByAnotherHandler,
+				return new NxmAssociationResult(true, NxmAssociationStatus.OwnedByAnotherHandler,
 					"The NXM command changed after Redux registered it.", currentCommand);
 			}
 

@@ -187,8 +187,29 @@ internal sealed class NxmAssociationTests
 
 		var result = service.GetStatus();
 
-		RegressionAssert.False(result.Success);
+		RegressionAssert.True(result.Success);
 		RegressionAssert.Equal(NxmAssociationStatus.OwnedByAnotherHandler, result.Status);
+	}
+
+	public void ChangedCommandWithStaleMarkerCanOnlyBeReclaimedExplicitly()
+	{
+		foreach (var command in new[] { "\"C:\\Vortex\\Vortex.exe\" \"%1\"", NxmAssociationService.BuildCommand(@"C:\Other\Redux.exe") })
+		{
+			var store = new MemoryNxmRegistryStore();
+			var service = new NxmAssociationService(store, Owner, Executable);
+			RegressionAssert.True(service.Enable().Success);
+			store.UserKey.SetValue(@"shell\open\command", "", command, RegistryValueKind.String);
+			RegressionAssert.True(service.GetStatus().Success);
+			RegressionAssert.Equal(NxmAssociationStatus.OwnedByAnotherHandler, service.GetStatus().Status);
+			RegressionAssert.False(service.Enable().Success);
+			RegressionAssert.False(service.Repair().Success);
+			RegressionAssert.False(service.Disable().Success);
+			RegressionAssert.Equal(command, store.UserKey.GetString(@"shell\open\command", ""));
+			RegressionAssert.True(service.TakeOver().Success);
+			RegressionAssert.Equal(command, store.Backup.UserKey.GetString(@"shell\open\command", ""));
+			RegressionAssert.True(service.Disable().Success);
+			RegressionAssert.Equal(command, store.UserKey.GetString(@"shell\open\command", ""));
+		}
 	}
 
 	public void PreviousHandlerCommandIsParsedWithoutShell()

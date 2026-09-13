@@ -494,6 +494,15 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		ReduxDropFeedback.Clear(ref _categoryDropMotion);
 	}
 
+	private bool ModListRejectsDrop(ListView listView)
+	{
+		if (listView == ActiveModsListView)
+			return ViewModel.IsActiveListMetadataSorted || ViewModel.DragHandler?.CanDropOnPane(true) == false;
+		if (listView == InactiveModsListView)
+			return ViewModel.IsInactiveListMetadataSorted || ViewModel.DragHandler?.CanDropOnPane(false) == false;
+		return false;
+	}
+
 	private void ModListView_PreviewDragOver(object sender, DragEventArgs e)
 	{
 		if (e.Data.GetDataPresent(typeof(ModCategoryFilterItem)))
@@ -516,8 +525,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			return;
 		}
 
-		if (ReferenceEquals(listView, InactiveModsListView) &&
-			ViewModel.DragHandler?.IsDraggingVisualDivider == true)
+		if (ModListRejectsDrop(listView))
 		{
 			ClearModListDropIndicator();
 			e.Effects = DragDropEffects.None;
@@ -561,8 +569,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			return;
 		}
 
-		if (ReferenceEquals(sender, InactiveModsListView) &&
-			ViewModel.DragHandler?.IsDraggingVisualDivider == true)
+		if (ModListRejectsDrop(sender as ListView))
 		{
 			ViewModel.DragHandler.CompleteDragTracking();
 			ClearModListDropIndicator();
@@ -823,18 +830,11 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			var insertIndex = GetVisualInsertionIndex(listView, point);
 			var activeList = listView == ActiveModsListView;
 			var overrideList = listView == ForceLoadedModsListView;
-			var emptySpaceSeparatorUnavailableReason = overrideList
-				? "Override mods are always loaded outside the normal load order, so separators cannot be added to them."
-				: "Inactive mods do not retain a load order.";
 			var addHere = new MenuItem
 			{
-				Header = activeList
-					? "Insert Separator Here..."
-					: overrideList
-						? "Insert Separator (Not available for Override Mods)"
-						: "Insert Separator (Inactive mods do not retain a load order)",
-				IsEnabled = activeList,
-				ToolTip = activeList ? null : emptySpaceSeparatorUnavailableReason,
+				Header = overrideList ? "Insert Separator (Not available for Override Mods)" : "Insert Separator Here...",
+				IsEnabled = !overrideList,
+				ToolTip = overrideList ? "Override mods are always loaded outside the normal load order." : null,
 				Icon = ReduxIcon.FromResource("Redux.Icon.AddStroke", true)
 			};
 			addHere.Click += (_, _) => ShowAddVisualDividerDialog(activeList, insertIndex);
@@ -1175,19 +1175,12 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 
 		var activeModList = listView == ActiveModsListView;
 		var overrideModList = listView == ForceLoadedModsListView;
-		var separatorUnavailableReason = overrideModList
-			? "Override mods are always loaded outside the normal load order, so separators cannot be added to them."
-			: "Inactive mods do not retain a load order.";
 		var dividerMenu = new MenuItem
 		{
-			Header = activeModList
-				? "Separator"
-				: overrideModList
-					? "Separator (Not available for Override Mods)"
-					: "Separator (Inactive mods do not retain a load order)",
+			Header = overrideModList ? "Separator (Not available for Override Mods)" : "Separator",
 			Tag = VisualDividerMenuTag,
-			IsEnabled = activeModList,
-			ToolTip = activeModList ? null : separatorUnavailableReason,
+			IsEnabled = !overrideModList,
+			ToolTip = overrideModList ? "Override mods are always loaded outside the normal load order." : null,
 			Icon = ReduxIcon.FromResource("Redux.Icon.AddStroke", true)
 		};
 		var visualIndex = listView.Items.IndexOf(mod);
@@ -1212,6 +1205,12 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 
 	private void AddVisualDividerStateActions(ItemsControl parent, bool activeList, object tag = null)
 	{
+		if (!activeList)
+		{
+			var restore = new MenuItem { Header = "Show Saved Inactive Order", Tag = tag, Icon = ReduxIcon.FromResource("Redux.Icon.ReorderStroke", true) };
+			restore.Click += RestoreInactiveOrderButton_Click;
+			parent.Items.Add(restore);
+		}
 		var collapseAll = new MenuItem
 		{
 			Header = "Collapse All Separators",
@@ -1361,7 +1360,11 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 
 	private void ShowAddVisualDividerDialog(bool activeList, int position)
 	{
-		if (!activeList) return;
+		if (activeList ? ViewModel.IsActiveListMetadataSorted : ViewModel.IsInactiveListMetadataSorted)
+		{
+			ViewModel.ShowAlert("Return to the saved order view before adding separators.", AlertType.Info, 8);
+			return;
+		}
 		var dialog = new CategoryNameDialog(color: ViewModel.GetSuggestedCustomCategoryColor(),
 			savedColors: ViewModel.Settings.SavedCategoryColors, visualDividerMode: true,
 			useCategoryColorsForHover: ViewModel.Settings.UseCategoryColorsForInteractions)
@@ -1374,6 +1377,16 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			dialog.CategoryIconId, dialog.HideSeparatorLine, dialog.CategoryDescription);
 		UpdateActiveSeparatorBulkToggleButton();
 	}
+
+	private void AddInactiveSeparatorButton_Click(object sender, RoutedEventArgs e)
+	{
+		var position = InactiveModsListView.SelectedIndex >= 0
+			? InactiveModsListView.SelectedIndex + 1 : InactiveModsListView.Items.Count;
+		ShowAddVisualDividerDialog(false, position);
+	}
+
+	private void RestoreInactiveOrderButton_Click(object sender, RoutedEventArgs e) =>
+		Sort("#", ListSortDirection.Ascending, InactiveModsListView);
 
 	private void AddActiveSeparatorButton_Click(object sender, RoutedEventArgs e) =>
 		ShowAddActiveSeparatorDialog();
@@ -4061,6 +4074,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 				// non-mod rows by a synthetic Index value.
 				dataView.Filter = null;
 				if (lv == ActiveModsListView && ViewModel != null) ViewModel.IsActiveListMetadataSorted = false;
+				if (lv == InactiveModsListView && ViewModel != null) ViewModel.IsInactiveListMetadataSorted = false;
 				ViewModel?.RefreshVisualDividers();
 				dataView.Refresh();
 				return;
@@ -4073,6 +4087,8 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			if (lv == ActiveModsListView || lv == InactiveModsListView)
 			{
 				if (lv == ActiveModsListView && ViewModel != null) ViewModel.IsActiveListMetadataSorted = true;
+				if (lv == InactiveModsListView && ViewModel != null) ViewModel.IsInactiveListMetadataSorted = true;
+				ViewModel?.RefreshVisualDividers();
 				foreach (var mod in lv.ItemsSource.OfType<DivinityModData>().Where(item => !item.IsVisualDivider))
 					mod.IsHiddenByVisualDivider = false;
 				dataView.Filter = item => item is not DivinityModData mod || !mod.IsVisualDivider;

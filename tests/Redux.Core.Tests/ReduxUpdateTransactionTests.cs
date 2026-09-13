@@ -24,6 +24,10 @@ public sealed class ReduxUpdateTransactionTests
 				["obsolete.dll"] = "obsolete"
 			});
 			File.WriteAllText(Path.Combine(target, "Settings.json"), "user settings");
+			var nativeState = Path.Combine(target, "Data", "GameDirectoryInstalls", "native-mods", "game-identity");
+			Directory.CreateDirectory(Path.Combine(nativeState, "backups"));
+			File.WriteAllText(Path.Combine(nativeState, "manifest.json"), "native ownership record");
+			File.WriteAllBytes(Path.Combine(nativeState, "backups", "original.dll"), new byte[] { 0, 1, 2, 255 });
 			WriteRelease(staged, new Dictionary<string, string>
 			{
 				["Redux.exe"] = "new app",
@@ -38,6 +42,8 @@ public sealed class ReduxUpdateTransactionTests
 			RegressionAssert.True(File.Exists(Path.Combine(target, "new.dll")));
 			RegressionAssert.False(File.Exists(Path.Combine(target, "obsolete.dll")));
 			RegressionAssert.Equal("user settings", File.ReadAllText(Path.Combine(target, "Settings.json")));
+			RegressionAssert.Equal("native ownership record", File.ReadAllText(Path.Combine(nativeState, "manifest.json")));
+			RegressionAssert.Equal("000102FF", Convert.ToHexString(File.ReadAllBytes(Path.Combine(nativeState, "backups", "original.dll"))));
 		}
 		finally
 		{

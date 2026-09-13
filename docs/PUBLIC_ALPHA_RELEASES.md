@@ -144,3 +144,11 @@ Keep one maintainer record with the following values from the exact artifacts th
 
 The generated channel manifest records the portable archive's byte length and SHA-256, but it is not
 a substitute for this human-readable release record.
+
+## Development and release branches
+
+`dev` is ongoing development, not a downloadable release channel. Commit work and maintain
+`docs/CHANGELOG.md` under Unreleased without bumping versions or creating release tags. CI still
+builds and tests dev, but portable artifacts are uploaded only for main. Public GitHub/Nexus
+releases are prepared from main after explicit release approval. Never publish a dev prerelease
+or repoint the public-alpha updater channel to development work.

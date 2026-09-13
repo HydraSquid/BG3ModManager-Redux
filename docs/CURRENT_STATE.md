@@ -7,6 +7,18 @@ reports and proposals, and the source and tests remain authoritative for impleme
 
 Last reviewed: September 12, 2026, for `v0.1.0-alpha.16.3.5`.
 
+## Development status
+
+The current dev work is unreleased groundwork for the next update, not a hotfix. Preserve the
+Unreleased changelog until release preparation assigns a version. Dev runs build and regression
+checks but publishes no downloadable portable build or release; main owns public releases.
+
+Inactive ordering and separators (#111), onboarding, shared window styling (#113), Script Extender
+export preference persistence (#119), and NXM reassociation recovery (#120) are implemented in dev.
+The broader UI pass still benefits from live checks with custom themes and enlarged text. Issue
+#95 remains unresolved pending reporter diagnostics. Native ownership and protected backups remain
+local to each Redux installation; changing to another folder does not migrate those records.
+
 ## Current release
 
 | Item | Current value |
@@ -125,8 +137,9 @@ The full publishing and recovery contract is in
 - Creator manifests and contribution reports provide evidence for review. They do not override
   parsed package identity or authorize automatic database changes.
 - Categories and separators are Redux presentation data and never enter `modsettings.lsx`.
-- Separators belong to Active Mods. Invalid drops must be rejected cleanly without leaving a drag
-  marker behind.
+- Separators can organize Active and Inactive Mods. Inactive ordering is saved in Redux settings,
+  shared across saved active orders, and never exported to the game. Column sorting is view-only.
+  Closed separator blocks move within their current pane; invalid drops leave no drag marker.
 
 ### Saving, syncing, diagnostics, and advice
 
@@ -135,7 +148,8 @@ The full publishing and recovery contract is in
 - Mod Diagnostics is built-in and read-only. It explains known package facts but does not repair,
   download, remove, activate, reorder, or sync anything.
 - Load Order Advisor is optional and experimental. Its organizer is deterministic, preview-first,
-  separator-aware, undoable, and unsaved until the user chooses to save.
+  separator-aware, undoable, and unsaved until the user chooses to save. The Advisor operates only
+  on Active Mods and must leave inactive ordering and separators untouched.
 - Unknown relationships remain unknown. Guidance must not imply certainty that the available data
   does not support.
 - Redux Modlists can carry order and selected presentation data, but never PAKs, saves, profiles,

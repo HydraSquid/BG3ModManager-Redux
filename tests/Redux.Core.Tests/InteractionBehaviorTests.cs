@@ -1,4 +1,4 @@
-using DivinityModManager;
+﻿using DivinityModManager;
 using DivinityModManager.AppServices;
 using DivinityModManager.Controls;
 using DivinityModManager.Models;
@@ -271,7 +271,7 @@ public sealed class InteractionBehaviorTests
 			var duplicate = (Button)settings.FindName("DuplicateCustomThemeButton");
 			var delete = (Button)settings.FindName("DeleteCustomThemeButton");
 			RegressionAssert.True(ReferenceEquals(modernTemplate, duplicate.Template));
-			RegressionAssert.True(ReferenceEquals(modernTemplate, delete.Template));
+			RegressionAssert.True(ReferenceEquals(settings.FindResource("ReduxAccentPillButtonTemplate"), delete.Template));
 			AssertLabeledIcon(duplicate, "Duplicate");
 			AssertLabeledIcon(delete, "Delete");
 			RegressionAssert.Equal(
@@ -312,6 +312,15 @@ public sealed class InteractionBehaviorTests
 		try
 		{
 			RegressionAssert.Equal(ResizeMode.CanResize, window.ResizeMode);
+			var parchment = (RadioButton)window.FindName("ParchmentThemeCard");
+			parchment.IsChecked = true;
+			parchment.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Equal("Segoe UI", window.FontFamily.Source);
+			var dark = (RadioButton)window.FindName("ReduxDarkThemeCard");
+			dark.IsChecked = true;
+			dark.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Contains(window.FontFamily.Source, "Manrope");
+
 			RegressionAssert.Equal(SizeToContent.Manual, window.SizeToContent);
 
 			window.Width = window.MinWidth;
@@ -328,6 +337,43 @@ public sealed class InteractionBehaviorTests
 				throw new InvalidOperationException("The onboarding content did not receive a scrollable viewport.");
 			AssertInsideWindow(notNow, contentRoot, "Not now");
 			AssertInsideWindow(saveContinue, contentRoot, "Save & Continue");
+			var source = (CheckBox)window.FindName("SourceIntegrationsCheckBox");
+			saveContinue.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.False(window.WasResolved);
+			RegressionAssert.Equal(Visibility.Visible, ((FrameworkElement)window.FindName("ConnectionsPage")).Visibility);
+			source.IsChecked = true;
+			((PasswordBox)window.FindName("NexusApiKeyTextBox")).Password = "test-key";
+			saveContinue.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.False(window.ApplyChanges);
+			RegressionAssert.Equal(Visibility.Visible, ((FrameworkElement)window.FindName("ManagersPage")).Visibility);
+			saveContinue.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Equal(Visibility.Visible, ((FrameworkElement)window.FindName("OptionsPage")).Visibility);
+			var detailsExpander = (Expander)window.FindName("BeforePlayExpander");
+			detailsExpander.ApplyTemplate();
+			detailsExpander.IsExpanded = true;
+			var detailsPanel = (Border)detailsExpander.Template.FindName("Details", detailsExpander);
+			RegressionAssert.Equal(Visibility.Visible, detailsPanel.Visibility);
+			RegressionAssert.True(Double.IsNaN(detailsPanel.Height));
+			detailsExpander.IsExpanded = false;
+			RegressionAssert.Equal(Visibility.Collapsed, detailsPanel.Visibility);
+			RegressionAssert.Equal(0d, detailsPanel.Height);
+
+			var demo = (Button)window.FindName("DemoActionButton");
+			demo.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Equal("1  Example mod", ((TextBlock)window.FindName("DemoActiveText")).Text);
+			demo.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Contains(((TextBlock)window.FindName("DemoInstructionText")).Text, "saving alone does not apply it");
+			demo.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Contains(((TextBlock)window.FindName("DemoInstructionText")).Text, "Example complete");
+			RegressionAssert.False(window.ApplyChanges);
+
+			((Button)window.FindName("BackButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Equal("test-key", window.SelectedNexusApiKey);
+			RegressionAssert.False(window.SelectedLocalOnlyMode);
+			contentRoot.UpdateLayout();
+			AssertInsideWindow(saveContinue, contentRoot, "Next");
+			AssertInsideWindow((Button)window.FindName("BackButton"), contentRoot, "Back");
+
 		}
 		finally
 		{

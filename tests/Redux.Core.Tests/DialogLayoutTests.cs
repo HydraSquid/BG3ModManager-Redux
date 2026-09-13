@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -14,6 +14,109 @@ namespace Redux.Core.Tests;
 
 public sealed class DialogLayoutTests
 {
+	public void ReviewDialogsKeepActionsReachableWithLargeText()
+	{
+		foreach (var theme in new[] { ReduxThemeType.ReduxDark, ReduxThemeType.ReduxLight, ReduxThemeType.Parchment })
+		{
+			var manager = new ReduxGameDirectoryModManagerWindow();
+			((ListBox)manager.FindName("InstalledList")).ItemsSource = new[] {
+				new { Name = "Native Mod Loader", StatusText = "Can't manage · this installation has no protected original backup",
+				ManagementNote = "Use the Redux installation holding the original backups.", Summary = "Native loader",
+				DetailsText = "Native plugin", FileSummary = "bink2w64.dll", ThumbnailUrl = "", HasSource = true, CanAdopt = false, CanRestore = false,
+				Status = DivinityModManager.AppServices.ReduxGameDirectoryModStatus.External, IsExternalReplacement = true }
+			};
+			((FrameworkElement)manager.FindName("EmptyText")).Visibility = Visibility.Collapsed;
+			VerifyLayout(manager, theme, 760, 540, "native-status", "GameDirectoryCloseButton");
+			var comparison = new ReduxLoadOrderComparisonWindow(null!, [], 0, 0);
+			VerifyLayout(comparison, theme, 680, 540, "comparison", "SwapOrdersButton");
+			RegressionAssert.True(ReferenceEquals(System.Windows.Input.FocusManager.GetFocusedElement(comparison), comparison.FindName("BaselineComboBox")));
+			var overlap = new ReduxFileOverlapWindow(null!, []);
+			VerifyLayout(overlap, theme, 680, 540, "overlap", "ScanActionButton");
+			RegressionAssert.True(ReferenceEquals(System.Windows.Input.FocusManager.GetFocusedElement(overlap), overlap.FindName("ScanActionButton")));
+			var preflight = new ReduxPackagePreflightWindow(null!, "example.pak", []);
+			VerifyLayout(preflight, theme, 660, 540, "preflight", "ScanActionButton");
+			RegressionAssert.True(ReferenceEquals(System.Windows.Input.FocusManager.GetFocusedElement(preflight), preflight.FindName("ScanActionButton")));
+		}
+	}
+
+	public void DownloadToolbarActionsRemainVisibleWithLargeText()
+	{
+		foreach (var theme in new[] { ReduxThemeType.ReduxDark, ReduxThemeType.ReduxLight, ReduxThemeType.Parchment })
+		{
+			var downloads = new ReduxNexusDownloadsWindow();
+			var selectionHandler = (SelectionChangedEventHandler)Delegate.CreateDelegate(typeof(SelectionChangedEventHandler), downloads,
+				typeof(ReduxNexusDownloadsWindow).GetMethod("DownloadsTabs_SelectionChanged", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!);
+			((TabControl)downloads.FindName("DownloadsTabs")).SelectionChanged -= selectionHandler;
+			((Button)downloads.FindName("ClearArchivesButton")).Visibility = Visibility.Visible;
+			((Button)downloads.FindName("ClearInstalledButton")).Visibility = Visibility.Visible;
+			VerifyLayout(downloads, theme, 760, 540, "downloads");
+			var root = (Grid)downloads.Content;
+			var actions = (WrapPanel)downloads.FindName("DownloadActions");
+			foreach (Button button in actions.Children)
+			{
+				var bounds = button.TransformToAncestor(root).TransformBounds(new Rect(button.RenderSize));
+				RegressionAssert.True(bounds.Width > 0 && bounds.Height > 0);
+				RegressionAssert.True(new Rect(0, 0, 760, 540).Contains(bounds));
+			}
+		}
+	}
+
+	public void PreferencesAndReleaseNotesUseReadableCompactLayouts()
+	{
+		foreach (var theme in new[] { ReduxThemeType.ReduxDark, ReduxThemeType.ReduxLight, ReduxThemeType.Parchment })
+		{
+			var welcome = new ReduxOnboardingWindow(null!, new DivinityModManagerSettings());
+			for (var step = 0; step < 4; step++)
+			{
+				if (step == 1) ((CheckBox)welcome.FindName("SourceIntegrationsCheckBox")).IsChecked = true;
+				VerifyLayout(welcome, theme, 780, 740, $"welcome-{step}", "NotNowButton", "SaveContinueButton");
+				VerifyLayout(welcome, theme, 780, 740, $"welcome-{step}-normal", "NotNowButton", "SaveContinueButton");
+				RegressionAssert.True(((ScrollViewer)welcome.FindName("OnboardingContentScrollViewer")).ScrollableHeight < 1);
+
+				if (step < 3) ((Button)welcome.FindName("SaveContinueButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			}
+			welcome.Close();
+			var settings = new SettingsWindow();
+			var grid = (DivinityModManager.Controls.AutoGrid)settings.FindName("SettingsAutoGrid");
+			typeof(SettingsWindow).GetMethod("CreateSettingsElements", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+				.Invoke(settings, [new DivinityModManagerSettings(), typeof(DivinityModManagerSettings), grid]);
+			VerifyLayout(settings, theme, 820, 600, "preferences", "SaveSettingsButton", "ResetSettingsButton");
+			((TabControl)settings.FindName("PreferencesTabControl")).SelectedIndex = 1;
+			VerifyLayout(settings, theme, 780, 600, "preferences-appearance", "SaveSettingsButton", "ResetSettingsButton");
+			foreach (var controlName in new[] { "TypographyComboBox", "TextSizeComboBox", "CustomThemeComboBox", "ReduxDarkThemeCard", "ReduxLightThemeCard", "ParchmentThemeCard", "DeleteCustomFontButton", "EditCustomThemeButton" })
+			{
+				var control = (Control)settings.FindName(controlName);
+				var peer = System.Windows.Automation.Peers.UIElementAutomationPeer.CreatePeerForElement(control);
+				RegressionAssert.True(!String.IsNullOrWhiteSpace(peer?.GetName()));
+				RegressionAssert.True(control.IsTabStop);
+			}
+			var appearanceTab = (TabItem)((TabControl)settings.FindName("PreferencesTabControl")).Items[1];
+			var appearanceScroll = (ScrollViewer)appearanceTab.Content;
+			appearanceScroll.ScrollToEnd();
+			VerifyLayout(settings, theme, 780, 600, "preferences-typography", "SaveSettingsButton", "ResetSettingsButton");
+			var notes = new ReduxWhatsNewWindow(null!, "test");
+			ReduxThemeService.Apply(notes.Resources, theme);
+			notes.SetNotes("<!-- redux:no-announce -->\n# Improvements\n\nClear text, **strong emphasis**, and `code`.\n\n## Fixes\n\n- Preserved load order\n- Improved downloads\n\n[Read more](https://github.com/circleainn/BG3ModManager-Redux)");
+			VerifyLayout(notes, theme, 560, 440, "whats-new");
+		}
+	}
+
+	public void ModlistActionsRemainReachableWithLargeTextAndWarnings()
+	{
+		foreach (var theme in new[] { ReduxThemeType.ReduxDark, ReduxThemeType.ReduxLight, ReduxThemeType.Parchment })
+		{
+			var import = new ReduxLoadOrderImportWindow(null!, null!, ["Missing mod"], ["Existing category"]);
+			((Border)import.FindName("SourceLinksOptionBorder")).Visibility = Visibility.Visible;
+			((Border)import.FindName("PrivateNotesOptionBorder")).Visibility = Visibility.Visible;
+			((CheckBox)import.FindName("ImportSourceLinksCheckBox")).IsChecked = true;
+			RegressionAssert.Contains(((TextBlock)import.FindName("ImportImpactText")).Text, "Replaces source links");
+			VerifyLayout(import, theme, 420, 440, "modlist-import", "CancelButton", "ImportButton");
+			var export = new ReduxLoadOrderExportWindow(null!, "A long saved load order name for sharing with other players", 100, 12, 5, 4, 80, 20, 2);
+			RegressionAssert.False(export.IncludePrivateNotes);
+			VerifyLayout(export, theme, 420, 440, "modlist-export", "CancelButton", "ChooseLocationButton");
+		}
+	}
+
 	public void UpdateAndMessageActionsRemainReachableWithLongText()
 	{
 		foreach (var theme in new[] { ReduxThemeType.ReduxDark, ReduxThemeType.ReduxLight, ReduxThemeType.Parchment })
@@ -34,7 +137,7 @@ public sealed class DialogLayoutTests
 	private static void VerifyLayout(Window window, ReduxThemeType theme, int width, int height, string name, params string[] buttons)
 	{
 		ReduxThemeService.Apply(window.Resources, theme);
-		window.Resources["Redux.FontSize.12"] = 18d;
+		window.Resources["Redux.FontSize.12"] = name.EndsWith("-normal", StringComparison.Ordinal) ? 12d : 18d;
 		var root = (Grid)window.Content;
 		root.Opacity = 1;
 		root.RenderTransform = Transform.Identity;

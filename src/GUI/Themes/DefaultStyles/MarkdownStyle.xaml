@@ -6,26 +6,28 @@
 	<Style x:Key="DocumentStyle" BasedOn="{StaticResource {x:Type FlowDocument}}" TargetType="FlowDocument">
 		<Setter Property="FontFamily" Value="{DynamicResource Redux.FontFamily.UI}" />
 		<Setter Property="TextAlignment" Value="Left" />
-		<Setter Property="Background" Value="{DynamicResource {x:Static adonisUI:Brushes.Layer1BackgroundBrush}}" />
+		<Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" />
+		<Setter Property="FontSize" Value="{DynamicResource Redux.FontSize.13}" />
+		<Setter Property="Background" Value="{DynamicResource ReduxAppBackgroundBrush}" />
 	</Style>
 	<Style x:Key="H1Style" BasedOn="{StaticResource {x:Type Paragraph}}" TargetType="Paragraph">
-		<Setter Property="FontSize" Value="{DynamicResource Redux.FontSize.32}" />
-		<Setter Property="Foreground" Value="{DynamicResource {x:Static adonisUI:Brushes.AccentForegroundBrush}}" />
+		<Setter Property="FontSize" Value="{DynamicResource Redux.FontSize.24}" />
+		<Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" />
 		<Setter Property="FontWeight" Value="Normal" />
 		<Setter Property="Padding" Value="0" />
 		<Setter Property="Margin" Value="0" />
 	</Style>
 	<Style x:Key="H2Style" BasedOn="{StaticResource {x:Type Paragraph}}" TargetType="Paragraph">
 		<Setter Property="FontSize" Value="{DynamicResource Redux.FontSize.20}" />
-		<Setter Property="FontWeight" Value="Light" />
+		<Setter Property="FontWeight" Value="SemiBold" />
 	</Style>
 	<Style x:Key="H3Style" BasedOn="{StaticResource {x:Type Paragraph}}" TargetType="Paragraph">
 		<Setter Property="FontSize" Value="{DynamicResource Redux.FontSize.20}" />
-		<Setter Property="FontWeight" Value="Light" />
+		<Setter Property="FontWeight" Value="SemiBold" />
 	</Style>
 	<Style x:Key="H4Style" BasedOn="{StaticResource {x:Type Paragraph}}" TargetType="Paragraph">
 		<Setter Property="FontSize" Value="{DynamicResource Redux.FontSize.14}" />
-		<Setter Property="FontWeight" Value="Light" />
+		<Setter Property="FontWeight" Value="SemiBold" />
 	</Style>
 	<Style x:Key="LinkStyle" BasedOn="{StaticResource {x:Type Hyperlink}}" TargetType="Hyperlink">
 		<Setter Property="TextDecorations" Value="None" />
@@ -53,7 +55,7 @@
 	</Style>
 	<Style x:Key="TableHeaderStyle" TargetType="TableRowGroup">
 		<Setter Property="FontWeight" Value="DemiBold" />
-		<Setter Property="Background" Value="{DynamicResource {x:Static adonisUI:Brushes.Layer1BackgroundBrush}}" />
+		<Setter Property="Background" Value="{DynamicResource ReduxAppBackgroundBrush}" />
 	</Style>
 	<controls:Markdown x:Key="DefaultMarkdown"
 	    AssetPathRoot="{x:Static sys:Environment.CurrentDirectory}"

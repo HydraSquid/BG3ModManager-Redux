@@ -63,6 +63,8 @@ public class ModListDragHandler : DefaultDragHandler
 
 	private IDisposable _stopDraggingFallbackTask;
 	public bool IsDraggingVisualDivider { get; private set; }
+	public bool CanDropOnPane(bool active) => !IsDraggingVisualDivider ||
+		VisualDividerDragPolicy.CanDropOnPane((_lastDragInfo?.Data as IEnumerable<DivinityModData>) ?? [], active);
 
 	private void StopDragTracking()
 	{
@@ -177,6 +179,9 @@ public class ModListDragHandler : DefaultDragHandler
 			// Keep sorting view-only by allowing reordering only in the # view.
 			return false;
 		}
+		if (_viewModel.IsInactiveListMetadataSorted &&
+			(ReferenceEquals(dragInfo.SourceCollection, _viewModel.DisplayInactiveMods) ||
+			 ReferenceEquals(dragInfo.SourceCollection, _viewModel.InactiveMods))) return false;
 		if (dragInfo.Data is ISelectable d && !d.CanDrag)
 		{
 			return false;

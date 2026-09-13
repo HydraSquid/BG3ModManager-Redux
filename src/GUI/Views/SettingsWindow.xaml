@@ -59,7 +59,7 @@
 				<Setter Property="Margin" Value="0,0,6,0" />
 				<Setter Property="Padding" Value="13,5" />
 			</Style>
-			<Style x:Key="SettingsDestructiveActionButtonStyle" BasedOn="{StaticResource ReduxDestructiveActionButtonStyle}" TargetType="{x:Type Button}">
+			<Style x:Key="SettingsDestructiveActionButtonStyle" BasedOn="{StaticResource ReduxMinorDestructiveActionButtonStyle}" TargetType="{x:Type Button}">
 				<Setter Property="MinHeight" Value="32" />
 				<Setter Property="Margin" Value="0,0,6,0" />
 				<Setter Property="Padding" Value="12,5" />
@@ -239,7 +239,7 @@
 						<ControlTemplate TargetType="{x:Type TabControl}">
 							<Grid>
 								<Grid.RowDefinitions>
-									<RowDefinition Height="37" />
+									<RowDefinition Height="Auto" />
 									<RowDefinition Height="*" />
 								</Grid.RowDefinitions>
 								<Border Margin="12,0,12,5"
@@ -388,8 +388,8 @@
 				<Setter Property="TextWrapping" Value="Wrap" />
 			</Style>
 			<Style x:Key="SettingsSectionCardStyle" TargetType="{x:Type Border}">
-				<Setter Property="Margin" Value="0,14,0,0" />
-				<Setter Property="Padding" Value="16,14" />
+				<Setter Property="Margin" Value="0,10,0,0" />
+				<Setter Property="Padding" Value="12,10" />
 				<Setter Property="Background" Value="{DynamicResource ReduxListInteriorBrush}" />
 				<Setter Property="BorderBrush" Value="{DynamicResource ReduxBorderBrush}" />
 				<Setter Property="BorderThickness" Value="1" />
@@ -485,10 +485,10 @@
 					</Setter.Value>
 				</Setter>
 			</Style>
-			<Style x:Key="SettingsWarningButtonStyle" BasedOn="{StaticResource SettingsActionButtonStyle}" TargetType="{x:Type Button}">
-				<Setter Property="Background" Value="{DynamicResource ReduxWarningPillBackground}" />
-				<Setter Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" />
-				<Setter Property="BorderBrush" Value="{DynamicResource ReduxWarningBrush}" />
+			<Style x:Key="SettingsWarningButtonStyle" BasedOn="{StaticResource ReduxMinorWarningActionButtonStyle}" TargetType="{x:Type Button}">
+				<Setter Property="MinHeight" Value="32" />
+				<Setter Property="Margin" Value="0,0,6,0" />
+				<Setter Property="Padding" Value="12,5" />
 			</Style>
 			<Style x:Key="SettingsListViewStyle" BasedOn="{StaticResource {x:Type ListView}}" TargetType="{x:Type ListView}">
 				<Setter Property="Background" Value="{DynamicResource ReduxListInteriorBrush}" />
@@ -544,7 +544,7 @@
 			<Style TargetType="StackPanel">
 				<Setter Property="VerticalAlignment" Value="Center" />
 				<Setter Property="Orientation" Value="Horizontal" />
-				<Setter Property="Margin" Value="10" />
+				<Setter Property="Margin" Value="0" />
 			</Style>
 			<Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="TextBlock">
 				<Setter Property="VerticalAlignment" Value="Center" />
@@ -554,8 +554,8 @@
 				<Setter Property="Margin" Value="0,1" />
 			</Style>
 			<Style TargetType="controls:AutoGrid">
-				<Setter Property="Margin" Value="10,0" />
-				<Setter Property="ChildMargin" Value="4" />
+				<Setter Property="Margin" Value="0" />
+				<Setter Property="ChildMargin" Value="4,3" />
 				<Setter Property="ColumnCount" Value="2" />
 				<Setter Property="Columns" Value="*,*" />
 				<Setter Property="RowCount" Value="1" />
@@ -606,28 +606,28 @@
 				<ColumnDefinition Width="1*" />
 			</Grid.ColumnDefinitions>
 			<StackPanel Margin="0" HorizontalAlignment="Left" Orientation="Horizontal">
-				<Button x:Name="SaveSettingsButton" Style="{StaticResource SettingsPrimaryActionButtonStyle}" ToolTip="Save settings now (Ctrl+S)">
+				<Button x:Name="SaveSettingsButton" AutomationProperties.Name="Save settings" Style="{StaticResource SettingsPrimaryActionButtonStyle}" ToolTip="Save settings now (Ctrl+S)">
 					<StackPanel Margin="0" Orientation="Horizontal">
-						<controls:ReduxIcon
+						<controls:ReduxIcon VerticalAlignment="Center"
 							Margin="0,0,6,0"
 							Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 							StrokeData="{StaticResource Redux.Icon.Save}" />
 						<TextBlock Text="Save" />
 					</StackPanel>
 				</Button>
-				<Button x:Name="OpenSettingsFolderButton" Style="{StaticResource SettingsActionButtonStyle}">
+				<Button x:Name="OpenSettingsFolderButton" AutomationProperties.Name="Open settings folder" Style="{StaticResource SettingsActionButtonStyle}">
 					<StackPanel Margin="0" Orientation="Horizontal">
-						<controls:ReduxIcon Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.FolderOpen}" />
+						<controls:ReduxIcon VerticalAlignment="Center" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.FolderOpen}" />
 						<TextBlock Text="Settings Folder" />
 					</StackPanel>
 				</Button>
 			</StackPanel>
-			<Button x:Name="ResetSettingsButton"
+			<Button x:Name="ResetSettingsButton" AutomationProperties.Name="Reset settings"
 			    Grid.Column="1"
 			    HorizontalAlignment="Right"
 			    Style="{StaticResource SettingsWarningButtonStyle}">
 				<StackPanel Margin="0" Orientation="Horizontal">
-					<controls:ReduxIcon Margin="0,0,6,0" Foreground="{DynamicResource ReduxWarningBrush}" StrokeData="{StaticResource Redux.Icon.RefreshStroke}" />
+					<controls:ReduxIcon VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{DynamicResource ReduxWarningBrush}" StrokeData="{StaticResource Redux.Icon.RefreshStroke}" />
 					<TextBlock Text="Reset" />
 				</StackPanel>
 			</Button>
@@ -652,7 +652,7 @@
 							<RowDefinition Height="Auto" />
 							<RowDefinition Height="Auto" />
 						</Grid.RowDefinitions>
-						<TextBlock Style="{StaticResource SettingsPageTitleStyle}" Text="General settings" />
+						<TextBlock Style="{StaticResource SettingsPageTitleStyle}" Text="General" />
 						<TextBlock Grid.Row="1"
 							Style="{StaticResource SettingsPageDescriptionStyle}"
 							Text="Change the manager's everyday behavior, paths, and online mod information." />
@@ -663,7 +663,7 @@
 				</ScrollViewer>
 			</TabItem>
 			<TabItem x:Name="AppearanceSettingsTab">
-				<TabItem.Header><TextBlock Text="Theme &amp; Appearance" /></TabItem.Header>
+				<TabItem.Header><TextBlock Text="Appearance" /></TabItem.Header>
 				<TabItem.Resources>
 					<Style TargetType="{x:Type StackPanel}">
 						<Setter Property="Margin" Value="0" />
@@ -681,7 +681,7 @@
 							<RowDefinition Height="Auto" />
 							<RowDefinition Height="Auto" />
 						</Grid.RowDefinitions>
-						<TextBlock Style="{StaticResource SettingsPageTitleStyle}" Text="Theme &amp; Appearance" />
+						<TextBlock Style="{StaticResource SettingsPageTitleStyle}" Text="Appearance" />
 						<TextBlock Grid.Row="1" Style="{StaticResource SettingsPageDescriptionStyle}"
 							Text="Choose a theme or make your own." />
 						<Border Grid.Row="2" Margin="0,12,0,0" Background="{DynamicResource ReduxBorderBrush}" />
@@ -696,7 +696,7 @@
 								ItemsSource="{Binding Source={ext:EnumExtension {x:Type data:ReduxThemeType}}}" SelectedValuePath="Value"
 								SelectionChanged="ThemeComboBox_SelectionChanged" />
 							<UniformGrid Columns="3">
-								<RadioButton x:Name="ReduxDarkThemeCard" GroupName="BuiltInThemes" Style="{StaticResource ThemeCardRadioStyle}"
+								<RadioButton x:Name="ReduxDarkThemeCard" AutomationProperties.Name="Redux dark theme" GroupName="BuiltInThemes" Style="{StaticResource ThemeCardRadioStyle}"
 									Tag="{x:Static data:ReduxThemeType.ReduxDark}" Click="ThemeCard_Click">
 									<StackPanel>
 										<Border Height="76" Margin="0,0,0,8" Padding="8" Background="#17151C" BorderBrush="#3A3346" BorderThickness="1" CornerRadius="6">
@@ -714,7 +714,7 @@
 										<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.11}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Deep, focused, and easy on the eyes." TextWrapping="Wrap" />
 									</StackPanel>
 								</RadioButton>
-								<RadioButton x:Name="ReduxLightThemeCard" GroupName="BuiltInThemes" Style="{StaticResource ThemeCardRadioStyle}"
+								<RadioButton x:Name="ReduxLightThemeCard" AutomationProperties.Name="Redux light theme" GroupName="BuiltInThemes" Style="{StaticResource ThemeCardRadioStyle}"
 									Tag="{x:Static data:ReduxThemeType.ReduxLight}" Click="ThemeCard_Click">
 									<StackPanel>
 										<Border Height="76" Margin="0,0,0,8" Padding="8" Background="#F5F3FA" BorderBrush="#C9C4D7" BorderThickness="1" CornerRadius="6">
@@ -732,7 +732,7 @@
 										<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.11}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Clean and bright for daytime use." TextWrapping="Wrap" />
 									</StackPanel>
 								</RadioButton>
-								<RadioButton x:Name="ParchmentThemeCard" GroupName="BuiltInThemes" Margin="0" Style="{StaticResource ThemeCardRadioStyle}"
+								<RadioButton x:Name="ParchmentThemeCard" AutomationProperties.Name="Parchment theme" GroupName="BuiltInThemes" Margin="0" Style="{StaticResource ThemeCardRadioStyle}"
 									Tag="{x:Static data:ReduxThemeType.Parchment}" Click="ThemeCard_Click">
 									<StackPanel>
 										<Border Height="76" Margin="0,0,0,8" Padding="8" Background="#E6DCC6" BorderBrush="#A89980" BorderThickness="1" CornerRadius="6">
@@ -779,7 +779,7 @@
 								Foreground="{DynamicResource ReduxAccentBrush}" StrokeData="{StaticResource Redux.Icon.ReorderStroke}" />
 							<StackPanel Grid.Column="1">
 								<TextBlock FontWeight="SemiBold" Text="Use category colors for selection" />
-								<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Use category colors when hovering over or selecting mods." TextWrapping="Wrap" />
+								<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.11}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Use category colors when hovering over or selecting mods." TextWrapping="Wrap" />
 							</StackPanel>
 						</Grid>
 									</CheckBox>
@@ -793,7 +793,7 @@
 								Foreground="{DynamicResource ReduxAccentBrush}" StrokeData="{StaticResource Redux.Icon.ListStroke}" />
 							<StackPanel Grid.Column="1">
 								<TextBlock FontWeight="SemiBold" Text="Hide icons" />
-								<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Remove decorative icons from lists, cards, details, and menus." TextWrapping="Wrap" />
+								<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.11}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Remove decorative icons from lists, cards, details, and menus." TextWrapping="Wrap" />
 							</StackPanel>
 						</Grid>
 									</CheckBox>
@@ -805,8 +805,8 @@
 								Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 								Foreground="{DynamicResource ReduxAccentBrush}" StrokeData="{StaticResource Redux.Icon.Pricetag}" />
 							<StackPanel Grid.Column="1">
-								<TextBlock FontWeight="SemiBold" Text="Colored text" />
-								<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Use contextual colors for text and menu icons throughout Redux." TextWrapping="Wrap" />
+								<TextBlock FontWeight="SemiBold" Text="Use contextual text colors" />
+								<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.11}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Use contextual colors for text and menu icons throughout Redux." TextWrapping="Wrap" />
 							</StackPanel>
 						</Grid>
 									</CheckBox>
@@ -819,8 +819,8 @@
 								Style="{StaticResource ReduxOptionalInterfaceIconStyle}"
 								Foreground="{DynamicResource ReduxAccentBrush}" StrokeData="{StaticResource Redux.Icon.Albums}" />
 							<StackPanel Grid.Column="1">
-								<TextBlock FontWeight="SemiBold" Text="Hide icon labels" />
-								<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Show icons without their text labels." TextWrapping="Wrap" />
+								<TextBlock FontWeight="SemiBold" Text="Show icons without labels" />
+								<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.11}" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Show icons without their text labels." TextWrapping="Wrap" />
 							</StackPanel>
 						</Grid>
 									</CheckBox>
@@ -837,7 +837,7 @@
 								StrokeData="{StaticResource Redux.Icon.Sparkles}" />
 							<StackPanel Grid.Column="1">
 								<TextBlock FontWeight="SemiBold" Text="Use generated gradients" />
-								<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.10}"
+								<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.11}"
 									Foreground="{DynamicResource ReduxTextMutedBrush}"
 									Text="Blend the active theme's colors across action buttons."
 									TextWrapping="Wrap" />
@@ -853,7 +853,7 @@
 								<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
 								<Grid.ColumnDefinitions><ColumnDefinition Width="190" /><ColumnDefinition Width="14" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
 								<StackPanel VerticalAlignment="Center">
-									<TextBlock Style="{StaticResource SettingsSectionTitleStyle}" Text="Font and text size" />
+									<TextBlock Style="{StaticResource SettingsSectionTitleStyle}" Text="Typography" />
 									<TextBlock Margin="0,3,0,7" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Change the app's font and text size." TextWrapping="Wrap" />
 									<TextBlock x:Name="TypographyPreviewText" FontFamily="{DynamicResource Redux.FontFamily.UI}"
 										FontSize="{DynamicResource Redux.FontSize.20}" Text="Aa Qg 0O 1l" />
@@ -863,22 +863,22 @@
 									<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="140" /></Grid.ColumnDefinitions>
 									<StackPanel>
 										<TextBlock Margin="0,0,0,4" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Font" />
-										<Grid>
-											<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-											<ComboBox x:Name="TypographyComboBox" Grid.Column="0" MinWidth="170" HorizontalAlignment="Stretch" DisplayMemberPath="Name"
+										<StackPanel>
+
+											<ComboBox x:Name="TypographyComboBox" AutomationProperties.Name="Font" MinWidth="120" HorizontalAlignment="Stretch" DisplayMemberPath="Name"
 						SelectionChanged="TypographyComboBox_SelectionChanged" />
-											<Button Grid.Column="1" Margin="6,0,0,0" Style="{StaticResource SettingsIconActionButtonStyle}" Click="ImportCustomFont_Click" ToolTip="Import a TrueType or OpenType font"><controls:ReduxIcon Width="14" Height="14" StrokeData="{StaticResource Redux.Icon.Download}" /></Button>
-											<Button x:Name="DeleteCustomFontButton" Grid.Column="2" Margin="6,0,0,0" Style="{StaticResource SettingsDestructiveIconActionButtonStyle}" Click="DeleteCustomFont_Click" ToolTip="Remove the selected imported font"><controls:ReduxIcon Width="14" Height="14" StrokeData="{StaticResource Redux.Icon.Trash}" /></Button>
-											<Button Grid.Column="3" Margin="6,0,0,0" Style="{StaticResource SettingsIconActionButtonStyle}" Click="OpenCustomFontsFolder_Click" ToolTip="Open the custom fonts folder"><controls:ReduxIcon Width="14" Height="14" StrokeData="{StaticResource Redux.Icon.FolderOpen}" /></Button>
-										</Grid>
+											<WrapPanel Margin="0,6,0,0"><Button Margin="0,0,6,4" Style="{StaticResource SettingsIconActionButtonStyle}" AutomationProperties.Name="Import font" Click="ImportCustomFont_Click" ToolTip="Import a TrueType or OpenType font"><controls:ReduxIcon VerticalAlignment="Center" Width="14" Height="14" StrokeData="{StaticResource Redux.Icon.Download}" /></Button>
+											<Button x:Name="DeleteCustomFontButton" Margin="0,0,6,4" Style="{StaticResource SettingsDestructiveIconActionButtonStyle}" AutomationProperties.Name="Remove selected imported font" Click="DeleteCustomFont_Click" ToolTip="Remove the selected imported font"><controls:ReduxIcon VerticalAlignment="Center" Width="14" Height="14" StrokeData="{StaticResource Redux.Icon.Trash}" /></Button>
+											<Button Margin="0,0,6,4" Style="{StaticResource SettingsIconActionButtonStyle}" AutomationProperties.Name="Open custom fonts folder" Click="OpenCustomFontsFolder_Click" ToolTip="Open the custom fonts folder"><controls:ReduxIcon VerticalAlignment="Center" Width="14" Height="14" StrokeData="{StaticResource Redux.Icon.FolderOpen}" /></Button>
+										</WrapPanel></StackPanel>
 									</StackPanel>
 									<StackPanel Grid.Column="2">
 										<TextBlock Margin="0,0,0,4" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Text size" />
-										<ComboBox x:Name="TextSizeComboBox" DisplayMemberPath="Description"
+										<ComboBox x:Name="TextSizeComboBox" AutomationProperties.Name="Text size" DisplayMemberPath="Description"
 							ItemsSource="{Binding Source={ext:EnumExtension {x:Type data:ReduxTextSize}}}" SelectedValuePath="Value" />
 									</StackPanel>
 									<TextBlock Grid.Row="1" Grid.ColumnSpan="3" Margin="0,8,0,0"
-										FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}"
+										FontSize="{DynamicResource Redux.FontSize.11}" Foreground="{DynamicResource ReduxTextMutedBrush}"
 										Text="Some imported fonts may not display correctly." TextWrapping="Wrap" />
 									</Grid>
 							</Grid>
@@ -891,19 +891,19 @@
 									<TextBlock Style="{StaticResource SettingsSectionTitleStyle}" Text="Custom themes" />
 									<TextBlock Margin="0,3,0,7" Foreground="{DynamicResource ReduxTextMutedBrush}"
 										Text="Save your colors, font, and text size as a theme." TextWrapping="Wrap" />
-									<TextBlock x:Name="CustomThemeStatusText" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}"
+									<TextBlock x:Name="CustomThemeStatusText" FontSize="{DynamicResource Redux.FontSize.11}" Foreground="{DynamicResource ReduxTextMutedBrush}"
 										Text="No custom themes yet." TextTrimming="CharacterEllipsis" />
 								</StackPanel>
 								<StackPanel Grid.Column="2">
-									<ComboBox x:Name="CustomThemeComboBox" MinWidth="240" DisplayMemberPath="Name"
+									<ComboBox x:Name="CustomThemeComboBox" AutomationProperties.Name="Custom theme" MinWidth="240" DisplayMemberPath="Name"
 										SelectionChanged="CustomThemeComboBox_SelectionChanged" />
 									<WrapPanel Margin="0,8,0,0">
-										<Button Margin="0,0,6,6" Style="{StaticResource SettingsPrimaryActionButtonStyle}" Click="CreateCustomTheme_Click"><StackPanel Margin="0" Orientation="Horizontal"><controls:ReduxIcon Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.AddCircle}" /><TextBlock Text="Create" /></StackPanel></Button>
-										<Button x:Name="EditCustomThemeButton" Margin="0,0,6,6" Style="{StaticResource SettingsActionButtonStyle}" Click="EditCustomTheme_Click"><StackPanel Margin="0" Orientation="Horizontal"><controls:ReduxIcon Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Create}" /><TextBlock Text="Edit" /></StackPanel></Button>
-										<Button x:Name="DuplicateCustomThemeButton" Margin="0,0,6,6" Style="{StaticResource SettingsActionButtonStyle}" Click="DuplicateCustomTheme_Click"><StackPanel Margin="0" Orientation="Horizontal"><controls:ReduxIcon Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Duplicate}" /><TextBlock Text="Duplicate" /></StackPanel></Button>
-										<Button x:Name="DeleteCustomThemeButton" Margin="0,0,6,6" Style="{StaticResource SettingsDestructiveActionButtonStyle}" Click="DeleteCustomTheme_Click"><StackPanel Margin="0" Orientation="Horizontal"><controls:ReduxIcon Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Trash}" /><TextBlock Text="Delete" /></StackPanel></Button>
-										<Button Margin="0,0,6,6" Style="{StaticResource SettingsActionButtonStyle}" Click="ImportCustomTheme_Click"><StackPanel Margin="0" Orientation="Horizontal"><controls:ReduxIcon Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Download}" /><TextBlock Text="Import" /></StackPanel></Button>
-										<Button x:Name="ExportCustomThemeButton" Margin="0,0,0,6" Style="{StaticResource SettingsActionButtonStyle}" Click="ExportCustomTheme_Click"><StackPanel Margin="0" Orientation="Horizontal"><controls:ReduxIcon Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.CloudUpload}" /><TextBlock Text="Export" /></StackPanel></Button>
+										<Button Margin="0,0,6,6" Style="{StaticResource SettingsPrimaryActionButtonStyle}" AutomationProperties.Name="Create custom theme" Click="CreateCustomTheme_Click"><StackPanel Margin="0" Orientation="Horizontal"><controls:ReduxIcon VerticalAlignment="Center" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.AddCircle}" /><TextBlock Text="Create" /></StackPanel></Button>
+										<Button x:Name="EditCustomThemeButton" Margin="0,0,6,6" Style="{StaticResource SettingsActionButtonStyle}" AutomationProperties.Name="Edit selected custom theme" Click="EditCustomTheme_Click"><StackPanel Margin="0" Orientation="Horizontal"><controls:ReduxIcon VerticalAlignment="Center" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Create}" /><TextBlock Text="Edit" /></StackPanel></Button>
+										<Button x:Name="DuplicateCustomThemeButton" Margin="0,0,6,6" Style="{StaticResource SettingsActionButtonStyle}" AutomationProperties.Name="Duplicate selected custom theme" Click="DuplicateCustomTheme_Click"><StackPanel Margin="0" Orientation="Horizontal"><controls:ReduxIcon VerticalAlignment="Center" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Duplicate}" /><TextBlock Text="Duplicate" /></StackPanel></Button>
+										<Button x:Name="DeleteCustomThemeButton" Margin="0,0,6,6" Style="{StaticResource SettingsDestructiveActionButtonStyle}" AutomationProperties.Name="Delete selected custom theme" Click="DeleteCustomTheme_Click"><StackPanel Margin="0" Orientation="Horizontal"><controls:ReduxIcon VerticalAlignment="Center" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Trash}" /><TextBlock Text="Delete" /></StackPanel></Button>
+										<Button Margin="0,0,6,6" Style="{StaticResource SettingsActionButtonStyle}" AutomationProperties.Name="Import custom theme" Click="ImportCustomTheme_Click"><StackPanel Margin="0" Orientation="Horizontal"><controls:ReduxIcon VerticalAlignment="Center" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Download}" /><TextBlock Text="Import" /></StackPanel></Button>
+										<Button x:Name="ExportCustomThemeButton" Margin="0,0,0,6" Style="{StaticResource SettingsActionButtonStyle}" AutomationProperties.Name="Export selected custom theme" Click="ExportCustomTheme_Click"><StackPanel Margin="0" Orientation="Horizontal"><controls:ReduxIcon VerticalAlignment="Center" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.CloudUpload}" /><TextBlock Text="Export" /></StackPanel></Button>
 									</WrapPanel>
 								</StackPanel>
 							</Grid>
@@ -1031,7 +1031,7 @@
 						Click="ShortcutGroupsToggleButton_Click"
 						Style="{StaticResource SettingsActionButtonStyle}"
 						ToolTip="Collapse all shortcut groups">
-						<controls:ReduxIcon x:Name="ShortcutGroupsToggleIcon"
+						<controls:ReduxIcon VerticalAlignment="Center" x:Name="ShortcutGroupsToggleIcon"
 							Width="14"
 							Height="14"
 							Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
@@ -1042,7 +1042,7 @@
 						MinHeight="30"
 						Margin="6,0,8,10"
 						VerticalAlignment="Center">
-						<TextBox x:Name="KeybindingsSearchTextBox"
+						<TextBox x:Name="KeybindingsSearchTextBox" AutomationProperties.Name="Search shortcuts"
 							Padding="8,2"
 							VerticalContentAlignment="Center"
 							adonisExtensions:CornerRadiusExtension.CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}"
@@ -1291,13 +1291,13 @@
 												Command="{Binding ResetCommand}"
 												Style="{StaticResource HotkeyRowActionButtonStyle}"
 												ToolTip="Reset to default">
-												<controls:ReduxIcon StrokeData="{StaticResource Redux.Icon.RefreshStroke}" />
+												<controls:ReduxIcon VerticalAlignment="Center" StrokeData="{StaticResource Redux.Icon.RefreshStroke}" />
 											</Button>
 											<Button Grid.Column="3"
 												Command="{Binding ClearCommand}"
 												Style="{StaticResource HotkeyRowActionButtonStyle}"
 												ToolTip="Remove shortcut">
-												<controls:ReduxIcon Foreground="{DynamicResource ReduxErrorBrush}" StrokeData="{StaticResource Redux.Icon.RemoveCircle}" />
+												<controls:ReduxIcon VerticalAlignment="Center" Foreground="{DynamicResource ReduxErrorBrush}" StrokeData="{StaticResource Redux.Icon.RemoveCircle}" />
 											</Button>
 										</Grid>
 									</DataTemplate>
@@ -1419,7 +1419,7 @@
 										Style="{StaticResource SettingsActionButtonStyle}"
 										ToolTip="Choose a common launch parameter">
 										<StackPanel Orientation="Horizontal">
-											<controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0"
+											<controls:ReduxIcon VerticalAlignment="Center" Width="14" Height="14" Margin="0,0,6,0"
 												Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 												StrokeData="{StaticResource Redux.Icon.Terminal}" />
 											<TextBlock Text="Add parameter" />
@@ -1445,7 +1445,7 @@
 							</ContextMenu>
 						</Button.ContextMenu>
 									</Button>
-									<TextBox x:Name="GameLaunchParamsTextBox"
+									<TextBox x:Name="GameLaunchParamsTextBox" AutomationProperties.Name="Game launch arguments"
 										Grid.Column="1"
 										MinHeight="30"
 										VerticalAlignment="Center"
@@ -1459,7 +1459,7 @@
 										Margin="6,0,0,0"
 										Style="{StaticResource IconButtonStyle}"
 										ToolTip="Clear current parameters">
-										<controls:ReduxIcon
+										<controls:ReduxIcon VerticalAlignment="Center"
 											Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 											StrokeData="{StaticResource Redux.Icon.Close}" />
 									</Button>
@@ -1482,7 +1482,7 @@
 										Style="{StaticResource SettingsWarningButtonStyle}"
 										ToolTip="Delete the local mod cache, located in the mod manager's Data folder">
 										<StackPanel Orientation="Horizontal">
-											<controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0"
+											<controls:ReduxIcon VerticalAlignment="Center" Width="14" Height="14" Margin="0,0,6,0"
 												Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 												StrokeData="{StaticResource Redux.Icon.Trash}" />
 											<TextBlock Text="Delete Cache" />
@@ -1501,7 +1501,7 @@
 										Style="{StaticResource SettingsWarningButtonStyle}"
 										ToolTip="Clear every manual per-mod category choice and run Redux's automatic classifier again">
 										<StackPanel Orientation="Horizontal">
-											<controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0"
+											<controls:ReduxIcon VerticalAlignment="Center" Width="14" Height="14" Margin="0,0,6,0"
 												Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 												StrokeData="{StaticResource Redux.Icon.RefreshStroke}" />
 											<TextBlock Text="Restore Automatic Categories" />
@@ -1520,7 +1520,7 @@
 										Style="{StaticResource SettingsWarningButtonStyle}"
 									ToolTip="Clear manual choices and restore links found in mod files and the built-in database">
 										<StackPanel Orientation="Horizontal">
-											<controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0"
+											<controls:ReduxIcon VerticalAlignment="Center" Width="14" Height="14" Margin="0,0,6,0"
 												Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 												StrokeData="{StaticResource Redux.Icon.RefreshStroke}" />
 											<TextBlock Text="Restore Automatic Links" />
@@ -1539,7 +1539,7 @@
 										Style="{StaticResource SettingsWarningButtonStyle}"
 										ToolTip="Remove remembered Nexus Mods and mod.io associations without changing installed mods, load orders, API keys, or preferences">
 										<StackPanel Orientation="Horizontal">
-											<controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0"
+											<controls:ReduxIcon VerticalAlignment="Center" Width="14" Height="14" Margin="0,0,6,0"
 												Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 												StrokeData="{StaticResource Redux.Icon.UnlinkStroke}" />
 										<TextBlock Text="Clear Source Links" />

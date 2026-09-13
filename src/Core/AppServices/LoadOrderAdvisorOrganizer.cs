@@ -380,7 +380,10 @@ public static class LoadOrderAdvisorOrganizer
 			|| String.Equals(edge.AfterUuid, mod.UUID, StringComparison.OrdinalIgnoreCase));
 		if (relationship != null) return relationship.Reason;
 		var group = knowledge.GetGroupName(mod.UUID);
-		return String.IsNullOrWhiteSpace(group) ? "Stable placement around advised mods" : $"Suggested {group} separator";
+		if (String.IsNullOrWhiteSpace(group)) return "Stable placement around advised mods";
+		return knowledge.TryGetEntry(mod.UUID, out var entry) && entry.Evidence != null
+			? $"{group} · {entry.Evidence.Label}"
+			: $"Suggested {group} separator";
 	}
 
 	private static string BuildMoveIgnoreKey(DivinityModData mod, IReadOnlyList<Edge> edges) =>

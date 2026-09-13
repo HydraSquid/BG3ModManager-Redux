@@ -392,6 +392,10 @@ public sealed class ReduxGameDirectoryInstallService
 				continue;
 
 			var definitions = package.ToArray();
+			if (definitions.Any(definition => definition.Kind == ReduxGameDirectoryModKind.NativeLoader)
+				&& !HasExternalLoaderEvidence(CaptureDestination("bink2w64.dll"), CaptureDestination("bink2w64_original.dll")))
+				continue;
+
 			var exactMatches = existingSnapshots
 				.Where(snapshot => snapshot.Hash != null)
 				.Select(snapshot => ReduxGameDirectoryModCatalog.FindByBinaryFingerprint(
@@ -412,11 +416,11 @@ public sealed class ReduxGameDirectoryInstallService
 			if (isUnverifiedVariant && representative?.Kind == ReduxGameDirectoryModKind.ScriptExtender)
 				externalName = "Baldur's Gate 3 Script Extender (unverified variant)";
 			var detectedVersion = exactMatch?.Fingerprint.Version ?? String.Empty;
-			var statusText = isUnverifiedVariant ? "Installed outside Redux · unverified variant"
-				: String.IsNullOrWhiteSpace(detectedVersion) ? "Installed outside Redux"
-				: $"Installed outside Redux · identified v{detectedVersion}";
+			var statusText = isUnverifiedVariant ? "Not managed by this Redux installation · unverified variant"
+				: String.IsNullOrWhiteSpace(detectedVersion) ? "Not managed by this Redux installation"
+				: $"Not managed by this Redux installation · identified v{detectedVersion}";
 			if (representative?.ReplacesExistingGameFiles == true)
-				statusText = "Can't manage · no protected original backup";
+				statusText = "Can't manage · this installation has no protected original backup";
 			var canAdopt = (exactMatch?.Definition.Kind is ReduxGameDirectoryModKind.NativePlugin
 				or ReduxGameDirectoryModKind.ScriptExtender)
 				&& !exactMatch.Definition.ReplacesExistingGameFiles
@@ -445,7 +449,7 @@ public sealed class ReduxGameDirectoryInstallService
 				results.Add(new ReduxGameDirectoryModEntry(
 					"external-native-files", -1, "Other native files", String.Empty, String.Empty,
 					ReduxGameDirectoryModStatus.External,
-					otherDlls.Length > 64 ? "Installed outside Redux · more than 64 DLLs" : "Installed outside Redux",
+					otherDlls.Length > 64 ? "Not managed by this Redux installation · more than 64 DLLs" : "Not managed by this Redux installation",
 					displayed, false));
 			}
 		}
@@ -1396,6 +1400,20 @@ public sealed class ReduxGameDirectoryInstallService
 		File.Delete(path);
 	}
 
+	private static bool HasExternalLoaderEvidence(DestinationSnapshot loader, DestinationSnapshot original)
+	{
+		if (!loader.Exists) return false;
+		var fingerprints = ReduxGameDirectoryModCatalog.Find(944)!.BinaryFingerprints;
+		bool Matches(string path) => fingerprints.Any(fingerprint => fingerprint.RelativePath == path
+			&& fingerprint.Length == loader.Length
+			&& String.Equals(fingerprint.Sha256, loader.Hash, StringComparison.OrdinalIgnoreCase));
+		if (Matches("bin/bink2w64_original.dll")) return false;
+		if (Matches("bin/bink2w64.dll")) return true;
+		// The base game owns this filename too. A lone DLL or identical leftover backup
+		// does not establish an external loader installation.
+		return original.Exists && !String.Equals(loader.Hash, original.Hash, StringComparison.OrdinalIgnoreCase);
+	}
+
 	private ReduxNativeLoaderStatus DetectLoader(NativeInstallManifest? manifest)
 	{
 		const string loader = "bink2w64.dll";
@@ -1418,7 +1436,7 @@ public sealed class ReduxGameDirectoryInstallService
 			return new ReduxNativeLoaderStatus(true, true, "Native Mod Loader is verified as installed by Redux.");
 		}
 
-		if (!loaderSnapshot.Exists && !originalSnapshot.Exists)
+		if (!HasExternalLoaderEvidence(loaderSnapshot, originalSnapshot))
 			return new ReduxNativeLoaderStatus(false, false, "Native Mod Loader is missing.");
 		if (!loaderSnapshot.Exists || !originalSnapshot.Exists
 			|| !IsAmd64PeDll(ResolveTargetPath(loader, createParent: false))

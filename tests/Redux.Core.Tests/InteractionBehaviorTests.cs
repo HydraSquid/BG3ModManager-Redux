@@ -305,6 +305,34 @@ public sealed class InteractionBehaviorTests
 		}
 	}
 
+	public void OnboardingAppearancePreviewsAndRestoresWithoutSaving()
+	{
+		var settings = new DivinityModManagerSettings { ShowCategoryIconsInPills = true, TextSize = ReduxTextSize.Default };
+		var window = new ReduxOnboardingWindow(null!, settings);
+		try
+		{
+			var hide = (CheckBox)window.FindName("HideIconsCheckBox");
+			hide.IsChecked = true;
+			hide.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.False(DivinityApp.ShowInterfaceIcons);
+			var previewIcon = (ReduxIcon)window.FindName("TourFileIcon");
+			System.Windows.Data.BindingOperations.GetBindingExpression(previewIcon, UIElement.VisibilityProperty)!.UpdateTarget();
+			RegressionAssert.Equal(Visibility.Collapsed, previewIcon.Visibility);
+			RegressionAssert.True(settings.ShowCategoryIconsInPills);
+			RegressionAssert.False(((CheckBox)window.FindName("IconsOnlyCheckBox")).IsEnabled);
+			((ComboBox)window.FindName("WelcomeTextSizeComboBox")).SelectedItem = ReduxTextSize.Large;
+			RegressionAssert.True((double)window.FindResource("Redux.FontSize.12") > 12);
+			var saved = new DivinityModManagerSettings();
+			window.ApplyAppearanceSelection(saved);
+			RegressionAssert.False(saved.ShowCategoryIconsInPills);
+			RegressionAssert.Equal(ReduxTextSize.Large, saved.TextSize);
+			RegressionAssert.Equal(ReduxTextSize.Default, settings.TextSize);
+		}
+		finally { window.Close(); }
+		RegressionAssert.True(DivinityApp.ShowInterfaceIcons);
+		RegressionAssert.Equal(12d, (double)window.FindResource("Redux.FontSize.12"));
+	}
+
 	public void OnboardingKeepsActionsVisibleAtItsMinimumSupportedSize()
 	{
 		Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -345,8 +373,6 @@ public sealed class InteractionBehaviorTests
 			((PasswordBox)window.FindName("NexusApiKeyTextBox")).Password = "test-key";
 			saveContinue.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 			RegressionAssert.False(window.ApplyChanges);
-			RegressionAssert.Equal(Visibility.Visible, ((FrameworkElement)window.FindName("ManagersPage")).Visibility);
-			saveContinue.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 			RegressionAssert.Equal(Visibility.Visible, ((FrameworkElement)window.FindName("OptionsPage")).Visibility);
 			var detailsExpander = (Expander)window.FindName("BeforePlayExpander");
 			detailsExpander.ApplyTemplate();
@@ -362,11 +388,24 @@ public sealed class InteractionBehaviorTests
 			demo.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 			RegressionAssert.Equal("1  Example mod", ((TextBlock)window.FindName("DemoActiveText")).Text);
 			demo.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-			RegressionAssert.Contains(((TextBlock)window.FindName("DemoInstructionText")).Text, "saving alone does not apply it");
+			RegressionAssert.Contains(((TextBlock)window.FindName("DemoInstructionText")).Text, "Sync applies your saved order");
 			demo.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-			RegressionAssert.Contains(((TextBlock)window.FindName("DemoInstructionText")).Text, "Example complete");
+			RegressionAssert.Contains(((TextBlock)window.FindName("DemoInstructionText")).Text, "Ready to play");
 			RegressionAssert.False(window.ApplyChanges);
 
+			saveContinue.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Equal(Visibility.Visible, ((FrameworkElement)window.FindName("ManagersPage")).Visibility);
+			var tour = (Button)window.FindName("TourActionButton");
+			tour.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			tour.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Contains(((TextBlock)window.FindName("TourResult")).Text, "Save added");
+			((Button)window.FindName("NativeTourButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Contains(((TextBlock)window.FindName("TourResult")).Text, "Ready");
+			tour.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Contains(((TextBlock)window.FindName("TourResult")).Text, "Review");
+			tour.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Contains(((TextBlock)window.FindName("TourResult")).Text, "game folder");
+			RegressionAssert.False(window.ApplyChanges);
 			((Button)window.FindName("BackButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 			RegressionAssert.Equal("test-key", window.SelectedNexusApiKey);
 			RegressionAssert.False(window.SelectedLocalOnlyMode);

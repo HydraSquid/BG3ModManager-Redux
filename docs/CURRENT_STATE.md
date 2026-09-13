@@ -1,11 +1,11 @@
-# Current project state
+﻿# Current project state
 
 This page records the decisions and boundaries that define Redux today. It is the first reference
 to check before changing established behavior. The [changelog](CHANGELOG.md) records what shipped,
 the [issue tracker](https://github.com/circleainn/BG3ModManager-Redux/issues) tracks individual
 reports and proposals, and the source and tests remain authoritative for implementation details.
 
-Last reviewed: September 12, 2026, for `v0.1.0-alpha.16.3.5`.
+Last reviewed: September 13, 2026. Public baseline: `v0.1.0-alpha.16.3.5`.
 
 ## Development status
 
@@ -18,6 +18,8 @@ export preference persistence (#119), and NXM reassociation recovery (#120) are 
 The broader UI pass still benefits from live checks with custom themes and enlarged text. Issue
 #95 remains unresolved pending reporter diagnostics. Native ownership and protected backups remain
 local to each Redux installation; changing to another folder does not migrate those records.
+
+See [the next-update audit](NEXT_UPDATE_AUDIT.md) for issue status and remaining release checks.
 
 ## Current release
 

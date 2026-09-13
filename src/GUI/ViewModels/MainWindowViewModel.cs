@@ -4643,6 +4643,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				Settings.UsesGeneratedGradients = welcomeWindow.SelectedTheme != ReduxThemeType.Parchment;
 			}
 
+			welcomeWindow.ApplyAppearanceSelection(Settings);
 			Settings.LocalOnlyMode = welcomeWindow.SelectedLocalOnlyMode;
 			Settings.EnableLoadOrderAdvisor = welcomeWindow.SelectedGuidanceEnabled;
 			Settings.NexusModsAPIKey = welcomeWindow.SelectedNexusApiKey;

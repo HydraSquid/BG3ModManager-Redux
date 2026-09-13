@@ -73,6 +73,24 @@ public sealed class DialogLayoutTests
 				VerifyLayout(welcome, theme, 780, 740, $"welcome-{step}-normal", "NotNowButton", "SaveContinueButton");
 				RegressionAssert.True(((ScrollViewer)welcome.FindName("OnboardingContentScrollViewer")).ScrollableHeight < 1);
 
+				if (step == 0)
+				{
+					var appearance = (Expander)welcome.FindName("AppearanceOptionsExpander");
+					appearance.IsExpanded = true;
+					((ScrollViewer)welcome.FindName("OnboardingContentScrollViewer")).ScrollToBottom();
+					VerifyLayout(welcome, theme, 780, 740, "welcome-appearance-normal", "NotNowButton", "SaveContinueButton");
+					appearance.IsExpanded = false;
+				}
+				if (step == 3)
+				{
+					((Button)welcome.FindName("NativeTourButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+					for (var state = 0; state < 3; state++)
+					{
+						VerifyLayout(welcome, theme, 780, 740, $"welcome-native-{state}-normal", "TourActionButton", "SaveContinueButton");
+						RegressionAssert.True(((ScrollViewer)welcome.FindName("OnboardingContentScrollViewer")).ScrollableHeight < 1);
+						((Button)welcome.FindName("TourActionButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+					}
+				}
 				if (step < 3) ((Button)welcome.FindName("SaveContinueButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 			}
 			welcome.Close();

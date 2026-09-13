@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 This file summarizes user-visible Redux releases. The issue tracker and Git history remain the
 source for individual implementation details.
@@ -7,84 +7,53 @@ source for individual implementation details.
 
 Development groundwork for the next update. No version or release has been assigned.
 
-- Keep dev build/test validation without downloadable portable artifacts. Publish releases from
-  main only, and verify release-tag ancestry before a Nexus upload.
-- Explain drag-and-drop installation, Save Game Manager, and game-directory mods in Welcome
-  Setup. Align the inactive separator action with Active Mods and put saved-order restoration
-  in the separator context menu.
-- Apply Parchment’s Segoe UI default when switching themes during setup, preserve explicit font
-  overrides, and explain custom themes. Animate the Before You Play section without sticky hover.
-- Replace legacy yellow/blinking Script Extender menu text with the quiet missing-loader dot.
+### Added
 
+- Saved ordering and separators in Inactive Mods, using the existing drag/drop and Undo/Redo
+  system. Inactive organization stays in Redux; Load Order Advisor remains active-only.
+- A rebuilt Welcome Setup: game discovery, larger theme previews, local/Nexus setup, interactive
+  load-order practice, and a saves/native-mod tour. Explain drag-and-drop and each manager without
+  repeating instructions. Offer to open Download Manager when setup finishes.
+- Live Appearance controls in setup for icons, category presentation, gradients, fonts, and text
+  size. Cancel restores the previous appearance. Keep explicit fonts and custom themes unless changed.
+- Help > What's New to reopen release notes, plus a remembered opt-out under General > Updates.
+- 499 UUID-backed catalog entries and refreshed Advisor categories with concise evidence origins.
+  Name-only identities remain unresolved; changed dependency/ordering constraints remain deferred.
 
-- Add saved ordering and separators to Inactive Mods using the existing drag/drop and Undo/Redo
-  system. Keep inactive organization in Redux only; Load Order Advisor remains active-only.
+### Changed
 
-- Rebuild Welcome Setup around locating the game, adding mods, and a hands-on load-order example.
-  Explain local and Nexus downloads, preserve custom themes unless changed, and offer to open
-  Download Manager when setup finishes. Add clickable steps, motion-aware transitions, practice
-  progress feedback, and expandable guidance before playing. Use the Redux star icon.
+- Unify manager headings, toolbar spacing, install/success actions, warning/destructive buttons,
+  icon alignment, keyboard focus, and accessibility names. Wrap toolbars and let save rows grow
+  with larger text. Keep import/export actions visible while long content scrolls.
+- Group Preferences consistently, align input sizes, wrap font actions, and allow tab labels to
+  grow. Shorten repeated explanations in package, overlap, comparison, restore, and modlist reviews.
+- Give review dialogs predictable initial focus and align comparison actions as labels grow.
+- Move Quick Links into Help > Links & Folders. Use Ctrl+1 through Ctrl+4 for Mods, Game,
+  Extender Logs, and Saves. Keep the update-availability dot.
+- Replace legacy yellow/blinking Script Extender menu text with a quiet missing-loader indicator.
+- Enlarge native-mod thumbnails, align status icons, use plain semantic status text, and place
+  actions below details. Clarify that ownership records and protected backups belong to each
+  Redux installation; another copy may hold them.
+- Distinguish Import Folder from Saves Folder. Shorten archive-retention status text.
+- Match inactive separator styling/placement to Active Mods; restore saved inactive order from
+  the separator context menu after column sorting.
+- Use shorter What's New headings and theme-aware release-note colors, including gradients.
+  Hide release-control comments and announcement-policy wording; use shared dialog backdrops.
+- Preserve the Redux star, platform logos, and useful action icons in onboarding. Respect icon
+  visibility in onboarding and shared title bars. Use reduced-motion-aware page/expander transitions.
+- Keep dev validation without downloadable portable artifacts. Public releases belong to main;
+  verify tag ancestry before Nexus uploads and include all supported release-note bullets in descriptions.
 
-- Assign folder shortcuts Ctrl+1 through Ctrl+4 in menu order (Mods, Game, Extender Logs, Saves).
-  Distinguish Import Folder from Saves Folder in the Save Game Manager.
+### Fixed
 
-- Center native status icons, enlarge native-mod thumbnails, and show a quiet Tools indicator
-  when the configured game is missing the Script Extender loader.
-
-- Replace outlined native-mod and install-review status pills with plain semantic text/icons.
-  Wrap native ownership messages below names and move row actions below details.
-
-- Describe native mods without local ownership records as not managed by this Redux installation;
-  explain that another Redux copy may hold their protected backups.
-
-- Do not identify the base-game Bink DLL, or an identical leftover backup, as an external
-  Native Mod Loader installation. Preserve checks for Redux-managed files.
-
-- Shorten What's New headings, hide announcement-policy wording, and apply the shared
-  preference-aware owner backdrop.
-
-- Unify install actions with Download Manager success styling, align button icons across windows,
-  and use shared warning/destructive styles in editors and history. Correct toolbar margins
-  accidentally applied to Save and Game-Directory Manager icons.
-
-- Add What's New window/action icons. Include all supported release-note bullets in Nexus
-  file descriptions so changes are not dropped after the first five fixes.
-
-- Move Quick Links under Help > Links & Folders; retain the existing update-availability dot.
-  Add Help > What's New to reopen the current release notes.
-- Use active theme brushes for release notes, including gradient backgrounds, and center save
-  toolbar icons. Align Preferences warning and destructive buttons with shared semantic styles.
-
-- Give review dialogs predictable initial focus: baseline selection, snapshot list, or scan cancel.
-
-- Align review-window headings and padding with managers; name comparison controls and keep
-  the swap action aligned as labels grow.
-
-- Share manager headings, toolbar spacing, and visible keyboard-focus outlines across Download,
-  Save Game, and Game-Directory Mod managers.
-
-- Let save rows grow with enlarged text, space wrapped manager toolbar rows, and name save
-  and game-directory actions for screen readers.
-
-- Wrap Download Manager toolbar actions at narrower widths and larger text sizes. Wrap package
-  finding titles and shorten the clean-result compatibility note.
-
-- Remember the Script Extender option to export default values across restarts and config reloads.
-  Keep explicit checkbox values in the JSON when that option is enabled.
-- Allow confirmed Nexus-link reassociation after another manager changes the handler while
-  leaving Redux's ownership marker. Keep automatic repair/removal blocked for changed handlers.
-- Group Preferences options consistently, align input sizes, and tighten shared row and section
-  spacing. Name Appearance controls for screen readers and wrap font actions below the selector.
-  Let tab headers grow for larger text rather than clipping wrapped tabs.
-- Remember the What's New opt-out, with a switch under Preferences > General > Updates.
-  Hide release-control comments and render release notes with readable background contrast.
-- Keep modlist import/export actions visible while long content scrolls; add clear accessibility
-  names and shorten repeated explanations. Save and Game-Directory Manager toolbars wrap at
-  narrower widths. Shorten supporting text in comparison, restore, package, and overlap reviews.
-- Refresh Load Order Advisor categories and placement evidence,
-  adding 499 UUID-backed entries. Keep name-only identities unresolved and defer changed
-  dependency and ordering constraints for review.
-- Show concise evidence origins for suggested category placements in the Advisor preview.
+- Remember the Script Extender export-default-values preference across restart/config reloads.
+  Explicit defaults stay in JSON when enabled; omitted defaults otherwise retain their normal meaning.
+- Allow explicit Nexus-link reassociation after another manager takes ownership, even if Redux's
+  old ownership marker remains. Automatic repair/removal still cannot replace a changed handler.
+- Do not identify the base-game Bink DLL or an identical leftover backup as Native Mod Loader.
+- Apply Parchment's Segoe UI default during setup, preserve explicit font overrides, and prevent
+  sticky hover/unfinished expansion states in onboarding details.
+- Correct manager button-icon margins and ensure release notes remain readable with custom themes.
 
 ## 0.1.0-alpha.16.3.5 — silent public-alpha maintenance release
 

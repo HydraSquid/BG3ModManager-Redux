@@ -29,9 +29,16 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 	private bool _accessibilityPreviewActive;
 	private bool _nxmAssociationChoiceAvailable = true;
 	private bool _isInitializing = true;
+	private bool _appearanceEdited;
+	private bool _updatingAppearance;
+	private bool _fontChoiceChanged;
+	private bool _gradientChoiceChanged;
+	private ReduxTextSize _initialTextSize;
+	private bool _initialShowIcons;
+	private bool _initialIconsOnly;
 	private int _step;
 	private int _demoStep;
-	private int _detailsAnimationVersion;
+	private readonly Dictionary<Expander, int> _detailsAnimationVersions = new();
 	public string SelectedGameExecutablePath { get; private set; }
 	public bool OpenDownloadsAfterSetup => OpenDownloadsCheckBox.IsChecked == true;
 	public bool WasResolved { get; private set; }
@@ -105,6 +112,20 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 			RetainArchivesCheckBox.IsChecked = false;
 		}
 
+		_initialTextSize = _initialCustomTheme?.TextSize ?? settings?.TextSize ?? ReduxTextSize.Default;
+		_initialShowIcons = _initialCustomTheme?.ShowCategoryIconsInPills ?? settings?.ShowCategoryIconsInPills ?? true;
+		_initialIconsOnly = _initialCustomTheme?.UseIconsOnly ?? settings?.UseIconsOnly ?? false;
+		HideIconsCheckBox.IsChecked = !_initialShowIcons;
+		IconsOnlyCheckBox.IsChecked = _initialIconsOnly;
+		IconsOnlyCheckBox.IsEnabled = _initialShowIcons;
+		CategorySelectionCheckBox.IsChecked = _initialCustomTheme?.UseCategoryColorsForInteractions ?? settings?.UseCategoryColorsForInteractions ?? false;
+		CategoryTextCheckBox.IsChecked = _initialCustomTheme?.UseCategoryColorsForSidebarText ?? settings?.UseCategoryColorsForSidebarText ?? false;
+		GradientsCheckBox.IsChecked = _initialCustomTheme?.UsesGeneratedGradients ?? settings?.UsesGeneratedGradients ?? true;
+		WelcomeFontComboBox.DisplayMemberPath = "Name";
+		WelcomeFontComboBox.ItemsSource = ReduxCustomFontService.GetChoices();
+		SelectWelcomeFont(_initialTypography.Font, _initialTypography.CustomReference);
+		WelcomeTextSizeComboBox.ItemsSource = Enum.GetValues<ReduxTextSize>();
+		WelcomeTextSizeComboBox.SelectedItem = _initialTextSize;
 		_isInitializing = false;
 		UpdateSourceIntegrationState();
 		ShowStep(0);
@@ -138,6 +159,94 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 		Top = Math.Clamp(Top, workArea.Top, Math.Max(workArea.Top, workArea.Bottom - renderedHeight));
 	}
 
+
+	private void SelectWelcomeFont(ReduxTypographyFont font, string reference)
+	{
+		_updatingAppearance = true;
+		WelcomeFontComboBox.SelectedItem = WelcomeFontComboBox.Items.Cast<ReduxFontChoice>().FirstOrDefault(c =>
+			String.IsNullOrEmpty(reference) ? !c.IsCustom && c.BuiltInFont == font : c.CustomReference == reference);
+		_updatingAppearance = false;
+	}
+
+	private ReduxCustomTheme SelectedAppearance()
+	{
+		var result = (!_themePreviewActive ? _initialCustomTheme?.Clone() : null)
+			?? ReduxThemeService.CreateFromBase("Preview", SelectedTheme);
+		result.ShowCategoryIconsInPills = HideIconsCheckBox.IsChecked != true;
+		result.UseIconsOnly = result.ShowCategoryIconsInPills && IconsOnlyCheckBox.IsChecked == true;
+		result.UseCategoryColorsForInteractions = CategorySelectionCheckBox.IsChecked == true;
+		result.UseCategoryColorsForSidebarText = CategoryTextCheckBox.IsChecked == true;
+		result.UsesGeneratedGradients = GradientsCheckBox.IsChecked == true;
+		result.TextSize = WelcomeTextSizeComboBox.SelectedItem is ReduxTextSize size ? size : _initialTextSize;
+		if (WelcomeFontComboBox.SelectedItem is ReduxFontChoice font)
+		{
+			result.TypographyFont = font.BuiltInFont;
+			result.CustomTypographyFont = font.IsCustom ? font.CustomReference : String.Empty;
+		}
+		return result;
+	}
+
+	private void AppearanceOption_Click(object sender, RoutedEventArgs e)
+	{
+		if (_isInitializing || _updatingAppearance) return;
+		if (sender == GradientsCheckBox) _gradientChoiceChanged = true;
+		if (HideIconsCheckBox.IsChecked == true) IconsOnlyCheckBox.IsChecked = false;
+		IconsOnlyCheckBox.IsEnabled = HideIconsCheckBox.IsChecked != true;
+		_appearanceEdited = true;
+		PreviewAppearance();
+	}
+
+	private void AppearanceSelection_Changed(object sender, SelectionChangedEventArgs e)
+	{
+		if (_isInitializing || _updatingAppearance) return;
+		if (sender == WelcomeFontComboBox) _fontChoiceChanged = true;
+		_appearanceEdited = true;
+		PreviewAppearance();
+	}
+
+	private void PreviewAppearance()
+	{
+		var preview = SelectedAppearance();
+		ReduxThemeService.Apply(Resources, SelectedTheme, preview);
+		_ownerWindow?.PreviewColorTheme(SelectedTheme, preview);
+		_ownerWindow?.ViewModel?.PreviewModPresentation(preview);
+		DivinityApp.ShowInterfaceIcons = preview.ShowCategoryIconsInPills;
+		DivinityApp.UseIconsOnly = preview.UseIconsOnly;
+		ReduxTypographyService.Apply(Resources, preview.TypographyFont, preview.CustomTypographyFont);
+		ReduxTypographyService.ApplyTextSize(Resources, preview.TextSize);
+		if (Application.Current != null) ReduxTypographyService.ApplyTextSize(Application.Current.Resources, preview.TextSize);
+	}
+
+	public void ApplyAppearanceSelection(DivinityModManagerSettings settings)
+	{
+		if (!_appearanceEdited) return;
+		var selected = SelectedAppearance();
+		settings.ShowCategoryIconsInPills = selected.ShowCategoryIconsInPills;
+		settings.UseIconsOnly = selected.UseIconsOnly;
+		settings.UseCategoryColorsForInteractions = selected.UseCategoryColorsForInteractions;
+		settings.UseCategoryColorsForSidebarText = selected.UseCategoryColorsForSidebarText;
+		settings.UsesGeneratedGradients = selected.UsesGeneratedGradients;
+		settings.TextSize = selected.TextSize;
+		if (_fontChoiceChanged)
+		{
+			settings.UseThemeDefaultTypography = false;
+			settings.TypographyFont = selected.TypographyFont;
+			settings.CustomTypographyFont = selected.CustomTypographyFont;
+		}
+		var custom = ReduxThemeService.GetActiveTheme(settings);
+		if (custom != null)
+		{
+			custom.ShowCategoryIconsInPills = selected.ShowCategoryIconsInPills;
+			custom.UseIconsOnly = selected.UseIconsOnly;
+			custom.UseCategoryColorsForInteractions = selected.UseCategoryColorsForInteractions;
+			custom.UseCategoryColorsForSidebarText = selected.UseCategoryColorsForSidebarText;
+			custom.UsesGeneratedGradients = selected.UsesGeneratedGradients;
+			custom.TypographyFont = selected.TypographyFont;
+			custom.CustomTypographyFont = selected.CustomTypographyFont;
+			custom.TextSize = selected.TextSize;
+		}
+	}
+
 	private void ThemeCard_Click(object sender, RoutedEventArgs e)
 	{
 		if (sender is RadioButton { Tag: ReduxThemeType theme })
@@ -149,6 +258,11 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 				: (_settings.TypographyFont, _settings.CustomTypographyFont);
 			ReduxTypographyService.Apply(Resources, typography.Item1, typography.Item2);
 			_themePreviewActive = true;
+			_appearanceEdited = true;
+			if (!_gradientChoiceChanged) GradientsCheckBox.IsChecked = theme != ReduxThemeType.Parchment;
+			if (!_fontChoiceChanged && _settings?.UseThemeDefaultTypography != false)
+				SelectWelcomeFont(ReduxTypographyService.GetThemeDefault(theme), String.Empty);
+			PreviewAppearance();
 		}
 	}
 
@@ -277,7 +391,8 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 		if (SelectedReduceMotion)
 		{
 			BeforePlayExpansion_Changed(BeforePlayExpander, new RoutedEventArgs());
-			foreach (var element in new FrameworkElement[] { AppearancePage, ConnectionsPage, ManagersPage, OptionsPage, DemoActiveText, DemoInstructionText })
+			BeforePlayExpansion_Changed(AppearanceOptionsExpander, new RoutedEventArgs());
+			foreach (var element in new FrameworkElement[] { AppearancePage, ConnectionsPage, ManagersPage, OptionsPage, DemoActiveText, DemoInstructionText, TourResult, TourExplanation })
 			{
 				element.BeginAnimation(OpacityProperty, null);
 				element.Opacity = 1;
@@ -297,9 +412,9 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 	private void UpdateGameStatus()
 	{
 		var exists = System.IO.File.Exists(SelectedGameExecutablePath);
-		GameStatusText.Text = exists ? "Game executable found" : "Game location needs attention";
+		GameStatusText.Text = exists ? "Game found" : "Choose your game location";
 		GameStatusText.SetResourceReference(TextBlock.ForegroundProperty, exists ? "ReduxSuccessBrush" : "ReduxWarningBrush");
-		GamePathText.Text = exists ? SelectedGameExecutablePath : "Locate bg3.exe or bg3_dx11.exe in the game’s bin folder. You can also do this later in Preferences.";
+		GamePathText.Text = exists ? SelectedGameExecutablePath : "Select bg3.exe or bg3_dx11.exe in the game’s bin folder.";
 		GamePathText.ToolTip = GamePathText.Text;
 	}
 
@@ -313,19 +428,67 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 		UpdateGameStatus();
 	}
 
+
+	private bool _nativeTour;
+	private int _managerTourStep;
+
+	private void ManagerTourSelection_Click(object sender, RoutedEventArgs e)
+	{
+		_nativeTour = (sender as Button)?.Tag?.ToString() == "native";
+		_managerTourStep = 0;
+		UpdateManagerTour();
+	}
+
+	private void ManagerTourAction_Click(object sender, RoutedEventArgs e)
+	{
+		_managerTourStep = (_managerTourStep + 1) % 3;
+		UpdateManagerTour();
+	}
+
+	private void UpdateManagerTour()
+	{
+		SaveTourButton.SetResourceReference(StyleProperty, _nativeTour ? "WelcomeStepStyle" : "WelcomeCurrentStepStyle");
+		NativeTourButton.SetResourceReference(StyleProperty, _nativeTour ? "WelcomeCurrentStepStyle" : "WelcomeStepStyle");
+		System.Windows.Automation.AutomationProperties.SetItemStatus(SaveTourButton, _nativeTour ? "" : "Selected");
+		System.Windows.Automation.AutomationProperties.SetItemStatus(NativeTourButton, _nativeTour ? "Selected" : "");
+		TourTitle.Text = _nativeTour ? "Native installation · Preview" : "Import a save · Preview";
+		TourDestinationIcon.SetResourceReference(Controls.ReduxIcon.StrokeDataProperty, _managerTourStep == 2 ? "Redux.Icon.Check" : "Redux.Icon.FolderOpen");
+		TourFileName.Text = _nativeTour ? "Example native mod.zip" : "Example save.zip";
+		TourFileDescription.Text = _nativeTour ? "A package containing native DLLs" : "A save file, folder, or ZIP";
+		TourFileIcon.SetResourceReference(Controls.ReduxIcon.StrokeDataProperty, _nativeTour ? "Redux.Icon.Shield" : "Redux.Icon.Save");
+		TourDestination.Text = _nativeTour ? "Game-Directory Mod Manager" : "Save Game Manager";
+		TourResult.Text = (_nativeTour ? new[] { "Ready for a native package", "Review files and replacements", "Installed in the game folder" } : new[] { "Ready for your save", "Save found · selected profile", "Save added to the profile" })[_managerTourStep];
+		TourResult.SetResourceReference(TextBlock.ForegroundProperty, _managerTourStep == 2 ? "ReduxSuccessBrush" : "ReduxTextSecondaryBrush");
+		TourExplanation.Text = (_nativeTour ? new[] {
+			"Drop a native DLL package into Redux. These mods live in the game folder.",
+			"Check the files being replaced. Redux verifies protected backups before continuing.",
+			"Installed. Manage tracked files here, outside the load order."
+		} : new[] {
+			"Drop a save file, folder, or ZIP into Redux.",
+			"Choose the profile. Review any existing files before replacing them.",
+			"Your save is ready. Install its required mods before playing."
+		})[_managerTourStep];
+		TourActionLabel.Text = (_nativeTour ? new[] { "Preview install", "Install example", "Replay" } : new[] { "Preview import", "Import example", "Replay" })[_managerTourStep];
+		TourLocation.Text = _nativeTour ? "Tools → Game-Directory Mod Manager" : "Saves → Manage";
+		TourTip.Text = _nativeTour ? "Native mods run code inside the game. Only install from sources you trust." : "Browse, import, and open the selected profile’s saves.";
+		AnimateEntrance(TourResult, 1);
+		AnimateEntrance(TourExplanation, 1);
+	}
+
 	private void DemoAction_Click(object sender, RoutedEventArgs e)
 	{
 		_demoStep = (_demoStep + 1) % 4;
 		DemoInactiveText.Text = _demoStep == 0 ? "Example mod" : "No inactive mods";
 		DemoActiveText.Text = _demoStep == 0 ? "No active mods" : "1  Example mod";
 		DemoInstructionText.Text = new[] {
-			"New mods start inactive. Activate the example mod to include it in your load order.",
-			"Active mods are included in your order. Save Current Order keeps this arrangement in Redux.",
-			"Saved in Redux. Sync Load Order to Game applies that order to Baldur’s Gate 3; saving alone does not apply it.",
-			"Example complete. In your real order, review the sync changes and any Mod Diagnostics before launching the game."
+			"Installed mods start here. Move one to Active to use it.",
+			"Save keeps this arrangement in Redux.",
+			"Sync applies your saved order to Baldur’s Gate 3.",
+			"Ready to play. That’s the full workflow."
 		}[_demoStep];
-		DemoActionLabel.Text = new[] { "Activate example mod", "Save example order", "Sync example to game", "Try again" }[_demoStep];
-		DemoProgressText.Text = new[] { "Installed → Activate → Save → Sync", "Active → Save → Sync", "Saved in Redux → Sync to game", "Synced · Example complete" }[_demoStep];
+		DemoActionIcon.SetResourceReference(Controls.ReduxIcon.StrokeDataProperty, new[] { "Redux.Icon.ChevronRightStroke", "Redux.Icon.Save", "Redux.Icon.Check", "Redux.Icon.ReorderStroke" }[_demoStep]);
+		DemoActionLabel.Text = new[] { "Activate mod", "Save order", "Sync to game", "Replay" }[_demoStep];
+		DemoProgressText.Text = new[] { "01 / Activate", "02 / Save", "03 / Sync", "Order synced" }[_demoStep];
 		DemoProgressText.SetResourceReference(TextBlock.ForegroundProperty, _demoStep == 3 ? "ReduxSuccessBrush" : "ReduxAccentHoverBrush");
 		AnimateEntrance(DemoActiveText, 1);
 		AnimateEntrance(DemoInstructionText, 1);
@@ -337,7 +500,8 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 		if (sender is not Expander expander) return;
 		expander.ApplyTemplate();
 		if (expander.Template.FindName("Details", expander) is not Border panel) return;
-		var version = ++_detailsAnimationVersion;
+		var version = _detailsAnimationVersions.GetValueOrDefault(expander) + 1;
+		_detailsAnimationVersions[expander] = version;
 		var currentHeight = panel.Visibility == Visibility.Visible ? panel.ActualHeight : 0;
 		panel.BeginAnimation(HeightProperty, null);
 		panel.BeginAnimation(OpacityProperty, null);
@@ -360,7 +524,7 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 		};
 		animation.Completed += (_, _) =>
 		{
-			if (version != _detailsAnimationVersion) return;
+			if (version != _detailsAnimationVersions.GetValueOrDefault(expander)) return;
 			panel.BeginAnimation(HeightProperty, null);
 			panel.BeginAnimation(OpacityProperty, null);
 			panel.Height = expander.IsExpanded ? Double.NaN : 0;
@@ -398,23 +562,23 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 		_step = Math.Clamp(step, 0, 3);
 		AppearancePage.Visibility = _step == 0 ? Visibility.Visible : Visibility.Collapsed;
 		ConnectionsPage.Visibility = _step == 1 ? Visibility.Visible : Visibility.Collapsed;
-		ManagersPage.Visibility = _step == 2 ? Visibility.Visible : Visibility.Collapsed;
-		OptionsPage.Visibility = _step == 3 ? Visibility.Visible : Visibility.Collapsed;
-		StepProgressText.Text = $"Step {_step + 1} of 4 · {new[] { "Your setup", "Add mods", "Saves & DLLs", "Load order" }[_step]}";
-		StepTitleText.Text = new[] { "Welcome to Redux", "Choose how you add mods", "Beyond the load order", "From installed to ready to play" }[_step];
-		StepDescriptionText.Text = new[] { "Check your game location and make the interface comfortable.", "Review packages in Download Manager before installing them.", "Bring your saves and game-directory mods into Redux.", "Learn the workflow with an example, then add your own mods." }[_step];
+		ManagersPage.Visibility = _step == 3 ? Visibility.Visible : Visibility.Collapsed;
+		OptionsPage.Visibility = _step == 2 ? Visibility.Visible : Visibility.Collapsed;
+		StepProgressText.Text = $"Step {_step + 1} of 4 · {new[] { "Your setup", "Add mods", "Load order", "Saves & DLLs" }[_step]}";
+		StepTitleText.Text = new[] { "Welcome to Redux", "Bring in your mods", "Make it part of your game", "Beyond the load order" }[_step];
+		StepDescriptionText.Text = new[] { "Set up Redux for Baldur’s Gate 3.", "Local files and Nexus downloads meet in Download Manager.", "Activate. Save. Sync. Try it below without changing your files.", "Saves and native mods have their own place in Redux." }[_step];
 		BackButton.Visibility = _step > 0 ? Visibility.Visible : Visibility.Collapsed;
-		ContinueLabel.Text = _step == 3 ? "Finish setup" : "Next";
+		ContinueLabel.Text = _step == 3 ? "Start using Redux" : "Continue";
 		ContinueIcon.SetResourceReference(Controls.ReduxIcon.StrokeDataProperty, _step == 3 ? "Redux.Icon.Check" : "Redux.Icon.ChevronRightStroke");
-		var stepButtons = new[] { SetupStepButton, SourcesStepButton, ManagersStepButton, OrderStepButton };
+		var stepButtons = new[] { SetupStepButton, SourcesStepButton, OrderStepButton, ManagersStepButton };
 		for (var i = 0; i < stepButtons.Length; i++)
 		{
-			stepButtons[i].SetResourceReference(StyleProperty, i == _step ? "ReduxPrimaryActionButtonStyle" : "ReduxSecondaryActionButtonStyle");
+			stepButtons[i].SetResourceReference(StyleProperty, i == _step ? "WelcomeCurrentStepStyle" : "WelcomeStepStyle");
 			System.Windows.Automation.AutomationProperties.SetItemStatus(stepButtons[i], i == _step ? "Current step" : "Go to step");
 		}
-		AnimateEntrance(_step == 0 ? AppearancePage : _step == 1 ? ConnectionsPage : _step == 2 ? ManagersPage : OptionsPage, direction);
+		AnimateEntrance(_step == 0 ? AppearancePage : _step == 1 ? ConnectionsPage : _step == 2 ? OptionsPage : ManagersPage, direction);
 		OnboardingContentScrollViewer.ScrollToTop();
-		System.Windows.Input.FocusManager.SetFocusedElement(this, _step == 0 ? ReduxDarkThemeCard : _step == 1 ? SourceIntegrationsCheckBox : _step == 2 ? SaveContinueButton : GuidanceCheckBox);
+		System.Windows.Input.FocusManager.SetFocusedElement(this, _step == 0 ? ReduxDarkThemeCard : _step == 1 ? SourceIntegrationsCheckBox : _step == 2 ? GuidanceCheckBox : SaveTourButton);
 	}
 
 	private void SaveButton_Click(object sender, RoutedEventArgs e)
@@ -437,10 +601,15 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 			ApplyChanges = false;
 		}
 
-		if (!ApplyChanges && _themePreviewActive)
+		if (!ApplyChanges && (_themePreviewActive || _appearanceEdited))
 		{
 			_ownerWindow?.PreviewColorTheme(_initialTheme, _initialCustomTheme);
 			ReduxTypographyService.Apply(Resources, _initialTypography.Font, _initialTypography.CustomReference);
+			ReduxTypographyService.ApplyTextSize(Resources, _initialTextSize);
+			if (Application.Current != null) ReduxTypographyService.ApplyTextSize(Application.Current.Resources, _initialTextSize);
+			_ownerWindow?.ViewModel?.PreviewModPresentation(_initialCustomTheme);
+			DivinityApp.ShowInterfaceIcons = _initialShowIcons;
+			DivinityApp.UseIconsOnly = _initialIconsOnly;
 		}
 		if (!ApplyChanges && _modulePreviewActive && _settings != null)
 		{

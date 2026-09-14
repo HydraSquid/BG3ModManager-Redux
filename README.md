@@ -25,6 +25,16 @@ Redux is a Windows mod manager built on
 BG3MM's proven package, profile, and load-order foundation while adding a cohesive interface,
 stronger organization, safer review workflows, and optional offline-assisted guidance.
 
+<h3 id="new-in-16-4" align="center">New in 16.4</h3>
+<hr>
+
+- **Save Game Manager overhaul:** a right-hand details pane with screenshots, location, party portraits and save facts; inline mod warnings; mod review; save/campaign ZIP exports; and consistent context menus.
+- **Download Manager overhaul:** clearer package rows, streamlined toolbars, separate actions for Downloads, Installed, and Archives, and red **Delete All** actions.
+- **Nexus Collection Importer:** select and filter collection files, compare installed mods, follow download progress, reopen recent collections, and save supported BG3 load orders for later use.
+- **Organization and onboarding:** automatically saved inactive ordering and separators, shared sorting/filtering behavior, live appearance previews, and optional starter separators.
+
+Read the [full 16.4 changelog](docs/releases/0.1.0-alpha.16.4.md).
+
 <h3 id="install-and-update" align="center">Install and update</h3>
 <hr>
 
@@ -70,8 +80,8 @@ uninstall guidance.
    retain the installed mod's active or inactive state and load-order position.
 2. **Organize without losing intent.** Assign categories, create separators, move mods, and use
    <kbd>Ctrl</kbd> + <kbd>Z</kbd> / <kbd>Ctrl</kbd> + <kbd>Y</kbd> for reversible edits.
-3. **Save deliberately.** Working changes do not overwrite the selected saved order until **Save**
-   is pressed. Closing with unsaved changes requires confirmation.
+3. **Save deliberately.** Active load-order changes do not overwrite the selected saved order until
+   **Save** is pressed. Inactive ordering and separators save automatically as Redux organization.
 4. **Review the game change.** **Sync Load Order to Game** shows what will activate, deactivate, or
    move before Redux writes `modsettings.lsx`.
 
@@ -90,7 +100,11 @@ uninstall guidance.
   be assigned a shortcut, while individual and context-menu controls remain available.
 - A resizable details drawer and hover cards for descriptions, requirements, files, changelogs,
   source pages, diagnostics, and private notes.
-- Configurable list columns and unified selection between Active and Inactive Mods.
+- Configurable list columns and unified selection between Active and Inactive Mods. The # column
+  starts visible in Active and hidden in Inactive; either can be changed in the column menu.
+- Inactive ordering and separators save automatically, independently of active-order Save/Discard.
+- Category filtering applies to both panes. Click a filtered/sorted-view notice to clear that view;
+  column-menu order follows your column arrangement.
 
 Categories, separators, and notes are Redux presentation data. They never enter the game's
 `modsettings.lsx`.
@@ -115,7 +129,7 @@ placement checks based on exact package declarations and Redux's offline orderin
 Nothing is applied silently. The preview shows mod moves, actual separator changes, and
 relationships that need review; unchanged preserved separators are left out of the change count.
 Applying it creates one undoable, unsaved edit, and individual recommendations can be ignored and
-restored later.
+restored later. Load Order Advisor never reorganizes inactive mods.
 
 <a id="safer-load-order-changes"></a>
 <img src="docs/assets/nexus-description/04-saving-and-syncing.png#gh-dark-mode-only" alt="Safer saving and syncing" width="100%">
@@ -134,19 +148,30 @@ restored later.
 <img src="docs/assets/nexus-description/06-save-game-manager.png#gh-dark-mode-only" alt="Save Game Manager" width="100%">
 <img src="docs/assets/nexus-description/06-save-game-manager-light.png#gh-light-mode-only" alt="Save Game Manager" width="100%">
 
-Open **Tools > Save Game Manager...** or use the **Saves** toolbar group. Redux groups story
-saves by campaign and shows available thumbnails, dates, sizes, and difficulty metadata. Honour
-campaigns receive a gold crown; Tactician campaigns receive a skull badge. Campaign collapse state
-is remembered, and its expand/collapse motion follows the Reduce Motion preference.
+Open **Tools > Save Game Manager...** or use **Saves > Manage**. The list groups saves by campaign
+and shows thumbnails, save type, difficulty, date, and size. Autosaves and quicksaves are identified;
+campaign counts and collapse controls use the same styling as the other managers.
 
-Redux accepts a save folder, loose `.lsv`, or supported ZIP, 7z, RAR, TAR, or GZip-family archive
-through the picker or drag and drop. Save drops receive a distinct review so they cannot be confused
-with mod installation. Archive paths and sizes are checked, imports are staged, existing names
-require confirmation, and deletion uses the Windows Recycle Bin.
+Select a save to inspect the right-hand details pane: screenshot, recorded location, game version,
+party members, levels, races, classes, and mod counts when available. Known companions have
+portraits; generic party members use clearly identified race-based placeholders.
+
+**Review Mods** compares the save's recorded UUIDs with the installed library and enriches known
+entries from Redux's database. Missing/inactive warnings appear on save rows. Review is available
+for saves with recorded mods, even when none are missing. You can activate selected installed
+inactive requirements with Undo support; review does not automatically save or sync the order.
+It does not verify required versions, dependency chains, or native mods.
+
+Use **Install Save > File or Archive / Folder**, or drop a save into Redux. Imports are staged,
+archive paths and sizes are checked, and existing files require review before replacement.
+**Saves Folder** opens the save location. Right-click a save for **Review Mods**, **Export This
+Save**, **Export Campaign**, or **Show in Folder**. ZIP exports include thumbnails and support
+progress/cancellation, with a limit of 32 saves, 1 GB total, and 256 MB per file.
 
 > [!NOTE]
-> Redux does not edit or validate save contents. Close BG3 before changing saves, keep independent
-> backups, and remember that Steam Cloud may restore files removed locally.
+> Redux reads metadata but does not edit or guarantee the integrity of save contents. Close BG3
+> before changing saves, keep independent backups, and remember that Steam Cloud may restore
+> files removed locally. Deletion uses the Windows Recycle Bin.
 
 <a id="game-directory-mod-manager"></a>
 <img src="docs/assets/nexus-description/07-game-directory-mods.png#gh-dark-mode-only" alt="Game-Directory Mod Manager" width="100%">
@@ -220,6 +245,12 @@ Mod Manager, and saves through Save Game Manager. Mixed, ambiguous, malformed, a
 layouts stay blocked in the inbox without changing files. Intake never activates, reorders, or syncs
 a mod automatically.
 
+The **Downloads** tab groups **Install All**, **Pause All**, **Resume All**, and **Delete All** in
+one action bar. The **Installed** tab clears history, while **Archives > Delete All** deletes retained
+packages. NXM association appears at the bottom of Downloads; archive retention appears at the
+bottom of Archives. Bulk download deletion cancels transfers and recycles completed packages,
+while preserving installed mods and the separate archive library.
+
 **Install All** performs one full preflight before changing any destination. Its single grouped
 review identifies the packages headed to Inactive Mods, Save Games, and Game-Directory Mods, plus
 anything Redux will skip. Duplicate archives, overlapping mod/destination identities, missing
@@ -237,12 +268,12 @@ Active transfers are paused and their queue state is saved before Redux exits. F
 and completed installation history do not keep the application open. Completed installations move
 to the **Installed** tab with their destination. **Clear Installed History** removes those records
 without changing installed content or the separate Package Archive Library. Unless archive
-retention is enabled, a successfully installed package's managed inbox copy is removed; user-owned
+retention is enabled, a successfully installed package's managed download copy is removed; user-owned
 local source files are never changed. Removing an uninstalled completed download explicitly offers
-to move its inbox archive to the Recycle Bin.
+to move its downloaded archive to the Recycle Bin.
 
 Installed-history entries can be reinstalled while their Download Manager archive remains present.
-Adding the same local archive again returns that record to the inbox instead of creating a duplicate
+Adding the same local archive again returns that record to Downloads instead of creating a duplicate
 or leaving it stranded as completed history.
 
 **Retain installed package archives** is a separate, explicit opt-in available during onboarding and
@@ -251,7 +282,7 @@ Redux verifies the package again and stores one
 content-addressed copy in **Download Manager > Archives**. Identical files are deduplicated by
 SHA-256. The default 10 GB quota is configurable from 1–100 GB; least-recently-used packages are
 pruned when the limit is reached. The Archives tab shows current usage and provides **Reinstall**,
-**Open Archives**, and **Clear Archives** actions. Clearing download history never clears this
+**Open Folder**, and **Delete All** actions. Clearing download history never clears this
 library, clearing the library never uninstalls content, and deleting a mod never implicitly deletes
 either copy. If retention is left off, Redux does not create the archive-library directory. The
 archive index stores only safe public source/package identity and installation metadata—not local
@@ -260,6 +291,33 @@ source paths, credentials, authorization keys, signed URLs, or thumbnail URLs.
 Reinstalling a retained PAK is placement-preserving: an installed mod keeps its current active or
 inactive state and its load-order position. A mod that is no longer installed returns to Inactive
 Mods. Reinstall never applies or syncs the load order.
+
+<h3 id="nexus-collection-importer" align="center">Nexus Collection Importer</h3>
+<hr>
+
+Choose **Import Nexus Collection** in Download Manager, paste a BG3 collection page link, and
+press **Import**. **Open collections page** opens the Nexus browser listing. The importer shows
+collection artwork and file details beside a compact, searchable file list.
+
+- Filter by **Missing**, **Installed**, **Unverified**, or **Needs attention**. Select All and
+  Deselect All affect visible rows; hidden selections are retained. Reset to Defaults restores
+  the initial collection choices.
+- Exact Nexus file matches in Active or Inactive Mods are skipped by default. Other files from the
+  same project are distinguished from exact matches; file IDs alone do not prove a newer version.
+  Game-directory matches without exact file identities remain unverified.
+- Download selected files through Redux's existing queue. Free Nexus accounts authorize each file
+  through **Mod Manager Download**; the importer guides you to the next file and tracks progress.
+  Eligible failed downloads can be retried together. Installation failures still require review.
+- Recent collections remembers choices for ten collections. The same revision restores choices;
+  changed revisions use current defaults with a notice to review them.
+- If the collection provides a supported BG3 load order, **Save Load Order** opens a review and
+  adds it to the main window's Load Order dropdown. Saving does not activate mods or change the
+  current order; missing entries stay in the saved order for later installation.
+
+Collection installer rules and instructions are not applied. Follow the author's setup guidance.
+The importer uses collection web links and the latest published revision; direct collection NXM
+activation and historical-revision browsing remain future work. Nexus API-key setup is still
+required; this is not an SSO connection flow.
 
 <h3 id="redux-modlists" align="center">Redux Modlists</h3>
 <hr>
@@ -287,7 +345,7 @@ module identities to Nexus Mods projects. Matching is intentionally conservative
 remain **Local** rather than being assigned a potentially incorrect source. The same database also
 contains exact dependency and ordering facts used only when Load Order Advisor is enabled.
 
-Use **Tools > Generate Redux Database Contribution...** to create a privacy-limited
+Use **Help > Generate Redux Database Contribution...** to create a privacy-limited
 `.bg3redux-report`. It contains sanitized mod identity, known provider IDs, and exact PAK
 fingerprints for maintainer review. It does **not** include packages, profiles, load-order positions,
 settings, API keys, notes, or private filesystem paths, and generating it changes nothing locally.
@@ -319,9 +377,11 @@ category icons and colors, while destructive, warning, and save/export actions r
 semantic meaning. The shortcut editor groups related actions and provides compact group-wide
 expand/collapse controls.
 
-The first launch provides one setup window for theme, optional source linking, optional Load Order
-Advisor guidance, API keys, and accessibility choices. Optional online and advisor features begin
-disabled. Provider keys are masked, encrypted for the current Windows account, and excluded from
+Welcome Setup walks through appearance, adding mods, load-order practice, organization, and the
+save/native managers. Appearance settings preview live, including fonts, icons, gradients, and text
+size; canceling restores the previous look. The Organize step offers nine optional starter
+separators, individually selectable. They append to Active Mods without moving existing mods or
+repeating existing names. Optional online and advisor features begin disabled. Provider keys are masked, encrypted for the current Windows account, and excluded from
 ordinary settings and diagnostic exports.
 
 <h3 id="built-on-bg3-mod-manager" align="center">Built on BG3 Mod Manager</h3>

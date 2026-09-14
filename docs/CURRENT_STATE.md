@@ -37,8 +37,10 @@ The accumulated work is assigned to the alpha.16.4 update. Dev runs build and re
 checks but publishes no downloadable portable build or release; main owns public releases.
 The Unreleased changelog is reserved for work after 16.4.
 
-Inactive ordering and separators (#111), onboarding, shared window styling (#113), Script Extender
-export preference persistence (#119), and NXM reassociation recovery (#120) are implemented in dev.
+Inactive ordering and separators (#111), Script Extender export preference persistence (#119),
+and NXM reassociation recovery (#120) shipped in 16.4 and their issues are closed. Shared window
+refinement (#113) remains open for live scaling/accessibility verification. Collections (#108)
+remain partial because direct collection NXM activation is not implemented.
 The broader UI pass still benefits from live checks with custom themes and enlarged text. Issue
 #95 remains unresolved pending reporter diagnostics. Native ownership and protected backups remain
 local to each Redux installation; changing to another folder does not migrate those records.

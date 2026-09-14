@@ -881,7 +881,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			remove.Click += (_, _) =>
 			{
 				ViewModel.RemoveVisualDivider(mod);
-				UpdateActiveSeparatorBulkToggleButton();
+				UpdateSeparatorBulkToggleButtons();
 			};
 			menu.Items.Add(toggleSection);
 			menu.Items.Add(new Separator { Tag = VisualDividerMenuTag });
@@ -1369,7 +1369,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		SaveCategoryDialogColors(dialog);
 		ViewModel.AddVisualDivider(activeList, position, dialog.CategoryName, dialog.CategoryColor,
 			dialog.CategoryIconId, dialog.HideSeparatorLine, dialog.CategoryDescription);
-		UpdateActiveSeparatorBulkToggleButton();
+		UpdateSeparatorBulkToggleButtons();
 	}
 
 	private void AddInactiveSeparatorButton_Click(object sender, RoutedEventArgs e)
@@ -1396,8 +1396,17 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 	private void ActiveSeparatorBulkToggleButton_MouseEnter(object sender, MouseEventArgs e) =>
 		UpdateActiveSeparatorBulkToggleButton();
 
+	private void InactiveSeparatorBulkToggleButton_Loaded(object sender, RoutedEventArgs e) =>
+		UpdateInactiveSeparatorBulkToggleButton();
+
+	private void InactiveSeparatorBulkToggleButton_MouseEnter(object sender, MouseEventArgs e) =>
+		UpdateInactiveSeparatorBulkToggleButton();
+
 	private void ActiveSeparatorBulkToggleButton_Click(object sender, RoutedEventArgs e) =>
 		ToggleAllActiveSeparators();
+
+	private void InactiveSeparatorBulkToggleButton_Click(object sender, RoutedEventArgs e) =>
+		ToggleAllInactiveSeparators();
 
 	public void ToggleAllActiveSeparators()
 	{
@@ -1417,34 +1426,151 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		CompleteVisualDividerTransition(listView);
 		if (!ViewModel.CanSetAllVisualDividersCollapsed(activeList, collapsed))
 		{
-			if (activeList) UpdateActiveSeparatorBulkToggleButton();
+			UpdateSeparatorBulkToggleButtons();
 			return;
 		}
 
-		// Bulk projection changes can replace the ItemsPresenter while it is fading.
-		// Applying the state directly avoids leaving a detached or replacement presenter
-		// at the transition opacity after WPF recycles the list containers.
-		ViewModel.SetAllVisualDividersCollapsed(activeList, collapsed);
-		if (activeList) UpdateActiveSeparatorBulkToggleButton();
+		void ApplyState()
+		{
+			ViewModel.SetAllVisualDividersCollapsed(activeList, collapsed);
+			UpdateSeparatorBulkToggleButtons();
+		}
+
+		listView.ApplyTemplate();
+		var realizedBefore = GetRealizedListRows(listView)
+			.Select(entry => new VisualDividerAnimatedRow(entry.Row))
+			.ToList();
+		if (ReduxWindowBehavior.ReduceMotion || !SystemParameters.ClientAreaAnimation ||
+			!listView.IsLoaded || realizedBefore.Count == 0)
+		{
+			foreach (var row in realizedBefore) row.Restore();
+			ApplyState();
+			return;
+		}
+
+		const double fadeOutEnd = 0.44;
+		const double fadeInStart = 0.56;
+		const double transitionOpacity = 0.16;
+		var stateApplied = false;
+		var realizedAfter = new List<VisualDividerAnimatedRow>();
+		VisualDividerAnimation transition = null;
+
+		void Update(double progress)
+		{
+			if (progress < fadeOutEnd)
+			{
+				var phase = progress / fadeOutEnd;
+				foreach (var row in realizedBefore.Where(candidate => candidate.IsCurrent))
+				{
+					row.Translation.Y = -3 * phase;
+					row.SetOpacity(row.BaseOpacity * (1 - ((1 - transitionOpacity) * phase)));
+				}
+				return;
+			}
+
+			if (!stateApplied)
+			{
+				foreach (var row in realizedBefore) row.Restore();
+				ApplyState();
+				stateApplied = true;
+				listView.UpdateLayout();
+				foreach (var entry in GetRealizedListRows(listView))
+				{
+					entry.Row.ClearValue(UIElement.OpacityProperty);
+					entry.Row.ClearValue(UIElement.RenderTransformProperty);
+					entry.Row.ClearValue(UIElement.RenderTransformOriginProperty);
+					var animated = new VisualDividerAnimatedRow(entry.Row);
+					animated.Translation.Y = 3;
+					animated.SetOpacity(animated.BaseOpacity * transitionOpacity);
+					realizedAfter.Add(animated);
+				}
+			}
+
+			if (progress <= fadeInStart) return;
+			var phaseIn = (progress - fadeInStart) / (1 - fadeInStart);
+			foreach (var row in realizedAfter.Where(candidate => candidate.IsCurrent))
+			{
+				row.Translation.Y = 3 * (1 - phaseIn);
+				row.SetOpacity(row.BaseOpacity *
+					(transitionOpacity + ((1 - transitionOpacity) * phaseIn)));
+			}
+		}
+
+		void Finish(bool completed)
+		{
+			try
+			{
+				foreach (var row in realizedBefore) row.Restore();
+				foreach (var row in realizedAfter) row.Restore();
+				if (completed && !stateApplied) ApplyState();
+			}
+			finally
+			{
+				if (activeList && ReferenceEquals(_activeVisualDividerTransition, transition))
+					_activeVisualDividerTransition = null;
+				else if (!activeList && ReferenceEquals(_inactiveVisualDividerTransition, transition))
+					_inactiveVisualDividerTransition = null;
+			}
+		}
+
+		transition = new VisualDividerAnimation(
+			Math.Max(180, GetPanelMotionMilliseconds()),
+			Update,
+			Finish);
+		if (activeList) _activeVisualDividerTransition = transition;
+		else _inactiveVisualDividerTransition = transition;
+		transition.Start();
+	}
+
+	public void ToggleAllInactiveSeparators()
+	{
+		var collapsedTarget = ViewModel.ResolveAllVisualDividersCollapsedTarget(activeList: false);
+		if (collapsedTarget.HasValue)
+			SetAllVisualDividersCollapsed(activeList: false, collapsedTarget.Value);
+		else
+			UpdateInactiveSeparatorBulkToggleButton();
 	}
 
 	private void UpdateActiveSeparatorBulkToggleButton()
 	{
-		if (ActiveSeparatorBulkToggleButton == null || ActiveSeparatorBulkToggleIcon == null || ViewModel == null) return;
-		var collapsedTarget = ViewModel.ResolveAllVisualDividersCollapsedTarget(activeList: true);
+		UpdateSeparatorBulkToggleButton(
+			ActiveSeparatorBulkToggleButton,
+			ActiveSeparatorBulkToggleIcon,
+			activeList: true);
+	}
+
+	private void UpdateInactiveSeparatorBulkToggleButton()
+	{
+		UpdateSeparatorBulkToggleButton(
+			InactiveSeparatorBulkToggleButton,
+			InactiveSeparatorBulkToggleIcon,
+			activeList: false);
+	}
+
+	private void UpdateSeparatorBulkToggleButtons()
+	{
+		UpdateActiveSeparatorBulkToggleButton();
+		UpdateInactiveSeparatorBulkToggleButton();
+	}
+
+	private void UpdateSeparatorBulkToggleButton(Button button, ReduxIcon icon, bool activeList)
+	{
+		if (button == null || icon == null || ViewModel == null) return;
+		var collapsedTarget = ViewModel.ResolveAllVisualDividersCollapsedTarget(activeList);
 		var collapse = collapsedTarget != false;
-		var action = collapse ? "Collapse all active separators" : "Expand all active separators";
+		var paneName = activeList ? "active" : "inactive";
+		var action = collapse ? $"Collapse all {paneName} separators" : $"Expand all {paneName} separators";
 		var hasMultipleSeparators = ViewModel.Settings.VisualModListDividers?
-			.Count(divider => divider != null && divider.IsActiveList) > 1;
-		ActiveSeparatorBulkToggleButton.Visibility = hasMultipleSeparators
+			.Count(divider => divider != null && divider.IsActiveList == activeList) > 1;
+		button.Visibility = hasMultipleSeparators
 			? Visibility.Visible
 			: Visibility.Collapsed;
-		ActiveSeparatorBulkToggleButton.IsEnabled = collapsedTarget.HasValue && ViewModel.IsInitialized && !ViewModel.IsLocked;
-		ActiveSeparatorBulkToggleButton.ToolTip = collapsedTarget.HasValue
+		button.IsEnabled = collapsedTarget.HasValue && ViewModel.IsInitialized && !ViewModel.IsLocked;
+		button.ToolTip = collapsedTarget.HasValue
 			? action
-			: "No active separators to expand or collapse";
-		System.Windows.Automation.AutomationProperties.SetName(ActiveSeparatorBulkToggleButton, action);
-		ActiveSeparatorBulkToggleIcon.SetResourceReference(
+			: $"No {paneName} separators to expand or collapse";
+		System.Windows.Automation.AutomationProperties.SetName(button, action);
+		icon.SetResourceReference(
 			ReduxIcon.StrokeDataProperty,
 			collapse ? "Redux.Icon.ChevronUpStroke" : "Redux.Icon.ChevronDownStroke");
 	}
@@ -3037,8 +3163,13 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 					h => ((INotifyCollectionChanged)ViewModel.DisplayActiveMods).CollectionChanged += h,
 					h => ((INotifyCollectionChanged)ViewModel.DisplayActiveMods).CollectionChanged -= h)
 					.ObserveOn(RxApp.MainThreadScheduler)
-					.Subscribe(_ => UpdateActiveSeparatorBulkToggleButton()));
-				UpdateActiveSeparatorBulkToggleButton();
+					.Subscribe(_ => UpdateSeparatorBulkToggleButtons()));
+				d(Observable.FromEventPattern<NotifyCollectionChangedEventHandler, NotifyCollectionChangedEventArgs>(
+					h => ((INotifyCollectionChanged)ViewModel.DisplayInactiveMods).CollectionChanged += h,
+					h => ((INotifyCollectionChanged)ViewModel.DisplayInactiveMods).CollectionChanged -= h)
+					.ObserveOn(RxApp.MainThreadScheduler)
+					.Subscribe(_ => UpdateSeparatorBulkToggleButtons()));
+				UpdateSeparatorBulkToggleButtons();
 
 				d(this.OneWayBind(ViewModel, vm => vm.HasForceLoadedMods, v => v.AlwaysLoadedSectionGrid.Visibility, BoolToVisibilityConverter.FromBool));
 				d(this.Bind(ViewModel, vm => vm.ActiveModFilterText, v => v.ActiveModsFilterTextBox.Text));

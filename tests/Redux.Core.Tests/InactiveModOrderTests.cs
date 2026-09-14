@@ -45,8 +45,12 @@ internal sealed class InactiveModOrderTests
 	{
 		var layout = new DivinityModManager.Views.HorizontalModLayout();
 		var add = (System.Windows.Controls.Button)layout.FindName("AddInactiveSeparatorButton");
-		RegressionAssert.Equal(5, System.Windows.Controls.Grid.GetColumn(add));
+		var actions = (System.Windows.Controls.StackPanel)add.Parent;
+		var collapseAll = (System.Windows.Controls.Button)layout.FindName("InactiveSeparatorBulkToggleButton");
+		RegressionAssert.Equal(5, System.Windows.Controls.Grid.GetColumn(actions));
 		RegressionAssert.True(add.Style != null);
+		RegressionAssert.True(collapseAll.Style != null);
+		RegressionAssert.True(ReferenceEquals(actions, collapseAll.Parent));
 		var first = new DivinityModData { UUID = "first", Name = "Zebra", FilePath = "Zebra.pak" };
 		var second = new DivinityModData { UUID = "second", Name = "Alpha", FilePath = "Alpha.pak" };
 		var source = new System.Collections.ObjectModel.ObservableCollection<DivinityModData> { first, second };

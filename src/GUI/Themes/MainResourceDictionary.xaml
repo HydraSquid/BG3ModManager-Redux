@@ -421,7 +421,10 @@
 				IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
 				util:ReduxWindowBehavior.PreferredPopupPlacement="BesideRightward"
 				util:ReduxWindowBehavior.ManagedPopupAnimation="Fade">
-				<Grid Margin="4">
+				<!-- The transparent outer surface starts at the parent row's edge. Keeping the
+				     four-pixel antialiasing inset as padding removes the mouse dead zone between
+				     a submenu header and its visible popup chrome. -->
+				<Border Background="Transparent" Padding="4">
 					<Border
 						Background="{DynamicResource ReduxSurfaceElevatedBrush}"
 						BorderBrush="{DynamicResource ReduxBorderStrongBrush}"
@@ -434,7 +437,7 @@
 							IsItemsHost="True"
 							KeyboardNavigation.DirectionalNavigation="Cycle" />
 					</Border>
-				</Grid>
+				</Border>
 			</Popup>
 		</Grid>
 		<ControlTemplate.Triggers>

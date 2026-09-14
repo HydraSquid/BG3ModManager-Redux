@@ -2025,7 +2025,33 @@
 					</ColumnDefinition>
 				</Grid.ColumnDefinitions>
 				<TextBlock Grid.Column="1" Margin="8,0,8,0" Style="{StaticResource ModSectionTitle}" Text="Inactive Mods" Visibility="{Binding IsInactiveModsExpanded, Converter={StaticResource BoolToVisibilityConverter}}"/>
-<Button Grid.Column="5" x:Name="AddInactiveSeparatorButton" Style="{StaticResource ModPaneHeaderActionButtonStyle}" Click="AddInactiveSeparatorButton_Click" ToolTip="Add a separator after the selected inactive mod" AutomationProperties.Name="Add inactive separator" Visibility="{Binding IsInactiveModsExpanded, Converter={StaticResource BoolToVisibilityConverter}}"><c:ReduxIcon Width="14" Height="14" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.AddStroke}"/></Button>
+				<StackPanel Grid.Column="5"
+					Orientation="Horizontal"
+					Visibility="{Binding IsInactiveModsExpanded, Converter={StaticResource BoolToVisibilityConverter}}">
+					<Button x:Name="InactiveSeparatorBulkToggleButton"
+						Style="{StaticResource ModPaneHeaderActionButtonStyle}"
+						IsEnabled="False"
+						Visibility="Collapsed"
+						Click="InactiveSeparatorBulkToggleButton_Click"
+						Loaded="InactiveSeparatorBulkToggleButton_Loaded"
+						MouseEnter="InactiveSeparatorBulkToggleButton_MouseEnter"
+						AutomationProperties.Name="Collapse all inactive separators"
+						ToolTip="Collapse all inactive separators">
+						<c:ReduxIcon x:Name="InactiveSeparatorBulkToggleIcon"
+							Width="14" Height="14"
+							Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+							StrokeData="{StaticResource Redux.Icon.ChevronUpStroke}" />
+					</Button>
+					<Button x:Name="AddInactiveSeparatorButton"
+						Style="{StaticResource ModPaneHeaderActionButtonStyle}"
+						Click="AddInactiveSeparatorButton_Click"
+						ToolTip="Add a separator after the selected inactive mod"
+						AutomationProperties.Name="Add inactive separator">
+						<c:ReduxIcon Width="14" Height="14"
+							Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+							StrokeData="{StaticResource Redux.Icon.AddStroke}" />
+					</Button>
+				</StackPanel>
                 <DockPanel Grid.Column="2" Margin="12,0,8,0" LastChildFill="True">
                     <Button Margin="0,0,12,0" Tag="Inactive" Click="ClearModListSort_Click"
                         Style="{StaticResource ModViewNoticeButtonStyle}"

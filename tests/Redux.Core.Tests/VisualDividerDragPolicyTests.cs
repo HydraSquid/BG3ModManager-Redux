@@ -9,6 +9,35 @@ namespace Redux.Core.Tests;
 
 public sealed class VisualDividerDragPolicyTests
 {
+	public void EstablishedSectionsFollowTheirMembersAfterMultiModChanges()
+	{
+		var addedFirst = CreateMod("added-first");
+		var addedSecond = CreateMod("added-second");
+		var firstMember = CreateMod("first-member");
+		var secondMember = CreateMod("second-member");
+		var divider = new ModListVisualDividerData
+		{
+			Id = "section", IsActiveList = true, Position = 0,
+			MemberModUuids = [firstMember.UUID, secondMember.UUID]
+		};
+
+		var changed = VisualDividerSectionPolicy.ReanchorPositionsToMembers(
+			new[] { addedFirst, addedSecond, firstMember, secondMember },
+			new[] { divider },
+			activeList: true);
+
+		RegressionAssert.True(changed);
+		RegressionAssert.Equal(2, divider.Position);
+		var projected = VisualDividerSectionPolicy.BuildVisualSequence(
+			new[] { addedFirst, addedSecond, firstMember, secondMember },
+			new[] { divider },
+			activeList: true,
+			_ => CreateDivider("section", collapsed: false));
+		RegressionAssert.SequenceEqual(
+			new[] { addedFirst, addedSecond, projected[2], firstMember, secondMember },
+			projected);
+	}
+
 	public void InactivePaneAcceptsSeparatorsAndKeepsClosedBlocksInTheirPane()
 	{
 		var divider = CreateDivider("section", collapsed: false);

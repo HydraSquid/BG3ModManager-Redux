@@ -3313,6 +3313,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 		nextOrders.AddRange(savedOrders);
 
+		MigrateLegacyActiveVisualDividers(nextOrders, lastOrderName);
+
 		if (!string.IsNullOrEmpty(lastOrderName))
 		{
 			int lastOrderIndex = nextOrders.IndexOf(nextOrders.FirstOrDefault(x => x.Name == lastOrderName));
@@ -3340,6 +3342,53 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				DivinityApp.Log($"Error setting next load order:\n{ex}");
 			}
 		}
+	}
+
+	private void MigrateLegacyActiveVisualDividers(
+		IReadOnlyList<DivinityLoadOrder> orders,
+		string requestedOrderName)
+	{
+		var legacyDividers = LoadOrderPersistencePolicy.CloneActiveVisualDividers(
+			Settings.VisualModListDividers);
+		if (legacyDividers.Count == 0 || orders.Count == 0 ||
+			orders.Any(order => order.VisualDividers != null)) return;
+
+		var ownerName = !String.IsNullOrWhiteSpace(requestedOrderName)
+			? requestedOrderName
+			: Settings.LastOrder;
+		var owner = orders.FirstOrDefault(order =>
+			String.Equals(order.Name, ownerName, StringComparison.OrdinalIgnoreCase))
+			?? orders[0];
+		owner.VisualDividers = legacyDividers;
+
+		try
+		{
+			var migrationPath = owner.IsModSettings
+				? GetCurrentWorkingOrderPath(SelectedProfile)
+				: owner.FilePath;
+			if (!String.IsNullOrWhiteSpace(migrationPath))
+			{
+				var snapshot = owner.Clone();
+				snapshot.Name = owner.Name;
+				snapshot.FilePath = migrationPath;
+				DivinityModDataLoader.ExportLoadOrderToFile(migrationPath, snapshot);
+			}
+		}
+		catch (Exception exception)
+		{
+			DivinityApp.Log($"Could not persist legacy separators for '{owner.Name}': {exception}");
+		}
+	}
+
+	private void ApplyActiveVisualDividers(DivinityLoadOrder order)
+	{
+		Settings.VisualModListDividers ??= [];
+		var inactiveDividers = CloneVisualDividers(
+			Settings.VisualModListDividers.Where(divider => !divider.IsActiveList));
+		var activeDividers = LoadOrderPersistencePolicy.CloneActiveVisualDividers(
+			order?.VisualDividers);
+		Settings.VisualModListDividers = activeDividers.Concat(inactiveDividers).ToList();
+		CaptureVisualDividerBaseline();
 	}
 
 	private string CreatePakImportTemporaryPath(string finalPath)
@@ -3832,7 +3881,13 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
         var suffix = 2;
         while (ModOrderList.Any(o => String.Equals(o.Name, name, StringComparison.OrdinalIgnoreCase)) || File.Exists(Path.Combine(directory, name + ".json")))
             name = $"{baseName} ({suffix++})";
-        var order = new DivinityLoadOrder { Name = name, FilePath = Path.Combine(directory, name + ".json"), LastModifiedDate = DateTime.Now };
+		var order = new DivinityLoadOrder
+		{
+			Name = name,
+			FilePath = Path.Combine(directory, name + ".json"),
+			LastModifiedDate = DateTime.Now,
+			VisualDividers = []
+		};
         order.Order.AddRange(entries.Select(e => e.Clone()));
         if (!DivinityModDataLoader.ExportLoadOrderToFile(order.FilePath, order)) throw new IOException("Could not save the collection load order.");
         SavedModOrderList.Add(order);
@@ -3961,6 +4016,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			InactiveMods.Clear();
 			InactiveMods.AddRange(InactiveModOrderPolicy.Restore(
 				addonMods.Where(x => x.CanAddToLoadOrder && !x.IsActive), Settings.InactiveModOrder));
+
+			ApplyActiveVisualDividers(order);
 
 			OnFilterTextChanged(ActiveModFilterText, ActiveMods);
 			OnFilterTextChanged(InactiveModFilterText, InactiveMods);
@@ -5415,6 +5472,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			{
 				orderToSave.LastModifiedDate = File.GetLastWriteTime(outputPath);
 				SelectedModOrder.SetOrder(orderToSave);
+				SelectedModOrder.VisualDividers = LoadOrderPersistencePolicy.CloneActiveVisualDividers(
+					orderToSave.VisualDividers);
 				SelectedModOrder.LastModifiedDate = orderToSave.LastModifiedDate;
 				HasUnsavedLoadOrderChanges = false;
 				CaptureVisualDividerBaseline();
@@ -5476,7 +5535,9 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			{
 				Name = modOrderName,
 				FilePath = outputPath,
-				LastModifiedDate = DateTime.Now
+				LastModifiedDate = DateTime.Now,
+				VisualDividers = LoadOrderPersistencePolicy.CloneActiveVisualDividers(
+					Settings.VisualModListDividers)
 			};
 			tempOrder.Order.AddRange(CreateWorkingLoadOrderEntries());
 			if (DivinityModDataLoader.ExportLoadOrderToFile(outputPath, tempOrder))
@@ -5488,6 +5549,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 					if (String.Equals(order.FilePath, outputPath, StringComparison.OrdinalIgnoreCase))
 					{
 						order.SetOrder(tempOrder);
+						order.VisualDividers = LoadOrderPersistencePolicy.CloneActiveVisualDividers(
+							tempOrder.VisualDividers);
 						updatedOrder = true;
 						DivinityApp.Log($"Updated saved order '{order.Name}' from '{modOrderName}'");
 					}
@@ -7535,7 +7598,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			var order = new DivinityLoadOrder
 			{
 				Name = name,
-				Order = bundledOrder.Order.Select(entry => entry.Clone()).ToList()
+				Order = bundledOrder.Order.Select(entry => entry.Clone()).ToList(),
+				VisualDividers = []
 			};
 			var ordersDirectory = GetOrdersDirectory();
 			var fileName = DivinityModDataLoader.MakeSafeFilename($"{name}.json", '_');
@@ -7745,6 +7809,20 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		var warnings = new List<string>();
 		if (importWindow.ImportPresentation)
 			presentationImported = ImportReduxBundlePresentation(contents, warnings);
+		if (importWindow.ImportPresentation && presentationImported && importedOrder != null)
+		{
+			try
+			{
+				importedOrder.VisualDividers = LoadOrderPersistencePolicy.CloneActiveVisualDividers(
+					Settings.VisualModListDividers);
+				DivinityModDataLoader.ExportLoadOrderToFile(importedOrder.FilePath, importedOrder);
+			}
+			catch (Exception exception)
+			{
+				DivinityApp.Log($"Could not attach imported separators to the saved order: {exception}");
+				warnings.Add("The imported separators are open now, but could not be attached to the saved order.");
+			}
+		}
 		if (importWindow.ImportPrivateNotes)
 			privateNotesImported = ImportReduxBundlePrivateNotes(
 				contents,
@@ -9252,6 +9330,14 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 					InactiveMods, Settings.VisualModListDividers ?? Enumerable.Empty<ModListVisualDividerData>(), false, IsInitialized));
 			if (IsInitialized)
 			{
+				membershipMigrated |= activeListOnly != false && VisualDividerSectionPolicy.ReanchorPositionsToMembers(
+					ActiveMods,
+					Settings.VisualModListDividers,
+					true);
+				membershipMigrated |= activeListOnly != true && VisualDividerSectionPolicy.ReanchorPositionsToMembers(
+					InactiveMods,
+					Settings.VisualModListDividers,
+					false);
 				// Expanded sections follow their current boundaries. Collapsed sections
 				// retain the membership snapshot captured when they were closed, so an
 				// unrelated refresh cannot absorb newly positioned rows.
@@ -9264,12 +9350,16 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 					Settings.VisualModListDividers,
 					false);
 			}
-			var show = String.IsNullOrWhiteSpace(SelectedModCategory) || SelectedModCategory.Equals(AllModsCategory, StringComparison.OrdinalIgnoreCase);
 			void Build(ObservableCollectionExtended<DivinityModData> target, IEnumerable<DivinityModData> mods, bool active)
 			{
 				var sourceMods = mods.ToList();
 				var visibleMods = VisualModFilterProjectionPolicy.ResolveVisibleMods(sourceMods);
-				var showSeparators = show && !(active ? IsActiveListMetadataSorted : IsInactiveListMetadataSorted);
+				var filterText = active ? ActiveModFilterText : InactiveModFilterText;
+				var showSeparators = VisualModFilterProjectionPolicy.ShouldShowSeparators(
+					SelectedModCategory,
+					AllModsCategory,
+					filterText,
+					active ? IsActiveListMetadataSorted : IsInactiveListMetadataSorted);
 				var result = showSeparators
 					? VisualDividerSectionPolicy.BuildVisualSequence(
 						visibleMods,
@@ -10633,7 +10723,10 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 	private DivinityLoadOrder CreateWorkingLoadOrderSnapshot()
 	{
-		return LoadOrderPersistencePolicy.CreateWorkingCopy(SelectedModOrder, ActiveMods);
+		return LoadOrderPersistencePolicy.CreateWorkingCopy(
+			SelectedModOrder,
+			ActiveMods,
+			Settings.VisualModListDividers);
 	}
 
 	private void ScheduleModHealthRefresh()
@@ -11334,6 +11427,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 					else
 					{
 						DivinityApp.Log($"Order changed to {SelectedModOrder.Name}. Skipping list loading since the orders match.");
+						ApplyActiveVisualDividers(SelectedModOrder);
+						RefreshVisualDividers(activeListOnly: true);
 					}
 				}
 			}

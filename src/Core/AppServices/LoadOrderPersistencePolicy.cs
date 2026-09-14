@@ -13,13 +13,16 @@ public static class LoadOrderPersistencePolicy
 	/// </summary>
 	public static DivinityLoadOrder CreateWorkingCopy(
 		DivinityLoadOrder selectedOrder,
-		IEnumerable<DivinityModData> activeMods)
+		IEnumerable<DivinityModData> activeMods,
+		IEnumerable<ModListVisualDividerData> activeVisualDividers = null)
 	{
 		var workingCopy = new DivinityLoadOrder
 		{
 			Name = selectedOrder?.Name,
 			FilePath = selectedOrder?.FilePath,
-			LastModifiedDate = DateTime.Now
+			LastModifiedDate = DateTime.Now,
+			VisualDividers = CloneActiveVisualDividers(
+				activeVisualDividers ?? selectedOrder?.VisualDividers)
 		};
 		workingCopy.AddRange(activeMods ?? Enumerable.Empty<DivinityModData>(), true);
 		return workingCopy;
@@ -31,9 +34,28 @@ public static class LoadOrderPersistencePolicy
 		{
 			Name = name,
 			FilePath = filePath,
-			Order = []
+			Order = [],
+			VisualDividers = []
 		};
 	}
+
+	public static List<ModListVisualDividerData> CloneActiveVisualDividers(
+		IEnumerable<ModListVisualDividerData> dividers) =>
+		(dividers ?? Enumerable.Empty<ModListVisualDividerData>())
+		.Where(divider => divider != null && divider.IsActiveList)
+		.Select(divider => new ModListVisualDividerData
+		{
+			Id = divider.Id,
+			Title = divider.Title,
+			Color = divider.Color,
+			IconId = divider.IconId,
+			Description = divider.Description,
+			IsActiveList = true,
+			Position = divider.Position,
+			IsCollapsed = divider.IsCollapsed,
+			HideLine = divider.HideLine,
+			MemberModUuids = divider.MemberModUuids?.ToList()
+		}).ToList();
 
 	public static bool RequiresSaveAs(DivinityLoadOrder order)
 	{
@@ -49,6 +71,9 @@ public static class LoadOrderPersistencePolicy
 	{
 		if (currentOrder == null || savedCurrentState == null) return false;
 		currentOrder.SetOrder(savedCurrentState.Order.Select(entry => entry.Clone()));
+		currentOrder.VisualDividers = savedCurrentState.VisualDividers == null
+			? null
+			: CloneActiveVisualDividers(savedCurrentState.VisualDividers);
 		currentOrder.LastModifiedDate = savedCurrentState.LastModifiedDate;
 		return true;
 	}

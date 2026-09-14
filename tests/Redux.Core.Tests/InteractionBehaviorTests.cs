@@ -184,6 +184,42 @@ public sealed class InteractionBehaviorTests
 		RegressionAssert.False(ReferenceEquals(saved, working));
 	}
 
+	public void SavedOrdersKeepIndependentActiveSeparators()
+	{
+		var saved = new DivinityLoadOrder
+		{
+			Name = "My Order",
+			FilePath = @"C:\Orders\My Order.json",
+			VisualDividers =
+			[
+				new ModListVisualDividerData
+				{
+					Id = "saved-section", Title = "Saved section", IsActiveList = true,
+					Position = 2, MemberModUuids = ["saved-mod"]
+				}
+			]
+		};
+		var workingDividers = new[]
+		{
+			new ModListVisualDividerData
+			{
+				Id = "working-section", Title = "Working section", IsActiveList = true,
+				Position = 0, MemberModUuids = ["working-mod"]
+			},
+			new ModListVisualDividerData { Id = "inactive", IsActiveList = false }
+		};
+
+		var working = LoadOrderPersistencePolicy.CreateWorkingCopy(
+			saved,
+			Array.Empty<DivinityModData>(),
+			workingDividers);
+
+		RegressionAssert.Equal("saved-section", saved.VisualDividers.Single().Id);
+		RegressionAssert.Equal("working-section", working.VisualDividers.Single().Id);
+		RegressionAssert.True(working.VisualDividers.Single().IsActiveList);
+		RegressionAssert.False(ReferenceEquals(saved.VisualDividers, working.VisualDividers));
+	}
+
 	public void SavedCurrentStateRestoresIntoTheSingleCurrentEntry()
 	{
 		var current = new DivinityLoadOrder

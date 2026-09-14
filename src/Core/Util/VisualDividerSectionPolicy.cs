@@ -60,6 +60,48 @@ public static class VisualDividerSectionPolicy
 		IEnumerable<ModListVisualDividerData> dividers,
 		bool activeList) => NormalizeOwnership(GetPaneDividers(dividers, activeList));
 
+	/// <summary>
+	/// Keeps established sections attached to their first surviving member when the
+	/// authoritative mod collection changes outside the visual drag path.
+	/// </summary>
+	public static bool ReanchorPositionsToMembers(
+		IEnumerable<DivinityModData> mods,
+		IEnumerable<ModListVisualDividerData> dividers,
+		bool activeList)
+	{
+		ArgumentNullException.ThrowIfNull(mods);
+		ArgumentNullException.ThrowIfNull(dividers);
+
+		var sequence = mods
+			.Where(mod => mod != null && !mod.IsVisualDivider)
+			.Cast<object>()
+			.ToList();
+		var paneDividers = GetPaneDividers(dividers, activeList);
+		foreach (var divider in paneDividers)
+		{
+			var memberIds = divider.MemberModUuids?
+				.Where(uuid => !String.IsNullOrWhiteSpace(uuid))
+				.ToHashSet(StringComparer.OrdinalIgnoreCase);
+			var memberIndex = memberIds?.Count > 0
+				? sequence.FindIndex(item => item is DivinityModData mod &&
+					!String.IsNullOrWhiteSpace(mod.UUID) && memberIds.Contains(mod.UUID))
+				: -1;
+			var insertIndex = memberIndex >= 0
+				? memberIndex
+				: Math.Clamp(divider.Position, 0, sequence.Count);
+			sequence.Insert(insertIndex, divider);
+		}
+
+		var changed = false;
+		for (var index = 0; index < sequence.Count; index++)
+		{
+			if (sequence[index] is not ModListVisualDividerData divider || divider.Position == index) continue;
+			divider.Position = index;
+			changed = true;
+		}
+		return changed;
+	}
+
 	public static IReadOnlyList<DivinityModData> BuildVisualSequence(
 		IEnumerable<DivinityModData> mods,
 		IEnumerable<ModListVisualDividerData> dividers,

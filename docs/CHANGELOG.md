@@ -7,6 +7,22 @@ source for individual implementation details.
 
 No changes recorded yet.
 
+## 0.1.0-alpha.16.4.1 — 2026-09-14
+
+A focused maintenance hotfix for separators and in-app updates.
+
+### Fixed
+
+- Keep active separators separate for every saved load order. Existing 16.4 separators migrate to the last-used order, while inactive organization remains global and automatic.
+- Keep separators attached to their recorded sections after multi-mod moves and other active-list changes.
+- Hide separators during text filtering, matching category and column-sorted views without changing the underlying order.
+- Apply Collapse All and Expand All directly so a recycled list presenter cannot remain dimmed or invisible.
+- Retry update replacements while Windows releases short-lived file locks, replace read-only application files safely, and identify the exact blocked Redux file when an update still cannot proceed.
+
+### Changed
+
+- Pin repository builds to the supported .NET 8 SDK family so newer installed SDKs do not break the C++/CLI dependency build.
+
 ## 0.1.0-alpha.16.4 — 2026-09-13
 
 A larger update featuring overhauls of Save Game Manager and Download Manager, the new Nexus Collection Importer, persistent inactive organization, and a rebuilt Welcome Setup.

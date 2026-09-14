@@ -1421,77 +1421,11 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			return;
 		}
 
-		void ApplyState()
-		{
-			ViewModel.SetAllVisualDividersCollapsed(activeList, collapsed);
-			if (activeList) UpdateActiveSeparatorBulkToggleButton();
-		}
-
-		listView.ApplyTemplate();
-		var animationTarget = listView.FindVisualChildren<ItemsPresenter>().FirstOrDefault();
-		if (ReduxWindowBehavior.ReduceMotion || !SystemParameters.ClientAreaAnimation ||
-			!listView.IsLoaded || animationTarget == null)
-		{
-			ApplyState();
-			return;
-		}
-
-		var restingOpacity = animationTarget.Opacity;
-		var stateApplied = false;
-		VisualDividerAnimation transition = null;
-		void Update(double progress)
-		{
-			const double fadeOutEnd = 0.46;
-			const double fadeInStart = 0.54;
-			const double transitionOpacity = 0.08;
-			if (progress < fadeOutEnd)
-			{
-				var phase = progress / fadeOutEnd;
-				animationTarget.Opacity = restingOpacity * (1 - ((1 - transitionOpacity) * phase));
-				return;
-			}
-
-			if (!stateApplied)
-			{
-				ApplyState();
-				stateApplied = true;
-				listView.UpdateLayout();
-			}
-
-			if (progress <= fadeInStart)
-			{
-				animationTarget.Opacity = restingOpacity * transitionOpacity;
-				return;
-			}
-
-			var fadeInProgress = (progress - fadeInStart) / (1 - fadeInStart);
-			animationTarget.Opacity = restingOpacity *
-				(transitionOpacity + ((1 - transitionOpacity) * fadeInProgress));
-		}
-
-		void Finish(bool completed)
-		{
-			try
-			{
-				if (completed && !stateApplied) ApplyState();
-			}
-			finally
-			{
-				animationTarget.Opacity = restingOpacity;
-				if (activeList && ReferenceEquals(_activeVisualDividerTransition, transition))
-					_activeVisualDividerTransition = null;
-				else if (!activeList && ReferenceEquals(_inactiveVisualDividerTransition, transition))
-					_inactiveVisualDividerTransition = null;
-			}
-		}
-
-		transition = new VisualDividerAnimation(
-			Math.Max(180, GetPanelMotionMilliseconds()),
-			Update,
-			Finish);
-		if (activeList) _activeVisualDividerTransition = transition;
-		else _inactiveVisualDividerTransition = transition;
-		transition.Start();
+		// Bulk projection changes can replace the ItemsPresenter while it is fading.
+		// Applying the state directly avoids leaving a detached or replacement presenter
+		// at the transition opacity after WPF recycles the list containers.
+		ViewModel.SetAllVisualDividersCollapsed(activeList, collapsed);
+		if (activeList) UpdateActiveSeparatorBulkToggleButton();
 	}
 
 	private void UpdateActiveSeparatorBulkToggleButton()

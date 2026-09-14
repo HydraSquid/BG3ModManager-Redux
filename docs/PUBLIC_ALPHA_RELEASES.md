@@ -6,8 +6,8 @@ the exact files published on GitHub and Nexus Mods.
 
 ## Release artifacts
 
-`0.1.0-alpha.15` was the first Redux public-alpha version; `0.1.0-alpha.16.4` is the current
-announced update.
+`0.1.0-alpha.15` was the first Redux public-alpha version; `0.1.0-alpha.16.4.1` is the current
+maintenance release for the alpha.16.4 update.
 Each public alpha has an immutable version and a matching Git tag such as
 `v0.1.0-alpha.16.2`. A correction to an already-published alpha uses a hotfix suffix such as
 `0.1.0-alpha.16.1`, then `.16.2`; a quiet correction to one of those hotfixes may add a maintenance
@@ -39,8 +39,8 @@ The updater compares a four-part numeric internal version. Alpha.15 and alpha.16
 published legacy values (`0.1.0.15` and `0.1.0.16`), and alpha.16.1 through alpha.16.3 retain their
 original flat revisions. Maintenance-aware releases encode `.H.M` as revision `H × 100 + M`, so
 `.16.3.1` uses `0.1.16.301`, `.16.3.2` uses `0.1.16.302`, `.16.3.3` uses `0.1.16.303`,
-`.16.3.4` uses `0.1.16.304`, and `.16.4` uses `0.1.16.400`. This keeps maintenance releases ordered
-before the next announced hotfix without changing an already-published version.
+`.16.3.4` uses `0.1.16.304`, `.16.4` uses `0.1.16.400`, and `.16.4.1` uses `0.1.16.401`. This keeps
+maintenance releases ordered before the next announced hotfix without changing an already-published version.
 
 Compatibility matters during the transition: the already-published alpha.15 and alpha.16 clients
 only parse the original `alpha.N` form, so they cannot discover a dotted hotfix automatically. The

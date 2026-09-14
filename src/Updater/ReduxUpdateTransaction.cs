@@ -90,7 +90,13 @@ public static class ReduxUpdateTransaction
 			existed.Add(relativePath);
 			var backup = GetContainedPath(backupRoot, relativePath);
 			Directory.CreateDirectory(Path.GetDirectoryName(backup)!);
-			File.Copy(target, backup, overwrite: false);
+			RunWithFileRetry(
+				() =>
+				{
+					File.Copy(target, backup, overwrite: false);
+					ClearReadOnlyAttribute(backup);
+				},
+				$"read Redux file '{relativePath}' for backup");
 		}
 
 		try
@@ -99,12 +105,19 @@ public static class ReduxUpdateTransaction
 			{
 				var source = GetContainedPath(stagedRoot, relativePath);
 				var destination = GetContainedPath(targetRoot, relativePath);
-				CopyAtomically(source, destination);
+				RunWithFileRetry(
+					() => CopyAtomically(source, destination),
+					$"replace Redux file '{relativePath}'",
+					destination);
 			}
 			foreach (var relativePath in current.Files.Where(path => !nextFiles.Contains(path)))
 			{
 				var obsolete = GetContainedPath(targetRoot, relativePath);
-				if (File.Exists(obsolete)) File.Delete(obsolete);
+				if (File.Exists(obsolete))
+					RunWithFileRetry(
+						() => File.Delete(obsolete),
+						$"remove obsolete Redux file '{relativePath}'",
+						obsolete);
 				DeleteEmptyParents(Path.GetDirectoryName(obsolete), targetRoot);
 			}
 		}
@@ -256,6 +269,41 @@ public static class ReduxUpdateTransaction
 		{
 			if (File.Exists(temporary)) File.Delete(temporary);
 		}
+	}
+
+	private static void RunWithFileRetry(
+		Action operation,
+		string description,
+		string? destinationPath = null)
+	{
+		const int attempts = 31;
+		Exception? lastError = null;
+		for (var attempt = 0; attempt < attempts; attempt++)
+		{
+			try
+			{
+				if (!String.IsNullOrWhiteSpace(destinationPath) && File.Exists(destinationPath))
+				{
+					ClearReadOnlyAttribute(destinationPath);
+				}
+				operation();
+				return;
+			}
+			catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+			{
+				lastError = ex;
+				if (attempt + 1 < attempts) Thread.Sleep(200);
+			}
+		}
+
+		throw new IOException($"Redux could not {description} after waiting for Windows to release it. {lastError?.Message}", lastError);
+	}
+
+	private static void ClearReadOnlyAttribute(string path)
+	{
+		var attributes = File.GetAttributes(path);
+		if (attributes.HasFlag(FileAttributes.ReadOnly))
+			File.SetAttributes(path, attributes & ~FileAttributes.ReadOnly);
 	}
 
 	private static void Rollback(

@@ -114,6 +114,37 @@ public sealed class ReduxUpdateTransactionTests
 		}
 	}
 
+	public void ReadOnlyInstalledFilesCanBeReplaced()
+	{
+		var root = TemporaryDirectory();
+		try
+		{
+			var target = Path.Combine(root, "target");
+			var staged = Path.Combine(root, "staged");
+			var backup = Path.Combine(root, "backup");
+			WriteRelease(target, new Dictionary<string, string>
+			{
+				["Redux.exe"] = "old app",
+				["Updater/ReduxUpdater.exe"] = "old updater"
+			});
+			WriteRelease(staged, new Dictionary<string, string>
+			{
+				["Redux.exe"] = "new app",
+				["Updater/ReduxUpdater.exe"] = "new updater"
+			});
+			File.SetAttributes(Path.Combine(target, "Redux.exe"), FileAttributes.ReadOnly);
+
+			var result = ReduxUpdateTransaction.Apply(Request(target, staged, backup));
+
+			RegressionAssert.True(result.Succeeded);
+			RegressionAssert.Equal("new app", File.ReadAllText(Path.Combine(target, "Redux.exe")));
+		}
+		finally
+		{
+			Directory.Delete(root, recursive: true);
+		}
+	}
+
 	private static ReduxUpdateRequest Request(string target, string staged, string backup) => new()
 	{
 		SchemaVersion = ReduxUpdateTransaction.RequestSchemaVersion,

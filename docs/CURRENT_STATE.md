@@ -5,7 +5,7 @@ to check before changing established behavior. The [changelog](CHANGELOG.md) rec
 the [issue tracker](https://github.com/circleainn/BG3ModManager-Redux/issues) tracks individual
 reports and proposals, and the source and tests remain authoritative for implementation details.
 
-Last reviewed: September 13, 2026. Public baseline: `v0.1.0-alpha.16.4`.
+Last reviewed: September 14, 2026. Public baseline: `v0.1.0-alpha.16.4`; maintenance candidate: `v0.1.0-alpha.16.4.1`.
 
 Save Manager now exports selected saves or a selected campaign to ZIP, including thumbnails,
 with progress and cancellation. Export retains the import limits: 32 saves, 1 GB total and
@@ -35,7 +35,12 @@ Collection previews compare exact Nexus mod/file IDs against existing PAKs in bo
 
 The accumulated work is assigned to the alpha.16.4 update. Dev runs build and regression
 checks but publishes no downloadable portable build or release; main owns public releases.
-The Unreleased changelog is reserved for work after 16.4.
+The Unreleased changelog is reserved for work after the 16.4.1 maintenance release.
+
+Alpha.16.4.1 fixes separator regressions reported in #121 and #123: filtered views hide separators,
+bulk collapse/expand no longer fades the whole recycled list, established sections re-anchor to their
+recorded mods, and active separators are stored with each saved load order. It also hardens the
+incoming updater against short-lived Windows locks and read-only application files for #122.
 
 Inactive ordering and separators (#111), Script Extender export preference persistence (#119),
 and NXM reassociation recovery (#120) shipped in 16.4 and their issues are closed. Shared window
@@ -58,7 +63,7 @@ mods, and never saves or syncs automatically.
 |:--|:--|
 | Product | Baldur's Gate 3 Mod Manager Redux |
 | Short name | Redux |
-| Latest version | `0.1.0-alpha.16.4` |
+| Latest version | `0.1.0-alpha.16.4.1` |
 | Lifecycle | Public alpha |
 | Supported platform | Windows 10/11 x64 |
 | Required runtime | .NET 8 Desktop Runtime |
@@ -68,7 +73,7 @@ mods, and never saves or syncs automatically.
 | Update channel | `public-alpha` |
 | Active milestone | `v0.1.0 – Public Alpha` |
 
-The release tag is `v0.1.0-alpha.16.4`. Always verify the live branches and releases before
+The maintenance release tag is `v0.1.0-alpha.16.4.1`. Always verify the live branches and releases before
 preparing another publication.
 
 ## What Redux is

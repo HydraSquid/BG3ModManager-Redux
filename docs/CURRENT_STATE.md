@@ -217,19 +217,14 @@ The full publishing and recovery contract is in
 
 ## Current reports and planned work
 
-The issue tracker is the live source. At the time of this review, the public reports still needing
-attention were:
+The issue tracker is the live source. The 16.4 audit closed #108, #111, #113, #119, and #120 for the
+shipped scope. #95 is resolved for now based on the maintainer’s assessment, and #118 is not planned.
+Earlier fixes for window placement and save archive/discovery defects (#112, #114–116) remain closed.
 
-- Remembered window placement and save archive/discovery defects (#112, #114–116) are addressed in alpha.16.3.5.
-- [#95 — Elevation warning can appear unexpectedly](https://github.com/circleainn/BG3ModManager-Redux/issues/95), currently awaiting more reproduction information
+Open planned work:
 
-Accepted or proposed additions include:
-
-- [#113 — Streamline windows, warnings, and explanatory text](https://github.com/circleainn/BG3ModManager-Redux/issues/113)
-- [#111 — Separators and orders for Inactive Mods](https://github.com/circleainn/BG3ModManager-Redux/issues/111)
 - [#110 — Improve compatibility with Wine and Linux desktops](https://github.com/circleainn/BG3ModManager-Redux/issues/110)
 - [#109 — Manage Override mods when switching saved load orders](https://github.com/circleainn/BG3ModManager-Redux/issues/109)
-- [#108 — Explore Nexus Collections support](https://github.com/circleainn/BG3ModManager-Redux/issues/108)
 - [#98 — Add official Nexus Mods SSO account connection](https://github.com/circleainn/BG3ModManager-Redux/issues/98)
 - [#63 — Explore a docked or paged Managers workspace](https://github.com/circleainn/BG3ModManager-Redux/issues/63)
 - [#56 — Expand localization and accessibility support](https://github.com/circleainn/BG3ModManager-Redux/issues/56)

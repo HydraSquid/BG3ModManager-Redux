@@ -40,7 +40,10 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 	private int _demoStep;
 	private readonly Dictionary<Expander, int> _detailsAnimationVersions = new();
 	public string SelectedGameExecutablePath { get; private set; }
-	public bool OpenDownloadsAfterSetup => OpenDownloadsCheckBox.IsChecked == true;
+	public bool AddStarterSeparators => StarterSeparatorsCheckBox.IsChecked == true;
+    public IReadOnlyList<string> SelectedStarterSeparators => StarterSeparatorsPreview.Children.OfType<CheckBox>()
+        .Where(choice => choice.IsChecked == true).Select(choice => (string)choice.Tag).ToArray();
+    public bool OpenDownloadsAfterSetup => OpenDownloadsCheckBox.IsChecked == true;
 	public bool WasResolved { get; private set; }
 	public bool ApplyChanges { get; private set; }
 	public bool ThemeSelectionChanged => _themePreviewActive;
@@ -61,7 +64,14 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 	public ReduxOnboardingWindow(Window owner, DivinityModManagerSettings settings)
 	{
 		InitializeComponent();
-		ReduxWindowBehavior.AttachDialogTransitions(this, 30);
+		foreach (var title in ReduxOnboardingPolicy.StarterSeparatorTitles)
+        {
+            var choice = new CheckBox { Tag = title, IsChecked = true, Margin = new Thickness(0, 8, 12, 8),
+                Content = new TextBlock { Text = title, TextWrapping = TextWrapping.Wrap } };
+            choice.SetResourceReference(StyleProperty, "ReduxCheckBoxStyle");
+            StarterSeparatorsPreview.Children.Add(choice);
+        }
+        ReduxWindowBehavior.AttachDialogTransitions(this, 30);
 		ReduxWindowBehavior.AttachRoundedCorners(this);
 		_ownerWindow = owner as MainWindow;
 		_settings = settings;
@@ -392,7 +402,7 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 		{
 			BeforePlayExpansion_Changed(BeforePlayExpander, new RoutedEventArgs());
 			BeforePlayExpansion_Changed(AppearanceOptionsExpander, new RoutedEventArgs());
-			foreach (var element in new FrameworkElement[] { AppearancePage, ConnectionsPage, ManagersPage, OptionsPage, DemoActiveText, DemoInstructionText, TourResult, TourExplanation })
+			foreach (var element in new FrameworkElement[] { AppearancePage, ConnectionsPage, ManagersPage, OptionsPage, OrganizePage, DemoActiveText, DemoInstructionText, TourResult, TourExplanation })
 			{
 				element.BeginAnimation(OpacityProperty, null);
 				element.Opacity = 1;
@@ -559,31 +569,32 @@ public partial class ReduxOnboardingWindow : AdonisUI.Controls.AdonisWindow
 	private void ShowStep(int step)
 	{
 		var direction = step >= _step ? 1 : -1;
-		_step = Math.Clamp(step, 0, 3);
+		_step = Math.Clamp(step, 0, 4);
 		AppearancePage.Visibility = _step == 0 ? Visibility.Visible : Visibility.Collapsed;
 		ConnectionsPage.Visibility = _step == 1 ? Visibility.Visible : Visibility.Collapsed;
-		ManagersPage.Visibility = _step == 3 ? Visibility.Visible : Visibility.Collapsed;
+		OrganizePage.Visibility = _step == 3 ? Visibility.Visible : Visibility.Collapsed;
+		ManagersPage.Visibility = _step == 4 ? Visibility.Visible : Visibility.Collapsed;
 		OptionsPage.Visibility = _step == 2 ? Visibility.Visible : Visibility.Collapsed;
-		StepProgressText.Text = $"Step {_step + 1} of 4 · {new[] { "Your setup", "Add mods", "Load order", "Saves & DLLs" }[_step]}";
-		StepTitleText.Text = new[] { "Welcome to Redux", "Bring in your mods", "Make it part of your game", "Beyond the load order" }[_step];
-		StepDescriptionText.Text = new[] { "Set up Redux for Baldur’s Gate 3.", "Local files and Nexus downloads meet in Download Manager.", "Activate. Save. Sync. Try it below without changing your files.", "Saves and native mods have their own place in Redux." }[_step];
+		StepProgressText.Text = $"Step {_step + 1} of 5 · {new[] { "Your setup", "Add mods", "Load order", "Organize", "Saves & DLLs" }[_step]}";
+		StepTitleText.Text = new[] { "Welcome to Redux", "Bring in your mods", "Make it part of your game", "A place for every mod", "Beyond the load order" }[_step];
+		StepDescriptionText.Text = new[] { "Set up Redux for Baldur’s Gate 3.", "Local files and Nexus downloads meet in Download Manager.", "Activate. Save. Sync. Try it below without changing your files.", "Make your library easier to browse with categories and separators.", "Saves and native mods have their own place in Redux." }[_step];
 		BackButton.Visibility = _step > 0 ? Visibility.Visible : Visibility.Collapsed;
-		ContinueLabel.Text = _step == 3 ? "Start using Redux" : "Continue";
-		ContinueIcon.SetResourceReference(Controls.ReduxIcon.StrokeDataProperty, _step == 3 ? "Redux.Icon.Check" : "Redux.Icon.ChevronRightStroke");
-		var stepButtons = new[] { SetupStepButton, SourcesStepButton, OrderStepButton, ManagersStepButton };
+		ContinueLabel.Text = _step == 4 ? "Start using Redux" : "Continue";
+		ContinueIcon.SetResourceReference(Controls.ReduxIcon.StrokeDataProperty, _step == 4 ? "Redux.Icon.Check" : "Redux.Icon.ChevronRightStroke");
+		var stepButtons = new[] { SetupStepButton, SourcesStepButton, OrderStepButton, OrganizeStepButton, ManagersStepButton };
 		for (var i = 0; i < stepButtons.Length; i++)
 		{
 			stepButtons[i].SetResourceReference(StyleProperty, i == _step ? "WelcomeCurrentStepStyle" : "WelcomeStepStyle");
 			System.Windows.Automation.AutomationProperties.SetItemStatus(stepButtons[i], i == _step ? "Current step" : "Go to step");
 		}
-		AnimateEntrance(_step == 0 ? AppearancePage : _step == 1 ? ConnectionsPage : _step == 2 ? OptionsPage : ManagersPage, direction);
+		AnimateEntrance(_step == 0 ? AppearancePage : _step == 1 ? ConnectionsPage : _step == 2 ? OptionsPage : _step == 3 ? OrganizePage : ManagersPage, direction);
 		OnboardingContentScrollViewer.ScrollToTop();
-		System.Windows.Input.FocusManager.SetFocusedElement(this, _step == 0 ? ReduxDarkThemeCard : _step == 1 ? SourceIntegrationsCheckBox : _step == 2 ? GuidanceCheckBox : SaveTourButton);
+		System.Windows.Input.FocusManager.SetFocusedElement(this, _step == 0 ? ReduxDarkThemeCard : _step == 1 ? SourceIntegrationsCheckBox : _step == 2 ? GuidanceCheckBox : _step == 3 ? StarterSeparatorsCheckBox : SaveTourButton);
 	}
 
 	private void SaveButton_Click(object sender, RoutedEventArgs e)
 	{
-		if (_step < 3)
+		if (_step < 4)
 		{
 			ShowStep(_step + 1);
 			return;

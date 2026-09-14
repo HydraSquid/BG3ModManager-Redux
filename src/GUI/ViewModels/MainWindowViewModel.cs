@@ -582,6 +582,56 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	public void EnqueueNxmActivation(string value) =>
 		ShowWhenMainWindowReady($"nxm-{Guid.NewGuid():N}", () => _ = HandleNxmLinkAsync(value, fromProtocolActivation: true));
 
+    public async Task<NexusCollectionInstallInventory> GetCollectionInstallInventoryAsync(CancellationToken token)
+    {
+        // Snapshot the live library on the UI thread; filesystem checks run off-thread.
+        var library = mods.Items.Where(m => m.NexusModsData?.ModId > 0)
+            .Select(m => (m.FilePath, Identity: new NexusInstalledFile(m.NexusModsData.ModId, m.NexusModsData.LastFileId, m.IsForceLoaded && !m.ForceAllowInLoadOrder ? "Override Mods" : m.IsActive ? "Active Mods" : "Inactive Mods"))).ToArray();
+        var executable = Environment.ExpandEnvironmentVariables(Settings.GameExecutablePath ?? "");
+        var stateDirectory = DivinityApp.GetAppDirectory("Data", "GameDirectoryInstalls");
+        return await Task.Run(() =>
+        {
+            var installed = library.Where(m => File.Exists(m.FilePath)).Select(m => m.Identity).ToList();
+            token.ThrowIfCancellationRequested();
+            var warning = "";
+            try
+            {
+                if (File.Exists(executable))
+                {
+                    var info = FileVersionInfo.GetVersionInfo(executable);
+                    var service = new ReduxGameDirectoryInstallService(Path.GetDirectoryName(Path.GetFullPath(executable)), stateDirectory,
+                        new Version(info.FileMajorPart, info.FileMinorPart, info.FileBuildPart, info.FilePrivatePart));
+                    foreach (var entry in service.GetInstalledMods().Where(e => e.Status is ReduxGameDirectoryModStatus.Managed or ReduxGameDirectoryModStatus.External or ReduxGameDirectoryModStatus.Changed))
+                        installed.Add(new NexusInstalledFile(entry.NexusModId, 0, "Game directory"));
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or ArgumentException)
+            { warning = "Game-directory mods could not be checked. Active and inactive mod matches are shown."; }
+            token.ThrowIfCancellationRequested();
+            return new NexusCollectionInstallInventory(installed) { Warning = warning };
+        }, token);
+    }
+
+    public async Task<NexusCollectionRetryResult> RetryCollectionDownloadsAsync(IEnumerable<NexusCollectionFile> files, CancellationToken token)
+    {
+        if (_nxmShuttingDown || !Modules.SourceIntegrationsEnabled || _nxmDownloadManager == null)
+            throw new InvalidOperationException("Nexus downloads are unavailable.");
+        return await NexusCollectionRecovery.RetryAsync(files, NxmDownloads, _nxmDownloadManager.RetryAsync, token);
+    }
+
+	public async Task QueueCollectionFileAsync(NexusCollectionFile file, CancellationToken cancellationToken)
+	{
+		if (_nxmShuttingDown || !Modules.SourceIntegrationsEnabled || String.IsNullOrWhiteSpace(Settings.NexusModsAPIKey))
+			throw new InvalidOperationException("Nexus downloads are unavailable.");
+		if (!file.Available || file.ModId <= 0 || file.FileId <= 0) throw new InvalidOperationException("This collection file is unavailable.");
+		await EnsureNxmDownloadsInitializedAsync();
+        var existing = NxmDownloads.FirstOrDefault(d => d.ModId == file.ModId && d.FileId == file.FileId);
+        if (existing?.State == NxmDownloadState.Installed)
+            await _nxmDownloadManager.DownloadAgainAsync(existing.Id);
+        else
+			await _nxmDownloadManager.EnqueueAsync(new NexusModManagerLink(file.ModId, file.FileId, null, null, null), cancellationToken);
+	}
+
 	public async Task HandleNxmLinkAsync(string value, bool fromProtocolActivation = false)
 	{
 		await _nxmActivationGate.WaitAsync();
@@ -1012,10 +1062,27 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		var hasArchive = item.State is NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview
 			or NxmDownloadState.InstallFailed;
 		if (ReduxMessageBox.Show(Window,
-			hasArchive ? "Remove this entry and move its downloaded archive to the Recycle Bin?" : "Cancel and remove this download?",
-			"Remove Package", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+			hasArchive ? "Delete this entry and move its downloaded archive to the Recycle Bin?" : "Cancel and delete this download?",
+			"Delete Package", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
 		await _nxmDownloadManager.RemoveAsync(item.Id, hasArchive);
 	}
+
+    public async Task DeleteAllNxmDownloadsAsync(Window owner)
+    {
+        if (_nxmDownloadManager == null || DownloadManagerInstallIsActive) return;
+        var items = NxmDownloads.Where(item => !item.IsInstalledHistory && item.State != NxmDownloadState.Installing).ToArray();
+        if (items.Length == 0) return;
+        if (ReduxMessageBox.Show(owner, $"Delete all {items.Length} downloads? Active downloads will be canceled and downloaded packages moved to the Recycle Bin. Installed mods and retained archives are kept.",
+            "Delete All Downloads", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+        var failed = 0;
+        foreach (var item in items)
+        {
+            if (DownloadManagerInstallIsActive || item.IsInstalledHistory || item.State == NxmDownloadState.Installing) break;
+            try { await _nxmDownloadManager.RemoveAsync(item.Id, true); }
+            catch (Exception ex) { failed++; DivinityApp.Log($"Could not delete download: {ex.Message}"); }
+        }
+        if (failed > 0) ShowAlert($"{failed} downloads could not be fully deleted. Check their files and try again.", AlertType.Warning);
+    }
 
 	public async Task ClearInstalledNxmHistoryAsync()
 	{
@@ -1030,8 +1097,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	{
 		if (_retainedPackageArchiveService == null || RetainedPackageArchives.Count == 0) return;
 		if (ReduxMessageBox.Show(owner?.IsLoaded == true ? owner : Window,
-			"Clear every retained install package? Installed mods and Download Manager history will not change.",
-			"Clear Package Archives", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+			"Delete every retained install package? Installed mods and Download Manager history will not change.",
+			"Delete Archives", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
 		try
 		{
 			await _retainedPackageArchiveService.ClearAsync();
@@ -3755,6 +3822,24 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		}
 	}
 
+    public string SaveCollectionLoadOrder(NexusCollectionPreview collection, IReadOnlyList<DivinityLoadOrderEntry> entries)
+    {
+        var directory = GetOrdersDirectory();
+        Directory.CreateDirectory(directory);
+        var baseName = DivinityModDataLoader.MakeSafeFilename($"{collection.Name} - Revision {collection.Revision}", '_');
+        if (baseName.Length > 100) baseName = baseName.Substring(0, 100);
+        var name = baseName;
+        var suffix = 2;
+        while (ModOrderList.Any(o => String.Equals(o.Name, name, StringComparison.OrdinalIgnoreCase)) || File.Exists(Path.Combine(directory, name + ".json")))
+            name = $"{baseName} ({suffix++})";
+        var order = new DivinityLoadOrder { Name = name, FilePath = Path.Combine(directory, name + ".json"), LastModifiedDate = DateTime.Now };
+        order.Order.AddRange(entries.Select(e => e.Clone()));
+        if (!DivinityModDataLoader.ExportLoadOrderToFile(order.FilePath, order)) throw new IOException("Could not save the collection load order.");
+        SavedModOrderList.Add(order);
+        ModOrderList.Add(order);
+        return name;
+    }
+
 	private void AddNewModOrder(DivinityLoadOrder newOrder = null)
 	{
 		var lastIndex = SelectedModOrderIndex;
@@ -4663,7 +4748,12 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 		if (SaveSettings() && welcomeWindow.ApplyChanges)
 		{
-			ApplyNxmAssociationPreference(welcomeWindow.SelectedNxmAssociationEnabled);
+			if (welcomeWindow.AddStarterSeparators)
+            {
+                foreach (var title in ReduxOnboardingPolicy.MissingStarterSeparators(Settings.VisualModListDividers).Where(welcomeWindow.SelectedStarterSeparators.Contains))
+                    AddVisualDivider(true, DisplayActiveMods.Count, title, "#8A6AF1", "layers", false);
+            }
+            ApplyNxmAssociationPreference(welcomeWindow.SelectedNxmAssociationEnabled);
 			if (welcomeWindow.OpenDownloadsAfterSetup)
 				Window.Dispatcher.BeginInvoke(new Action(async () => await Window.OpenNexusDownloadsAsync()));
 		}
@@ -5524,7 +5614,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			if (missingResults.TotalMissing > 0)
 			{
 				List<string> messages = [];
-				
+
 				var missingMessage = missingResults.GetMissingMessage();
 				var missingDependencies = missingResults.GetDependenciesMessage();
 

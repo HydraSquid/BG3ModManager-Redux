@@ -18,7 +18,7 @@ public partial class ReduxNexusDownloadsWindow : AdonisUI.Controls.AdonisWindow
 	public ReduxNexusDownloadsWindow()
 	{
 		InitializeComponent();
-		ReduxExternalDropFeedback.Attach(this, paths => paths.All(MainWindowViewModel.IsSupportedDownloadManagerInput), "Drop to add packages", "Redux.Icon.Package", "Review and install in Download Manager.");
+        ReduxExternalDropFeedback.Attach(this, paths => paths.All(MainWindowViewModel.IsSupportedDownloadManagerInput), "Drop to add packages", "Redux.Icon.Package", "Review and install in Download Manager.");
 		ReduxWindowBehavior.AttachDialogTransitions(this, 40);
 		ReduxWindowBehavior.AttachRoundedCorners(this);
 	}
@@ -92,10 +92,9 @@ public partial class ReduxNexusDownloadsWindow : AdonisUI.Controls.AdonisWindow
 		InstalledEmptyText.Visibility = hasInstalled ? Visibility.Collapsed : Visibility.Visible;
 		ArchivesEmptyText.Visibility = _viewModel.RetainedPackageArchives.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
 		ClearInstalledButton.IsEnabled = hasInstalled;
-		ClearInstalledButton.Visibility = DownloadsTabs.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
+        DeleteAllButton.IsEnabled = !_viewModel.DownloadManagerInstallIsActive && hasPending;
 		ClearArchivesButton.IsEnabled = _viewModel.RetainedPackageArchives.Count > 0;
-		ClearArchivesButton.Visibility = DownloadsTabs.SelectedIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
-		OpenFolderText.Text = DownloadsTabs.SelectedIndex == 2 ? "Open Archives" : "Open Folder";
+		OpenFolderText.Text = "Open Folder";
 		InstallAllButton.Visibility = DownloadsTabs.SelectedIndex == 0 ? Visibility.Visible : Visibility.Collapsed;
 		InstallAllButton.IsEnabled = !_viewModel.DownloadManagerInstallIsActive && downloads.Any(item =>
 			item.State is NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview or NxmDownloadState.InstallFailed);
@@ -103,25 +102,17 @@ public partial class ReduxNexusDownloadsWindow : AdonisUI.Controls.AdonisWindow
 	private void UpdateAssociationButton()
 	{
 		var status = _viewModel.GetNxmAssociationStatus();
-		AssociationText.Text = status.Status switch
-		{
-			NxmAssociationStatus.Owned => "Disable NXM Links...",
-			NxmAssociationStatus.NeedsRepair => "Repair NXM Links...",
-			NxmAssociationStatus.OwnedByAnotherHandler => "Use Redux for NXM Links...",
-			_ => "Enable NXM Links..."
-		};
-		AssociationIcon.SetResourceReference(DivinityModManager.Controls.ReduxIcon.StrokeDataProperty,
-			status.Status == NxmAssociationStatus.Owned ? "Redux.Icon.UnlinkStroke" : "Redux.Icon.LinkStroke");
-		var styleResource = status.Status switch
-		{
-			NxmAssociationStatus.Owned => "ReduxMinorDestructiveActionButtonStyle",
-			NxmAssociationStatus.NeedsRepair => "ReduxMinorWarningActionButtonStyle",
-			NxmAssociationStatus.OwnedByAnotherHandler => "ReduxMinorNexusActionButtonStyle",
-			_ => "ReduxMinorActionButtonStyle"
-		};
-		AssociationButton.SetResourceReference(StyleProperty, styleResource);
-		AssociationButton.IsEnabled = status.Success;
-		AssociationButton.ToolTip = status.Message;
+        AssociationText.Text = !status.Success ? "NXM status unavailable" : status.Status switch
+        {
+            NxmAssociationStatus.Owned => "NXM links open in Redux",
+            NxmAssociationStatus.NeedsRepair => "NXM links need repair",
+            NxmAssociationStatus.OwnedByAnotherHandler => "NXM links use another app",
+            _ => "NXM links are off"
+        };
+        AssociationCheckBox.IsChecked = status.Status == NxmAssociationStatus.Owned;
+        AssociationCheckBox.IsEnabled = status.Success;
+        AssociationCheckBox.ToolTip = status.Message;
+
 	}
 
 	private void DownloadsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -147,6 +138,8 @@ public partial class ReduxNexusDownloadsWindow : AdonisUI.Controls.AdonisWindow
 		await _viewModel.HandleNxmLinkAsync(Clipboard.GetText());
 	}
 
+    private void CollectionButton_Click(object sender, RoutedEventArgs e) => new ReduxCollectionWindow(this, _viewModel).ShowDialog();
+
 	private async void AddPackageButton_Click(object sender, RoutedEventArgs e)
 	{
 		var dialog = new Microsoft.Win32.OpenFileDialog
@@ -159,6 +152,8 @@ public partial class ReduxNexusDownloadsWindow : AdonisUI.Controls.AdonisWindow
 		if (dialog.ShowDialog(this) == true)
 			await _viewModel.AddLocalPackagesToDownloadManagerAsync(dialog.FileNames);
 	}
+
+	private async void DeleteAllButton_Click(object sender, RoutedEventArgs e) => await _viewModel.DeleteAllNxmDownloadsAsync(this);
 
 	private async void InstallAllButton_Click(object sender, RoutedEventArgs e) =>
 		await _viewModel.InstallAllNxmDownloadsAsync(this);
@@ -210,7 +205,7 @@ public partial class ReduxNexusDownloadsWindow : AdonisUI.Controls.AdonisWindow
 	private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
 	private void AssociationButton_Click(object sender, RoutedEventArgs e)
 	{
-		_viewModel.ConfigureNxmAssociation();
+		_viewModel.ApplyNxmAssociationPreference(AssociationCheckBox.IsChecked == true);
 		UpdateAssociationButton();
 	}
 }

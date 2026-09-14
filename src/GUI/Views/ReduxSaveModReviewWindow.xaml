@@ -10,13 +10,13 @@
  <Grid Grid.Row="1" Margin="18"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
  <StackPanel><TextBlock x:Name="SaveNameText" Style="{StaticResource ReduxWindowHeadingStyle}" TextWrapping="Wrap"/>
  <TextBlock x:Name="SummaryText" Margin="0,8,0,12" Foreground="{DynamicResource ReduxTextSecondaryBrush}" TextWrapping="Wrap"/></StackPanel>
- <TextBlock Grid.Row="1" Text="Select inactive mods to add to the end of your active list. Existing active mods keep their order." Margin="0,0,0,12" TextWrapping="Wrap"/>
+ <TextBlock x:Name="InstructionsText" Grid.Row="1" Text="Select inactive mods to add to the end of your active list. Existing active mods keep their order." Margin="0,0,0,12" TextWrapping="Wrap"/>
  <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
  <ItemsControl x:Name="RequirementsGrid" AutomationProperties.Name="Mods recorded in the save">
  <ItemsControl.ItemTemplate><DataTemplate>
  <Border Background="{DynamicResource ReduxSurfaceBrush}" BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1" CornerRadius="{DynamicResource Redux.CornerRadius.Control}" Padding="{DynamicResource Redux.Manager.RowPadding}" Margin="0,0,0,6">
  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
- <CheckBox IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding Requirement.CanActivate}" Margin="0,0,12,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding Requirement.Name}" Style="{StaticResource ReduxCheckBoxStyle}"/>
+ <CheckBox Visibility="{Binding SelectionVisibility}" IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding Requirement.CanActivate}" Margin="0,0,12,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding Requirement.Name}" Style="{StaticResource ReduxCheckBoxStyle}"/>
  <StackPanel Grid.Column="1">
  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
  <TextBlock Text="{Binding DisplayName}" ToolTip="{Binding IdentityText}" Style="{StaticResource ReduxManagerRowTitleStyle}"/>
@@ -27,9 +27,9 @@
  <TextBlock Text="{Binding Requirement.Detail}" Margin="0,4,0,0" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextSecondaryBrush}"/>
  </StackPanel></Grid></Border>
  </DataTemplate></ItemsControl.ItemTemplate></ItemsControl></ScrollViewer>
- <StackPanel Grid.Row="3" Margin="0,12,0,0"><TextBlock Foreground="{DynamicResource ReduxTextMutedBrush}" TextWrapping="Wrap" Text="Recorded mods only. Versions, dependencies, and native mods are not verified. Save and sync separately after reviewing your order."/>
+ <StackPanel Grid.Row="3" Margin="0,12,0,0"><TextBlock x:Name="FooterText" Foreground="{DynamicResource ReduxTextMutedBrush}" TextWrapping="Wrap" Text="Recorded mods only. Versions, dependencies, and native mods are not verified. Save and sync separately after reviewing your order."/>
  <WrapPanel HorizontalAlignment="Right" Margin="0,12,0,0">
- <Button x:Name="ApplyButton" Click="Apply_Click" Margin="0,0,8,0" Style="{StaticResource ReduxMinorSuccessActionButtonStyle}"><StackPanel Orientation="Horizontal"><c:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" VerticalAlignment="Center" StrokeData="{StaticResource Redux.Icon.Check}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}"/><TextBlock Text="Activate selected"/></StackPanel></Button>
+ <Button x:Name="ApplyButton" Click="Apply_Click" Margin="0,0,8,0" Style="{StaticResource ReduxMinorSuccessActionButtonStyle}"><StackPanel Orientation="Horizontal"><c:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" VerticalAlignment="Center" StrokeData="{StaticResource Redux.Icon.Check}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}"/><TextBlock x:Name="ApplyLabel" Text="Activate selected"/></StackPanel></Button>
  <Button IsCancel="True" Style="{StaticResource ReduxSecondaryActionButtonStyle}"><StackPanel Orientation="Horizontal"><c:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" VerticalAlignment="Center" StrokeData="{StaticResource Redux.Icon.Close}"/><TextBlock Text="Close"/></StackPanel></Button>
  </WrapPanel></StackPanel></Grid></Grid>
 </adonisUI:AdonisWindow>

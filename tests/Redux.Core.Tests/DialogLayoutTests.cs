@@ -24,6 +24,11 @@ public sealed class DialogLayoutTests
 			VerifyLayout(review, theme, 780, 560, "save-mod-review-normal", "ApplyButton");
 			VerifyLayout(review, theme, 640, 480, "save-mod-review", "ApplyButton");
 			review.Close();
+            var collectionOrder = new ReduxSaveModReviewWindow(null!, "Example collection", [
+                new("11111111-1111-1111-1111-111111111111", "Installed inactive mod", DivinityModManager.AppServices.SaveModStatus.Inactive),
+                new("22222222-2222-2222-2222-222222222222", "Missing collection mod", DivinityModManager.AppServices.SaveModStatus.Missing)], new DivinityModManagerSettings(), collectionOrder: true);
+            VerifyLayout(collectionOrder, theme, 780, 560, "collection-order-review", "ApplyButton");
+            collectionOrder.Close();
 			var manager = new ReduxGameDirectoryModManagerWindow();
 			((ListBox)manager.FindName("InstalledList")).ItemsSource = new[] {
 				new { Name = "Native Mod Loader", StatusText = "Can't manage · this installation has no protected original backup",
@@ -49,6 +54,19 @@ public sealed class DialogLayoutTests
 	{
 		foreach (var theme in new[] { ReduxThemeType.ReduxDark, ReduxThemeType.ReduxLight, ReduxThemeType.Parchment })
 		{
+			var collection = new ReduxCollectionWindow(null!, null!);
+			collection.PresentFiles(new[] {
+				new CollectionFileChoice(new(5, 101, "Example collection mod", "Core file", "1.0", 1234, false, true), false),
+				new CollectionFileChoice(new(5, 102, "Example optional textures", "Textures", "1.0", 1234, true, true), false),
+				new CollectionFileChoice(new(0, 103, "", "", "", 0, false, false), false)
+			});
+			VerifyLayout(collection, theme, 760, 560, "collection-preview", "DownloadButton", "PreviewButton");
+            ((FrameworkElement)collection.FindName("DownloadGuidePanel")).Visibility = Visibility.Visible;
+            ((TextBlock)collection.FindName("DownloadGuideText")).Text = "2 downloaded · 0 installed · 3 need a Nexus link\nNext: Example collection mod. Choose Mod Manager Download on Nexus.";
+            VerifyLayout(collection, theme, 900, 660, "collection-download-guide", "DownloadButton", "NextFileButton");
+            ((FrameworkElement)collection.FindName("RetryFailedButton")).Visibility = Visibility.Visible;
+            VerifyLayout(collection, theme, 900, 660, "collection-download-retry", "DownloadButton", "NextFileButton", "RetryFailedButton");
+			collection.Close();
 			var saves = new ReduxSaveManagerWindow(null, null);
             ((ListBox)saves.FindName("SaveList")).ItemsSource = new[] {
                 new ReduxSaveGameItem(new DivinityModManager.AppServices.Bg3SaveGameEntry(
@@ -82,6 +100,10 @@ public sealed class DialogLayoutTests
 				RegressionAssert.True(bounds.Width > 0 && bounds.Height > 0);
 				RegressionAssert.True(new Rect(0, 0, 760, 540).Contains(bounds));
 			}
+			((TabControl)downloads.FindName("DownloadsTabs")).SelectedIndex = 1;
+			VerifyLayout(downloads, theme, 760, 540, "installed-actions", "ClearInstalledButton");
+			((TabControl)downloads.FindName("DownloadsTabs")).SelectedIndex = 2;
+			VerifyLayout(downloads, theme, 760, 540, "archive-actions", "ClearArchivesButton");
 		}
 	}
 
@@ -90,7 +112,7 @@ public sealed class DialogLayoutTests
 		foreach (var theme in new[] { ReduxThemeType.ReduxDark, ReduxThemeType.ReduxLight, ReduxThemeType.Parchment })
 		{
 			var welcome = new ReduxOnboardingWindow(null!, new DivinityModManagerSettings());
-			for (var step = 0; step < 4; step++)
+			for (var step = 0; step < 5; step++)
 			{
 				if (step == 1) ((CheckBox)welcome.FindName("SourceIntegrationsCheckBox")).IsChecked = true;
 				VerifyLayout(welcome, theme, 780, 740, $"welcome-{step}", "NotNowButton", "SaveContinueButton");
@@ -105,7 +127,7 @@ public sealed class DialogLayoutTests
 					VerifyLayout(welcome, theme, 780, 740, "welcome-appearance-normal", "NotNowButton", "SaveContinueButton");
 					appearance.IsExpanded = false;
 				}
-				if (step == 3)
+				if (step == 4)
 				{
 					((Button)welcome.FindName("NativeTourButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 					for (var state = 0; state < 3; state++)
@@ -115,7 +137,7 @@ public sealed class DialogLayoutTests
 						((Button)welcome.FindName("TourActionButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 					}
 				}
-				if (step < 3) ((Button)welcome.FindName("SaveContinueButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+				if (step < 4) ((Button)welcome.FindName("SaveContinueButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 			}
 			welcome.Close();
 			var settings = new SettingsWindow();

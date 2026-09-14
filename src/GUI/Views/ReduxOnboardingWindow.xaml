@@ -148,18 +148,13 @@
 					<RowDefinition Height="Auto"/>
 				</Grid.RowDefinitions>
 				<StackPanel Margin="0,0,0,24">
-					<Grid Margin="0,0,0,24">
-						<Grid.ColumnDefinitions>
-							<ColumnDefinition/>
-							<ColumnDefinition/>
-							<ColumnDefinition/>
-							<ColumnDefinition/>
-						</Grid.ColumnDefinitions>
-						<Button x:Name="SetupStepButton" Grid.Column="0" Tag="0" Click="StepButton_Click" Margin="0,0,12,0" Style="{StaticResource WelcomeStepStyle}" Content="01   Make it yours"/>
-						<Button x:Name="SourcesStepButton" Grid.Column="1" Tag="1" Click="StepButton_Click" Margin="0,0,12,0" Style="{StaticResource WelcomeStepStyle}" Content="02   Add mods"/>
-						<Button x:Name="OrderStepButton" Grid.Column="2" Tag="2" Click="StepButton_Click" Margin="0,0,12,0" Style="{StaticResource WelcomeStepStyle}" Content="03   Load order"/>
-						<Button x:Name="ManagersStepButton" Grid.Column="3" Tag="3" Click="StepButton_Click" Margin="0,0,0,0" Style="{StaticResource WelcomeStepStyle}" Content="04   More to explore"/>
-					</Grid>
+					<UniformGrid Columns="5" Margin="0,0,0,24">
+<Button x:Name="SetupStepButton" Tag="0" Click="StepButton_Click" Margin="0,0,8,0" Style="{StaticResource WelcomeStepStyle}" Content="01   Your look"/>
+<Button x:Name="SourcesStepButton" Tag="1" Click="StepButton_Click" Margin="0,0,8,0" Style="{StaticResource WelcomeStepStyle}" Content="02   Add mods"/>
+<Button x:Name="OrderStepButton" Tag="2" Click="StepButton_Click" Margin="0,0,8,0" Style="{StaticResource WelcomeStepStyle}" Content="03   Load order"/>
+<Button x:Name="OrganizeStepButton" Tag="3" Click="StepButton_Click" Margin="0,0,8,0" Style="{StaticResource WelcomeStepStyle}" Content="04   Organize"/>
+<Button x:Name="ManagersStepButton" Tag="4" Click="StepButton_Click" Style="{StaticResource WelcomeStepStyle}" Content="05   Explore"/>
+</UniformGrid>
 					<Grid>
 						<Grid.ColumnDefinitions>
 							<ColumnDefinition Width="*"/>
@@ -537,7 +532,25 @@
 								<TextBlock Margin="4,8" Text="Install each mod’s requirements, check Mod Diagnostics, then sync your order. Keep the same mod setup when returning to an existing save." TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextSecondaryBrush}"/>
 							</Expander>
 						</StackPanel>
-						<StackPanel x:Name="ManagersPage" Visibility="Collapsed">
+						<StackPanel x:Name="OrganizePage" Visibility="Collapsed">
+<Border Style="{StaticResource WelcomeFeatureCardStyle}" Margin="0,0,0,12">
+<StackPanel>
+<StackPanel Orientation="Horizontal" Margin="0,0,0,8"><controls:ReduxIcon Width="18" Height="18" Margin="0,0,8,0" StrokeData="{DynamicResource Redux.Icon.Layers}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}"/><TextBlock Text="Categories find. Separators organize." FontWeight="SemiBold"/></StackPanel>
+<TextBlock Text="Create custom categories in the sidebar and assign them to mods. Click a category to filter both panes; click the filtered-view notice to show everything again." TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextSecondaryBrush}"/>
+<TextBlock Text="Use + beside Active or Inactive Mods to add a separator. Give it a name, color, and icon, then drag it into place. Collapse sections to keep long lists readable." TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextSecondaryBrush}" Margin="0,10,0,0"/>
+</StackPanel>
+</Border>
+<Border Style="{StaticResource WelcomeFeatureCardStyle}">
+<StackPanel>
+<CheckBox x:Name="StarterSeparatorsCheckBox" Style="{StaticResource ReduxCheckBoxStyle}"><TextBlock Text="Start with a few sections" FontWeight="SemiBold"/></CheckBox>
+<TextBlock Text="Choose the separators to add to the end of Active Mods when you finish setup." TextWrapping="Wrap" Margin="0,8,0,12" Foreground="{DynamicResource ReduxTextSecondaryBrush}"/>
+<UniformGrid x:Name="StarterSeparatorsPreview" Columns="3" IsEnabled="{Binding IsChecked, ElementName=StarterSeparatorsCheckBox}"/>
+<TextBlock Text="Your mods stay in place. Existing names are skipped. Rename or delete any section later." TextWrapping="Wrap" Margin="0,12,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}"/>
+</StackPanel>
+</Border>
+<TextBlock Text="These are labels, not a recommended load order. Follow each mod’s installation instructions." TextWrapping="Wrap" Margin="0,12,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}"/>
+</StackPanel>
+<StackPanel x:Name="ManagersPage" Visibility="Collapsed">
 							<Grid Margin="0,0,0,12">
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition Width="*"/>

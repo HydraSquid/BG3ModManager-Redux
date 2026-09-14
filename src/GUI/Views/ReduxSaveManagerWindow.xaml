@@ -23,7 +23,7 @@
 				<ResourceDictionary Source="../Themes/MainResourceDictionary.xaml" />
 			</ResourceDictionary.MergedDictionaries>
 			<Style x:Key="SaveListItemStyle" TargetType="{x:Type ListBoxItem}">
-                <EventSetter Event="Loaded" Handler="SaveRow_Loaded"/>
+
 				<Setter Property="Margin" Value="0,0,0,7" />
 				<Setter Property="Padding" Value="0" />
 				<Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -183,10 +183,10 @@
 				<WrapPanel Grid.Row="1" Margin="{DynamicResource Redux.Manager.ToolbarMargin}" Orientation="Horizontal">
                     <Button Margin="{DynamicResource Redux.Manager.ActionMargin}" AutomationProperties.Name="Install save" Click="InstallSaveButton_Click" Style="{StaticResource ReduxMinorSuccessActionButtonStyle}">
                         <Button.ContextMenu><ContextMenu>
-                            <MenuItem Header="File or Archive..." Click="ImportArchiveButton_Click">
+                            <MenuItem util:ReduxMenuItemExtension.UseSemanticHover="True" util:ReduxMenuItemExtension.SemanticHoverBrush="{DynamicResource ReduxSuccessPillBackground}" util:ReduxMenuItemExtension.SemanticRailBrush="{DynamicResource ReduxSuccessBrush}" Header="File or Archive..." Click="ImportArchiveButton_Click">
                                 <MenuItem.Icon><controls:ReduxIcon Width="16" Height="16" StrokeData="{StaticResource Redux.Icon.Download}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}"/></MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="Folder..." Click="ImportFolderButton_Click">
+                            <MenuItem util:ReduxMenuItemExtension.UseSemanticHover="True" util:ReduxMenuItemExtension.SemanticHoverBrush="{DynamicResource ReduxSuccessPillBackground}" util:ReduxMenuItemExtension.SemanticRailBrush="{DynamicResource ReduxSuccessBrush}" Header="Folder..." Click="ImportFolderButton_Click">
                                 <MenuItem.Icon><controls:ReduxIcon Width="16" Height="16" StrokeData="{StaticResource Redux.Icon.FolderOpen}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}"/></MenuItem.Icon>
                             </MenuItem>
                         </ContextMenu></Button.ContextMenu>
@@ -201,13 +201,7 @@
 					<Button Margin="{DynamicResource Redux.Manager.ActionMargin}" AutomationProperties.Name="Refresh saves" Click="RefreshButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
 						<StackPanel Orientation="Horizontal"><controls:ReduxIcon VerticalAlignment="Center" Width="15" Height="15" Margin="0,0,7,0" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" StrokeData="{StaticResource Redux.Icon.RefreshStroke}" /><TextBlock Text="Refresh" /></StackPanel>
 					</Button>
-					<Button Margin="{DynamicResource Redux.Manager.ActionMargin}" Click="ExportSavesMenu_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}" AutomationProperties.Name="Export saves">
-                        <Button.ContextMenu><ContextMenu>
-                            <MenuItem Header="Selected Saves..." Click="ExportSelectedSaves_Click"><MenuItem.Icon><controls:ReduxIcon Width="16" Height="16" StrokeData="{StaticResource Redux.Icon.Save}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}"/></MenuItem.Icon></MenuItem>
-                            <MenuItem Header="Selected Campaign..." Click="ExportCampaignSaves_Click"><MenuItem.Icon><controls:ReduxIcon Width="16" Height="16" StrokeData="{StaticResource Redux.Icon.BookOpen}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}"/></MenuItem.Icon></MenuItem>
-                        </ContextMenu></Button.ContextMenu>
-                        <StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="15" Height="15" Margin="0,0,7,0" StrokeData="{StaticResource Redux.Icon.Save}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}"/><TextBlock Text="Export Saves..."/></StackPanel>
-                    </Button>
+
                     <Button x:Name="ReviewModsButton" IsEnabled="False" Margin="{DynamicResource Redux.Manager.ActionMargin}" Click="ReviewModsButton_Click" AutomationProperties.Name="Review mods for selected save" Style="{StaticResource ReduxMinorActionButtonStyle}">
 <StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="15" Height="15" Margin="0,0,7,0" VerticalAlignment="Center" StrokeData="{StaticResource Redux.Icon.ReorderStroke}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}"/><TextBlock x:Name="ReviewModsLabel" Text="Review Mods..."/></StackPanel></Button>
 <Button x:Name="CampaignBulkToggleButton" IsEnabled="False" Visibility="Collapsed"
@@ -235,6 +229,12 @@
 						HorizontalContentAlignment="Stretch" ItemContainerStyle="{StaticResource SaveListItemStyle}"
 						SelectionChanged="SaveList_SelectionChanged" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
 						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.IsVirtualizingWhenGrouping="True" VirtualizingPanel.VirtualizationMode="Recycling">
+                        <ListBox.ContextMenu><ContextMenu Style="{StaticResource ReduxContextMenuStyle}" ItemContainerStyle="{StaticResource ReduxPopupMenuItemStyle}">
+                            <MenuItem x:Name="SaveReviewMenu" Header="Review Mods…" Click="ReviewModsButton_Click"><MenuItem.Icon><controls:ReduxIcon StrokeData="{DynamicResource Redux.Icon.ReorderStroke}"/></MenuItem.Icon></MenuItem>
+                            <MenuItem Header="Export This Save…" Click="ExportThisSave_Click"><MenuItem.Icon><controls:ReduxIcon StrokeData="{DynamicResource Redux.Icon.Save}"/></MenuItem.Icon></MenuItem>
+                            <MenuItem Header="Export Campaign…" Click="ExportCampaignSaves_Click"><MenuItem.Icon><controls:ReduxIcon StrokeData="{DynamicResource Redux.Icon.BookOpen}"/></MenuItem.Icon></MenuItem>
+                            <MenuItem Header="Show in Folder" Click="ShowSelectedSaveFolder_Click"><MenuItem.Icon><controls:ReduxIcon StrokeData="{DynamicResource Redux.Icon.FolderOpen}"/></MenuItem.Icon></MenuItem>
+                        </ContextMenu></ListBox.ContextMenu>
 						<ListBox.GroupStyle>
 							<GroupStyle>
 								<GroupStyle.ContainerStyle>
@@ -291,7 +291,7 @@
                                         </Grid>
                                         <TextBlock Text="{Binding CampaignGroupName}" Margin="0,4,0,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
                                         <TextBlock Style="{StaticResource ReduxManagerMetadataStyle}" Text="{Binding MetadataText}" Margin="0,5,0,0" TextWrapping="Wrap"/>
-                                        
+
 
                                     </StackPanel>
                                 </Grid>
@@ -306,7 +306,7 @@
 						<TextBlock Margin="0,10,0,0" HorizontalAlignment="Center" FontWeight="SemiBold" Text="No story saves found" />
 						<TextBlock Margin="0,3,0,0" Foreground="{DynamicResource ReduxTextMutedBrush}" Text="Install a save or create one in game, then refresh." TextWrapping="Wrap" TextAlignment="Center" />
 					</StackPanel>
-				
+
                     <GridSplitter Grid.Column="1" Width="12" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ResizeBehavior="PreviousAndNext" Style="{StaticResource ReduxManagerPaneSplitterStyle}" AutomationProperties.Name="Resize save list and details"/>
                     <Border x:Name="SaveDetailsPanel" Grid.Column="2" Padding="12,10"
                         Background="{DynamicResource ReduxSurfaceBrush}" BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1" CornerRadius="{DynamicResource Redux.CornerRadius.Card}">
@@ -314,7 +314,7 @@
                         <TextBlock x:Name="SaveDetailsPlaceholder" Text="Select a save to view its details." Foreground="{DynamicResource ReduxTextMutedBrush}" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         <ScrollViewer x:Name="SaveDetailsContent" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                             <StackPanel>
-                                
+
                                 <StackPanel>
                                     <TextBlock Text="{Binding DisplayName}" Style="{StaticResource ReduxManagerRowTitleStyle}"/>
                                     <TextBlock Text="{Binding LocationText}" Margin="0,4,0,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}" TextWrapping="Wrap" ToolTip="{Binding Save.Location}"/>
@@ -323,7 +323,7 @@
                                     <TextBlock Text="{Binding GameVersionText}" Margin="0,3,0,0" Style="{StaticResource ReduxManagerMetadataStyle}"/>
                                     <TextBlock Text="Mods" Margin="0,14,0,5" FontWeight="SemiBold"/>
                                     <TextBlock Text="{Binding ModSummary}" Style="{StaticResource ReduxManagerMetadataStyle}"/>
-                                    
+
                                     <TextBlock Text="{Binding PartyHeading}" Margin="0,10,0,5" FontWeight="SemiBold"/>
                                     <ItemsControl ItemsSource="{Binding Party}"><ItemsControl.ItemTemplate><DataTemplate>
                                         <Grid Margin="0,0,0,10"><Grid.ColumnDefinitions><ColumnDefinition Width="44"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>

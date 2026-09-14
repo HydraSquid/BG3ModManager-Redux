@@ -1,7 +1,7 @@
 # Next update readiness
 
 Audited September 13, 2026 against the open GitHub issues and current dev implementation.
-This is a development checkpoint, not a release announcement. Public version remains alpha.16.3.5.
+This checkpoint is assigned to alpha.16.4. The release notes record the final scope; live checks listed below remain qualification follow-ups unless explicitly marked complete.
 
 Save Manager now exports selected saves or a selected campaign to ZIP, including thumbnails,
 with progress and cancellation. Export retains the import limits: 32 saves, 1 GB total and
@@ -54,7 +54,7 @@ Finish qualification and address concrete failures rather than adding unrelated 
 
 If a further headline feature is desired, Nexus SSO fits the new onboarding best, once registration
 is available. Override management is another meaningful feature but carries greater file-safety scope.
-Docking, a second UI redesign, Collections, and Linux support should not be bundled just to enlarge this release.
+Collections were subsequently implemented and are included in 16.4. Docking, a second UI redesign, and Linux support remain separate work.
 
 ## Data review checkpoint
 
@@ -66,3 +66,10 @@ ordering constraints or provider identity assignments were accepted in this pass
 Save Mod Review package fixtures now cover populated, empty, absent metadata, missing UUID, and
 corrupt saves, including input-file preservation and legacy empty-import behavior. A real gameplay
 save and live activation/Undo check remain required before release.
+
+## Alpha.16.4 release verification
+
+- Debug and Publish builds completed; 471/471 regression checks passed in each configuration.
+- NuGet transitive dependency audit reported no known vulnerable packages.
+- The portable package contains 75 inventoried files, exactly four updater files, matching manifest size/hash, and no detected user state or local build paths. Clean extraction succeeded.
+- Main and dev publication is authorized for 16.4. No app-control testing was performed. Live free-account collection handoff, real UI/update smoke checks, scaling and assistive-technology checks remain follow-ups; automated checks do not claim to replace them.

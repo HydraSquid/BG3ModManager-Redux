@@ -5,7 +5,7 @@ to check before changing established behavior. The [changelog](CHANGELOG.md) rec
 the [issue tracker](https://github.com/circleainn/BG3ModManager-Redux/issues) tracks individual
 reports and proposals, and the source and tests remain authoritative for implementation details.
 
-Last reviewed: September 13, 2026. Public baseline: `v0.1.0-alpha.16.3.5`.
+Last reviewed: September 13, 2026. Public baseline: `v0.1.0-alpha.16.4`.
 
 Save Manager now exports selected saves or a selected campaign to ZIP, including thumbnails,
 with progress and cancellation. Export retains the import limits: 32 saves, 1 GB total and
@@ -14,9 +14,28 @@ regressions pass; real campaign export/restore and cancellation still need a liv
 
 ## Development status
 
-The current dev work is unreleased groundwork for the next update, not a hotfix. Preserve the
-Unreleased changelog until release preparation assigns a version. Dev runs build and regression
+Welcome Setup includes an optional starter-separator selection after the load-order tour. Chosen sections append to Active Mods through the existing separator/Undo workflow; matching active-section names are skipped and existing mods are not reordered. Canceling setup adds nothing. Downloads bulk deletion confirms once, skips installed/installing entries, and reuses the existing cancellation and package recycling path.
+
+Collection previews support text search and status filters, with visible-row bulk selection and preserved hidden choices. Batch recovery retries eligible failed downloads only, excluding installation and rollback failures. Saving a collection order now opens the shared mod-review window in a read-only review mode before confirmation; it retains missing entries and never activates mods or changes the current order.
+
+Collection installer groundwork now includes a BG3 collection-link parser and a bounded Nexus
+GraphQL preview reader. It preserves multiple files per mod and unavailable entries, rejects
+partial responses, and does not substitute the latest revision for a requested older revision.
+Download Manager now opens a themed collection preview with optional-file selection and
+duplicate-queue checks, and sends selected files through the existing NXM queue. Free accounts
+still require file-specific Nexus authorization. Live download verification,
+older revisions, collection manifest instructions, and shared preview rate-limit integration remain.
+The collection window can read explicit enabled BG3 UUID ordering from collection.json and save it as a separate Redux order. It does not apply the order or modify inactive mods. Metadata preview has been verified against a live collection; authenticated manifest retrieval has now been checked against pns4qv revision 150 (its loadOrder array is empty). The same reader successfully parsed 1,589 ordered entries from DUNGEON (f3iqts), revision 45. End-to-end saving and choosing a populated order in the running app still needs a check. Installer rules are not applied.
+
+Collection choices are stored separately from download authorization for the ten most recent collections. Reopening restores the last link; Recent collections imports a saved collection and restores selections only for the same revision. Changed revisions show a review notice and use current defaults.
+
+Collection imports now guide queued files awaiting Nexus authorization one page at a time. The guide advances on queue-state changes, supports reopening the current file, and derives progress from existing queue records. End-to-end free-account NXM handoff still needs a live check.
+
+Collection previews compare exact Nexus mod/file IDs against existing PAKs in both active and inactive panes and mark uncertain same-project matches separately. Game-directory detections have no exact file ID and remain unverified. No newer-version claim is inferred from file ID ordering. Installed history can be reacquired through the existing download pipeline if the installed file is no longer detected.
+
+The accumulated work is assigned to the alpha.16.4 update. Dev runs build and regression
 checks but publishes no downloadable portable build or release; main owns public releases.
+The Unreleased changelog is reserved for work after 16.4.
 
 Inactive ordering and separators (#111), onboarding, shared window styling (#113), Script Extender
 export preference persistence (#119), and NXM reassociation recovery (#120) are implemented in dev.
@@ -37,7 +56,7 @@ mods, and never saves or syncs automatically.
 |:--|:--|
 | Product | Baldur's Gate 3 Mod Manager Redux |
 | Short name | Redux |
-| Latest version | `0.1.0-alpha.16.3.5` |
+| Latest version | `0.1.0-alpha.16.4` |
 | Lifecycle | Public alpha |
 | Supported platform | Windows 10/11 x64 |
 | Required runtime | .NET 8 Desktop Runtime |
@@ -47,7 +66,7 @@ mods, and never saves or syncs automatically.
 | Update channel | `public-alpha` |
 | Active milestone | `v0.1.0 – Public Alpha` |
 
-The release tag is `v0.1.0-alpha.16.3.5`. Always verify the live branches and releases before
+The release tag is `v0.1.0-alpha.16.4`. Always verify the live branches and releases before
 preparing another publication.
 
 ## What Redux is

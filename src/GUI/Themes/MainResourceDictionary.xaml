@@ -719,6 +719,68 @@
 		<Setter Property="BorderThickness" Value="1" />
 		<Setter Property="CornerRadius" Value="{DynamicResource Redux.CornerRadius.Control}" />
 	</Style>
+	<Style x:Key="ReduxManagerSelectableItemStyle" TargetType="{x:Type ListBoxItem}">
+
+				<Setter Property="Margin" Value="0,0,0,7" />
+				<Setter Property="Padding" Value="0" />
+				<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+				<Setter Property="Background" Value="Transparent" />
+				<Setter Property="BorderThickness" Value="0" />
+				<Setter Property="FocusVisualStyle" Value="{StaticResource ReduxManagerKeyboardFocusStyle}" />
+				<Setter Property="Template">
+					<Setter.Value>
+						<ControlTemplate TargetType="{x:Type ListBoxItem}">
+							<Border x:Name="Card" Background="{DynamicResource ReduxSurfaceBrush}"
+								BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1"
+								CornerRadius="{DynamicResource Redux.CornerRadius.Control}" ClipToBounds="True"
+								RenderTransformOrigin="0.5,0.5" util:ReduxWindowBehavior.HoverLift="1">
+								<Border.RenderTransform><TranslateTransform Y="0" /></Border.RenderTransform>
+								<Grid>
+									<Border x:Name="SelectionSurface" Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
+										Background="{DynamicResource ReduxAccentSoftBrush}"
+										CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}"
+										OpacityMask="{StaticResource Redux.Hover.WashMask}" IsHitTestVisible="False" Opacity="0" />
+									<Border x:Name="SelectionRail" Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
+										BorderBrush="{DynamicResource ReduxAccentBrush}" BorderThickness="{DynamicResource Redux.Rail.Thickness}"
+										CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}" IsHitTestVisible="False" Opacity="0" />
+									<Border x:Name="HoverSurface" Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
+										Background="{DynamicResource ReduxAccentSoftBrush}"
+										CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}"
+										OpacityMask="{StaticResource Redux.Hover.WashMask}" IsHitTestVisible="False" Opacity="0" />
+									<Border x:Name="HoverRail" Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
+										BorderBrush="{DynamicResource ReduxAccentBrush}" BorderThickness="{DynamicResource Redux.Rail.Thickness}"
+										CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}" IsHitTestVisible="False" Opacity="0" />
+									<ContentPresenter Margin="{DynamicResource Redux.Manager.RowPadding}" />
+								</Grid>
+							</Border>
+							<ControlTemplate.Triggers>
+
+
+								<Trigger Property="IsMouseOver" Value="True">
+									<Setter TargetName="Card" Property="BorderBrush" Value="Transparent" />
+									<Trigger.EnterActions><BeginStoryboard><Storyboard>
+										<DoubleAnimation Storyboard.TargetName="HoverSurface" Storyboard.TargetProperty="Opacity" To="0.62"
+											Duration="{StaticResource Redux.Motion.Fast}" EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
+										<DoubleAnimation Storyboard.TargetName="HoverRail" Storyboard.TargetProperty="Opacity" To="1"
+											Duration="{StaticResource Redux.Motion.Fast}" EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
+									</Storyboard></BeginStoryboard></Trigger.EnterActions>
+									<Trigger.ExitActions><BeginStoryboard><Storyboard>
+										<DoubleAnimation Storyboard.TargetName="HoverSurface" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Redux.Motion.Standard}" />
+										<DoubleAnimation Storyboard.TargetName="HoverRail" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Redux.Motion.Standard}" />
+									</Storyboard></BeginStoryboard></Trigger.ExitActions>
+								</Trigger>
+								<Trigger Property="IsSelected" Value="True">
+									<Setter TargetName="Card" Property="BorderBrush" Value="Transparent" />
+									<Setter TargetName="SelectionSurface" Property="Opacity" Value="0.62" />
+									<Setter TargetName="SelectionRail" Property="Opacity" Value="1" />
+									<Setter TargetName="HoverSurface" Property="Background" Value="Transparent" />
+									<Setter TargetName="HoverRail" Property="BorderBrush" Value="Transparent" />
+								</Trigger>
+							</ControlTemplate.Triggers>
+						</ControlTemplate>
+					</Setter.Value>
+				</Setter>
+			</Style>
 	<Style x:Key="ReduxPassiveResultItemStyle" TargetType="{x:Type ListBoxItem}">
 		<Setter Property="Margin" Value="0,0,0,6" />
 		<Setter Property="Padding" Value="0" />
@@ -4996,7 +5058,7 @@
 					</DataTemplate>
 				</GridViewColumn.CellTemplate>
 			</GridViewColumn>
-			
+
 			<GridViewColumn Width="240"
 			    CellTemplate="{StaticResource ModNameTemplate}"
 			    Header="Name"

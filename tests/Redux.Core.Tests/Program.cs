@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -17,6 +17,7 @@ internal static class Program
 		_ = Application.Current ?? new Application();
 
 		var dialogLayout = new DialogLayoutTests();
+		var collections = new NexusCollectionPreviewTests();
 		var saveReview = new SaveModReviewTests();
 		var whatsNew = new WhatsNewTests();
 		var extenderExport = new ExtenderSettingsExportTests();
@@ -75,6 +76,19 @@ internal static class Program
 		var releaseVersions = new ReleaseVersionContractTests();
 		var tests = new (string Name, Action Run)[]
 		{
+			(nameof(collections.CollectionManifestDownloadKeepsAccountHeadersOnApiHost), collections.CollectionManifestDownloadKeepsAccountHeadersOnApiHost),
+			(nameof(collections.CollectionOrderUsesExplicitEnabledUuidSequence), collections.CollectionOrderUsesExplicitEnabledUuidSequence),
+			(nameof(collections.CollectionInventoryMatchesExactFilesAcrossBothPanes), collections.CollectionInventoryMatchesExactFilesAcrossBothPanes),
+			(nameof(collections.CollectionGuideAdvancesOnlyMatchingFilesAwaitingAuthorization), collections.CollectionGuideAdvancesOnlyMatchingFilesAwaitingAuthorization),
+			(nameof(collections.CollectionSessionsRoundTripSelectionsAndSeparateRevisions), collections.CollectionSessionsRoundTripSelectionsAndSeparateRevisions),
+			(nameof(collections.CollectionSessionsRejectCorruptDataWithoutOverwritingIt), collections.CollectionSessionsRejectCorruptDataWithoutOverwritingIt),
+			(nameof(collections.CollectionFiltersKeepHiddenSelectionsAndLimitBulkActions), collections.CollectionFiltersKeepHiddenSelectionsAndLimitBulkActions),
+			(nameof(collections.CollectionRetrySkipsUnsafeAndUnrelatedItemsAndContinuesAfterFailure), collections.CollectionRetrySkipsUnsafeAndUnrelatedItemsAndContinuesAfterFailure),
+			(nameof(collections.CollectionOrderReviewNeverSelectsModsForActivation), collections.CollectionOrderReviewNeverSelectsModsForActivation),
+			(nameof(collections.CollectionLinksAreRestrictedToBg3OnNexus), collections.CollectionLinksAreRestrictedToBg3OnNexus),
+			(nameof(collections.CollectionBulkSelectionRespectsAvailabilityAndDefaults), collections.CollectionBulkSelectionRespectsAvailabilityAndDefaults),
+			(nameof(collections.CollectionPreviewPreservesFilesAndUnavailableEntries), collections.CollectionPreviewPreservesFilesAndUnavailableEntries),
+			(nameof(collections.CollectionPreviewRejectsWrongIdentityAndPartialResponses), collections.CollectionPreviewRejectsWrongIdentityAndPartialResponses),
 			(nameof(saveReview.MatchesSaveUUIDsWithoutNameFallbackOrMutation), saveReview.MatchesSaveUUIDsWithoutNameFallbackOrMutation),
 			(nameof(saveReview.AmbiguousAndInvalidRequirementsCannotActivate), saveReview.AmbiguousAndInvalidRequirementsCannotActivate),
 			(nameof(saveReview.ActivationKeepsSaveSequenceAndExistingActiveOrder), saveReview.ActivationKeepsSaveSequenceAndExistingActiveOrder),
@@ -208,6 +222,7 @@ internal static class Program
 			(nameof(advisorKnowledge.AuthorProvidedPlacementExtendsTheExistingAdvisor), advisorKnowledge.AuthorProvidedPlacementExtendsTheExistingAdvisor),
 			(nameof(advisorKnowledge.ExceptionalLateLoadingDependenciesDoNotCreateFalseAdvice), advisorKnowledge.ExceptionalLateLoadingDependenciesDoNotCreateFalseAdvice),
 			(nameof(modules.DefaultsKeepModDiagnosticsOnAndGuidanceOptIn), modules.DefaultsKeepModDiagnosticsOnAndGuidanceOptIn),
+            (nameof(modules.StarterSeparatorsPreserveExistingSectionsAndSkipMatchingNames), modules.StarterSeparatorsPreserveExistingSectionsAndSkipMatchingNames),
 			(nameof(modules.FirstRunOnboardingStartsWithIntegrationsAndGuidanceOff), modules.FirstRunOnboardingStartsWithIntegrationsAndGuidanceOff),
 			(nameof(modules.ReturningUsersKeepTheirOptionalFeatureChoices), modules.ReturningUsersKeepTheirOptionalFeatureChoices),
 			(nameof(modules.CategoryInteractionSettingSynchronizesLegacyPresentationFlags), modules.CategoryInteractionSettingSynchronizesLegacyPresentationFlags),

@@ -125,6 +125,9 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 	public ReduxSaveManagerWindow(Window owner, MainWindowViewModel viewModel, IEnumerable<string> pendingImportPaths = null)
 	{
 		InitializeComponent();
+		SaveList.ContextMenuOpening += SaveList_ContextMenuOpening;
+        SaveReviewMenu.SetBinding(IsEnabledProperty, new Binding(nameof(Button.IsEnabled)) { Source = ReviewModsButton });
+        SaveReviewMenu.SetBinding(ToolTipProperty, new Binding(nameof(Button.ToolTip)) { Source = ReviewModsButton });
 		ReduxExternalDropFeedback.Attach(this, paths => !_isImporting && !_isReadingSave && paths.All(Bg3SaveGameService.IsSupportedSaveInput), "Drop to install saves", "Redux.Icon.Save", "Save files, folders, or archives.");
 		ReduxWindowBehavior.AttachDialogTransitions(this, 40);
 		ReduxWindowBehavior.AttachRoundedCorners(this);
@@ -161,51 +164,34 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 			SaveList.SelectedItem = saves.FirstOrDefault(save => save.FolderPath.Equals(selectedPath, StringComparison.OrdinalIgnoreCase));
 		EmptyState.Visibility = saves.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
 		DeleteButton.IsEnabled = SaveList.SelectedItem != null && !_isReadingSave;
-		ReviewModsButton.IsEnabled = SaveList.SelectedItems.Count == 1 && !_isReadingSave && !_isImporting;
+		UpdateReviewButton();
 		UpdateCampaignBulkToggleButton();
         if (IsLoaded) StartSaveChecks();
 	}
 
-    private void ExportSavesMenu_Click(object sender, RoutedEventArgs e)
+    private void SaveList_ContextMenuOpening(object sender, ContextMenuEventArgs e)
     {
-        if (_isImporting || _isReadingSave || sender is not Button button) return;
-        var selected = SaveList.SelectedItems.OfType<ReduxSaveGameItem>().ToArray();
-        ((MenuItem)button.ContextMenu.Items[0]).IsEnabled = selected.Length > 0;
-        ((MenuItem)button.ContextMenu.Items[1]).IsEnabled = selected.Length > 0 && selected.Select(item => item.Save.CampaignName).Distinct().Count() == 1;
-        button.ContextMenu.PlacementTarget = button;
-        button.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
-        button.ContextMenu.IsOpen = true;
+        // Let WPF open the list-owned menu for mouse, Menu key, and Shift+F10.
+        // Recycled campaign rows no longer own or manually open popups.
+        e.Handled = !PrepareSaveContextMenu(e.OriginalSource as DependencyObject, e.CursorLeft < 0 && e.CursorTop < 0);
     }
 
-    private void SaveRow_Loaded(object sender, RoutedEventArgs e)
+    public bool PrepareSaveContextMenu(DependencyObject source, bool keyboardInvocation)
     {
-        if (sender is not ListBoxItem row || row.ContextMenu != null) return;
-        var menu = new ContextMenu();
-        void Add(string title, string icon, RoutedEventHandler handler)
-        {
-            var item = new MenuItem { Header = title, Icon = DivinityModManager.Controls.ReduxIcon.FromResource(icon, true) };
-            item.Click += handler;
-            menu.Items.Add(item);
-        }
-        Add("Review Mods…", "Redux.Icon.ReorderStroke", ReviewModsButton_Click);
-        Add("Export This Save…", "Redux.Icon.Save", ExportThisSave_Click);
-        Add("Show in Folder", "Redux.Icon.FolderOpen", ShowSelectedSaveFolder_Click);
-        menu.Opened += SaveRowContextMenu_Opened;
-        row.ContextMenu = menu;
-    }
-
-    private void SaveRowContextMenu_Opened(object sender, RoutedEventArgs e)
-    {
-        if (sender is not ContextMenu menu || menu.PlacementTarget is not ListBoxItem { DataContext: ReduxSaveGameItem save }) return;
-        if (_isReadingSave || _isImporting) { menu.IsOpen = false; return; }
+        if (_isReadingSave || _isImporting) return false;
+        while (source != null && source is not ListBoxItem && source != SaveList)
+            source = source is Visual || source is System.Windows.Media.Media3D.Visual3D
+                ? VisualTreeHelper.GetParent(source) : (source as FrameworkContentElement)?.Parent;
+        var save = (source as ListBoxItem)?.DataContext as ReduxSaveGameItem;
+        if (save == null && keyboardInvocation) save = SaveList.SelectedItem as ReduxSaveGameItem;
+        if (save == null || !SaveList.Items.Contains(save)) return false;
         SaveList.SelectedItem = save;
         UpdateReviewButton();
-        var review = (MenuItem)menu.Items[0];
-        review.IsEnabled = ReviewModsButton.IsEnabled;
-        review.SetResourceReference(Control.ForegroundProperty, save.HasModWarning ? "ReduxWarningBrush" : "ReduxTextPrimaryBrush");
-        ReduxMenuItemExtension.SetUseSemanticHover(review, save.HasModWarning);
-        review.SetResourceReference(ReduxMenuItemExtension.SemanticHoverBrushProperty, "ReduxWarningPillBackground");
-        review.SetResourceReference(ReduxMenuItemExtension.SemanticRailBrushProperty, "ReduxWarningBrush");
+        SaveReviewMenu.SetBinding(ReduxMenuItemExtension.UseSemanticHoverProperty,
+            new Binding(nameof(ReduxSaveGameItem.HasModWarning)) { Source = save });
+        SaveReviewMenu.SetResourceReference(ReduxMenuItemExtension.SemanticHoverBrushProperty, "ReduxWarningPillBackground");
+        SaveReviewMenu.SetResourceReference(ReduxMenuItemExtension.SemanticRailBrushProperty, "ReduxWarningBrush");
+        return true;
     }
 
     private void ExportThisSave_Click(object sender, RoutedEventArgs e)
@@ -219,9 +205,6 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
         try { ProcessHelper.TryOpenPath(selected.FolderPath, Directory.Exists); }
         catch (Exception ex) { ShowMessage(ex.Message, "Could Not Open Save Folder", MessageBoxImage.Error); }
     }
-
-    private void ExportSelectedSaves_Click(object sender, RoutedEventArgs e) =>
-        ExportSaves(SaveList.SelectedItems.OfType<ReduxSaveGameItem>().Select(item => item.Save).ToArray());
 
     private void ExportCampaignSaves_Click(object sender, RoutedEventArgs e)
     {
@@ -336,13 +319,13 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 			Cursor = null;
 			SaveList.IsEnabled = true;
 			DeleteButton.IsEnabled = SaveList.SelectedItem != null && !_isReadingSave;
-		ReviewModsButton.IsEnabled = SaveList.SelectedItems.Count == 1 && !_isReadingSave && !_isImporting;
+		UpdateReviewButton();
 		}
 	}
 
 	private async void ReviewModsButton_Click(object sender, RoutedEventArgs e)
 	{
-		if (_isImporting || _isReadingSave || _viewModel == null || SaveList.SelectedItems.Count != 1
+		if (!ReviewModsButton.IsEnabled || _isImporting || _isReadingSave || _viewModel == null || SaveList.SelectedItems.Count != 1
 			|| SaveList.SelectedItem is not ReduxSaveGameItem selected) return;
 		var profile = _viewModel.SelectedProfile;
 		var order = _viewModel.SelectedModOrder;
@@ -384,7 +367,7 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 			ReviewModsLabel.Text = "Review Mods...";
 			SaveList.IsEnabled = true;
 			DeleteButton.IsEnabled = SaveList.SelectedItem != null;
-			ReviewModsButton.IsEnabled = SaveList.SelectedItems.Count == 1;
+			UpdateReviewButton();
             StartSaveChecks();
             UpdateReviewButton();
 		}
@@ -441,9 +424,6 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 
 	private void RefreshButton_Click(object sender, RoutedEventArgs e) { if (!_isReadingSave && !_isImporting) RefreshSaves(); }
     private int _saveCheckVersion;
-    private int _buttonColorVersion;
-    private bool? _buttonWarning;
-    private bool? _buttonEnabledState;
     private async void StartSaveChecks()
     {
         var version = ++_saveCheckVersion;
@@ -495,41 +475,17 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
         SaveDetailsContent.Visibility = selected == null ? Visibility.Collapsed : Visibility.Visible;
         SaveDetailsPlaceholder.Visibility = selected == null ? Visibility.Visible : Visibility.Collapsed;
         var enabled = selected != null && (selected.CanReviewMods || selected.HasModWarning) && !_isReadingSave && !_isImporting;
-        ReviewModsButton.ApplyTemplate();
-        var chrome = ReviewModsButton.Template?.FindName("ButtonChrome", ReviewModsButton) as FrameworkElement;
-        var wasEnabled = ReviewModsButton.IsEnabled;
-        var previousOpacity = chrome?.Opacity ?? (wasEnabled ? 1 : 0.45);
-        ReviewModsButton.IsEnabled = enabled;
-        if (chrome != null && wasEnabled != enabled)
-        {
-            chrome.BeginAnimation(OpacityProperty, null);
-            if (_viewModel?.Settings?.ReduceMotion != true && !ReduxWindowBehavior.ReduceMotion)
-                chrome.BeginAnimation(OpacityProperty, new DoubleAnimation(previousOpacity, enabled ? 1 : 0.45, TimeSpan.FromMilliseconds(180)) { FillBehavior = FillBehavior.Stop });
-        }
+        var warning = selected?.HasModWarning == true;
+        ReduxActionButtonTransition.Apply(ReviewModsButton, enabled,
+            warning ? "ReduxWarningPillBackground" : "ReduxSurfaceElevatedBrush",
+            warning ? "ReduxWarningBrush" : "ReduxBorderStrongBrush",
+            warning ? "ReduxWarningBrush" : enabled ? "ReduxTextPrimaryBrush" : "ReduxTextMutedBrush",
+            _viewModel?.Settings?.ReduceMotion == true);
         ReviewModsButton.ToolTip = selected == null ? "Select a save to review its mods."
             : selected.HasModWarning ? selected.ModWarning
             : selected.CanReviewMods ? "Review this save’s recorded mods." : "No recorded mods to review.";
         SaveModWarning.Visibility = Visibility.Collapsed;
-        var warning = selected?.HasModWarning == true;
-        if (_buttonWarning == warning && _buttonEnabledState == enabled) return;
-        _buttonWarning = warning;
-        _buttonEnabledState = enabled;
-        var version = ++_buttonColorVersion;
-        foreach (var pair in new[] {
-            (Control.BackgroundProperty, warning ? "ReduxWarningPillBackground" : "ReduxSurfaceElevatedBrush"),
-            (Control.BorderBrushProperty, warning ? "ReduxWarningBrush" : "ReduxBorderStrongBrush"),
-            (Control.ForegroundProperty, warning ? "ReduxWarningBrush" : enabled ? "ReduxTextPrimaryBrush" : "ReduxTextMutedBrush") })
-        {
-            var old = ReviewModsButton.GetValue(pair.Item1) as SolidColorBrush;
-            var target = TryFindResource(pair.Item2) as SolidColorBrush;
-            if (old == null || target == null || _viewModel?.Settings?.ReduceMotion == true || ReduxWindowBehavior.ReduceMotion)
-            { ReviewModsButton.SetResourceReference(pair.Item1, pair.Item2); continue; }
-            var brush = new SolidColorBrush(old.Color);
-            ReviewModsButton.SetValue(pair.Item1, brush);
-            var animation = new ColorAnimation(old.Color, target.Color, TimeSpan.FromMilliseconds(180));
-            animation.Completed += (_, _) => { if (version == _buttonColorVersion) ReviewModsButton.SetResourceReference(pair.Item1, pair.Item2); };
-            brush.BeginAnimation(SolidColorBrush.ColorProperty, animation);
-        }
+
     }
 
     private void CampaignHeader_Click(object sender, RoutedEventArgs e)

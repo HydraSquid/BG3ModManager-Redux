@@ -394,6 +394,15 @@ public sealed class InteractionBehaviorTests
 			RegressionAssert.False(window.ApplyChanges);
 
 			saveContinue.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            RegressionAssert.Equal(Visibility.Visible, ((FrameworkElement)window.FindName("OrganizePage")).Visibility);
+            RegressionAssert.False(window.AddStarterSeparators);
+            RegressionAssert.Equal(9, window.SelectedStarterSeparators.Count);
+            ((CheckBox)window.FindName("StarterSeparatorsCheckBox")).IsChecked = true;
+            var starter = (System.Windows.Controls.Primitives.UniformGrid)window.FindName("StarterSeparatorsPreview");
+            ((CheckBox)starter.Children[0]).IsChecked = false;
+            RegressionAssert.Equal(8, window.SelectedStarterSeparators.Count);
+            RegressionAssert.True(window.AddStarterSeparators);
+            saveContinue.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 			RegressionAssert.Equal(Visibility.Visible, ((FrameworkElement)window.FindName("ManagersPage")).Visibility);
 			var tour = (Button)window.FindName("TourActionButton");
 			tour.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -715,7 +724,7 @@ public sealed class InteractionBehaviorTests
 				((SolidColorBrush)installAllButton.Foreground).Color,
 				((SolidColorBrush)installAllIcon.Foreground).Color);
 			RegressionAssert.Equal(
-				((SolidColorBrush)nexusDownloads.FindResource("ReduxWarningBrush")).Color,
+				((SolidColorBrush)nexusDownloads.FindResource("ReduxErrorBrush")).Color,
 				((SolidColorBrush)clearArchivesButton.Foreground).Color);
 			RegressionAssert.Equal(
 				((SolidColorBrush)clearArchivesButton.Foreground).Color,

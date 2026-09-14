@@ -357,13 +357,14 @@ public sealed class NxmDownloadManager : INxmDownloadManager
 		{
 			if (_shuttingDown || !_networkEnabled) throw new InvalidOperationException("Nexus downloads are currently disabled.");
 			item = Find(itemId);
-			if (item == null || !item.CanDownloadAgain) return;
+			if (item == null || (!item.CanDownloadAgain && (item.State != NxmDownloadState.Installed || item.ErrorCode == "rollback-failed"))) return;
 			var candidate = PersistentCopy(item);
 			// Never overwrite or remove the archive from the previous attempt.
 			AssignPaths(candidate);
 			candidate.BytesReceived = 0;
 			candidate.ETag = String.Empty;
 			candidate.LastModified = null;
+			candidate.InstalledAt = null;
 			candidate.ArchiveSha256 = String.Empty;
 			candidate.RetryCount = 0;
 			candidate.RetryAfter = null;

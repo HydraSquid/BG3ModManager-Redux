@@ -39,10 +39,10 @@ The Unreleased changelog is reserved for work after 16.4.
 
 Inactive ordering and separators (#111), Script Extender export preference persistence (#119),
 and NXM reassociation recovery (#120) shipped in 16.4 and their issues are closed. Shared window
-refinement (#113) remains open for live scaling/accessibility verification. Collections (#108)
-remain partial because direct collection NXM activation is not implemented.
+refinement (#113) and collection importing (#108) are also closed for the accepted 16.4 scope.
+Direct collection NXM activation is not implemented; it remains a possible separate enhancement.
 The broader UI pass still benefits from live checks with custom themes and enlarged text. Issue
-#95 remains unresolved pending reporter diagnostics. Native ownership and protected backups remain
+#95 is closed as resolved for now at the maintainer’s request; reopen if a current-build report recurs. Native ownership and protected backups remain
 local to each Redux installation; changing to another folder does not migrate those records.
 
 See [the next-update audit](NEXT_UPDATE_AUDIT.md) for issue status and remaining release checks.

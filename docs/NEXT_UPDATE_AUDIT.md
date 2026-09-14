@@ -17,19 +17,19 @@ a real save with missing/inactive mods, activation and Undo, and a corrupt save.
 | Issue | Assessment | Next action |
 |:--|:--|:--|
 | [#111](https://github.com/circleainn/BG3ModManager-Redux/issues/111) Inactive organization | Closed: shipped in 16.4 with persistence, separators, and Undo/Redo coverage. | Global Redux-only ordering; Advisor remains active-only. |
-| [#113](https://github.com/circleainn/BG3ModManager-Redux/issues/113) Window consistency | Substantial work complete; broad scope remains partial. | Finish the manual workflow/theme/keyboard matrix below. |
+| [#113](https://github.com/circleainn/BG3ModManager-Redux/issues/113) Window consistency | Closed: the shipped 16.4 refinement pass is complete at the maintainer’s request. | Track specific future scaling/accessibility defects separately. |
 | [#119](https://github.com/circleainn/BG3ModManager-Redux/issues/119) Extender settings | Closed: default-export preference persistence is fixed in 16.4. | Omitted EnableAchievements=true means the normal enabled default, not disabled achievements; explicit default export is optional. |
 | [#120](https://github.com/circleainn/BG3ModManager-Redux/issues/120) NXM reassociation | Closed: explicit takeover recovers from stale Redux ownership markers in 16.4. | Automatic repair cannot replace another handler without explicit reassociation. |
-| [#95](https://github.com/circleainn/BG3ModManager-Redux/issues/95) Elevation warning | Unresolved; current issue has no new reporter diagnostics. | Obtain same-process elevation evidence/logs; do not claim fixed. |
+| [#95](https://github.com/circleainn/BG3ModManager-Redux/issues/95) Elevation warning | Closed as resolved for now at the maintainer’s request. | Reopen with current-build diagnostics if it recurs. |
 | [#98](https://github.com/circleainn/BG3ModManager-Redux/issues/98) Nexus SSO | Planned; official application registration is a prerequisite in the issue. | Confirm registration before scheduling implementation. |
 | [#109](https://github.com/circleainn/BG3ModManager-Redux/issues/109) Overrides per order | Planned; requires safe file moves and recovery. | Separate feature work with opt-in migration and transaction tests. |
 | [#110](https://github.com/circleainn/BG3ModManager-Redux/issues/110) Wine | Planned; platform reports need reproducible environments. | Collect/test real Wine prefixes, SE detection, and NXM routing. |
-| [#108](https://github.com/circleainn/BG3ModManager-Redux/issues/108) Collections | Open, partial: web-link importer and download workflow shipped in 16.4. | Direct collection NXM activation from the original request remains. Historical revisions and installer rules are unsupported. |
-| [#118](https://github.com/circleainn/BG3ModManager-Redux/issues/118) Compact interface | Later experiment. | Prototype separately after stabilization. |
+| [#108](https://github.com/circleainn/BG3ModManager-Redux/issues/108) Collections | Closed: the 16.4 importer fulfills the accepted release scope. | Direct collection NXM activation, historical revisions, and installer rules remain possible follow-ups. |
+| [#118](https://github.com/circleainn/BG3ModManager-Redux/issues/118) Compact interface | Closed as not planned for now. | No compact redesign is scheduled. |
 | [#63](https://github.com/circleainn/BG3ModManager-Redux/issues/63) Docking | Planned, substantial workspace change. | Separate design/implementation; reuse manager state. |
 | [#56](https://github.com/circleainn/BG3ModManager-Redux/issues/56) Localization/accessibility | Planned foundation; current layout work is only partial coverage. | Separate resource/localization work and assistive-technology testing. |
 
-Issues #111, #119, and #120 were closed with release-audit explanations appended to their original reports. Issues #108 and #113 remain partial. No issue was reopened: no new regression evidence justified reopening, and #97 signing remains explicitly deferred (not completed). Other planned issues and #95 awaiting diagnostics retain their existing state.
+Issues #108, #111, #113, #119, and #120 are closed for the accepted 16.4 scope. The maintainer also closed #95 as resolved for now and #118 as not planned. Original reports are preserved with current-disposition notes. No issue was reopened; #97 signing remains explicitly deferred (not completed). Open planned work is #56, #63, #98, #109, and #110.
 
 ## Live verification follow-ups
 

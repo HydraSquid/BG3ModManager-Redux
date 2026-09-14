@@ -1205,12 +1205,6 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 
 	private void AddVisualDividerStateActions(ItemsControl parent, bool activeList, object tag = null)
 	{
-		if (!activeList)
-		{
-			var restore = new MenuItem { Header = "Show Saved Inactive Order", Tag = tag, Icon = ReduxIcon.FromResource("Redux.Icon.ReorderStroke", true) };
-			restore.Click += RestoreInactiveOrderButton_Click;
-			parent.Items.Add(restore);
-		}
 		var collapseAll = new MenuItem
 		{
 			Header = "Collapse All Separators",
@@ -1384,9 +1378,6 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			? InactiveModsListView.SelectedIndex + 1 : InactiveModsListView.Items.Count;
 		ShowAddVisualDividerDialog(false, position);
 	}
-
-	private void RestoreInactiveOrderButton_Click(object sender, RoutedEventArgs e) =>
-		Sort("#", ListSortDirection.Ascending, InactiveModsListView);
 
 	private void AddActiveSeparatorButton_Click(object sender, RoutedEventArgs e) =>
 		ShowAddActiveSeparatorDialog();
@@ -3607,7 +3598,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			switch (columnName)
 			{
 				case "#":
-					candidateWidth = MeasureColumnText(listView, mod.Index.ToString(CultureInfo.CurrentCulture)) + 20;
+					candidateWidth = MeasureColumnText(listView, (listView == InactiveModsListView ? mod.InactiveIndex : mod.Index).ToString(CultureInfo.CurrentCulture)) + 20;
 					break;
 				case "Name":
 					candidateWidth = MeasureColumnText(listView, mod.DisplayTitle) + 28 + GetModNameAdornmentWidth(mod);
@@ -3817,7 +3808,10 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		CaptureModListColumnWidths();
 		foreach (var gridView in GetModListGridViews())
 		{
-			foreach (var columnName in OptionalModListColumns)
+			SetGridViewColumnVisibility(gridView, "#",
+                ReferenceEquals(gridView, InactiveModsListView.View)
+                    ? ViewModel.Settings.ShowInactiveModIndex : ViewModel.Settings.ShowActiveModIndex);
+            foreach (var columnName in OptionalModListColumns)
 			{
 				SetGridViewColumnVisibility(gridView, columnName, IsModListColumnVisible(columnName));
 			}
@@ -3826,7 +3820,9 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 
 	private void ResetModListColumnsToDefaults()
 	{
-		CaptureModListColumnWidths();
+		ViewModel.Settings.ShowActiveModIndex = true;
+        ViewModel.Settings.ShowInactiveModIndex = false;
+        CaptureModListColumnWidths();
 
 		foreach (var columnName in OptionalModListColumns)
 		{
@@ -3913,33 +3909,59 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		});
 		menu.Items.Add(new Separator());
 
-		if (ReferenceEquals(listView, ActiveModsListView))
-		{
-			menu.Items.Add(CreateFixedColumnMenuItem("#  (load order — always shown)"));
-		}
-		menu.Items.Add(CreateFixedColumnMenuItem("Name  (always shown)"));
-
-		foreach (var columnName in OptionalModListColumns)
-		{
-			if (columnName == "Source" && !ViewModel.Modules.SourceIntegrationsEnabled)
-			{
-				continue;
-			}
-
-			var item = new MenuItem
-			{
-				Header = columnName,
-				IsCheckable = true,
-				IsChecked = IsModListColumnVisible(columnName)
-			};
-			item.Click += (_, _) =>
-			{
-				SetModListColumnSetting(columnName, item.IsChecked);
-				ApplyModListColumnVisibility();
-				ViewModel.QueueSave();
-			};
-			menu.Items.Add(item);
-		}
+        var inactivePane = ReferenceEquals(listView, InactiveModsListView);
+        var availableColumns = new[] { "#", "Name" }.Concat(OptionalModListColumns).ToArray();
+        // Visible columns mirror this pane left-to-right. Hidden columns follow so
+        // they remain available without interrupting the visible sequence.
+        var orderedColumns = (listView.View is GridView currentView
+                ? currentView.Columns.Select(GetColumnName)
+                : Enumerable.Empty<string>())
+            .Concat(availableColumns)
+            .Where(name => availableColumns.Contains(name))
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+        foreach (var columnName in orderedColumns)
+        {
+            if (columnName == "Source" && !ViewModel.Modules.SourceIntegrationsEnabled) continue;
+            if (columnName == "Name")
+            {
+                menu.Items.Add(new MenuItem { Header = "Name  (always shown)", IsCheckable = true, IsChecked = true, IsEnabled = false });
+                continue;
+            }
+            var item = new MenuItem
+            {
+                Header = columnName,
+                IsCheckable = true,
+                IsChecked = columnName == "#"
+                    ? (inactivePane ? ViewModel.Settings.ShowInactiveModIndex : ViewModel.Settings.ShowActiveModIndex)
+                    : IsModListColumnVisible(columnName)
+            };
+            var iconKey = columnName switch
+            {
+                "#" => "Redux.Icon.ReorderStroke",
+                "Category" => "Redux.Icon.ListStroke",
+                "Author" => "Redux.Icon.Information",
+                "Last Updated" or "Last Modified" => "Redux.Icon.CalendarDays",
+                "Source" => "Redux.Icon.LinkStroke",
+                "File Name" => "Redux.Icon.FolderOpen",
+                _ => "Redux.Icon.Information"
+            };
+            void RefreshColumnIcon() => item.Icon = item.IsChecked ? null : ReduxIcon.FromResource(iconKey, true);
+            RefreshColumnIcon();
+            item.Checked += (_, _) => RefreshColumnIcon();
+            item.Unchecked += (_, _) => RefreshColumnIcon();
+            item.Click += (_, _) =>
+            {
+                if (columnName == "#")
+                {
+                    if (inactivePane) ViewModel.Settings.ShowInactiveModIndex = item.IsChecked;
+                    else ViewModel.Settings.ShowActiveModIndex = item.IsChecked;
+                }
+                else SetModListColumnSetting(columnName, item.IsChecked);
+                ApplyModListColumnVisibility();
+                ViewModel.QueueSave();
+            };
+            menu.Items.Add(item);
+        }
 
 		menu.Items.Add(new Separator());
 		var autoSizeItem = new MenuItem
@@ -4047,6 +4069,13 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			}
 		}
 	}
+
+    private void ClearModListSort_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button) return;
+        Sort("#", ListSortDirection.Ascending,
+            button.Tag as string == "Active" ? ActiveModsListView : InactiveModsListView);
+    }
 
 	public void Sort(string sortBy, ListSortDirection direction, object sender)
 	{
@@ -4171,7 +4200,8 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			if (targetWidth > 0)
 			{
 				InactiveModsListView.Resizing = true;
-				gridView.Columns[0].Width = targetWidth;
+				var nameColumn = gridView.Columns.FirstOrDefault(column => GetColumnName(column) == "Name");
+				if (nameColumn != null) nameColumn.Width = targetWidth;
 			}
 		}
 	}

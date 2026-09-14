@@ -1213,6 +1213,8 @@ public static class ReduxWindowBehavior
 	/// are reference-counted so nested or simultaneous secondary windows cannot
 	/// restore the owner prematurely.
 	/// </summary>
+	public static bool HasActiveChild(Window owner) => owner != null && OwnerBackdropStates.TryGetValue(owner, out var state) && state.LeaseCount > 0;
+
 	public static void ApplyOwnerBackdrop(Window child, Window owner)
 	{
 		if (child == null || owner?.Content is not UIElement ownerContent)

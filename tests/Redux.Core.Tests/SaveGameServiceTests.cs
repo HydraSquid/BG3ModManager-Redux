@@ -198,6 +198,81 @@ public sealed class SaveGameServiceTests
 		});
 	}
 
+    public void SaveExportRoundTripPreservesFilesAndCancellationPreservesBackup()
+    {
+        WithTemporaryDirectory(root =>
+        {
+            var story = Path.Combine(root, "Story");
+            var folder = Path.Combine(story, "Tav__QuickSave_1");
+            Directory.CreateDirectory(folder);
+            File.WriteAllText(Path.Combine(folder, "QuickSave_1.lsv"), "save content");
+            File.WriteAllText(Path.Combine(folder, "QuickSave_1.webp"), "thumbnail");
+            var saves = Bg3SaveGameService.Discover(story);
+            var output = Path.Combine(root, "backup.zip");
+            SaveArchiveExportService.ExportAsync(saves, output).GetAwaiter().GetResult();
+            var backupBytes = File.ReadAllBytes(output);
+            var restored = Path.Combine(root, "Restored");
+            Bg3SaveGameService.Import(output, restored, false);
+            RegressionAssert.Equal("save content", File.ReadAllText(Path.Combine(restored, "Tav__QuickSave_1", "QuickSave_1.lsv")));
+            RegressionAssert.Equal("thumbnail", File.ReadAllText(Path.Combine(restored, "Tav__QuickSave_1", "QuickSave_1.webp")));
+            using var cancel = new System.Threading.CancellationTokenSource();
+            RegressionAssert.Throws<OperationCanceledException>(() =>
+                SaveArchiveExportService.ExportAsync(saves, output, new CancelExportProgress(cancel), cancel.Token).GetAwaiter().GetResult());
+            RegressionAssert.SequenceEqual(backupBytes, File.ReadAllBytes(output));
+            RegressionAssert.Equal("save content", File.ReadAllText(Path.Combine(folder, "QuickSave_1.lsv")));
+            RegressionAssert.False(Directory.EnumerateFiles(root, ".redux-save-export-*").Any());
+            RegressionAssert.Throws<IOException>(() =>
+                SaveArchiveExportService.ExportAsync(saves, Path.Combine(folder, "bad.zip")).GetAwaiter().GetResult());
+            for (var index = 0; index < 32; index++)
+            {
+                var extra = Path.Combine(story, "Tav__Save_" + index);
+                Directory.CreateDirectory(extra);
+                File.WriteAllText(Path.Combine(extra, "Save.lsv"), "save");
+            }
+            RegressionAssert.Throws<IOException>(() =>
+                SaveArchiveExportService.ExportAsync(Bg3SaveGameService.Discover(story), output).GetAwaiter().GetResult());
+            RegressionAssert.SequenceEqual(backupBytes, File.ReadAllBytes(output));
+        });
+    }
+
+    public void SaveDetailsReadEmbeddedNameAndVersionAndTolerateInvalidMetadata()
+    {
+        WithTemporaryDirectory(root =>
+        {
+            var folder = Path.Combine(root, "Tav__Fallback_Name");
+            Directory.CreateDirectory(folder);
+            var path = Path.Combine(folder, "Save.lsv");
+            void Write(string json)
+            {
+                var build = new LSLib.LS.PackageBuildData();
+                build.Files.Add(new LSLib.LS.PackageBuildInputFile { Path = "SaveInfo.json", Body = System.Text.Encoding.UTF8.GetBytes(json) });
+                using var writer = LSLib.LS.PackageWriterFactory.Create(build, path);
+                writer.Write();
+            }
+            Write("""{"Save Name":"At the grove","Game Version":"4.1.1.123","Current Level":"WLD_Main_A","Active Party":{"Characters":[{"Origin":"Gale","Race":"Human","Level":5,"Subregion":"Grove","Classes":[{"Main":"Wizard","Sub":"Evocation"}]},null,{"Level":"bad"}]},"Difficulty":["DifficultyHard"]}""");
+            var save = Bg3SaveGameService.Discover(root).Single();
+            RegressionAssert.Equal("At the grove", save.DisplayName);
+            RegressionAssert.Equal("4.1.1.123", save.GameVersion);
+            RegressionAssert.Equal("WLD_Main_A", save.Location);
+            RegressionAssert.Equal(2, save.Party.Count);
+            RegressionAssert.Equal("Gale", save.Party[0].DisplayName);
+            RegressionAssert.Equal("Level 5 · Human · Wizard (Evocation)", save.Party[0].Details);
+            RegressionAssert.Equal("Party member", save.Party[1].DisplayName);
+            RegressionAssert.Equal(Bg3SaveDifficulty.Tactician, save.Difficulty);
+            Write("[]");
+            save = Bg3SaveGameService.Discover(root).Single();
+            RegressionAssert.Equal("Fallback Name", save.DisplayName);
+            RegressionAssert.Equal("", save.GameVersion);
+            RegressionAssert.Equal(0, save.Party.Count);
+            RegressionAssert.Equal("", save.Location);
+        });
+    }
+
+    private sealed class CancelExportProgress(System.Threading.CancellationTokenSource source) : IProgress<SaveExportProgress>
+    {
+        public void Report(SaveExportProgress value) => source.Cancel();
+    }
+
 	private static void WriteEntry(ZipArchive archive, string name, string contents)
 	{
 		var entry = archive.CreateEntry(name);

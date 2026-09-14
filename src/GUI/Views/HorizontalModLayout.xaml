@@ -53,7 +53,7 @@
 				<Setter Property="FontWeight" Value="{DynamicResource Redux.FontWeight.Title}" />
 				<Setter Property="VerticalAlignment" Value="Center" />
 			</Style>
-			<Style x:Key="ModCategoryFilterNoticeButtonStyle" TargetType="{x:Type Button}">
+			<Style x:Key="ModViewNoticeButtonStyle" TargetType="{x:Type Button}">
 				<Setter Property="Padding" Value="0" />
 				<Setter Property="HorizontalAlignment" Value="Left" />
 				<Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -63,8 +63,6 @@
 				<Setter Property="Cursor" Value="Hand" />
 				<Setter Property="FontSize" Value="{DynamicResource Redux.FontSize.11}" />
 				<Setter Property="Foreground" Value="{DynamicResource ReduxAccentBrush}" />
-				<Setter Property="ToolTip" Value="Clear the category filter and show all mods" />
-				<Setter Property="AutomationProperties.Name" Value="Clear category filter" />
 				<Setter Property="Template">
 					<Setter.Value>
 						<ControlTemplate TargetType="{x:Type Button}">
@@ -74,6 +72,11 @@
 						</ControlTemplate>
 					</Setter.Value>
 				</Setter>
+                <Style.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter Property="Opacity" Value="0.78"/></Trigger></Style.Triggers>
+            </Style>
+            <Style x:Key="ModCategoryFilterNoticeButtonStyle" BasedOn="{StaticResource ModViewNoticeButtonStyle}" TargetType="{x:Type Button}">
+                <Setter Property="ToolTip" Value="Clear the category filter and show all mods" />
+                <Setter Property="AutomationProperties.Name" Value="Clear category filter" />
 				<Style.Triggers>
 					<!-- An empty selection can briefly occur while profiles/categories refresh.
 					     Do not expose an incomplete notice or fall back to WPF's black text. -->
@@ -140,83 +143,7 @@
 				only on hover, mirroring ReduxChromeToggleStyle so the + controls and the chevron
 				toggles beside them share one interaction language.
 			-->
-			<Style x:Key="ModPaneHeaderActionButtonStyle" TargetType="{x:Type Button}">
-				<Setter Property="Width" Value="26" />
-				<Setter Property="Height" Value="26" />
-				<Setter Property="Margin" Value="2,0" />
-				<Setter Property="Background" Value="{DynamicResource ReduxAccentSoftBrush}" />
-				<Setter Property="BorderBrush" Value="Transparent" />
-				<Setter Property="BorderThickness" Value="0" />
-				<Setter Property="Cursor" Value="Hand" />
-				<Setter Property="FocusVisualStyle" Value="{x:Null}" />
-				<Setter Property="Foreground" Value="{DynamicResource ReduxTextSecondaryBrush}" />
-				<Setter Property="Template">
-					<Setter.Value>
-						<ControlTemplate TargetType="{x:Type Button}">
-							<Border x:Name="ButtonChrome"
-								Background="Transparent"
-								CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
-								util:ReduxWindowBehavior.HoverLift="1"
-								RenderTransformOrigin="0.5,0.5">
-								<Border.RenderTransform>
-									<TranslateTransform Y="0" />
-								</Border.RenderTransform>
-								<Grid>
-									<Border x:Name="HoverSurface"
-										Width="24"
-										Height="24"
-										HorizontalAlignment="Center"
-										VerticalAlignment="Center"
-										Background="{TemplateBinding Background}"
-										CornerRadius="{DynamicResource Redux.CornerRadius.Pill}"
-										IsHitTestVisible="False"
-										Opacity="0" />
-									<ContentPresenter HorizontalAlignment="Center"
-										VerticalAlignment="Center"
-										TextElement.Foreground="{TemplateBinding Foreground}" />
-								</Grid>
-							</Border>
-							<ControlTemplate.Triggers>
-								<Trigger Property="IsMouseOver" Value="True">
-									<Setter Property="Foreground" Value="{DynamicResource ReduxAccentHoverBrush}" />
-									<Trigger.EnterActions>
-										<BeginStoryboard>
-											<Storyboard>
-												<DoubleAnimation Storyboard.TargetName="HoverSurface"
-													Storyboard.TargetProperty="Opacity"
-													To="1"
-													Duration="{StaticResource Redux.Motion.Fast}"
-													EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
-											</Storyboard>
-										</BeginStoryboard>
-									</Trigger.EnterActions>
-									<Trigger.ExitActions>
-										<BeginStoryboard>
-											<Storyboard>
-												<DoubleAnimation Storyboard.TargetName="HoverSurface"
-													Storyboard.TargetProperty="Opacity"
-													To="0"
-													Duration="{StaticResource Redux.Motion.Standard}" />
-											</Storyboard>
-										</BeginStoryboard>
-									</Trigger.ExitActions>
-								</Trigger>
-								<!--
-									Press feedback stays a plain setter. An animation on HoverSurface would
-									outrank the hover storyboard and could leave the control stuck in its
-									accent state after the pointer leaves.
-								-->
-								<Trigger Property="IsPressed" Value="True">
-									<Setter Property="Opacity" Value="0.85" />
-								</Trigger>
-								<Trigger Property="IsEnabled" Value="False">
-									<Setter Property="Opacity" Value="0.35" />
-								</Trigger>
-							</ControlTemplate.Triggers>
-						</ControlTemplate>
-					</Setter.Value>
-				</Setter>
-			</Style>
+			<Style x:Key="ModPaneHeaderActionButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource ReduxPaneHeaderActionButtonStyle}" />
 			<!-- Pane-resize handles mirror the rounded insertion rail without adding permanent chrome. -->
 			<Style x:Key="ReduxVerticalSplitterStyle" TargetType="{x:Type GridSplitter}">
 				<Setter Property="Background" Value="Transparent" />
@@ -1847,15 +1774,13 @@
 				</Grid.ColumnDefinitions>
 				<TextBlock Style="{StaticResource ModSectionTitle}" Text="Active Mods" />
 				<DockPanel Grid.Column="1" Margin="12,0,8,0" LastChildFill="True">
-					<TextBlock Margin="0,0,12,0"
-						VerticalAlignment="Center"
-						AutomationProperties.HelpText="The active list is sorted by metadata. Click the number-sign column to restore load-order editing."
-						FontSize="{DynamicResource Redux.FontSize.11}"
-						Foreground="{DynamicResource ReduxWarningBrush}"
-						Text="Sorted view — click # to return to load-order view"
-						TextTrimming="CharacterEllipsis"
-						ToolTip="The active list is sorted by metadata, so visible rows no longer match load-order positions. Click the # column to restore load-order editing and drag-and-drop."
-						Visibility="{Binding IsActiveListMetadataSorted, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}" />
+					<Button Margin="0,0,12,0" Tag="Active" Click="ClearModListSort_Click"
+                        Style="{StaticResource ModViewNoticeButtonStyle}"
+                        ToolTip="Clear sorting and return to your arrangement"
+                        AutomationProperties.Name="Clear active mod sorting"
+                        Visibility="{Binding IsActiveListMetadataSorted, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}">
+                        <TextBlock Text="Sorted view · Clear" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                    </Button>
 					<Button Command="{Binding ClearModCategoryFilterCommand}"
 						Content="{Binding}"
 						ContentTemplate="{StaticResource ModCategoryFilterNoticeContentTemplate}"
@@ -2101,12 +2026,21 @@
 				</Grid.ColumnDefinitions>
 				<TextBlock Grid.Column="1" Margin="8,0,8,0" Style="{StaticResource ModSectionTitle}" Text="Inactive Mods" Visibility="{Binding IsInactiveModsExpanded, Converter={StaticResource BoolToVisibilityConverter}}"/>
 <Button Grid.Column="5" x:Name="AddInactiveSeparatorButton" Style="{StaticResource ModPaneHeaderActionButtonStyle}" Click="AddInactiveSeparatorButton_Click" ToolTip="Add a separator after the selected inactive mod" AutomationProperties.Name="Add inactive separator" Visibility="{Binding IsInactiveModsExpanded, Converter={StaticResource BoolToVisibilityConverter}}"><c:ReduxIcon Width="14" Height="14" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeData="{StaticResource Redux.Icon.AddStroke}"/></Button>
-				<Button Grid.Column="2"
-					Margin="12,0,8,0"
+                <DockPanel Grid.Column="2" Margin="12,0,8,0" LastChildFill="True">
+                    <Button Margin="0,0,12,0" Tag="Inactive" Click="ClearModListSort_Click"
+                        Style="{StaticResource ModViewNoticeButtonStyle}"
+                        ToolTip="Clear sorting and return to your arrangement"
+                        AutomationProperties.Name="Clear inactive mod sorting"
+                        Visibility="{Binding IsInactiveListMetadataSorted, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}">
+                        <TextBlock Text="Sorted view · Clear" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                    </Button>
+				<Button
+					Margin="0"
 					Command="{Binding ClearModCategoryFilterCommand}"
 					Content="{Binding}"
 					ContentTemplate="{StaticResource ModCategoryFilterNoticeContentTemplate}"
 					Style="{StaticResource ModCategoryFilterNoticeButtonStyle}" />
+                </DockPanel>
 			<c:UnfocusableTextBox x:Name="InactiveModsFilterTextBox"
 					Grid.Column="6"
 					Height="28"

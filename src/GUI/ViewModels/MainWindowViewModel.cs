@@ -8304,7 +8304,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		VisualDividerSectionPolicy.AssignMembersPreservingCollapsedSections(
 			sequence, Settings.VisualModListDividers, activeList);
 		RefreshVisualDividers();
-		HasUnsavedLoadOrderChanges = true;
+		if (activeList) HasUnsavedLoadOrderChanges = true;
 		QueueSave();
 		RecordLoadOrderEdit(historyBefore);
 	}
@@ -8321,7 +8321,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		divider.HideLine = hideLine;
 		divider.Description = description?.Trim() ?? "";
 		RefreshVisualDividers();
-		HasUnsavedLoadOrderChanges = true;
+		if (divider.IsActiveList) HasUnsavedLoadOrderChanges = true;
 		QueueSave();
 		RecordLoadOrderEdit(historyBefore);
 	}
@@ -8345,7 +8345,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		VisualDividerSectionPolicy.AssignMembersPreservingCollapsedSections(
 			sequence, Settings.VisualModListDividers, divider.IsActiveList);
 		RefreshVisualDividers();
-		HasUnsavedLoadOrderChanges = true;
+		if (divider.IsActiveList) HasUnsavedLoadOrderChanges = true;
 		QueueSave();
 		RecordLoadOrderEdit(historyBefore);
 	}
@@ -8904,17 +8904,14 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		return true;
 	}
 
-	private List<string> _savedInactiveOrder;
 	private void CaptureVisualDividerBaseline()
 	{
 		_savedVisualDividerBaseline = CloneVisualDividers(Settings.VisualModListDividers);
-		_savedInactiveOrder = InactiveModOrderPolicy.Capture(InactiveMods, Settings.InactiveModOrder);
 	}
 
 	private void EnsureVisualDividerBaseline()
 	{
 		_savedVisualDividerBaseline ??= CloneVisualDividers(Settings.VisualModListDividers);
-		_savedInactiveOrder ??= InactiveModOrderPolicy.Capture(InactiveMods, Settings.InactiveModOrder);
 	}
 
 	public void DiscardUnsavedLoadOrderPresentationChanges()
@@ -8923,14 +8920,15 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		_deferSave = null;
 		if (_savedVisualDividerBaseline != null)
 		{
-			Settings.VisualModListDividers = CloneVisualDividers(_savedVisualDividerBaseline);
-			Settings.InactiveModOrder = (_savedInactiveOrder ?? []).ToList();
-			ObservableCollectionSynchronizer.Synchronize(InactiveMods,
-				InactiveModOrderPolicy.Restore(InactiveMods, Settings.InactiveModOrder), ReferenceEquals);
+            // Inactive organization is autosaved independently of the active load order.
+            Settings.VisualModListDividers = CloneVisualDividers(
+                _savedVisualDividerBaseline.Where(divider => divider.IsActiveList)
+                    .Concat(Settings.VisualModListDividers.Where(divider => !divider.IsActiveList)));
 			RefreshVisualDividers();
 		}
 		HasUnsavedLoadOrderChanges = false;
 		ClearLoadOrderEditHistory();
+		QueueSave();
 	}
 
 	public void ApplyVisualModListDrop(IEnumerable<DivinityModData> draggedItems, bool destinationActive, int insertIndex)
@@ -9047,9 +9045,29 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		finally { _updatingVisualModLists = false; }
 		RefreshVisualDividers();
 		ScheduleModHealthRefresh();
-		HasUnsavedLoadOrderChanges = true;
+		if (sourceActive || destinationActive) HasUnsavedLoadOrderChanges = true;
 		QueueSave();
 		RecordLoadOrderEdit(historyBefore);
+	}
+
+	public IReadOnlyList<SaveModRequirement> ReviewSaveMods(IEnumerable<DivinityLoadOrderEntry> required) =>
+		SaveModReviewService.Review(required, UserMods.Concat(Mods).Concat(ForceLoadedMods).Distinct(),
+			ActiveMods.Select(m => m.UUID), InactiveMods.Select(m => m.UUID));
+
+	public int ActivateReviewedSaveMods(IReadOnlyList<DivinityLoadOrderEntry> recorded,
+		IReadOnlyList<SaveModRequirement> reviewed, IEnumerable<string> selected)
+	{
+		if (IsRefreshing || IsLoadingOrder || MainProgressIsActive)
+			throw new InvalidOperationException("Wait for the current operation to finish, then review the save again.");
+		var current = ReviewSaveMods(recorded);
+		if (!current.SequenceEqual(reviewed))
+			throw new InvalidOperationException("Installed mods changed since this review. Review the save again.");
+		var ids = SaveModReviewService.SelectedActivationIds(current, selected);
+		var modsToActivate = ids.Select(id => InactiveMods.Single(m => Guid.TryParse(m.UUID, out var uuid) && uuid == Guid.Parse(id))).ToArray();
+		if (modsToActivate.Any(m => !File.Exists(m.FilePath)))
+			throw new InvalidOperationException("An installed mod file is no longer available. Refresh your mods and review again.");
+		MoveModsBetweenLists(modsToActivate, true);
+		return modsToActivate.Length;
 	}
 
 	public void MoveModsBetweenLists(IEnumerable<DivinityModData> mods, bool moveToActive)
@@ -9116,6 +9134,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 	private void RefreshVisualDividers(bool? activeListOnly, bool preferBulkReset = false)
 	{
+		for (var index = 0; index < InactiveMods.Count; index++)
+			InactiveMods[index].InactiveIndex = index;
 		if (_updatingVisualModLists) return;
 		_refreshVisualDividersTask?.Dispose();
 		_refreshVisualDividersTask = null;

@@ -221,7 +221,11 @@
     "startingequipmentpassivesfix": "5470bce5-0ad7-4e05-287f-2d6fa3e9eb04",
     "mazzledocs": "ad95bd1c-1a80-45fb-b73b-9eea1f8e58d0",
     "tavshairpack": "da0b99ca-4406-49c1-bef9-3a08621280a2",
-    "scantilyseparator": "3224cf9e-ac53-445a-9c8f-fc117668337a"
+    "scantilyseparator": "3224cf9e-ac53-445a-9c8f-fc117668337a",
+    "modconfigurationmenumcm": "755a8a72-407f-4f0d-9a33-274ac0f0b53d",
+    "baldursgate3communitylibrary": "396c5966-09b0-40a1-af3f-93a5e9ce71c0",
+    "fadesequipmentdistributionfed": "3baef2b9-80d3-777b-a256-394f7f7be0d8",
+    "goonslibrarypassivesfunctionsspellsandmore": "07fbc2f1-f359-4b9d-b243-fe28bd783e4c"
   },
   "dependencySubstitutes": {
     "3779a4fb-0c2c-404a-beee-879d97eb9e87": [
@@ -240,9 +244,9 @@
     "exactArchiveFingerprints": 967,
     "reviewedModuleIdentities": 170,
     "communityModuleIdentities": 1349,
-    "loadOrderEntries": 10623,
+    "loadOrderEntries": 10626,
     "orderingGroups": 30,
-    "dependencyNameAliases": 5,
+    "dependencyNameAliases": 9,
     "dependencySubstitutes": 3,
     "modioProjects": 1761,
     "communityModioIdentities": 1798
@@ -368957,22 +368961,6 @@
       }
     },
     {
-      "uuid": "3cceef9f-768b-4e9d-8501-2fee08af8fa2",
-      "name": "+Dialogue Edits",
-      "divider": 89.5,
-      "group": "Miscellaneous",
-      "dependencies": [],
-      "loadAfter": [],
-      "loadsAfterDependents": false,
-      "evidence": {
-        "basis": "external-category",
-        "installs": 1,
-        "workingInstalls": 0,
-        "brokenInstalls": 1,
-        "sortedInstalls": 0
-      }
-    },
-    {
       "uuid": "6c2f0712-af8e-480c-bd7b-7f217bb1abf7",
       "name": "☉ The Emperor's New Attire",
       "divider": 37,
@@ -375374,6 +375362,98 @@
         "workingInstalls": 1,
         "brokenInstalls": 0,
         "sortedInstalls": 1
+      }
+    },
+    {
+      "uuid": "a491600e-7294-4902-97aa-1bddd1f949be",
+      "name": "AbsoluteRolls",
+      "alternateNames": [],
+      "folder": "",
+      "author": "",
+      "group": "Gameplay",
+      "dependencies": [],
+      "loadAfter": [],
+      "loadsAfterDependents": false,
+      "usesScriptExtender": false,
+      "featureFlags": [],
+      "oftenAbsent": false,
+      "version": "",
+      "lastSeenGameBuild": "",
+      "evidence": {
+        "basis": "external-category",
+        "installs": 2,
+        "workingInstalls": 2,
+        "brokenInstalls": 0,
+        "sortedInstalls": 1
+      }
+    },
+    {
+      "uuid": "51123100-e399-41d9-b281-e9aa822622ff",
+      "name": "AbsoluteWrath_kr",
+      "alternateNames": [],
+      "folder": "",
+      "author": "",
+      "group": "Gameplay",
+      "dependencies": [],
+      "loadAfter": [],
+      "loadsAfterDependents": false,
+      "usesScriptExtender": false,
+      "featureFlags": [],
+      "oftenAbsent": false,
+      "version": "",
+      "lastSeenGameBuild": "",
+      "evidence": {
+        "basis": "external-category",
+        "installs": 2,
+        "workingInstalls": 2,
+        "brokenInstalls": 0,
+        "sortedInstalls": 1
+      }
+    },
+    {
+      "uuid": "b8b49e71-7b38-4e14-85bc-c047298abfed",
+      "name": "Waiting With Style — AIMRYAX Loading Screens [Companions Edition]",
+      "alternateNames": [],
+      "folder": "",
+      "author": "Aetherpoint | AIMRYAX",
+      "group": "User Interface",
+      "dependencies": [],
+      "loadAfter": [],
+      "loadsAfterDependents": false,
+      "usesScriptExtender": false,
+      "featureFlags": [],
+      "oftenAbsent": false,
+      "version": "",
+      "lastSeenGameBuild": "",
+      "evidence": {
+        "basis": "curated",
+        "installs": 2,
+        "workingInstalls": 2,
+        "brokenInstalls": 0,
+        "sortedInstalls": 0
+      }
+    },
+    {
+      "uuid": "368dc49c-018b-4374-90b8-90e2d92223d7",
+      "name": "Yet Another UI",
+      "alternateNames": [],
+      "folder": "",
+      "author": "Saigofu",
+      "group": "User Interface",
+      "dependencies": [],
+      "loadAfter": [],
+      "loadsAfterDependents": false,
+      "usesScriptExtender": false,
+      "featureFlags": [],
+      "oftenAbsent": false,
+      "version": "",
+      "lastSeenGameBuild": "",
+      "evidence": {
+        "basis": "section",
+        "installs": 2,
+        "workingInstalls": 2,
+        "brokenInstalls": 0,
+        "sortedInstalls": 0
       }
     }
   ],

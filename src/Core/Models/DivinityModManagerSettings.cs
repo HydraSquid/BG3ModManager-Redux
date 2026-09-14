@@ -59,7 +59,10 @@ public enum ReduxTextSize
 [DataContract]
 public class DivinityModManagerSettings : ReactiveObject
 {
-	[DataMember, Reactive] public string LastSeenWhatsNewVersion { get; set; } = String.Empty;
+	[DefaultValue(true), DataMember, Reactive] public bool ShowActiveModIndex { get; set; } = true;
+    [DataMember, Reactive] public bool ShowInactiveModIndex { get; set; } = false;
+
+    [DataMember, Reactive] public string LastSeenWhatsNewVersion { get; set; } = String.Empty;
 	[DefaultValue(true)]
 	[SettingsEntry("Show What's New after updates", "Open release notes after Redux updates. Turn this off to skip future popups.")]
 	[DataMember, Reactive] public bool ShowWhatsNewAfterUpdates { get; set; } = true;

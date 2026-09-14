@@ -58,6 +58,7 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 	public ReduxGameDirectoryModManagerWindow()
 	{
 		InitializeComponent();
+		ReduxExternalDropFeedback.Attach(this, paths => paths.Length == 1, "Drop to install a root mod", "Redux.Icon.GameController", "Redux will review the archive before installing.");
 		ReduxWindowBehavior.AttachDialogTransitions(this, 40);
 		ReduxWindowBehavior.AttachRoundedCorners(this);
 	}
@@ -224,6 +225,9 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 			: definition?.Requirements ?? (entry.Status == ReduxGameDirectoryModStatus.RecoveryRequired
 				? "Redux found an interrupted game-directory operation that needs attention."
 				: "Native files detected in the game directory.");
+        summary = (string)new DivinityModManager.Converters.NexusDescriptionToPlainTextConverter()
+            .Convert(summary, typeof(string), "", System.Globalization.CultureInfo.CurrentCulture);
+        summary = String.Join(" ", summary.Split((char[])null, StringSplitOptions.RemoveEmptyEntries));
 		var kind = definition?.Kind switch
 		{
 			ReduxGameDirectoryModKind.NativeLoader => "Native loader",
@@ -242,12 +246,9 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 			String.IsNullOrWhiteSpace(displayVersion) ? null : $"v{displayVersion}",
 			metadata?.UpdatedAt is DateTime updated ? $"Updated {updated:g}" : null
 		}.Where(value => !String.IsNullOrWhiteSpace(value)));
-		var files = entry.Files.Count == 0 ? "No installed-file details are available"
-			: String.Join(" · ", new[]
-			{
-				String.IsNullOrWhiteSpace(entry.ArchiveName) ? null : entry.ArchiveName,
-				String.Join(", ", entry.Files.Select(path => Path.GetFileName(path)))
-			}.Where(value => !String.IsNullOrWhiteSpace(value)));
+        var files = entry.Files.Count == 0 ? "No installed files recorded"
+            : "Files: " + String.Join(", ", entry.Files.Select(path => Path.GetFileName(path)));
+
 		return new ReduxGameDirectoryModListItem(entry, files, sourceUrl, summary, details,
 			metadata?.PreviewImageUrl ?? String.Empty)
 		{
@@ -298,6 +299,7 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 			CheckFileExists = true
 		};
 		if (dialog.ShowDialog(this) != true) return;
+		await System.Windows.Threading.Dispatcher.Yield(System.Windows.Threading.DispatcherPriority.Background);
 		if (await ReviewAndInstallAsync(this, _viewModel, dialog.FileName)) RefreshList();
 	}
 
@@ -453,9 +455,11 @@ public partial class ReduxGameDirectoryModManagerWindow : AdonisUI.Controls.Adon
 
 	private async void Window_Drop(object sender, DragEventArgs e)
 	{
+		if (ReduxWindowBehavior.HasActiveChild(this)) { e.Effects = DragDropEffects.None; e.Handled = true; return; }
 		if (!e.Data.GetDataPresent(DataFormats.FileDrop)
 			|| e.Data.GetData(DataFormats.FileDrop) is not string[] { Length: 1 } paths) return;
 		e.Handled = true;
+		await System.Windows.Threading.Dispatcher.Yield(System.Windows.Threading.DispatcherPriority.Background);
 		if (await ReviewAndInstallAsync(this, _viewModel, paths[0])) RefreshList();
 	}
 

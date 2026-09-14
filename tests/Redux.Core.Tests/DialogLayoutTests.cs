@@ -18,6 +18,12 @@ public sealed class DialogLayoutTests
 	{
 		foreach (var theme in new[] { ReduxThemeType.ReduxDark, ReduxThemeType.ReduxLight, ReduxThemeType.Parchment })
 		{
+			var review = new ReduxSaveModReviewWindow(null!, "A long campaign name — latest save", [
+				new("11111111-1111-1111-1111-111111111111", "Installed required mod", DivinityModManager.AppServices.SaveModStatus.Inactive),
+				new("22222222-2222-2222-2222-222222222222", "A missing required mod", DivinityModManager.AppServices.SaveModStatus.Missing)], new DivinityModManagerSettings());
+			VerifyLayout(review, theme, 780, 560, "save-mod-review-normal", "ApplyButton");
+			VerifyLayout(review, theme, 640, 480, "save-mod-review", "ApplyButton");
+			review.Close();
 			var manager = new ReduxGameDirectoryModManagerWindow();
 			((ListBox)manager.FindName("InstalledList")).ItemsSource = new[] {
 				new { Name = "Native Mod Loader", StatusText = "Can't manage · this installation has no protected original backup",
@@ -43,7 +49,25 @@ public sealed class DialogLayoutTests
 	{
 		foreach (var theme in new[] { ReduxThemeType.ReduxDark, ReduxThemeType.ReduxLight, ReduxThemeType.Parchment })
 		{
-			var downloads = new ReduxNexusDownloadsWindow();
+			var saves = new ReduxSaveManagerWindow(null, null);
+            ((ListBox)saves.FindName("SaveList")).ItemsSource = new[] {
+                new ReduxSaveGameItem(new DivinityModManager.AppServices.Bg3SaveGameEntry(
+                    "", "Tav__AutoSave_12", "AutoSave 12", "Tav", "AutoSave_12.lsv", null,
+                    DateTime.UtcNow, 12345678, DivinityModManager.AppServices.Bg3SaveDifficulty.Tactician) {
+                        Location = "WLD_Main_A", GameVersion = "4.1.1.123",
+                        Party = new[] { new DivinityModManager.AppServices.Bg3SavePartyMember("Gale", 5, "Human", "Wizard (Evocation)", "Grove") }
+                    })
+            };
+            var saveList = (ListBox)saves.FindName("SaveList");
+            var grouped = new System.Windows.Data.ListCollectionView(saveList.Items.Cast<ReduxSaveGameItem>().ToArray());
+            grouped.GroupDescriptions.Add(new System.Windows.Data.PropertyGroupDescription(nameof(ReduxSaveGameItem.CampaignGroupName)));
+            saveList.ItemsSource = grouped;
+            ((FrameworkElement)saves.FindName("EmptyState")).Visibility = Visibility.Collapsed;
+            VerifyLayout(saves, theme, 760, 540, "save-rows");
+            ((ListBox)saves.FindName("SaveList")).SelectedIndex = 0;
+            VerifyLayout(saves, theme, 760, 540, "save-details-panel");
+            saves.Close();
+            var downloads = new ReduxNexusDownloadsWindow();
 			var selectionHandler = (SelectionChangedEventHandler)Delegate.CreateDelegate(typeof(SelectionChangedEventHandler), downloads,
 				typeof(ReduxNexusDownloadsWindow).GetMethod("DownloadsTabs_SelectionChanged", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!);
 			((TabControl)downloads.FindName("DownloadsTabs")).SelectionChanged -= selectionHandler;

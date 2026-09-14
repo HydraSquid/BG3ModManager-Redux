@@ -153,10 +153,10 @@
 				<Setter Property="Foreground" Value="{DynamicResource ReduxSuccessBrush}" />
 			</Style>
 			<DataTemplate x:Key="DownloadItemTemplate">
-				<Border Padding="11,9" Background="Transparent">
+				<Border Padding="{DynamicResource Redux.Manager.RowPadding}" Background="Transparent">
 					<Grid>
-						<Grid.ColumnDefinitions><ColumnDefinition Width="96" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-						<Border Width="96" Height="54" VerticalAlignment="Center" Background="{DynamicResource ReduxSurfaceMutedBrush}"
+						<Grid.ColumnDefinitions><ColumnDefinition Width="128" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+						<Border Width="{DynamicResource Redux.Manager.ThumbnailWidth}" Height="{DynamicResource Redux.Manager.ThumbnailHeight}" VerticalAlignment="Center" Background="{DynamicResource ReduxSurfaceMutedBrush}"
 							BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1"
 							CornerRadius="{DynamicResource Redux.CornerRadius.Control}" ClipToBounds="True">
 							<Grid>
@@ -165,11 +165,10 @@
 								<Image Source="{Binding ThumbnailUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
 							</Grid>
 						</Border>
-						<StackPanel Grid.Column="1" Margin="11,0,0,0" VerticalAlignment="Center">
+						<StackPanel Grid.Column="1" Margin="{DynamicResource Redux.Manager.ThumbnailGap}" VerticalAlignment="Center">
 							<Grid>
 								<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-								<TextBlock FontWeight="SemiBold" FontSize="{DynamicResource Redux.FontSize.13}"
-									Foreground="{DynamicResource ReduxTextPrimaryBrush}"
+								<TextBlock Style="{StaticResource ReduxManagerRowTitleStyle}"
 									Text="{Binding ProjectName}" TextTrimming="CharacterEllipsis" />
 								<Border x:Name="StatusPill" Grid.Column="1" Margin="10,0,0,0" Padding="0"
 									VerticalAlignment="Center" Background="Transparent" BorderThickness="0">
@@ -178,14 +177,14 @@
 											VerticalAlignment="Center"
 											Foreground="{DynamicResource ReduxInfoBrush}" StrokeData="{StaticResource Redux.Icon.Download}"
 											Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
-										<TextBlock x:Name="StatusText" VerticalAlignment="Center" Foreground="{DynamicResource ReduxInfoBrush}" FontWeight="SemiBold" Text="{Binding StatusText}" />
+										<TextBlock Style="{StaticResource ReduxManagerStatusStyle}" x:Name="StatusText" VerticalAlignment="Center" Foreground="{DynamicResource ReduxInfoBrush}" Text="{Binding StatusText}" />
 									</StackPanel>
 								</Border>
 							</Grid>
 							<TextBlock Margin="0,4,0,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}"
 								Text="{Binding FileDisplayName}" TextTrimming="CharacterEllipsis" />
 							<WrapPanel Margin="0,2,0,0" VerticalAlignment="Center">
-								<TextBlock FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}"
+								<TextBlock Style="{StaticResource ReduxManagerMetadataStyle}"
 									Text="{Binding MetadataText}" TextTrimming="CharacterEllipsis"
 									Visibility="{Binding MetadataText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" />
 								<StackPanel x:Name="InstalledStatus" Margin="9,0,0,0" VerticalAlignment="Center"
@@ -193,11 +192,11 @@
 									<controls:ReduxIcon Width="9" Height="9" Margin="0,0,4,0" VerticalAlignment="Center"
 										Foreground="{DynamicResource ReduxSuccessBrush}" StrokeData="{StaticResource Redux.Icon.CircleCheck}"
 										Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
-									<TextBlock VerticalAlignment="Center" FontSize="{DynamicResource Redux.FontSize.10}"
+									<TextBlock VerticalAlignment="Center" FontSize="{DynamicResource Redux.FontSize.11}"
 										FontWeight="SemiBold" Foreground="{DynamicResource ReduxSuccessBrush}" Text="Installed" />
 								</StackPanel>
 							</WrapPanel>
-							<TextBlock Margin="0,2,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextSecondaryBrush}"
+							<TextBlock Margin="0,2,0,0" FontSize="{DynamicResource Redux.FontSize.11}" Foreground="{DynamicResource ReduxTextSecondaryBrush}"
 								Text="{Binding DownloadDetailText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding DownloadDetailText}"
 								Visibility="{Binding DownloadDetailText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" />
 							<ProgressBar x:Name="DownloadProgress" Height="4" Margin="0,7,0,0" Minimum="0" Maximum="1" Value="{Binding Progress}"
@@ -257,10 +256,10 @@
 				</DataTemplate.Triggers>
 			</DataTemplate>
 			<DataTemplate x:Key="RetainedArchiveItemTemplate">
-				<Border Padding="11,9" Background="Transparent">
+				<Border Padding="{DynamicResource Redux.Manager.RowPadding}" Background="Transparent">
 					<Grid>
-						<Grid.ColumnDefinitions><ColumnDefinition Width="96" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-						<Border Width="96" Height="54" VerticalAlignment="Center" Background="{DynamicResource ReduxSurfaceMutedBrush}"
+						<Grid.ColumnDefinitions><ColumnDefinition Width="128" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+						<Border Width="{DynamicResource Redux.Manager.ThumbnailWidth}" Height="{DynamicResource Redux.Manager.ThumbnailHeight}" VerticalAlignment="Center" Background="{DynamicResource ReduxSurfaceMutedBrush}"
 							BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1"
 							CornerRadius="{DynamicResource Redux.CornerRadius.Control}" ClipToBounds="True">
 							<Grid>
@@ -269,17 +268,16 @@
 								<Image Source="{Binding ThumbnailUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
 							</Grid>
 						</Border>
-						<StackPanel Grid.Column="1" Margin="11,0,0,0" VerticalAlignment="Center">
-							<TextBlock FontWeight="SemiBold" FontSize="{DynamicResource Redux.FontSize.13}"
-								Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+						<StackPanel Grid.Column="1" Margin="{DynamicResource Redux.Manager.ThumbnailGap}" VerticalAlignment="Center">
+							<TextBlock Style="{StaticResource ReduxManagerRowTitleStyle}" Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
 							<StackPanel Margin="0,4,0,0" Orientation="Horizontal">
 								<controls:ReduxIcon Width="11" Height="11" Margin="0,0,5,0" Foreground="{DynamicResource ReduxSuccessBrush}"
 									StrokeData="{StaticResource Redux.Icon.Archive}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
-								<TextBlock Foreground="{DynamicResource ReduxSuccessBrush}" FontWeight="SemiBold" Text="{Binding DestinationText}" />
+								<TextBlock Style="{StaticResource ReduxManagerStatusStyle}" Foreground="{DynamicResource ReduxSuccessBrush}" Text="{Binding DestinationText}" />
 							</StackPanel>
 							<TextBlock Margin="0,3,0,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}"
 								Text="{Binding OriginalFileName}" TextTrimming="CharacterEllipsis" />
-							<TextBlock Margin="0,2,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}"
+							<TextBlock Style="{StaticResource ReduxManagerMetadataStyle}" Margin="0,2,0,0"
 								Text="{Binding MetadataText}" TextTrimming="CharacterEllipsis" />
 						</StackPanel>
 						<WrapPanel Grid.Column="2" Margin="14,0,0,0" VerticalAlignment="Center">
@@ -316,18 +314,18 @@
 						<StackPanel Orientation="Horizontal"><controls:ReduxIcon VerticalAlignment="Center" x:Name="InstallAllIcon" Width="13" Height="13" Margin="0,0,6,0"
 							StrokeData="{StaticResource Redux.Icon.Download}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Install All" /></StackPanel>
 					</Button>
+					<Button Margin="{DynamicResource Redux.Manager.ActionMargin}" Click="PauseAllButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}"><StackPanel Orientation="Horizontal"><controls:ReduxIcon VerticalAlignment="Center" Width="14" Height="14" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.StopCircle}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Pause All" /></StackPanel></Button>
+					<Button Margin="{DynamicResource Redux.Manager.ActionMargin}" Click="ResumeAllButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}"><StackPanel Orientation="Horizontal"><controls:ReduxIcon VerticalAlignment="Center" Width="14" Height="14" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.RefreshStroke}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Resume All" /></StackPanel></Button>
 					<Button Margin="{DynamicResource Redux.Manager.ActionMargin}" Click="AddPackageButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
 						<StackPanel Orientation="Horizontal"><controls:ReduxIcon VerticalAlignment="Center" Width="14" Height="14" Margin="0,0,6,0"
 							Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 							StrokeData="{StaticResource Redux.Icon.Package}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Add Package..." /></StackPanel>
 					</Button>
-					<Button Margin="{DynamicResource Redux.Manager.ActionMargin}" Click="PasteLinkButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
+					<Button Margin="{DynamicResource Redux.Manager.ActionMargin}" Click="PasteLinkButton_Click" Style="{StaticResource ReduxMinorNexusActionButtonStyle}">
 						<StackPanel Orientation="Horizontal"><controls:ReduxIcon VerticalAlignment="Center" Width="14" Height="14" Margin="0,0,6,0"
 							Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 							StrokeData="{StaticResource Redux.Icon.LinkStroke}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Paste NXM Link" /></StackPanel>
 					</Button>
-					<Button Margin="{DynamicResource Redux.Manager.ActionMargin}" Click="PauseAllButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}"><StackPanel Orientation="Horizontal"><controls:ReduxIcon VerticalAlignment="Center" Width="14" Height="14" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.StopCircle}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Pause All" /></StackPanel></Button>
-					<Button Margin="{DynamicResource Redux.Manager.ActionMargin}" Click="ResumeAllButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}"><StackPanel Orientation="Horizontal"><controls:ReduxIcon VerticalAlignment="Center" Width="14" Height="14" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.RefreshStroke}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Resume All" /></StackPanel></Button>
 					<Button Margin="{DynamicResource Redux.Manager.ActionMargin}" Click="OpenFolderButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
 						<StackPanel Orientation="Horizontal"><controls:ReduxIcon VerticalAlignment="Center" Width="14" Height="14" Margin="0,0,6,0"
 							Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
@@ -346,7 +344,7 @@
 				</WrapPanel>
 				<TabControl x:Name="DownloadsTabs" Grid.Row="2" Margin="0" SelectionChanged="DownloadsTabs_SelectionChanged"
 					ItemContainerStyle="{StaticResource ReduxContentTabItemStyle}" Style="{StaticResource ReduxContentTabControlStyle}">
-					<TabItem Header="Inbox">
+					<TabItem Header="Downloads">
 						<Grid Margin="0,7,0,0">
 							<Border Background="{DynamicResource ReduxListInteriorBrush}" BorderBrush="{DynamicResource ReduxBorderBrush}"
 								BorderThickness="1" CornerRadius="{DynamicResource Redux.CornerRadius.Card}" />

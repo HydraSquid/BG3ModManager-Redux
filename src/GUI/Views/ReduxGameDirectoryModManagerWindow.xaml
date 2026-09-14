@@ -111,14 +111,19 @@
 				</Setter>
 			</Style>
 			<DataTemplate x:Key="InstalledModTemplate">
-				<Border Padding="10,8" Background="Transparent">
+				<Border Padding="{DynamicResource Redux.Manager.RowPadding}" Background="Transparent">
+                    <Border.ToolTip><StackPanel MaxWidth="460">
+                        <TextBlock Text="{Binding Summary}" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding FileSummary}" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding ManagementNote}" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                    </StackPanel></Border.ToolTip>
 					<Grid>
 						<Grid.ColumnDefinitions>
 							<ColumnDefinition Width="128" />
 							<ColumnDefinition Width="*" />
 						</Grid.ColumnDefinitions>
 						<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-						<Border Grid.RowSpan="2" Width="128" Height="72" VerticalAlignment="Center"
+						<Border Grid.RowSpan="2" Width="{DynamicResource Redux.Manager.ThumbnailWidth}" Height="{DynamicResource Redux.Manager.ThumbnailHeight}" VerticalAlignment="Center"
 							Background="{DynamicResource ReduxSurfaceMutedBrush}"
 							BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1"
 							CornerRadius="{DynamicResource Redux.CornerRadius.Control}" ClipToBounds="True">
@@ -128,29 +133,25 @@
 								<Image Source="{Binding ThumbnailUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
 							</Grid>
 						</Border>
-						<StackPanel Grid.Column="1" Margin="11,0,0,0" VerticalAlignment="Center">
+						<StackPanel Grid.Column="1" Margin="{DynamicResource Redux.Manager.ThumbnailGap}" VerticalAlignment="Center">
 							<Grid>
-								<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-								<TextBlock VerticalAlignment="Center" FontWeight="SemiBold" FontSize="{DynamicResource Redux.FontSize.12}"
-									Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-								<Border x:Name="StatusPill" Grid.Row="1" Margin="0,4,0,0" Background="Transparent" BorderThickness="0" ToolTip="{Binding ManagementNote}">
+								<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+								<TextBlock Style="{StaticResource ReduxManagerRowTitleStyle}" VerticalAlignment="Center" Text="{Binding Name}" TextWrapping="Wrap" ToolTip="{Binding Name}" />
+								<Border x:Name="StatusPill" Grid.Column="1" MaxWidth="180" VerticalAlignment="Top" Margin="12,1,0,0" Background="Transparent" BorderThickness="0" ToolTip="{Binding ManagementNote}">
 									<Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
 										<controls:ReduxIcon x:Name="StatusIcon" VerticalAlignment="Center" Width="11" Height="11" Margin="0,0,5,0"
 											Foreground="{DynamicResource ReduxSuccessBrush}" StrokeData="{StaticResource Redux.Icon.ShieldCheck}" />
-										<TextBlock x:Name="StatusText" Grid.Column="1" TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{DynamicResource ReduxSuccessBrush}"
-											FontWeight="SemiBold" Text="{Binding StatusText}" />
+										<TextBlock Style="{StaticResource ReduxManagerStatusStyle}" x:Name="StatusText" Grid.Column="1" TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{DynamicResource ReduxSuccessBrush}" Text="{Binding StatusText}" />
 									</Grid>
 								</Border>
 							</Grid>
-							<TextBlock Margin="0,3,0,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}"
-								Text="{Binding Summary}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Summary}" />
-							<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}"
-								Text="{Binding DetailsText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding DetailsText}" />
-							<TextBlock Margin="0,2,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}"
-								Text="{Binding FileSummary}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FileSummary}" />
+							
+							<TextBlock Style="{StaticResource ReduxManagerMetadataStyle}" Margin="0,3,0,0"
+								Text="{Binding DetailsText}" TextWrapping="Wrap" ToolTip="{Binding DetailsText}" />
+							
 						</StackPanel>
-						<WrapPanel Grid.Row="1" Grid.Column="1" Margin="11,8,0,0">
-							<Button Margin="0,0,6,4" Padding="9,5" Style="{StaticResource ReduxSourceButtonStyle}"
+						<WrapPanel Grid.Row="1" Grid.Column="1" Margin="13,6,0,0">
+							<Button Margin="0,0,6,0" Padding="8,4" MinHeight="30" FontSize="{DynamicResource Redux.FontSize.12}" Style="{StaticResource ReduxSourceButtonStyle}"
 								AutomationProperties.Name="Open mod source" Click="SourceButton_Click" IsEnabled="{Binding HasSource}">
 								<StackPanel Orientation="Horizontal">
 									<controls:ReduxIcon VerticalAlignment="Center" Width="13" Height="13" Margin="0,0,6,0"
@@ -159,7 +160,7 @@
 									<TextBlock Text="Source" />
 								</StackPanel>
 							</Button>
-							<Button Margin="0,0,6,4" Padding="9,5" Style="{StaticResource ReduxMinorSuccessActionButtonStyle}"
+							<Button Margin="0,0,6,0" Padding="8,4" MinHeight="30" FontSize="{DynamicResource Redux.FontSize.12}" Style="{StaticResource ReduxMinorSuccessActionButtonStyle}"
 								ToolTip="{Binding ManagementNote}" AutomationProperties.Name="Manage this mod with Redux" Click="AdoptButton_Click" Visibility="{Binding CanAdopt, Converter={StaticResource BoolToVisibilityConverter}}">
 								<StackPanel Orientation="Horizontal">
 									<controls:ReduxIcon VerticalAlignment="Center" Width="13" Height="13" Margin="0,0,6,0"
@@ -168,8 +169,8 @@
 							<TextBlock Text="Manage" />
 								</StackPanel>
 							</Button>
-							<Button Margin="0,0,6,4" Padding="9,5" Style="{StaticResource ReduxDeleteButtonStyle}"
-								AutomationProperties.Name="Delete this game-directory mod" Click="DeleteButton_Click" IsEnabled="{Binding CanRestore}">
+							<Button Margin="0,0,6,0" Padding="8,4" MinHeight="30" FontSize="{DynamicResource Redux.FontSize.12}" Style="{StaticResource ReduxDeleteButtonStyle}"
+								AutomationProperties.Name="Delete this game-directory mod" Click="DeleteButton_Click" IsEnabled="{Binding CanRestore}" Visibility="{Binding CanRestore, Converter={StaticResource BoolToVisibilityConverter}}">
 								<StackPanel Orientation="Horizontal">
 									<controls:ReduxIcon VerticalAlignment="Center" Width="13" Height="13" Margin="0,0,6,0"
 										Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"

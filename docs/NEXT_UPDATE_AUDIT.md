@@ -3,7 +3,16 @@
 Audited September 13, 2026 against the open GitHub issues and current dev implementation.
 This is a development checkpoint, not a release announcement. Public version remains alpha.16.3.5.
 
+Save Manager now exports selected saves or a selected campaign to ZIP, including thumbnails,
+with progress and cancellation. Export retains the import limits: 32 saves, 1 GB total and
+256 MB per file; larger campaigns require smaller selections. Round-trip and cancellation
+regressions pass; real campaign export/restore and cancellation still need a live check.
+
 ## Open issues
+
+Save Mod Review has UUID matching and activation regression coverage. Before release, verify
+a real save with missing/inactive mods, activation and Undo, and a corrupt save.
+
 
 | Issue | Assessment | Next action |
 |:--|:--|:--|
@@ -46,3 +55,14 @@ Finish qualification and address concrete failures rather than adding unrelated 
 If a further headline feature is desired, Nexus SSO fits the new onboarding best, once registration
 is available. Override management is another meaningful feature but carries greater file-safety scope.
 Docking, a second UI redesign, Collections, and Linux support should not be bundled just to enlarge this release.
+
+## Data review checkpoint
+
+Removed one invalid ordering record and added four exact library-name aliases plus four
+corroborated UUID category records. Remaining 137 dependency differences, ten new UUID records,
+name-only additions, and placement/category changes require further evidence review. No new
+ordering constraints or provider identity assignments were accepted in this pass.
+
+Save Mod Review package fixtures now cover populated, empty, absent metadata, missing UUID, and
+corrupt saves, including input-file preservation and legacy empty-import behavior. A real gameplay
+save and live activation/Undo check remain required before release.

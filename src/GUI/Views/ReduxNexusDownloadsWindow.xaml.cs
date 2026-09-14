@@ -18,6 +18,7 @@ public partial class ReduxNexusDownloadsWindow : AdonisUI.Controls.AdonisWindow
 	public ReduxNexusDownloadsWindow()
 	{
 		InitializeComponent();
+		ReduxExternalDropFeedback.Attach(this, paths => paths.All(MainWindowViewModel.IsSupportedDownloadManagerInput), "Drop to add packages", "Redux.Icon.Package", "Review and install in Download Manager.");
 		ReduxWindowBehavior.AttachDialogTransitions(this, 40);
 		ReduxWindowBehavior.AttachRoundedCorners(this);
 	}
@@ -164,6 +165,7 @@ public partial class ReduxNexusDownloadsWindow : AdonisUI.Controls.AdonisWindow
 
 	private async void Window_PreviewDrop(object sender, DragEventArgs e)
 	{
+		if (ReduxWindowBehavior.HasActiveChild(this)) { e.Effects = DragDropEffects.None; e.Handled = true; return; }
 		if (!e.Data.GetDataPresent(DataFormats.FileDrop)
 			|| e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
 		e.Handled = true;
@@ -173,6 +175,7 @@ public partial class ReduxNexusDownloadsWindow : AdonisUI.Controls.AdonisWindow
 			_viewModel.ShowAlert("Download Manager accepts PAK, save, ZIP, 7z, RAR, TAR, and GZip package files.", AlertType.Warning, 25);
 			return;
 		}
+		await System.Windows.Threading.Dispatcher.Yield(System.Windows.Threading.DispatcherPriority.Background);
 		await _viewModel.AddLocalPackagesToDownloadManagerAsync(supported);
 	}
 

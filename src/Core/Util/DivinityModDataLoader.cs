@@ -1587,7 +1587,7 @@ public static partial class DivinityModDataLoader
 		return null;
 	}
 
-	public static DivinityLoadOrder GetLoadOrderFromSave(string file, string ordersFolder = "")
+	public static DivinityLoadOrder GetLoadOrderFromSave(string file, string ordersFolder = "", bool includeEmpty = false)
 	{
 		try
 		{
@@ -1614,8 +1614,8 @@ public static partial class DivinityModDataLoader
 
 				if (modListChildrenRoot != null)
 				{
-					var modList = modListChildrenRoot.Children.Values.FirstOrDefault();
-					if (modList != null && modList.Count > 0)
+					var modList = modListChildrenRoot.Children.Values.FirstOrDefault() ?? new List<Node>();
+					if (modList != null || includeEmpty)
 					{
 						var fileName = Path.GetFileNameWithoutExtension(file);
 						string orderName = fileName;
@@ -1644,12 +1644,12 @@ public static partial class DivinityModDataLoader
 								name = nameAtt.AsString(_defaultNodeSettings);
 							}
 
-							if (uuid != null && !IgnoreMod(uuid))
+							if ((uuid != null && !IgnoreMod(uuid)) || (includeEmpty && uuid == null))
 							{
 								DivinityApp.Log($"Found mod in save: '{name}_{uuid}'.");
 								loadOrder.Order.Add(new DivinityLoadOrderEntry()
 								{
-									UUID = uuid,
+									UUID = uuid ?? "",
 									Name = name
 								});
 							}
@@ -1659,7 +1659,7 @@ public static partial class DivinityModDataLoader
 							}
 						}
 
-						if (loadOrder.Order.Count > 0)
+						if (loadOrder.Order.Count > 0 || includeEmpty)
 						{
 							return loadOrder;
 						}

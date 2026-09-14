@@ -492,6 +492,12 @@ public partial class MainViewControl : MainViewControlViewBase
 			packagePreflightItem.Click += InspectModPackage_Click;
 			toolsMenuItem.Items.Add(packagePreflightItem);
 
+
+		}
+
+		// Keep attribution available without dedicating a second top-level menu to it.
+		if (menuItems.TryGetValue("Help", out var helpMenuItem))
+		{
 			var contributionItem = new MenuItem
 			{
 				Header = "Generate Redux Database Contribution...",
@@ -510,12 +516,8 @@ public partial class MainViewControl : MainViewControlViewBase
 				contributionIcon.SetResourceReference(Control.ForegroundProperty, "ReduxSuccessBrush");
 			}
 			contributionItem.Click += GenerateReduxDatabaseContribution_Click;
-			toolsMenuItem.Items.Add(contributionItem);
-		}
+			helpMenuItem.Items.Add(contributionItem);
 
-		// Keep attribution available without dedicating a second top-level menu to it.
-		if (menuItems.TryGetValue("Help", out var helpMenuItem))
-		{
 			TopMenuBar.Items.Remove(QuickLinksMenuItem);
 			QuickLinksMenuItem.Header = "Links & Folders";
 			QuickLinksMenuItem.Icon = ReduxIcon.FromResource("Redux.Icon.FolderOpen", true);

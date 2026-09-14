@@ -1,4 +1,4 @@
-using DivinityModManager.AppServices;
+﻿using DivinityModManager.AppServices;
 using DivinityModManager.Converters;
 using DivinityModManager.Util;
 using DivinityModManager.ViewModels;
@@ -18,14 +18,64 @@ using System.Windows.Threading;
 
 namespace DivinityModManager.Views;
 
-public sealed record ReduxSaveGameItem(Bg3SaveGameEntry Save)
+public sealed record SavePartyDisplayItem(Bg3SavePartyMember Member)
 {
+    public string DisplayName => Member.DisplayName;
+    public string Details => Member.Details;
+    public string Subregion => Member.Subregion;
+    private string CompanionKey => Member.OriginKey is "gale" or "astarion" or "shadowheart" or "laezel" or "karlach" or "wyll" or "halsin" or "minthara" or "jaheira" or "minsc" ? Member.OriginKey : null;
+    private string RaceKey => new string((Member.Race ?? "").Where(Char.IsLetterOrDigit).ToArray()).ToLowerInvariant() switch
+    {
+        "human" => "human",
+        "elf" or "highelf" or "woodelf" => "elf",
+        "halfelf" or "highhalfelf" or "woodhalfelf" or "drowhalfelf" or "halfhighelf" or "halfwoodelf" or "halfdrow" => "halfelf",
+        "drow" or "seldarinedrow" or "lolthsworndrow" or "lolthdrow" => "drow",
+        "dwarf" or "mountaindwarf" or "shielddwarf" or "hilldwarf" or "golddwarf" => "dwarf",
+        "duergar" => "duergar",
+        "gnome" or "rockgnome" or "forestgnome" or "deepgnome" => "gnome",
+        "halfling" or "lightfoothalfling" or "stronghearthalfling" => "halfling",
+        "halforc" => "halforc",
+        "githyanki" => "githyanki",
+        "tiefling" or "asmodeustiefling" or "mephistophelestiefling" or "zarieltiefling" => "tiefling",
+        "dragonborn" or "whitedragonborn" or "blackdragonborn" or "bluedragonborn" or "brassdragonborn" or "bronzedragonborn" or "copperdragonborn" or "golddragonborn" or "greendragonborn" or "reddragonborn" or "silverdragonborn" => "dragonborn",
+        _ => null
+    };
+    public string PortraitPath => CompanionKey is string companion
+        ? $"pack://application:,,,/Redux;component/Resources/Icons/Companions/{companion}.png"
+        : RaceKey is string race ? $"pack://application:,,,/Redux;component/Resources/Icons/Companions/race-{race}.png" : null;
+    public string PortraitToolTip => CompanionKey != null ? DisplayName : RaceKey != null
+        ? $"Representative {RaceKey} portrait · not the character’s saved appearance" : "No portrait available";
+
+}
+
+public sealed class ReduxSaveGameItem(Bg3SaveGameEntry save) : System.ComponentModel.INotifyPropertyChanged
+{
+    public Bg3SaveGameEntry Save { get; } = save;
+    public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+    public string ModWarning { get; private set; } = "";
+    public bool HasModWarning => !String.IsNullOrEmpty(ModWarning);
+    public bool CanReviewMods { get; private set; }
+    public string ModSummary { get; private set; } = "Checking recorded mods…";
+    public void SetModCheck(string warning, bool canReview, string summary = null)
+    {
+        ModWarning = warning ?? "";
+        CanReviewMods = canReview;
+        ModSummary = summary ?? (HasModWarning ? ModWarning : canReview ? "Recorded mods available" : "No recorded mods");
+        PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(null));
+    }
 	public string FolderPath => Save.FolderPath;
 	public string FolderName => Save.FolderName;
 	public string DisplayName => Save.DisplayName;
 	public string CampaignName => String.IsNullOrWhiteSpace(Save.CampaignName) ? "Story save" : Save.CampaignName;
 	public string CampaignGroupName => GetCampaignDisplayName(Save.CampaignName);
 	public string ThumbnailPath => Save.ThumbnailPath;
+    public string LocationText => Save.Location == "WLD_Main_A" ? "Wilderness (Act 1)" : String.IsNullOrWhiteSpace(Save.Location) ? "Location unavailable" : Save.Location;
+    public string SaveFacts => String.Join(" · ", new[] { SaveTypeLabel, DifficultyLabel, SizeText }.Where(v => !String.IsNullOrWhiteSpace(v)));
+    public string SavedDateText => "Saved " + ModifiedText;
+    public string GameVersionText => String.IsNullOrWhiteSpace(Save.GameVersion) ? "Game version unavailable" : "Game " + Save.GameVersion;
+    public IReadOnlyList<SavePartyDisplayItem> Party => Save.Party.Select(member => new SavePartyDisplayItem(member)).ToArray();
+    public string PartyHeading => Party.Count == 0 ? "Party information unavailable" : $"Party · {Party.Count}";
+    public string DetailsText => String.IsNullOrWhiteSpace(Save.GameVersion) ? Save.FolderName : $"Game version {Save.GameVersion}\n{Save.FolderName}";
 	public Bg3SaveDifficulty Difficulty => Save.Difficulty;
 	public bool HasDifficulty => Difficulty != Bg3SaveDifficulty.Unknown;
 	public bool IsHonourMode => Difficulty == Bg3SaveDifficulty.Honour;
@@ -39,6 +89,8 @@ public sealed record ReduxSaveGameItem(Bg3SaveGameEntry Save)
 		Bg3SaveDifficulty.Custom => "Custom",
 		_ => String.Empty
 	};
+    public string SaveTypeLabel => Bg3SaveGameService.ClassifySaveKind(Save.SaveFilePath);
+    public string MetadataText => String.Join(" · ", new[] { SaveTypeLabel, DifficultyLabel, ModifiedText, SizeText }.Where(value => !String.IsNullOrWhiteSpace(value)));
 	public string ModifiedText => Save.ModifiedUtc.ToLocalTime().ToString("g");
 	public string SizeText => FormatSize(Save.SizeBytes);
 
@@ -62,6 +114,7 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 	private readonly MainWindowViewModel _viewModel;
 	private readonly string _storyFolder;
 	private bool _isImporting;
+	private bool _isReadingSave;
 	private readonly Dictionary<FrameworkElement, int> _campaignAnimationVersions = new();
 	private readonly HashSet<Expander> _restoringCampaignExpanders = new();
 	private readonly HashSet<Expander> _campaignExpanders = new();
@@ -72,6 +125,7 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 	public ReduxSaveManagerWindow(Window owner, MainWindowViewModel viewModel, IEnumerable<string> pendingImportPaths = null)
 	{
 		InitializeComponent();
+		ReduxExternalDropFeedback.Attach(this, paths => !_isImporting && !_isReadingSave && paths.All(Bg3SaveGameService.IsSupportedSaveInput), "Drop to install saves", "Redux.Icon.Save", "Save files, folders, or archives.");
 		ReduxWindowBehavior.AttachDialogTransitions(this, 40);
 		ReduxWindowBehavior.AttachRoundedCorners(this);
 		if (owner?.IsLoaded == true) Owner = owner;
@@ -84,6 +138,8 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 				ReduxThemeService.GetActiveTheme(viewModel.Settings), viewModel.Settings.UsesGeneratedGradients);
 		ProfilePathText.Text = _storyFolder ?? "No player profile is selected.";
 		RefreshSaves();
+        Loaded += (_, _) => StartSaveChecks();
+        Closed += (_, _) => _saveCheckVersion++;
 		var pendingPaths = (pendingImportPaths ?? []).Where(path => !String.IsNullOrWhiteSpace(path)).ToArray();
 		if (pendingPaths.Length > 0)
 			Loaded += async (_, _) =>
@@ -104,9 +160,105 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 		if (!String.IsNullOrWhiteSpace(selectedPath))
 			SaveList.SelectedItem = saves.FirstOrDefault(save => save.FolderPath.Equals(selectedPath, StringComparison.OrdinalIgnoreCase));
 		EmptyState.Visibility = saves.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
-		DeleteButton.IsEnabled = SaveList.SelectedItem != null;
+		DeleteButton.IsEnabled = SaveList.SelectedItem != null && !_isReadingSave;
+		ReviewModsButton.IsEnabled = SaveList.SelectedItems.Count == 1 && !_isReadingSave && !_isImporting;
 		UpdateCampaignBulkToggleButton();
+        if (IsLoaded) StartSaveChecks();
 	}
+
+    private void ExportSavesMenu_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isImporting || _isReadingSave || sender is not Button button) return;
+        var selected = SaveList.SelectedItems.OfType<ReduxSaveGameItem>().ToArray();
+        ((MenuItem)button.ContextMenu.Items[0]).IsEnabled = selected.Length > 0;
+        ((MenuItem)button.ContextMenu.Items[1]).IsEnabled = selected.Length > 0 && selected.Select(item => item.Save.CampaignName).Distinct().Count() == 1;
+        button.ContextMenu.PlacementTarget = button;
+        button.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+        button.ContextMenu.IsOpen = true;
+    }
+
+    private void SaveRow_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is not ListBoxItem row || row.ContextMenu != null) return;
+        var menu = new ContextMenu();
+        void Add(string title, string icon, RoutedEventHandler handler)
+        {
+            var item = new MenuItem { Header = title, Icon = DivinityModManager.Controls.ReduxIcon.FromResource(icon, true) };
+            item.Click += handler;
+            menu.Items.Add(item);
+        }
+        Add("Review Mods…", "Redux.Icon.ReorderStroke", ReviewModsButton_Click);
+        Add("Export This Save…", "Redux.Icon.Save", ExportThisSave_Click);
+        Add("Show in Folder", "Redux.Icon.FolderOpen", ShowSelectedSaveFolder_Click);
+        menu.Opened += SaveRowContextMenu_Opened;
+        row.ContextMenu = menu;
+    }
+
+    private void SaveRowContextMenu_Opened(object sender, RoutedEventArgs e)
+    {
+        if (sender is not ContextMenu menu || menu.PlacementTarget is not ListBoxItem { DataContext: ReduxSaveGameItem save }) return;
+        if (_isReadingSave || _isImporting) { menu.IsOpen = false; return; }
+        SaveList.SelectedItem = save;
+        UpdateReviewButton();
+        var review = (MenuItem)menu.Items[0];
+        review.IsEnabled = ReviewModsButton.IsEnabled;
+        review.SetResourceReference(Control.ForegroundProperty, save.HasModWarning ? "ReduxWarningBrush" : "ReduxTextPrimaryBrush");
+        ReduxMenuItemExtension.SetUseSemanticHover(review, save.HasModWarning);
+        review.SetResourceReference(ReduxMenuItemExtension.SemanticHoverBrushProperty, "ReduxWarningPillBackground");
+        review.SetResourceReference(ReduxMenuItemExtension.SemanticRailBrushProperty, "ReduxWarningBrush");
+    }
+
+    private void ExportThisSave_Click(object sender, RoutedEventArgs e)
+    {
+        if (SaveList.SelectedItem is ReduxSaveGameItem selected) ExportSaves(new[] { selected.Save });
+    }
+
+    private void ShowSelectedSaveFolder_Click(object sender, RoutedEventArgs e)
+    {
+        if (SaveList.SelectedItem is not ReduxSaveGameItem selected) return;
+        try { ProcessHelper.TryOpenPath(selected.FolderPath, Directory.Exists); }
+        catch (Exception ex) { ShowMessage(ex.Message, "Could Not Open Save Folder", MessageBoxImage.Error); }
+    }
+
+    private void ExportSelectedSaves_Click(object sender, RoutedEventArgs e) =>
+        ExportSaves(SaveList.SelectedItems.OfType<ReduxSaveGameItem>().Select(item => item.Save).ToArray());
+
+    private void ExportCampaignSaves_Click(object sender, RoutedEventArgs e)
+    {
+        if (SaveList.SelectedItem is not ReduxSaveGameItem selected) return;
+        try { ExportSaves(Bg3SaveGameService.Discover(_storyFolder).Where(save => save.CampaignName == selected.Save.CampaignName).ToArray()); }
+        catch (Exception ex) { DivinityApp.Log(ex.ToString()); ShowMessage(ex.Message, "Could Not Export Saves", MessageBoxImage.Error); }
+    }
+
+    private void ExportSaves(IReadOnlyList<Bg3SaveGameEntry> saves)
+    {
+        if (_isImporting || _isReadingSave || saves.Count == 0) return;
+        var chooser = new Microsoft.Win32.SaveFileDialog { Title = "Export Saves", Filter = "ZIP archive (*.zip)|*.zip", DefaultExt = ".zip", FileName = "Redux Saves", OverwritePrompt = true };
+        if (chooser.ShowDialog(this) != true) return;
+        _isReadingSave = true;
+        try
+        {
+            var progressWindow = new ReduxInstallProgressWindow(this, exportingSaves: true);
+            var progress = new Progress<SaveExportProgress>(value =>
+            {
+                if (progressWindow.IsVisible)
+                    _ = progressWindow.ReportAsync("Exporting", value.Name, Math.Min(value.Completed + 1, value.Total), value.Total);
+            });
+            progressWindow.Run(() => Task.Run(() => SaveArchiveExportService.ExportAsync(saves, chooser.FileName, progress, progressWindow.CancellationToken)));
+            _viewModel?.ShowAlert($"Exported {saves.Count} {(saves.Count == 1 ? "save" : "saves")}.", AlertType.Success, 8);
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex) { DivinityApp.Log(ex.ToString()); ShowMessage(ex.Message, "Could Not Export Saves", MessageBoxImage.Error); }
+        finally { _isReadingSave = false; }
+    }
+
+    private void InstallSaveButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isImporting || _isReadingSave || sender is not Button button) return;
+        button.ContextMenu.PlacementTarget = button;
+        button.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+        button.ContextMenu.IsOpen = true;
+    }
 
 	private async void ImportArchiveButton_Click(object sender, RoutedEventArgs e)
 	{
@@ -144,7 +296,7 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 
 	private async Task ImportPathAsync(string sourcePath)
 	{
-		if (_isImporting) return;
+		if (_isImporting || _isReadingSave) return;
 		if (String.IsNullOrWhiteSpace(_storyFolder))
 		{
 			ShowMessage("Select a BG3 player profile before installing saves.", "Save Games", MessageBoxImage.Warning);
@@ -183,13 +335,64 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 			_isImporting = false;
 			Cursor = null;
 			SaveList.IsEnabled = true;
+			DeleteButton.IsEnabled = SaveList.SelectedItem != null && !_isReadingSave;
+		ReviewModsButton.IsEnabled = SaveList.SelectedItems.Count == 1 && !_isReadingSave && !_isImporting;
+		}
+	}
+
+	private async void ReviewModsButton_Click(object sender, RoutedEventArgs e)
+	{
+		if (_isImporting || _isReadingSave || _viewModel == null || SaveList.SelectedItems.Count != 1
+			|| SaveList.SelectedItem is not ReduxSaveGameItem selected) return;
+		var profile = _viewModel.SelectedProfile;
+		var order = _viewModel.SelectedModOrder;
+		var savePath = selected.Save.SaveFilePath;
+		try
+		{
+			_isReadingSave = true;
+			ReviewModsLabel.Text = "Reading save…";
+			ReviewModsButton.IsEnabled = false;
+			DeleteButton.IsEnabled = false;
+			SaveList.IsEnabled = false;
+			var before = new FileInfo(savePath);
+			var stamp = (before.Length, before.LastWriteTimeUtc);
+			var recorded = await Task.Run(() => DivinityModDataLoader.GetLoadOrderFromSave(savePath, includeEmpty: true));
+			if (!IsLoaded) return;
+			if (recorded == null) throw new InvalidDataException("Redux could not read the mod list from this save. The save may be incomplete or unsupported.");
+			bool SaveUnchanged()
+			{
+				var now = new FileInfo(savePath);
+				return now.Exists && stamp == (now.Length, now.LastWriteTimeUtc);
+			}
+			if (!SaveUnchanged()) throw new InvalidOperationException("The save changed while it was being read. Refresh and review it again.");
+			var review = _viewModel.ReviewSaveMods(recorded.Order);
+			var dialog = new ReduxSaveModReviewWindow(this, selected.DisplayName, review, _viewModel.Settings);
+			if (dialog.ShowDialog() != true) return;
+			if (!ReferenceEquals(profile, _viewModel.SelectedProfile) || !ReferenceEquals(order, _viewModel.SelectedModOrder) || !SaveUnchanged())
+				throw new InvalidOperationException("The save or selected workspace changed. Review the save again before applying.");
+			var count = _viewModel.ActivateReviewedSaveMods(recorded.Order, review, dialog.SelectedIds);
+			_viewModel.ShowAlert($"Activated {count} recorded mod{(count == 1 ? "" : "s")}. Review your order, then save and sync when ready.", AlertType.Success, 12);
+		}
+		catch (Exception ex)
+		{
+			DivinityApp.Log($"Save mod review failed: {ex}");
+			if (IsLoaded) ShowMessage(ex.Message, "Save Mod Review", MessageBoxImage.Error);
+		}
+		finally
+		{
+			_isReadingSave = false;
+			ReviewModsLabel.Text = "Review Mods...";
+			SaveList.IsEnabled = true;
 			DeleteButton.IsEnabled = SaveList.SelectedItem != null;
+			ReviewModsButton.IsEnabled = SaveList.SelectedItems.Count == 1;
+            StartSaveChecks();
+            UpdateReviewButton();
 		}
 	}
 
 	private void DeleteButton_Click(object sender, RoutedEventArgs e)
 	{
-		if (_isImporting) return;
+		if (_isImporting || _isReadingSave) return;
 		if (SaveList.SelectedItem is not ReduxSaveGameItem selected) return;
 		var result = ReduxMessageBox.Show(this,
 			$"Move '{selected.DisplayName}' to the Recycle Bin?",
@@ -236,13 +439,127 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 		}
 	}
 
-	private void RefreshButton_Click(object sender, RoutedEventArgs e) => RefreshSaves();
-	private void SaveList_SelectionChanged(object sender, SelectionChangedEventArgs e) => DeleteButton.IsEnabled = SaveList.SelectedItem != null;
+	private void RefreshButton_Click(object sender, RoutedEventArgs e) { if (!_isReadingSave && !_isImporting) RefreshSaves(); }
+    private int _saveCheckVersion;
+    private int _buttonColorVersion;
+    private bool? _buttonWarning;
+    private bool? _buttonEnabledState;
+    private async void StartSaveChecks()
+    {
+        var version = ++_saveCheckVersion;
+        if (_viewModel == null) return;
+        var items = SaveList.Items.OfType<ReduxSaveGameItem>().ToArray();
+        foreach (var item in items)
+        {
+            if (version != _saveCheckVersion || !IsLoaded) return;
+            string warning = "";
+            string summary = null;
+            bool canReview = false;
+            try
+            {
+                var path = item.Save.SaveFilePath;
+                var before = new FileInfo(path);
+                var stamp = (before.Length, before.LastWriteTimeUtc);
+                var recorded = await Task.Run(() => DivinityModDataLoader.GetLoadOrderFromSave(path, includeEmpty: true));
+                if (version != _saveCheckVersion || !IsLoaded) return;
+                var after = new FileInfo(path);
+                if (!after.Exists || stamp != (after.Length, after.LastWriteTimeUtc)) warning = "Save changed · Refresh to check mods";
+                else if (recorded == null) warning = "Mod list unavailable";
+                else
+                {
+                    canReview = recorded.Order.Count > 0;
+                    var review = _viewModel.ReviewSaveMods(recorded.Order);
+                    var missing = review.Count(r => r.Status == SaveModStatus.Missing);
+                    var inactive = review.Count(r => r.Status == SaveModStatus.Inactive);
+                    var unresolved = review.Count(r => r.Status == SaveModStatus.Unavailable);
+                    summary = $"{review.Count} recorded · {missing} missing · {inactive} inactive";
+                    if (unresolved > 0) summary += $" · {unresolved} need attention";
+                    var parts = new List<string>();
+                    if (missing > 0) parts.Add($"{missing} missing mod{(missing == 1 ? "" : "s")}");
+                    if (inactive > 0) parts.Add($"{inactive} inactive");
+                    if (unresolved > 0) parts.Add($"{unresolved} need attention");
+                    warning = String.Join(" · ", parts);
+                }
+            }
+            catch (Exception ex) { DivinityApp.Log($"Save mod check failed: {ex}"); warning = "Could not check mods"; }
+            if (version != _saveCheckVersion || !IsLoaded) return;
+            item.SetModCheck(warning, canReview, summary);
+            UpdateReviewButton();
+        }
+    }
+
+    private void UpdateReviewButton()
+    {
+        var selected = SaveList.SelectedItems.Count == 1 ? SaveList.SelectedItem as ReduxSaveGameItem : null;
+        SaveDetailsPanel.DataContext = selected;
+        SaveDetailsContent.Visibility = selected == null ? Visibility.Collapsed : Visibility.Visible;
+        SaveDetailsPlaceholder.Visibility = selected == null ? Visibility.Visible : Visibility.Collapsed;
+        var enabled = selected != null && (selected.CanReviewMods || selected.HasModWarning) && !_isReadingSave && !_isImporting;
+        ReviewModsButton.ApplyTemplate();
+        var chrome = ReviewModsButton.Template?.FindName("ButtonChrome", ReviewModsButton) as FrameworkElement;
+        var wasEnabled = ReviewModsButton.IsEnabled;
+        var previousOpacity = chrome?.Opacity ?? (wasEnabled ? 1 : 0.45);
+        ReviewModsButton.IsEnabled = enabled;
+        if (chrome != null && wasEnabled != enabled)
+        {
+            chrome.BeginAnimation(OpacityProperty, null);
+            if (_viewModel?.Settings?.ReduceMotion != true && !ReduxWindowBehavior.ReduceMotion)
+                chrome.BeginAnimation(OpacityProperty, new DoubleAnimation(previousOpacity, enabled ? 1 : 0.45, TimeSpan.FromMilliseconds(180)) { FillBehavior = FillBehavior.Stop });
+        }
+        ReviewModsButton.ToolTip = selected == null ? "Select a save to review its mods."
+            : selected.HasModWarning ? selected.ModWarning
+            : selected.CanReviewMods ? "Review this save’s recorded mods." : "No recorded mods to review.";
+        SaveModWarning.Visibility = Visibility.Collapsed;
+        var warning = selected?.HasModWarning == true;
+        if (_buttonWarning == warning && _buttonEnabledState == enabled) return;
+        _buttonWarning = warning;
+        _buttonEnabledState = enabled;
+        var version = ++_buttonColorVersion;
+        foreach (var pair in new[] {
+            (Control.BackgroundProperty, warning ? "ReduxWarningPillBackground" : "ReduxSurfaceElevatedBrush"),
+            (Control.BorderBrushProperty, warning ? "ReduxWarningBrush" : "ReduxBorderStrongBrush"),
+            (Control.ForegroundProperty, warning ? "ReduxWarningBrush" : enabled ? "ReduxTextPrimaryBrush" : "ReduxTextMutedBrush") })
+        {
+            var old = ReviewModsButton.GetValue(pair.Item1) as SolidColorBrush;
+            var target = TryFindResource(pair.Item2) as SolidColorBrush;
+            if (old == null || target == null || _viewModel?.Settings?.ReduceMotion == true || ReduxWindowBehavior.ReduceMotion)
+            { ReviewModsButton.SetResourceReference(pair.Item1, pair.Item2); continue; }
+            var brush = new SolidColorBrush(old.Color);
+            ReviewModsButton.SetValue(pair.Item1, brush);
+            var animation = new ColorAnimation(old.Color, target.Color, TimeSpan.FromMilliseconds(180));
+            animation.Completed += (_, _) => { if (version == _buttonColorVersion) ReviewModsButton.SetResourceReference(pair.Item1, pair.Item2); };
+            brush.BeginAnimation(SolidColorBrush.ColorProperty, animation);
+        }
+    }
+
+    private void CampaignHeader_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isReadingSave || _isImporting) return;
+        if (sender is FrameworkElement { DataContext: CollectionViewGroup group })
+        {
+            var saves = group.Items.OfType<ReduxSaveGameItem>().ToArray();
+            if (SaveList.SelectedItem is not ReduxSaveGameItem selected || !saves.Contains(selected))
+                SaveList.SelectedItem = saves.FirstOrDefault();
+            UpdateReviewButton();
+        }
+    }
+
+    private void SaveList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        DeleteButton.IsEnabled = SaveList.SelectedItem != null && !_isReadingSave;
+        UpdateReviewButton();
+    }
 
 	private void CampaignExpander_Loaded(object sender, RoutedEventArgs e)
 	{
 		if (sender is not Expander expander) return;
 		_campaignExpanders.Add(expander);
+        expander.ApplyTemplate();
+        if (expander.Template.FindName("HeaderButton", expander) is System.Windows.Controls.Primitives.ToggleButton header)
+        {
+            header.Click -= CampaignHeader_Click;
+            header.Click += CampaignHeader_Click;
+        }
 		var key = GetCampaignKey(expander);
 		var collapsed = !String.IsNullOrWhiteSpace(key)
 			&& (_viewModel?.Settings?.CollapsedSaveGameCampaigns?.Contains(key, StringComparer.OrdinalIgnoreCase) ?? false);
@@ -466,11 +783,13 @@ public partial class ReduxSaveManagerWindow : AdonisUI.Controls.AdonisWindow
 
 	private async void Window_Drop(object sender, DragEventArgs e)
 	{
+		if (_isImporting || _isReadingSave || ReduxWindowBehavior.HasActiveChild(this)) { e.Effects = DragDropEffects.None; e.Handled = true; return; }
 		if (TryGetDroppedPaths(e.Data, out var paths))
 		{
 			try
 			{
-				var names = paths.SelectMany(Bg3SaveGameService.GetImportFolderNames).ToArray();
+				await System.Windows.Threading.Dispatcher.Yield(System.Windows.Threading.DispatcherPriority.Background);
+		var names = paths.SelectMany(Bg3SaveGameService.GetImportFolderNames).ToArray();
 				if (names.Length > 0 && ConfirmDroppedSaveInstall(this, names, _storyFolder))
 					foreach (var path in paths) await ImportPathAsync(path);
 			}

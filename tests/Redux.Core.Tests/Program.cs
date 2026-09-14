@@ -17,6 +17,7 @@ internal static class Program
 		_ = Application.Current ?? new Application();
 
 		var dialogLayout = new DialogLayoutTests();
+		var saveReview = new SaveModReviewTests();
 		var whatsNew = new WhatsNewTests();
 		var extenderExport = new ExtenderSettingsExportTests();
 		var releaseFlow = new ReleaseFlowTests();
@@ -74,6 +75,17 @@ internal static class Program
 		var releaseVersions = new ReleaseVersionContractTests();
 		var tests = new (string Name, Action Run)[]
 		{
+			(nameof(saveReview.MatchesSaveUUIDsWithoutNameFallbackOrMutation), saveReview.MatchesSaveUUIDsWithoutNameFallbackOrMutation),
+			(nameof(saveReview.AmbiguousAndInvalidRequirementsCannotActivate), saveReview.AmbiguousAndInvalidRequirementsCannotActivate),
+			(nameof(saveReview.ActivationKeepsSaveSequenceAndExistingActiveOrder), saveReview.ActivationKeepsSaveSequenceAndExistingActiveOrder),
+			(nameof(saveReview.ParentDropBlockSurvivesNestedDialogs), saveReview.ParentDropBlockSurvivesNestedDialogs),
+			(nameof(saveReview.SavePackageReviewDistinguishesEmptyMissingAndMalformedMetadata), saveReview.SavePackageReviewDistinguishesEmptyMissingAndMalformedMetadata),
+			(nameof(saveReview.SaveKindsRecognizeGeneratedNamesWithoutMatchingCustomTitles), saveReview.SaveKindsRecognizeGeneratedNamesWithoutMatchingCustomTitles),
+			(nameof(saveReview.EmptyReviewDoesNotOfferActivation), saveReview.EmptyReviewDoesNotOfferActivation),
+			(nameof(saveReview.SaveRowMenuUsesClickedSaveAndExistingReviewState), saveReview.SaveRowMenuUsesClickedSaveAndExistingReviewState),
+			(nameof(saveReview.CompanionPortraitsResolveAndUnknownOriginsRemainGeneric), saveReview.CompanionPortraitsResolveAndUnknownOriginsRemainGeneric),
+			(nameof(saveReview.SaveWarningsPreserveSelectionIdentity), saveReview.SaveWarningsPreserveSelectionIdentity),
+			(nameof(saveReview.DatabasePresentationKeepsRecordedIdentityAndActivationRules), saveReview.DatabasePresentationKeepsRecordedIdentityAndActivationRules),
 			(nameof(releaseVersions.ApplicationAndBinaryVersionsIdentifyTheSameAlphaRelease), releaseVersions.ApplicationAndBinaryVersionsIdentifyTheSameAlphaRelease),
 			(nameof(updateTransaction.TransactionReplacesOwnedFilesAndPreservesUserFiles), updateTransaction.TransactionReplacesOwnedFilesAndPreservesUserFiles),
 			(nameof(updateTransaction.FailedReplacementRollsBackFilesChangedEarlierInTheTransaction), updateTransaction.FailedReplacementRollsBackFilesChangedEarlierInTheTransaction),
@@ -180,6 +192,7 @@ internal static class Program
 			(nameof(health.ForceLoadedVariantsRemainInformationalAndReadOnly), health.ForceLoadedVariantsRemainInformationalAndReadOnly),
 			(nameof(health.ModioMetadataDoesNotImplyAHealthWarning), health.ModioMetadataDoesNotImplyAHealthWarning),
 			(nameof(health.InactiveMcmExplainsItsInGameLoadOrderWarning), health.InactiveMcmExplainsItsInGameLoadOrderWarning),
+			(nameof(advisorKnowledge.LibraryListingAliasesResolveOnlyInstalledModules), advisorKnowledge.LibraryListingAliasesResolveOnlyInstalledModules),
 			(nameof(advisorKnowledge.BundledKnowledgeIncludesGroupsAliasesAndSubstitutes), advisorKnowledge.BundledKnowledgeIncludesGroupsAliasesAndSubstitutes),
 			(nameof(advisorEvidence.PlacementEvidenceDoesNotClaimCompatibility), advisorEvidence.PlacementEvidenceDoesNotClaimCompatibility),
 			(nameof(dialogLayout.ModlistActionsRemainReachableWithLargeTextAndWarnings), dialogLayout.ModlistActionsRemainReachableWithLargeTextAndWarnings),
@@ -377,6 +390,8 @@ internal static class Program
 			(nameof(dismissal.RepeatedCloseWaitsForOneDismissalEvenWhenMotionChanges), dismissal.RepeatedCloseWaitsForOneDismissalEvenWhenMotionChanges),
 			(nameof(dismissal.CanceledCloseDoesNotStartExitAnimation), dismissal.CanceledCloseDoesNotStartExitAnimation),
 			(nameof(placement.SavedBoundsRemainVisibleAcrossMonitorChanges), placement.SavedBoundsRemainVisibleAcrossMonitorChanges),
+			(nameof(saveGames.SaveExportRoundTripPreservesFilesAndCancellationPreservesBackup), saveGames.SaveExportRoundTripPreservesFilesAndCancellationPreservesBackup),
+			(nameof(saveGames.SaveDetailsReadEmbeddedNameAndVersionAndTolerateInvalidMetadata), saveGames.SaveDetailsReadEmbeddedNameAndVersionAndTolerateInvalidMetadata),
 			(nameof(saveGames.CorruptSaveMetadataDoesNotAbortDiscoveryOrChangeFiles), saveGames.CorruptSaveMetadataDoesNotAbortDiscoveryOrChangeFiles),
 			(nameof(saveGames.LooseArchiveSavesKeepOnlyTheirMatchingFiles), saveGames.LooseArchiveSavesKeepOnlyTheirMatchingFiles),
 			(nameof(saveGames.RecognizesEveryAdvertisedSaveArchiveFormat), saveGames.RecognizesEveryAdvertisedSaveArchiveFormat),
@@ -530,7 +545,7 @@ internal static class Program
 			catch (Exception ex)
 			{
 				failures++;
-				Console.Error.WriteLine($"FAIL {test.Name}: {ex.Message}");
+				Console.Error.WriteLine($"FAIL {test.Name}: {ex}");
 			}
 		}
 

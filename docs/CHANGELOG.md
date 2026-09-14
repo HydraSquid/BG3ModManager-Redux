@@ -5,9 +5,45 @@ source for individual implementation details.
 
 ## Unreleased
 
+- Label generic save party members by their race, with readable spacing and no repeated race in the detail line.
+
+- Use race-based placeholder portraits for generic party members, preserving named companion portraits and identifying placeholders on hover.
+
+- Expand the save details pane with mod counts, save-row context-menu actions for review/export/folder access, save facts, and bundled companion portraits. Preserve unknown character and area identifiers rather than guessing.
+
+- Add a selected-save details panel with screenshot preview, recorded location, game version, and party origin, level, race, and classes when available.
+
+- Share manager title, metadata, status, and row-spacing styles across saves, downloads, native mods, and Save Mod Review. Enrich save-review names/authors/categories from UUID-matched Redux database records without changing activation decisions.
+
+- Check saves for missing or inactive mods in the background, with inline status warnings, semantic hover/selection, and smooth warning styling on Review Mods. Keep Review Mods muted and unavailable for saves without recorded mods.
+- Streamline game-directory mod cards and move database contributions to Help.
+
+- Match Save Manager collapse controls to the mod panes and use muted campaign counts. Show difficulty in each save’s metadata instead of campaign badges.
+
+- Use matching 128 × 72 thumbnails and consistent title/metadata sizing in Download Manager, Save Manager, and Game-Directory Mod Manager. Save rows use embedded save names when available and show the saved game version on hover.
+
 Development groundwork for the next update. No version or release has been assigned.
 
+- Add themed drop feedback to Save, Game-Directory Mod, and Download Managers. Block drops
+  into owners with open child windows, defer drop confirmations until the native drag ends,
+  and minimize owned windows together with Redux to keep confirmations reachable.
+
+- Autosave inactive ordering and separators independently of active load-order Save/Discard.
+  Use matching clickable sorted-view notices in both mod panes, like category filtering.
+  Make # visibility configurable per pane (Active on, Inactive off by default) and remove
+  the redundant context-menu reset.
+
+- Correct four library dependency-name aliases, remove an invalid ordering entry, and add four
+  corroborated UUID category records without importing new ordering constraints or provider links.
+
 ### Added
+
+- Export selected saves or a campaign to ZIP, including thumbnails, with progress and cancellation.
+  Stage exports before replacing existing backups, and reject saves that change during export.
+
+
+- Save Mod Review compares recorded mod UUIDs with installed mods. Select inactive requirements
+  to append to the active list with Undo support, without replacing or syncing the current order.
 
 - Saved ordering and separators in Inactive Mods, using the existing drag/drop and Undo/Redo
   system. Inactive organization stays in Redux; Load Order Advisor remains active-only.
@@ -21,6 +57,10 @@ Development groundwork for the next update. No version or release has been assig
   Name-only identities remain unresolved; changed dependency/ordering constraints remain deferred.
 
 ### Changed
+
+- Align save rows with Download Manager: thumbnail, title, campaign, and compact metadata.
+  Identify standard autosave/quicksave filenames, and use Nexus source styling for Paste NXM Link.
+
 
 - Unify manager headings, toolbar spacing, install/success actions, warning/destructive buttons,
   icon alignment, keyboard focus, and accessibility names. Wrap toolbars and let save rows grow
@@ -45,6 +85,10 @@ Development groundwork for the next update. No version or release has been assig
   verify tag ancestry before Nexus uploads and include all supported release-note bullets in descriptions.
 
 ### Fixed
+
+- Keep malformed save mod records visible as Needs attention instead of silently omitting them
+  from Save Mod Review. Empty saves remain distinct from unreadable metadata.
+
 
 - Remember the Script Extender export-default-values preference across restart/config reloads.
   Explicit defaults stay in JSON when enabled; omitted defaults otherwise retain their normal meaning.

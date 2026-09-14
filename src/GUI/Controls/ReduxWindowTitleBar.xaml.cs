@@ -115,6 +115,7 @@ public partial class ReduxWindowTitleBar : UserControl
 			return;
 		}
 
+		while (window.Owner != null) window = window.Owner;
 		SystemCommands.MinimizeWindow(window);
 	}
 

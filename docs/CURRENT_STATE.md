@@ -7,6 +7,11 @@ reports and proposals, and the source and tests remain authoritative for impleme
 
 Last reviewed: September 13, 2026. Public baseline: `v0.1.0-alpha.16.3.5`.
 
+Save Manager now exports selected saves or a selected campaign to ZIP, including thumbnails,
+with progress and cancellation. Export retains the import limits: 32 saves, 1 GB total and
+256 MB per file; larger campaigns require smaller selections. Round-trip and cancellation
+regressions pass; real campaign export/restore and cancellation still need a live check.
+
 ## Development status
 
 The current dev work is unreleased groundwork for the next update, not a hotfix. Preserve the
@@ -22,6 +27,11 @@ local to each Redux installation; changing to another folder does not migrate th
 See [the next-update audit](NEXT_UPDATE_AUDIT.md) for issue status and remaining release checks.
 
 ## Current release
+
+Save Mod Review reads save metadata and offers reviewed activation of installed inactive mods
+using existing ordering and Undo behavior. It does not verify versions, dependencies, or native
+mods, and never saves or syncs automatically.
+
 
 | Item | Current value |
 |:--|:--|

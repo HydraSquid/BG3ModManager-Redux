@@ -23,6 +23,7 @@ public class DivinityModData : DivinityBaseModData, ISelectable
 		.Ascending(p => !DivinityApp.IgnoredMods.Lookup(p.UUID).HasValue).ThenByAscending(p => p.Name);
 
 	[Reactive] public int Index { get; set; }
+	[Reactive] public int InactiveIndex { get; set; } = -1;
 
 	public string OutputPakName
 	{

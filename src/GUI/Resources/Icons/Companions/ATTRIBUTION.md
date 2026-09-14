@@ -1,0 +1,26 @@
+# Companion portraits
+
+BG3 character artwork copyright Larian Studios, sourced from bg3.wiki. These game assets are not covered by the Redux code license. Original source pages:
+
+- [File:Portrait Astarion.png](https://bg3.wiki/wiki/File:Portrait_Astarion.png)
+- [File:Portrait Gale.png](https://bg3.wiki/wiki/File:Portrait_Gale.png)
+- [File:Portrait Halsin.png](https://bg3.wiki/wiki/File:Portrait_Halsin.png)
+- [File:Portrait Jaheira.png](https://bg3.wiki/wiki/File:Portrait_Jaheira.png)
+- [File:Portrait Karlach.png](https://bg3.wiki/wiki/File:Portrait_Karlach.png)
+- [File:Portrait Laezel.png](https://bg3.wiki/wiki/File:Portrait_Lae%27zel.png)
+- [File:Portrait Minsc.png](https://bg3.wiki/wiki/File:Portrait_Minsc.png)
+- [File:Portrait Minthara.png](https://bg3.wiki/wiki/File:Portrait_Minthara_(263).png)
+- [File:Portrait Shadowheart.png](https://bg3.wiki/wiki/File:Portrait_Shadowheart.png)
+- [File:Portrait Wyll.png](https://bg3.wiki/wiki/File:Portrait_Wyll.png)
+- Race placeholder halfling: [Brinna Brightsong](https://bg3.wiki/wiki/File:Portrait_Brinna_Brightsong.png)
+- Race placeholder gnome: [Sir Fuzzalump](https://bg3.wiki/wiki/File:Portrait_Sir_Fuzzalump.png)
+- Race placeholder dwarf: [Eldra Luthrinn](https://bg3.wiki/wiki/File:Portrait_Eldra_Luthrinn.png)
+- Race placeholder duergar: [Kree Derryck](https://bg3.wiki/wiki/File:Portrait_Kree_Derryck.png)
+- Race placeholder human: [Maddala Deadeye](https://bg3.wiki/wiki/File:Portrait_Maddala_Deadeye.png)
+- Race placeholder halfelf: [Jacelyn](https://bg3.wiki/wiki/File:Portrait_Hireling_Jacelyn.png)
+- Race placeholder halforc: [Kerz](https://bg3.wiki/wiki/File:Portrait_Kerz.png)
+- Race placeholder githyanki: [Sina'zith](https://bg3.wiki/wiki/File:Portrait_Sina%27zith.png)
+- Race placeholder drow: [Ver'yll Wenkiir](https://bg3.wiki/wiki/File:Portrait_Ver%27yll_Wenkiir.png)
+- Race placeholder elf: [Zenith Feur'sel](https://bg3.wiki/wiki/File:Portrait_Zenith_Feur%27sel.png)
+- Race placeholder tiefling: [Danton](https://bg3.wiki/wiki/File:Portrait_Danton.png)
+- Race placeholder dragonborn: [The Dark Urge](https://bg3.wiki/wiki/File:Portrait_The_Dark_Urge.png)

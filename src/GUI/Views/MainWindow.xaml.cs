@@ -280,6 +280,7 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 
 	private void UpdateExternalInstallDrag(DragEventArgs e)
 	{
+		if (ReduxWindowBehavior.HasActiveChild(this)) { HideInstallDropOverlay(); e.Effects = DragDropEffects.None; e.Handled = true; return; }
 		if (!TryGetExternalInstallDropPaths(e, out var paths)) return;
 		_lastInstallDragOverUtc = DateTime.UtcNow;
 		var acceptsDrop = paths.All(IsSupportedExternalInstallDrop);
@@ -405,6 +406,7 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 
 	private async void MainWindow_PreviewDrop(object sender, DragEventArgs e)
 	{
+		if (ReduxWindowBehavior.HasActiveChild(this)) { e.Effects = DragDropEffects.None; e.Handled = true; return; }
 		if (!TryGetExternalInstallDropPaths(e, out var paths)) return;
 		HideInstallDropOverlay();
 		e.Handled = true;
@@ -1064,7 +1066,7 @@ public partial class MainWindow : AdonisWindow, IViewFor<MainWindowViewModel>, I
 			searchTerms: "scan preflight validate pak zip archive"),
 		new(
 			"Generate Redux Database Contribution...",
-			"Tools",
+			"Help",
 			"Create a privacy-limited contribution report from installed mods.",
 			String.Empty,
 			"database",

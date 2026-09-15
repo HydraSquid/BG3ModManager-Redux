@@ -9,20 +9,30 @@ using System.Windows;
 
 namespace DivinityModManager.Views;
 
+public sealed class NexusModUpdateRow : ReactiveObject
+{
+	public NexusModUpdateResult Result { get; }
+	[Reactive] public NexusRemoteFile SelectedRelease { get; set; }
+	public NexusModUpdateRow(NexusModUpdateResult result) => Result = result;
+}
+
 public sealed class NexusModUpdatesViewModel : ReactiveObject
 {
-	public ObservableCollection<NexusModUpdateResult> Results { get; } = new();
+	public ObservableCollection<NexusModUpdateRow> Results { get; } = new();
 	[Reactive] public bool IsChecking { get; set; }
 	[Reactive] public bool CanCheck { get; set; }
-	[Reactive] public string StatusText { get; set; } = "No network requests are made until you choose Check now.";
+	[Reactive] public bool CanEdit { get; set; } = true;
+	[Reactive] public string StatusText { get; set; } = "Check for updates reads Nexus listings only. Nothing will be downloaded, installed or reordered.";
 	[Reactive] public string Summary { get; set; }
 	public void SetResults(IEnumerable<NexusModUpdateResult> results)
 	{
 		Results.Clear();
-		foreach (var result in results) Results.Add(result);
+		foreach (var result in results) Results.Add(new(result));
 		Summary = Results.Count == 0 ? "No installed Nexus-linked mods found."
-			: $"{Results.Count} installed Nexus-linked mod(s) · {Results.Count(row => row.Status == NexusModUpdateStatus.UpdateAvailable)} replacement(s) · "
-				+ $"{Results.Count(row => row.Status == NexusModUpdateStatus.NeedsReview)} need manual review";
+			: $"{Results.Count} linked mods in {Results.Select(row => row.Result.Installed.ModId).Distinct().Count()} projects · {Results.Count(row => row.Result.Installed.HasExactFileIdentity || row.Result.Acknowledgement != null)} can compare · "
+				+ $"{Results.Count(row => !row.Result.Installed.HasExactFileIdentity && row.Result.Acknowledgement == null)} need a download reference · "
+				+ $"{Results.Count(row => row.Result.Status == NexusModUpdateStatus.UpdateAvailable)} updates · "
+				+ $"{Results.Count(row => row.Result.Acknowledgement != null)} using your references";
 	}
 }
 
@@ -34,6 +44,7 @@ public partial class NexusModUpdatesWindow : AdonisUI.Controls.AdonisWindow
 	private readonly NexusModUpdateService _service;
 	private CancellationTokenSource _cancellation;
 	private bool _closed;
+	private NexusInstalledFile[] _snapshot = Array.Empty<NexusInstalledFile>();
 
 	public NexusModUpdatesWindow()
 	{
@@ -52,10 +63,12 @@ public partial class NexusModUpdatesWindow : AdonisUI.Controls.AdonisWindow
 		_service = new NexusModUpdateService(_client, DivinityApp.GetAppDirectory("Data", "NexusUpdateChecks.json"));
 		ReduxThemeService.Apply(Resources, main.Settings.ColorTheme,
 			ReduxThemeService.GetActiveTheme(main.Settings), main.Settings.UsesGeneratedGradients);
-		ViewModel.SetResults(_service.GetCachedResults(Snapshot()));
+		_snapshot = Snapshot();
+		ViewModel.SetResults(_service.GetCachedResults(_snapshot));
 		if (_service.CacheWarning != null) ViewModel.StatusText = _service.CacheWarning;
 		_main.Settings.PropertyChanged += SettingsChanged;
 		UpdateAvailability();
+		Loaded += LoadLocalIdentities;
 	}
 
 	private NexusInstalledFile[] Snapshot() => _main.UserMods
@@ -66,6 +79,7 @@ public partial class NexusModUpdatesWindow : AdonisUI.Controls.AdonisWindow
 	{
 		ViewModel.CanCheck = _main != null && !ViewModel.IsChecking && !_main.Settings.LocalOnlyMode
 			&& !String.IsNullOrWhiteSpace(_main.Settings.NexusModsAPIKey);
+		ViewModel.CanEdit = !ViewModel.IsChecking;
 		if (_main != null && (_main.Settings.LocalOnlyMode || String.IsNullOrWhiteSpace(_main.Settings.NexusModsAPIKey)))
 			ViewModel.StatusText = "Enable online mod information and configure your Nexus API key in Preferences. Cached results remain available.";
 	}
@@ -82,6 +96,17 @@ public partial class NexusModUpdatesWindow : AdonisUI.Controls.AdonisWindow
 	private async void CheckNow_Click(object sender, RoutedEventArgs e)
 	{
 		if (!ViewModel.CanCheck || _main == null) return;
+		await RunCheckAsync(true);
+	}
+
+	private async void LoadLocalIdentities(object sender, RoutedEventArgs e)
+	{
+		Loaded -= LoadLocalIdentities;
+		if (!_closed && !ViewModel.IsChecking) await RunCheckAsync(false);
+	}
+
+	private async Task RunCheckAsync(bool requestNetwork)
+	{
 		ViewModel.IsChecking = true;
 		UpdateAvailability();
 		_cancellation = new CancellationTokenSource();
@@ -89,6 +114,26 @@ public partial class NexusModUpdatesWindow : AdonisUI.Controls.AdonisWindow
 		try
 		{
 			var snapshot = Snapshot();
+			// Rechecking/cancelling must not leave a previous scan's proof attached to changed bytes.
+			_snapshot = snapshot;
+			ViewModel.SetResults(_service.GetCachedResults(snapshot));
+			var evidence = _main.GetNexusUpdateIdentityEvidence();
+			var resolver = new NexusInstalledIdentityResolver();
+			for (var index = 0; index < snapshot.Length; index++)
+			{
+				ViewModel.StatusText = $"Identifying local downloads (no network): {index + 1}/{snapshot.Length}";
+				var installed = snapshot[index];
+				snapshot[index] = await Task.Run(() => resolver.ResolveAsync(installed, evidence, _cancellation.Token));
+			}
+			_snapshot = snapshot;
+			if (_closed) return;
+			ViewModel.SetResults(_service.GetCachedResults(snapshot));
+			if (!requestNetwork)
+			{
+				ViewModel.StatusText = _service.ReferenceWarning ?? _service.CacheWarning
+					?? "Local matching complete. Check for updates reads Nexus listings only; it does not change mods or orders.";
+				return;
+			}
 			var progress = new Progress<NexusUpdateProgress>(state =>
 			{
 				if (!_closed && ViewModel.IsChecking)
@@ -100,7 +145,7 @@ public partial class NexusModUpdatesWindow : AdonisUI.Controls.AdonisWindow
 			if (!_closed)
 			{
 				ViewModel.SetResults(run.Results);
-				ViewModel.StatusText = run.Message;
+				ViewModel.StatusText = _service.ReferenceWarning ?? run.Message;
 			}
 		}
 		catch (OperationCanceledException) { if (!_closed) ViewModel.StatusText = "Check cancelled."; }
@@ -121,8 +166,50 @@ public partial class NexusModUpdatesWindow : AdonisUI.Controls.AdonisWindow
 	private void Close_Click(object sender, RoutedEventArgs e) => Close();
 	private void OpenFiles_Click(object sender, RoutedEventArgs e)
 	{
-		if ((sender as FrameworkElement)?.Tag is NexusModUpdateResult result)
-			ProcessHelper.TryOpenUrl(result.FilesPageUrl);
+		if ((sender as FrameworkElement)?.Tag is NexusModUpdateRow row)
+			ProcessHelper.TryOpenUrl(row.Result.FilesPageUrl);
+	}
+
+	private async void SetReference_Click(object sender, RoutedEventArgs e)
+	{
+		if (!ViewModel.CanEdit || (sender as FrameworkElement)?.Tag is not NexusModUpdateRow row || _service == null) return;
+		if (row.SelectedRelease == null) { ViewModel.StatusText = "Choose the matching release first. Main files and optional patches are different downloads."; return; }
+		var current = Snapshot().FirstOrDefault(file => file.Uuid == row.Result.Installed.Uuid);
+		if (current?.ModId != row.Result.Installed.ModId || current.FilePath != row.Result.Installed.FilePath)
+		{ ViewModel.StatusText = "The mod's source or location changed. Reopen this window to refresh it."; return; }
+		ViewModel.IsChecking = true;
+		UpdateAvailability();
+		_cancellation = new();
+		try
+		{
+			await _service.SetReferenceAsync(row.Result.Installed, row.SelectedRelease.FileId, _cancellation.Token);
+			if (!_closed)
+			{
+				ViewModel.SetResults(_service.GetCachedResults(_snapshot));
+				ViewModel.StatusText = "Reference saved. Later linked replacements will appear again. Installed metadata, mods and orders are unchanged.";
+			}
+		}
+		catch (OperationCanceledException) { if (!_closed) ViewModel.StatusText = "Reference change cancelled."; }
+		catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or InvalidOperationException or Newtonsoft.Json.JsonException)
+		{ if (!_closed) ViewModel.StatusText = "Reference was not saved. The package, checked file list or reference store may have changed. Recheck and try again."; }
+		finally
+		{
+			_cancellation.Dispose(); _cancellation = null; ViewModel.IsChecking = false;
+			if (_closed) _client.Dispose(); else UpdateAvailability();
+		}
+	}
+
+	private void ResetReference_Click(object sender, RoutedEventArgs e)
+	{
+		if (!ViewModel.CanEdit || (sender as FrameworkElement)?.Tag is not NexusModUpdateRow row || _service == null) return;
+		try
+		{
+			_service.ResetReference(row.Result.Installed);
+			ViewModel.SetResults(_service.GetCachedResults(_snapshot));
+			ViewModel.StatusText = "Reference cleared. Comparison now uses the identified installed download, when available.";
+		}
+		catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or Newtonsoft.Json.JsonException)
+		{ ViewModel.StatusText = "The reference could not be cleared. Existing saved references were preserved."; }
 	}
 	private void OnClosed(object sender, EventArgs e)
 	{

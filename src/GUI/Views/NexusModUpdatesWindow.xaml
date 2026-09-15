@@ -20,9 +20,9 @@
 				<Setter Property="FontWeight" Value="SemiBold" />
 				<Setter Property="Foreground" Value="{DynamicResource ReduxTextSecondaryBrush}" />
 				<Style.Triggers>
-					<DataTrigger Binding="{Binding Status}" Value="{x:Static services:NexusModUpdateStatus.UpdateAvailable}"><Setter Property="Foreground" Value="{DynamicResource ReduxSuccessBrush}" /></DataTrigger>
-					<DataTrigger Binding="{Binding Status}" Value="{x:Static services:NexusModUpdateStatus.NeedsReview}"><Setter Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" /></DataTrigger>
-					<DataTrigger Binding="{Binding Status}" Value="{x:Static services:NexusModUpdateStatus.CheckFailed}"><Setter Property="Foreground" Value="{DynamicResource ReduxErrorBrush}" /></DataTrigger>
+					<DataTrigger Binding="{Binding Result.Status}" Value="{x:Static services:NexusModUpdateStatus.UpdateAvailable}"><Setter Property="Foreground" Value="{DynamicResource ReduxSuccessBrush}" /></DataTrigger>
+					<DataTrigger Binding="{Binding Result.Status}" Value="{x:Static services:NexusModUpdateStatus.NeedsReview}"><Setter Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" /></DataTrigger>
+					<DataTrigger Binding="{Binding Result.Status}" Value="{x:Static services:NexusModUpdateStatus.CheckFailed}"><Setter Property="Foreground" Value="{DynamicResource ReduxErrorBrush}" /></DataTrigger>
 				</Style.Triggers>
 			</Style>
 		</ResourceDictionary>
@@ -35,14 +35,14 @@
 			<StackPanel>
 				<TextBlock FontSize="{DynamicResource Redux.FontSize.20}" FontWeight="SemiBold" Text="Nexus mod updates" />
 				<TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextSecondaryBrush}"
-					Text="Manual checks only. Successful project checks are cached for 24 hours; requests are paced and failures delay retries." />
+					Text="Checks only: nothing will be downloaded, installed, activated or reordered. Nexus file lists are cached for 24 hours." />
 				<TextBlock Margin="0,5,0,0" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextMutedBrush}"
-					Text="A project version is not a file update. Confirmed updates follow Nexus's replacement history. Downloads and installation remain your choice." />
+					Text="Package metadata versions can differ from Nexus release versions. Comparisons follow file-replacement history, not version numbers. Unidentified downloads are not errors." />
 			</StackPanel>
 			<WrapPanel Grid.Row="1" Margin="0,12,0,6">
 				<Button x:Name="CheckNowButton" Margin="0,0,8,6" Style="{StaticResource ReduxMinorNexusActionButtonStyle}"
-					IsEnabled="{Binding CanCheck}" Click="CheckNow_Click" ToolTip="Check installed Nexus files whose cached check has expired">
-					<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.RefreshStroke}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Check now" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" /></StackPanel>
+					IsEnabled="{Binding CanCheck}" Click="CheckNow_Click" ToolTip="Read file listings for linked Nexus projects whose cache has expired; no downloads or installation">
+					<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="13" Height="13" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.RefreshStroke}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" /><TextBlock Text="Check for updates" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" /></StackPanel>
 				</Button>
 				<Button x:Name="CancelCheckButton" Margin="0,0,8,6" Style="{StaticResource ReduxMinorWarningActionButtonStyle}"
 					IsEnabled="{Binding IsChecking}" Click="CancelCheck_Click" Content="Cancel check" />
@@ -51,7 +51,7 @@
 				<TextBlock Text="{Binding StatusText}" TextWrapping="Wrap" />
 				<TextBlock Margin="0,4,0,0" Text="{Binding Summary}" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextMutedBrush}" />
 			</StackPanel>
-			<ListBox x:Name="ResultsList" Grid.Row="3" ItemsSource="{Binding Results}" Background="{DynamicResource ReduxListInteriorBrush}"
+			<ListBox x:Name="ResultsList" Grid.Row="3" ItemsSource="{Binding Results}" IsEnabled="{Binding CanEdit}" Background="{DynamicResource ReduxListInteriorBrush}"
 				BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1" Padding="6" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
 				ScrollViewer.VerticalScrollBarVisibility="Auto" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 				<ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="Padding" Value="0" /><Setter Property="Margin" Value="0,0,0,6" /></Style></ListBox.ItemContainerStyle>
@@ -59,15 +59,28 @@
 					<DataTemplate>
 						<Border Padding="12" Background="{DynamicResource ReduxSurfaceBrush}" CornerRadius="6">
 							<StackPanel>
-								<TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextPrimaryBrush}" />
-								<TextBlock Margin="0,4,0,0" Text="{Binding StatusLabel}" Style="{StaticResource UpdateStateStyle}" />
-								<TextBlock Margin="0,5,0,0" Text="{Binding InstalledLabel}" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextSecondaryBrush}" />
-								<TextBlock Text="{Binding CandidateLabel}" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextSecondaryBrush}"
-									Visibility="{Binding CandidateLabel, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" />
-								<TextBlock Margin="0,4,0,0" Text="{Binding Reason}" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextSecondaryBrush}" />
+								<TextBlock Text="{Binding Result.Name}" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextPrimaryBrush}" />
+								<TextBlock Margin="0,4,0,0" Text="{Binding Result.StatusLabel}" Style="{StaticResource UpdateStateStyle}" />
+								<TextBlock Margin="0,5,0,0" Text="{Binding Result.InstalledLabel}" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextSecondaryBrush}" />
+								<TextBlock Text="{Binding Result.CandidateLabel}" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextSecondaryBrush}"
+									Visibility="{Binding Result.CandidateLabel, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" />
+								<TextBlock Margin="0,4,0,0" Text="{Binding Result.Reason}" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextSecondaryBrush}" />
+								<TextBlock Margin="0,4,0,0" Text="{Binding Result.ReferenceLabel}" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextSecondaryBrush}"
+									Visibility="{Binding Result.ReferenceLabel, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" />
+								<StackPanel Margin="0,8,0,0" Visibility="{Binding Result.CanChooseReference, Converter={StaticResource BoolToVisibilityConverter}}">
+									<TextBlock x:Name="ReferencePrompt" Text="Choose your matching main/optional release (no automatic selection):" TextWrapping="Wrap" Foreground="{DynamicResource ReduxTextSecondaryBrush}" />
+									<ComboBox ItemsSource="{Binding Result.AvailableFiles}" SelectedItem="{Binding SelectedRelease, Mode=TwoWay}" DisplayMemberPath="ChoiceLabel" Margin="0,5,0,5" MaxDropDownHeight="280"
+										ScrollViewer.CanContentScroll="True" VirtualizingPanel.IsVirtualizing="True">
+										<ComboBox.ItemsPanel><ItemsPanelTemplate><VirtualizingStackPanel /></ItemsPanelTemplate></ComboBox.ItemsPanel>
+									</ComboBox>
+									<Button x:Name="SetReferenceButton" Tag="{Binding}" Click="SetReference_Click" HorizontalAlignment="Left" Content="I'm current through this release" Style="{StaticResource ReduxSecondaryActionButtonStyle}"
+										ToolTip="Save this release as your comparison reference, not installed metadata. Notify about later linked replacements; optional/unlinked uploads are not inferred." />
+								</StackPanel>
 								<WrapPanel Margin="0,8,0,0">
 									<Button Tag="{Binding}" Click="OpenFiles_Click" Style="{StaticResource ReduxMinorNexusActionButtonStyle}" Margin="0,0,10,4" Content="Open Nexus Files" />
-									<TextBlock Text="{Binding CheckedLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ReduxTextMutedBrush}" TextWrapping="Wrap" />
+									<Button x:Name="ResetReferenceButton" Tag="{Binding}" Click="ResetReference_Click" Content="Reset my reference" Style="{StaticResource ReduxSecondaryActionButtonStyle}" Margin="0,0,10,4"
+										Visibility="{Binding Result.ReferenceLabel, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" />
+									<TextBlock Text="{Binding Result.CheckedLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ReduxTextMutedBrush}" TextWrapping="Wrap" />
 								</WrapPanel>
 							</StackPanel>
 						</Border>

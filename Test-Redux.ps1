@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param()
+param([switch]$BackgroundOnly)
 
 $ErrorActionPreference = "Stop"
 $repositoryRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -8,24 +8,6 @@ $prepareLSLib = Join-Path $repositoryRoot "Prepare-LSLib.ps1"
 
 $project = Join-Path $repositoryRoot "tests\Redux.Core.Tests\Redux.Core.Tests.csproj"
 $solutionDirectory = "$repositoryRoot\"
-$offlinePackages = Join-Path $env:USERPROFILE ".nuget\packages"
-$restoreArguments = @(
-	"restore",
-	$project,
-	"--source",
-	$offlinePackages,
-	"--source",
-	"https://api.nuget.org/v3/index.json",
-	"--ignore-failed-sources",
-	"--property:Platform=x64",
-	"--property:SolutionDir=$solutionDirectory"
-)
-
-& dotnet @restoreArguments
-if ($LASTEXITCODE -ne 0)
-{
-	exit $LASTEXITCODE
-}
 
 $vswhereCandidates = @(
 	(Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio\Installer\vswhere.exe"),
@@ -51,6 +33,7 @@ if ([String]::IsNullOrWhiteSpace($installationPath))
 
 $msbuild = Join-Path $installationPath "MSBuild\Current\Bin\MSBuild.exe"
 & $msbuild $project `
+	"/restore" `
 	"/t:Build" `
 	"/p:Configuration=Debug" `
 	"/p:Platform=x64" `
@@ -63,5 +46,6 @@ if ($LASTEXITCODE -ne 0)
 }
 
 $executable = Join-Path $repositoryRoot "tests\Redux.Core.Tests\bin\x64\Debug\net8.0-windows10.0.22621.0\Redux.Core.Tests.exe"
-& $executable
+if ($BackgroundOnly) { & $executable --nexus-background-only }
+else { & $executable }
 exit $LASTEXITCODE

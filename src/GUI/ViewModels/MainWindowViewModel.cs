@@ -1708,6 +1708,18 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		return Path.GetFullPath(path).StartsWith(root, StringComparison.OrdinalIgnoreCase);
 	}
 
+	public IReadOnlyList<NexusRetainedDownload> GetNexusUpdateIdentityEvidence()
+	{
+		// Snapshot public records on the UI thread; recovery verifies all referenced bytes.
+		var downloads = (NxmDownloads ?? Enumerable.Empty<NxmDownloadItem>()).Where(item => item.SourceKind == AcquiredPackageSourceKind.NexusMods
+			&& item.ModId > 0 && item.FileId > 0 && !String.IsNullOrEmpty(item.ArchiveSha256))
+			.Select(item => new NexusRetainedDownload(item.ModId, item.FileId, GetNxmArchivePath(item), item.ArchiveSha256, item.Version));
+		var retained = (RetainedPackageArchives ?? Enumerable.Empty<RetainedPackageArchiveEntry>()).Where(entry => entry.SourceKind == AcquiredPackageSourceKind.NexusMods)
+			.Select(entry => new NexusRetainedDownload(entry.NexusModId, entry.NexusFileId,
+				_retainedPackageArchiveService?.GetPackagePath(entry.Sha256), entry.Sha256, entry.Version));
+		return downloads.Concat(retained).Distinct().ToArray();
+	}
+
 	private string GetNxmArchivePath(NxmDownloadItem item)
 	{
 		if (String.IsNullOrWhiteSpace(item.CompletedFileName) || item.CompletedFileName != Path.GetFileName(item.CompletedFileName))

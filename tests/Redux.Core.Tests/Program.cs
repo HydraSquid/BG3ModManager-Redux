@@ -10,7 +10,7 @@ namespace Redux.Core.Tests;
 internal static class Program
 {
 	[STAThread]
-	private static int Main()
+	private static int Main(string[] args)
 	{
 		// Register WPF's pack URI support before exercising GUI-owned, nonvisual
 		// services such as the portable Redux bundle reader/writer.
@@ -82,7 +82,7 @@ internal static class Program
 			(nameof(nexusModUpdates.NexusUpdateWeakProjectIdentityCannotClaimAnInstalledFile), nexusModUpdates.NexusUpdateWeakProjectIdentityCannotClaimAnInstalledFile),
 			(nameof(nexusModUpdates.NexusUpdateChecksDeduplicateProjectsAndPaceRequests), nexusModUpdates.NexusUpdateChecksDeduplicateProjectsAndPaceRequests),
 			(nameof(nexusModUpdates.NexusUpdateCacheSurvivesRestartAndReevaluatesInstalledFile), nexusModUpdates.NexusUpdateCacheSurvivesRestartAndReevaluatesInstalledFile),
-			(nameof(nexusModUpdates.NexusUpdateMissingIdentityOrDisabledProviderMakesNoRequests), nexusModUpdates.NexusUpdateMissingIdentityOrDisabledProviderMakesNoRequests),
+			(nameof(nexusModUpdates.NexusUpdateUnknownDownloadGetsFileListButDisabledProviderMakesNoRequests), nexusModUpdates.NexusUpdateUnknownDownloadGetsFileListButDisabledProviderMakesNoRequests),
 			(nameof(nexusModUpdates.NexusUpdateRateLimitStopsOtherProjectsAndSurvivesRestart), nexusModUpdates.NexusUpdateRateLimitStopsOtherProjectsAndSurvivesRestart),
 			(nameof(nexusModUpdates.NexusUpdateFailedRefreshDoesNotClaimCurrentOrEraseCheckTime), nexusModUpdates.NexusUpdateFailedRefreshDoesNotClaimCurrentOrEraseCheckTime),
 			(nameof(nexusModUpdates.NexusUpdateCancellationPersistsAttemptCooldown), nexusModUpdates.NexusUpdateCancellationPersistsAttemptCooldown),
@@ -94,6 +94,7 @@ internal static class Program
 			(nameof(nexusModUpdates.NexusFileApiHonorsRetryAfterAndDoesNotExposeErrorBody), nexusModUpdates.NexusFileApiHonorsRetryAfterAndDoesNotExposeErrorBody),
 			(nameof(nexusModUpdates.NexusFileApiRejectsMalformedAndOversizedResponses), nexusModUpdates.NexusFileApiRejectsMalformedAndOversizedResponses),
 			(nameof(nexusModUpdates.NexusUpdateWindowShowsReviewAndReplacementWithinCompactBounds), nexusModUpdates.NexusUpdateWindowShowsReviewAndReplacementWithinCompactBounds),
+			(nameof(nexusModUpdates.NexusUpdateWindowSavesAndResetsReferenceThroughActualControls), nexusModUpdates.NexusUpdateWindowSavesAndResetsReferenceThroughActualControls),
 			(nameof(nxmImporter.RegisteredModelFailureRestoresLibraryPlacementOrdersAndSourceCaches), nxmImporter.RegisteredModelFailureRestoresLibraryPlacementOrdersAndSourceCaches),
 			(nameof(nxmImporter.SameVersionImportPreservesActiveAndInactivePositionsWithoutSavingOrders), nxmImporter.SameVersionImportPreservesActiveAndInactivePositionsWithoutSavingOrders),
 			(nameof(nxmImporter.CleanupFailureDoesNotRollbackCommittedFiles), nxmImporter.CleanupFailureDoesNotRollbackCommittedFiles),
@@ -568,6 +569,41 @@ internal static class Program
 			(nameof(nxmTransfer.StalledResponseBodyTimesOutWithoutPublishing), nxmTransfer.StalledResponseBodyTimesOutWithoutPublishing)
 		};
 
+		var identity = new NexusInstalledIdentityResolverTests();
+		var references = new NexusUpdateAcknowledgementTests();
+		// These fixtures are wholly nonvisual. Include them in both default and background gates.
+		var extra = new (string Name, Action Run)[]
+		{
+			(nameof(identity.RetainedArchivePakWithDifferentNameRecoversExactNexusFile), identity.RetainedArchivePakWithDifferentNameRecoversExactNexusFile),
+			(nameof(identity.RetainedDirectPakWithVerifiedHashRecoversExactNexusFile), identity.RetainedDirectPakWithVerifiedHashRecoversExactNexusFile),
+			(nameof(identity.ArchiveHashMismatchCannotRecoverExactNexusFile), identity.ArchiveHashMismatchCannotRecoverExactNexusFile),
+			(nameof(identity.MatchingUuidAndVersionWithDifferentPakBytesCannotRecoverExactNexusFile), identity.MatchingUuidAndVersionWithDifferentPakBytesCannotRecoverExactNexusFile),
+			(nameof(identity.MultipleMatchingNexusFileIdsRemainUnresolved), identity.MultipleMatchingNexusFileIdsRemainUnresolved),
+			(nameof(identity.ChangedInstalledPakBytesReplaceStaleHashAndInvalidateIdentity), identity.ChangedInstalledPakBytesReplaceStaleHashAndInvalidateIdentity),
+			(nameof(identity.CancellationIsPropagatedBeforeAnyIdentityClaim), identity.CancellationIsPropagatedBeforeAnyIdentityClaim),
+			(nameof(identity.OversizedEntryListCannotAcceptAnEarlyMatchingPak), identity.OversizedEntryListCannotAcceptAnEarlyMatchingPak),
+			(nameof(identity.BundledFingerprintFromAnotherProjectCannotRelabelInstalledMod), identity.BundledFingerprintFromAnotherProjectCannotRelabelInstalledMod),
+			(nameof(identity.LegacyRecordedIdentityWithoutLocalProofIsPreservedAsUnverified), identity.LegacyRecordedIdentityWithoutLocalProofIsPreservedAsUnverified),
+			(nameof(identity.UnverifiedRecordedIdentityClearsStaleDownloadVersion), identity.UnverifiedRecordedIdentityClearsStaleDownloadVersion),
+			(nameof(identity.ExcessSameProjectEvidenceRemainsUnidentifiedWithoutPartialScan), identity.ExcessSameProjectEvidenceRemainsUnidentifiedWithoutPartialScan),
+			(nameof(identity.InstalledPakReadHandleRemainsHeldDuringBundledResolution), identity.InstalledPakReadHandleRemainsHeldDuringBundledResolution),
+			(nameof(references.ReferenceSurvivesRestartAndLaterSameVersionReplacementAppears), references.ReferenceSurvivesRestartAndLaterSameVersionReplacementAppears),
+			(nameof(references.UnlinkedOptionalUploadDoesNotOverrideChosenReference), references.UnlinkedOptionalUploadDoesNotOverrideChosenReference),
+			(nameof(references.UnknownInstalledDownloadCanUseReferenceWithoutInventingIdentity), references.UnknownInstalledDownloadCanUseReferenceWithoutInventingIdentity),
+			(nameof(references.ChangedPackageProjectOrUuidCannotReuseReference), references.ChangedPackageProjectOrUuidCannotReuseReference),
+			(nameof(references.StaleMissingAndChangedPackageReferencesAreRejected), references.StaleMissingAndChangedPackageReferencesAreRejected),
+			(nameof(references.ResetWorksWithoutApiCacheAndRestoresOriginalComparison), references.ResetWorksWithoutApiCacheAndRestoresOriginalComparison),
+			(nameof(references.CorruptOrLockedReferenceStoreCannotOverwriteChoices), references.CorruptOrLockedReferenceStoreCannotOverwriteChoices),
+			(nameof(references.ReferenceStoreContainsNoPrivatePathOrApiKey), references.ReferenceStoreContainsNoPrivatePathOrApiKey),
+			(nameof(references.PackageAndDownloadVersionsAreExplicitAndChooserStartsEmpty), references.PackageAndDownloadVersionsAreExplicitAndChooserStartsEmpty),
+		};
+		tests = tests.Concat(extra).ToArray();
+		if (args.Contains("--nexus-background-only"))
+		{
+			tests = tests.Where(test => test.Run.Target is NexusInstalledIdentityResolverTests or NexusUpdateAcknowledgementTests
+				|| test.Run.Target is NexusModUpdateTests && !test.Name.StartsWith("NexusUpdateWindow", StringComparison.Ordinal)).ToArray();
+			Console.WriteLine("Background Nexus subset only: desktop-opening checks are excluded; this is not the full regression gate.");
+		}
 		var failures = 0;
 		foreach (var test in tests)
 		{

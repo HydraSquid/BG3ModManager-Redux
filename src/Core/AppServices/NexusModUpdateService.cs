@@ -20,7 +20,9 @@ public sealed class NexusModUpdateService
 	private readonly Action<string, string> _writeCache;
 	private readonly SemaphoreSlim _gate = new(1, 1);
 	private CheckCache _cache = new();
+	private readonly NexusUpdateAcknowledgements _acknowledgements;
 	public string CacheWarning { get; private set; }
+	public string ReferenceWarning => _acknowledgements.Warning;
 
 	public NexusModUpdateService(INexusModFilesClient client, string cachePath,
 		Func<DateTimeOffset> now = null, Func<TimeSpan, CancellationToken, Task> delay = null,
@@ -31,25 +33,67 @@ public sealed class NexusModUpdateService
 		_now = now ?? (() => DateTimeOffset.UtcNow);
 		_delay = delay ?? ((duration, token) => Task.Delay(duration, token));
 		_writeCache = writeCache ?? ((path, json) => AtomicFileWriter.WriteAllText(path, json, path + ".bak"));
+		_acknowledgements = new NexusUpdateAcknowledgements(_path + ".references.json");
 		Load();
 	}
 
-	public IReadOnlyList<NexusModUpdateResult> GetCachedResults(IEnumerable<NexusInstalledFile> installed) =>
-		installed.Select(file => CachedResult(file)).OrderBy(result => result.Status).ThenBy(result => result.Name).ToArray();
-
-	private NexusModUpdateResult CachedResult(NexusInstalledFile file)
+	public IReadOnlyList<NexusModUpdateResult> GetCachedResults(IEnumerable<NexusInstalledFile> installed)
 	{
-		if (!file.HasExactFileIdentity) return NexusModUpdateEvaluator.Evaluate(file, null);
-		if (!_cache.Projects.TryGetValue(file.ModId, out var entry)) return NexusModUpdateEvaluator.Evaluate(file, null);
+		var references = _acknowledgements.Read();
+		return installed.Select(file => CachedResult(file, references)).OrderBy(result => result.Status).ThenBy(result => result.Name).ToArray();
+	}
+
+	private NexusModUpdateResult CachedResult(NexusInstalledFile file, IReadOnlyList<NexusUpdateAcknowledgement> references)
+	{
+		var reference = NexusUpdateAcknowledgements.Find(references, file);
+		if (!_cache.Projects.TryGetValue(file.ModId, out var entry)) return NexusModUpdateEvaluator.Evaluate(file, null) with { Acknowledgement = reference };
 		if (!String.IsNullOrEmpty(entry.Error))
 			return new(file, NexusModUpdateStatus.CheckFailed, entry.Error + $" Retry after {entry.NextAllowedUtc.LocalDateTime:g}.",
-				CheckedUtc: entry.CheckedUtc, FromCache: true);
-		var result = NexusModUpdateEvaluator.Evaluate(file, entry.Data, entry.CheckedUtc, true);
-		if (entry.CheckedUtc < _now() - CacheLifetime)
+				CheckedUtc: entry.CheckedUtc, FromCache: true) { Acknowledgement = reference };
+		if (file.HasExactFileIdentity && NexusUpdateAcknowledgements.IsHash(file.PackageSha256) && String.IsNullOrEmpty(file.DownloadVersion))
+		{
+			var recorded = entry.Data?.Files.SingleOrDefault(remote => remote.FileId == file.FileId);
+			if (recorded != null) file = file with { DownloadVersion = recorded.Version };
+		}
+		var comparison = reference == null ? file : file with { FileId = reference.FileId, HasExactFileIdentity = true };
+		var result = NexusModUpdateEvaluator.Evaluate(comparison, entry.Data, entry.CheckedUtc, true) with
+		{
+			Installed = file, Acknowledgement = reference,
+			AvailableFiles = entry.Data?.Files.Where(remote => remote.CategoryId is 1 or 2 or 3 or 4 or 7)
+				.OrderBy(remote => remote.Name).ThenBy(remote => remote.FileId).ToArray() ?? Array.Empty<NexusRemoteFile>(),
+			CanChooseReference = NexusUpdateAcknowledgements.IsHash(file.PackageSha256) && entry.CheckedUtc > _now() - CacheLifetime
+		};
+		if (reference != null)
+			result = result with { Status = result.Status == NexusModUpdateStatus.NoUpdateReported ? NexusModUpdateStatus.Acknowledged : result.Status,
+				Reason = "Compared from your chosen reference release. " + result.Reason };
+		if (entry.CheckedUtc <= _now() - CacheLifetime)
 			result = result with { Status = NexusModUpdateStatus.NotChecked,
 				Reason = "This cached check is older than 24 hours. Run a check for a current result. " + result.Reason };
 		return result;
 	}
+
+	public async Task SetReferenceAsync(NexusInstalledFile installed, long fileId, CancellationToken cancellationToken = default)
+	{
+		await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+		try
+		{
+			if (!_cache.Projects.TryGetValue(installed.ModId, out var entry) || !String.IsNullOrEmpty(entry.Error)
+				|| entry.CheckedUtc <= _now() - CacheLifetime || entry.CheckedUtc == null || entry.Data == null)
+				throw new InvalidOperationException("Check this project's file list before choosing a reference.");
+			var file = entry.Data.Files.SingleOrDefault(candidate => candidate.FileId == fileId && candidate.CategoryId is 1 or 2 or 3 or 4 or 7)
+				?? throw new InvalidOperationException("Choose a file from this project's checked list.");
+			await using var package = new FileStream(installed.FilePath, FileMode.Open, FileAccess.Read, FileShare.Read,
+				65536, FileOptions.Asynchronous | FileOptions.SequentialScan);
+			var hash = Convert.ToHexString(await System.Security.Cryptography.SHA256.HashDataAsync(package, cancellationToken).ConfigureAwait(false));
+			if (!String.Equals(hash, installed.PackageSha256, StringComparison.OrdinalIgnoreCase))
+				throw new InvalidOperationException("The installed package changed. Recheck before choosing a reference.");
+			cancellationToken.ThrowIfCancellationRequested();
+			_acknowledgements.Set(installed, file);
+		}
+		finally { _gate.Release(); }
+	}
+
+	public void ResetReference(NexusInstalledFile installed) => _acknowledgements.Reset(installed);
 
 	public async Task<NexusUpdateRun> CheckAsync(IReadOnlyList<NexusInstalledFile> installed, string apiKey,
 		Func<bool> checksAllowed, IProgress<NexusUpdateProgress> progress = null, CancellationToken cancellationToken = default)
@@ -69,7 +113,7 @@ public sealed class NexusModUpdateService
 			// A second window/process cannot start another scan against the same cache.
 			using var lease = new FileStream(_path + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
 			Load();
-			var groups = installed.Where(file => file.HasExactFileIdentity && file.FileId > 0 && file.ModId > 0)
+			var groups = installed.Where(file => file.ModId > 0)
 				.GroupBy(file => file.ModId).ToArray();
 			var complete = 0;
 			progress?.Report(new(complete, groups.Length, requests, cached));
@@ -134,7 +178,7 @@ public sealed class NexusModUpdateService
 				progress?.Report(new(++complete, groups.Length, requests, cached));
 			}
 			if (String.IsNullOrEmpty(message)) message = groups.Length == 0
-				? "No reliably identified Nexus files to check. Review the linked project pages below."
+				? "No linked Nexus projects to check."
 				: $"Check complete: {requests} Nexus request(s), {cached} cached project(s).";
 		}
 		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -158,17 +202,20 @@ public sealed class NexusModUpdateService
 		{
 			if (!File.Exists(_path)) { _cache = new(); return; }
 			if (new FileInfo(_path).Length > MaximumCacheBytes) throw new InvalidDataException();
-			var cache = JsonConvert.DeserializeObject<CheckCache>(File.ReadAllText(_path));
+			var root = Newtonsoft.Json.Linq.JObject.Parse(File.ReadAllText(_path), new Newtonsoft.Json.Linq.JsonLoadSettings
+				{ DuplicatePropertyNameHandling = Newtonsoft.Json.Linq.DuplicatePropertyNameHandling.Error });
+			var cache = root.ToObject<CheckCache>();
 			if (cache?.SchemaVersion != 1 || cache.Projects == null || cache.Projects.Count > 4096
 				|| cache.NextRequestUtc > _now().AddDays(2)) throw new InvalidDataException();
 			foreach (var pair in cache.Projects)
 			{
 				var entry = pair.Value;
 				if (pair.Key <= 0 || entry == null || entry.CheckedUtc > _now().AddMinutes(5)) throw new InvalidDataException();
-				if (entry.Data is { } data && (!entry.CheckedUtc.HasValue || entry.CheckedUtc == DateTimeOffset.MinValue
+				if (entry.Data is { } data && (!entry.CheckedUtc.HasValue || entry.CheckedUtc < DateTimeOffset.UnixEpoch
 					|| data.Files == null || data.Replacements == null
 					|| data.Files.Count > 10000 || data.Replacements.Count > 20000
-					|| data.Files.Any(file => file == null || file.FileId <= 0)
+					|| data.Files.Any(file => file == null || file.FileId <= 0 || file.Name?.Length > 500 || file.Version?.Length > 500)
+					|| data.Files.Select(file => file.FileId).Distinct().Count() != data.Files.Count
 					|| data.Replacements.Any(edge => edge == null || edge.OldFileId <= 0 || edge.NewFileId <= 0))) throw new InvalidDataException();
 			}
 			_cache = cache;

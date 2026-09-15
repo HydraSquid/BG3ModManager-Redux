@@ -3,6 +3,8 @@ using DivinityModManager.Models;
 using DivinityModManager.Models.NexusMods;
 using DivinityModManager.Util;
 using DivinityModManager.Views;
+using DivinityModManager.ViewModels;
+using DynamicData;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,6 +17,9 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
+using System.Windows.Controls.Primitives;
+using System.Reflection;
+using System.Diagnostics;
 
 namespace Redux.Core.Tests;
 
@@ -58,11 +63,17 @@ public sealed class NexusModUpdateTests
 		mod.NexusModsData.OfflineMatchKind = ReduxOfflineMatchKind.ModuleIdentity;
 		var target = NexusInstalledFile.FromMod(mod);
 		RegressionAssert.False(target.HasExactFileIdentity);
-		RegressionAssert.Equal(NexusModUpdateStatus.NeedsReview, NexusModUpdateEvaluator.Evaluate(target, Files()).Status);
+		RegressionAssert.Equal(NexusModUpdateStatus.DownloadNotIdentified, NexusModUpdateEvaluator.Evaluate(target, Files()).Status);
 		mod.NexusModsData.OfflineMatchKind = ReduxOfflineMatchKind.ExactPak;
-		RegressionAssert.True(NexusInstalledFile.FromMod(mod).HasExactFileIdentity);
+		RegressionAssert.False(NexusInstalledFile.FromMod(mod).HasExactFileIdentity);
 		mod.NexusModsData.MetadataOrigin = NexusMetadataOrigin.NexusArchiveImport;
-		RegressionAssert.True(NexusInstalledFile.FromMod(mod).HasExactFileIdentity);
+		RegressionAssert.False(NexusInstalledFile.FromMod(mod).HasExactFileIdentity);
+		using var fixture = new Fixture();
+		fixture.Service().CheckAsync([Installed()], "fixture-key", () => true).GetAwaiter().GetResult();
+		var initial = fixture.Service().GetCachedResults([NexusInstalledFile.FromMod(mod)]).Single();
+		RegressionAssert.Equal(NexusModUpdateStatus.DownloadNotIdentified, initial.Status);
+		RegressionAssert.Equal(null, initial.Candidate);
+		RegressionAssert.False(initial.CanChooseReference);
 		mod.NexusModsData.MetadataOrigin = NexusMetadataOrigin.ReduxBundleImport;
 		RegressionAssert.False(NexusInstalledFile.FromMod(mod).HasExactFileIdentity);
 		mod.OnlineMetadataEnabled = false;
@@ -123,13 +134,15 @@ public sealed class NexusModUpdateTests
 		}
 	}
 
-	public void NexusUpdateMissingIdentityOrDisabledProviderMakesNoRequests()
+	public void NexusUpdateUnknownDownloadGetsFileListButDisabledProviderMakesNoRequests()
 	{
 		using var fixture = new Fixture();
 		var service = fixture.Service();
 		var unknown = service.CheckAsync([Installed() with { HasExactFileIdentity = false }], "fixture-key", () => true).GetAwaiter().GetResult();
-		RegressionAssert.Equal(0, unknown.Requests);
-		RegressionAssert.Equal(NexusModUpdateStatus.NeedsReview, unknown.Results.Single().Status);
+		RegressionAssert.Equal(1, unknown.Requests);
+		RegressionAssert.Equal(NexusModUpdateStatus.DownloadNotIdentified, unknown.Results.Single().Status);
+		RegressionAssert.Equal(4, unknown.Results.Single().AvailableFiles.Count);
+		RegressionAssert.Equal(null, unknown.Results.Single().Candidate);
 		RegressionAssert.Equal(0, service.CheckAsync([Installed()], "fixture-key", () => false).GetAwaiter().GetResult().Requests);
 		RegressionAssert.Equal(0, service.CheckAsync([Installed()], "", () => true).GetAwaiter().GetResult().Requests);
 	}
@@ -268,13 +281,19 @@ public sealed class NexusModUpdateTests
 		try
 		{
 			window.ViewModel.SetResults([
-				NexusModUpdateEvaluator.Evaluate(Installed(), Files(), DateTimeOffset.Now, true),
+				NexusModUpdateEvaluator.Evaluate(Installed(), Files(), DateTimeOffset.Now, true) with
+				{
+					AvailableFiles = Files().Files, CanChooseReference = true,
+					Acknowledgement = new(Guid.NewGuid().ToString(), 42, 20, new string('a', 64), "Previous chosen main release", "2.0", DateTimeOffset.UtcNow)
+				},
 				NexusModUpdateEvaluator.Evaluate(Installed(uuid: "review") with { HasExactFileIdentity = false }, null!),
 				new(Installed(uuid: "failure"), NexusModUpdateStatus.CheckFailed, "Nexus request budget is low. Retry later.")]);
 			window.ViewModel.CanCheck = true;
 			window.Show();
+			foreach (var theme in new[] { ReduxThemeType.ReduxDark, ReduxThemeType.ReduxLight, ReduxThemeType.Parchment })
 			foreach (var width in new[] { 900d, 560d })
 			{
+				ReduxThemeService.Apply(window.Resources, theme);
 				window.Width = width;
 				window.Dispatcher.Invoke(() => { }, DispatcherPriority.ContextIdle);
 				window.UpdateLayout();
@@ -283,9 +302,15 @@ public sealed class NexusModUpdateTests
 				RegressionAssert.False(((Button)window.FindName("CancelCheckButton")).IsEnabled);
 				var list = (ListBox)window.FindName("ResultsList");
 				RegressionAssert.Equal(3, list.Items.Count);
+				var choices = WpfRenderCapture.Descendants<ComboBox>(list).First();
+				RegressionAssert.Equal(4, choices.Items.Count);
+				RegressionAssert.Equal(null, choices.SelectedItem);
+				var prompt = WpfRenderCapture.Descendants<TextBlock>(list).First(text => text.Name == "ReferencePrompt");
+				RegressionAssert.True(ReferenceEquals(prompt.Foreground, window.FindResource("ReduxTextSecondaryBrush")));
+				WpfRenderCapture.AssertFullyWithin(prompt, list);
 				var scroll = WpfRenderCapture.Descendants<ScrollViewer>(list).First();
 				RegressionAssert.True(scroll.ScrollableWidth <= 1);
-				WpfRenderCapture.CaptureIfRequested(window, $"nexus-mod-updates-{width:0}");
+				WpfRenderCapture.CaptureIfRequested(window, $"nexus-mod-updates-{theme}-{width:0}");
 			}
 		}
 		finally
@@ -294,6 +319,77 @@ public sealed class NexusModUpdateTests
 			ReduxWindowBehavior.ConfigureAccessibility(reduceMotion, effects);
 			Application.Current.ShutdownMode = shutdown;
 			Application.Current.Resources = resources;
+		}
+	}
+
+	public void NexusUpdateWindowSavesAndResetsReferenceThroughActualControls()
+	{
+		using var fixture = new Fixture();
+		using var watcher = WpfRenderCapture.RegisterNoOpFileWatcherService();
+		var oldResources = Application.Current.Resources;
+		var shutdown = Application.Current.ShutdownMode;
+		var reduceMotion = ReduxWindowBehavior.ReduceMotion;
+		var effects = ReduxWindowBehavior.BackgroundEffectsDisabled;
+		Application.Current.Resources = WpfRenderCapture.CreateReduxApplicationResources();
+		ReduxThemeService.Apply(Application.Current.Resources, ReduxThemeType.ReduxDark);
+		Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+		ReduxWindowBehavior.ConfigureAccessibility(true, effects);
+		var pak = System.IO.Path.ChangeExtension(fixture.Path, ".pak");
+		File.WriteAllText(pak, "controlled UI-test package bytes");
+		var mod = new RegressionModData { UUID = Guid.NewGuid().ToString(), Name = "Example UI package",
+			FilePath = pak, IsUserMod = true, OnlineMetadataEnabled = true, NexusModsEnabled = true };
+		mod.NexusModsData.ModId = 42;
+		var main = new MainWindowViewModel();
+		main.Settings.LocalOnlyMode = false;
+		var models = (SourceCache<DivinityModData, string>)typeof(MainWindowViewModel)
+			.GetField("mods", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(main)!;
+		models.AddOrUpdate(mod);
+		var service = fixture.Service();
+		service.CheckAsync([Installed()], "fixture-key", () => true).GetAwaiter().GetResult();
+		var window = new NexusModUpdatesWindow(null!, main)
+		{ Left = -15000, Top = -15000, ShowActivated = false, WindowStartupLocation = WindowStartupLocation.Manual };
+		typeof(NexusModUpdatesWindow).GetField("_service", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(window, service);
+		void WaitFor(Func<bool> ready)
+		{
+			var timer = Stopwatch.StartNew();
+			while (!ready() && timer.Elapsed < TimeSpan.FromSeconds(15))
+			{
+				window.Dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+				Thread.Sleep(10);
+			}
+			if (!ready()) throw new InvalidOperationException($"UI did not settle: busy={window.ViewModel.IsChecking}, rows={window.ViewModel.Results.Count}, "
+				+ $"status={window.ViewModel.StatusText}; " + String.Join("; ", window.ViewModel.Results.Select(row => $"{row.Result.Status}, choices={row.Result.AvailableFiles.Count}, canChoose={row.Result.CanChooseReference}, identity={row.Result.Installed.IdentityDescription}")));
+			window.UpdateLayout();
+		}
+		try
+		{
+			window.Show();
+			WaitFor(() => !window.ViewModel.IsChecking && window.ViewModel.Results.Count == 1
+				&& window.ViewModel.Results[0].Result.CanChooseReference);
+			RegressionAssert.Equal(1, fixture.Client.Times.Count); // Opening used only cached listings.
+			var list = (ListBox)window.FindName("ResultsList");
+			var combo = WpfRenderCapture.Descendants<ComboBox>(list).First();
+			RegressionAssert.Equal(null, combo.SelectedItem);
+			combo.SelectedItem = window.ViewModel.Results[0].Result.AvailableFiles.Single(file => file.FileId == 30);
+			var set = WpfRenderCapture.Descendants<Button>(list).First(button => button.Name == "SetReferenceButton");
+			window.Dispatcher.Invoke(() => set.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)));
+			WaitFor(() => !window.ViewModel.IsChecking && window.ViewModel.Results[0].Result.Acknowledgement != null);
+			RegressionAssert.Equal(NexusModUpdateStatus.Acknowledged, window.ViewModel.Results[0].Result.Status);
+			WpfRenderCapture.CaptureIfRequested(window, "nexus-reference-acknowledged");
+			var reset = WpfRenderCapture.Descendants<Button>(list).First(button => button.Name == "ResetReferenceButton");
+			window.Dispatcher.Invoke(() => reset.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)));
+			WaitFor(() => window.ViewModel.Results[0].Result.Acknowledgement == null);
+			RegressionAssert.Equal(NexusModUpdateStatus.DownloadNotIdentified, window.ViewModel.Results[0].Result.Status);
+			RegressionAssert.Equal(1, fixture.Client.Times.Count);
+			RegressionAssert.Equal("controlled UI-test package bytes", File.ReadAllText(pak));
+			WpfRenderCapture.CaptureIfRequested(window, "nexus-reference-reset");
+		}
+		finally
+		{
+			window.Close();
+			ReduxWindowBehavior.ConfigureAccessibility(reduceMotion, effects);
+			Application.Current.ShutdownMode = shutdown;
+			Application.Current.Resources = oldResources;
 		}
 	}
 

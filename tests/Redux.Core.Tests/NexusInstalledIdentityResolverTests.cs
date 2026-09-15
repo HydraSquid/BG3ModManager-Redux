@@ -247,7 +247,7 @@ public sealed class NexusInstalledIdentityResolverTests
 		public NexusRetainedDownload Evidence(long fileId, string version) =>
 			new(_project, fileId, ArchivePath, HashFile(ArchivePath), version);
 
-		public NexusInstalledFile Installed() => new("fixture-uuid", "Fixture", _project, 0, "1.0", false)
+		public NexusUpdateInstalledFile Installed() => new("fixture-uuid", "Fixture", _project, 0, "1.0", false)
 		{
 			FilePath = InstalledPath,
 			PackageSha256 = "stale-hash",
@@ -255,10 +255,10 @@ public sealed class NexusInstalledIdentityResolverTests
 			IdentityDescription = "Installed download not identified"
 		};
 
-		public NexusInstalledFile Resolve(params NexusRetainedDownload[] evidence) =>
+		public NexusUpdateInstalledFile Resolve(params NexusRetainedDownload[] evidence) =>
 			Resolver.ResolveAsync(Installed(), evidence).GetAwaiter().GetResult();
 
-		public NexusInstalledFile Resolve(NexusRetainedDownload evidence, NexusInstalledFile installed) =>
+		public NexusUpdateInstalledFile Resolve(NexusRetainedDownload evidence, NexusUpdateInstalledFile installed) =>
 			Resolver.ResolveAsync(installed, [evidence]).GetAwaiter().GetResult();
 
 		public void Dispose()

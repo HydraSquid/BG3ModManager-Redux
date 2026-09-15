@@ -44,7 +44,7 @@ public partial class NexusModUpdatesWindow : AdonisUI.Controls.AdonisWindow
 	private readonly NexusModUpdateService _service;
 	private CancellationTokenSource _cancellation;
 	private bool _closed;
-	private NexusInstalledFile[] _snapshot = Array.Empty<NexusInstalledFile>();
+	private NexusUpdateInstalledFile[] _snapshot = Array.Empty<NexusUpdateInstalledFile>();
 
 	public NexusModUpdatesWindow()
 	{
@@ -71,8 +71,8 @@ public partial class NexusModUpdatesWindow : AdonisUI.Controls.AdonisWindow
 		Loaded += LoadLocalIdentities;
 	}
 
-	private NexusInstalledFile[] Snapshot() => _main.UserMods
-		.Where(mod => File.Exists(mod.FilePath)).Select(NexusInstalledFile.FromMod)
+	private NexusUpdateInstalledFile[] Snapshot() => _main.UserMods
+		.Where(mod => File.Exists(mod.FilePath)).Select(NexusUpdateInstalledFile.FromMod)
 		.Where(file => file != null).ToArray();
 
 	private void UpdateAvailability()

@@ -24,6 +24,10 @@ public sealed class ReduxUpdateTransactionTests
 				["obsolete.dll"] = "obsolete"
 			});
 			File.WriteAllText(Path.Combine(target, "Settings.json"), "user settings");
+			var nativeState = Path.Combine(target, "Data", "GameDirectoryInstalls", "native-mods", "game-identity");
+			Directory.CreateDirectory(Path.Combine(nativeState, "backups"));
+			File.WriteAllText(Path.Combine(nativeState, "manifest.json"), "native ownership record");
+			File.WriteAllBytes(Path.Combine(nativeState, "backups", "original.dll"), new byte[] { 0, 1, 2, 255 });
 			WriteRelease(staged, new Dictionary<string, string>
 			{
 				["Redux.exe"] = "new app",
@@ -38,6 +42,8 @@ public sealed class ReduxUpdateTransactionTests
 			RegressionAssert.True(File.Exists(Path.Combine(target, "new.dll")));
 			RegressionAssert.False(File.Exists(Path.Combine(target, "obsolete.dll")));
 			RegressionAssert.Equal("user settings", File.ReadAllText(Path.Combine(target, "Settings.json")));
+			RegressionAssert.Equal("native ownership record", File.ReadAllText(Path.Combine(nativeState, "manifest.json")));
+			RegressionAssert.Equal("000102FF", Convert.ToHexString(File.ReadAllBytes(Path.Combine(nativeState, "backups", "original.dll"))));
 		}
 		finally
 		{
@@ -101,6 +107,37 @@ public sealed class ReduxUpdateTransactionTests
 			RegressionAssert.Throws<InvalidDataException>(() =>
 				ReduxUpdateTransaction.Apply(Request(target, staged, Path.Combine(root, "backup"))));
 			RegressionAssert.Equal("old app", File.ReadAllText(Path.Combine(target, "Redux.exe")));
+		}
+		finally
+		{
+			Directory.Delete(root, recursive: true);
+		}
+	}
+
+	public void ReadOnlyInstalledFilesCanBeReplaced()
+	{
+		var root = TemporaryDirectory();
+		try
+		{
+			var target = Path.Combine(root, "target");
+			var staged = Path.Combine(root, "staged");
+			var backup = Path.Combine(root, "backup");
+			WriteRelease(target, new Dictionary<string, string>
+			{
+				["Redux.exe"] = "old app",
+				["Updater/ReduxUpdater.exe"] = "old updater"
+			});
+			WriteRelease(staged, new Dictionary<string, string>
+			{
+				["Redux.exe"] = "new app",
+				["Updater/ReduxUpdater.exe"] = "new updater"
+			});
+			File.SetAttributes(Path.Combine(target, "Redux.exe"), FileAttributes.ReadOnly);
+
+			var result = ReduxUpdateTransaction.Apply(Request(target, staged, backup));
+
+			RegressionAssert.True(result.Succeeded);
+			RegressionAssert.Equal("new app", File.ReadAllText(Path.Combine(target, "Redux.exe")));
 		}
 		finally
 		{

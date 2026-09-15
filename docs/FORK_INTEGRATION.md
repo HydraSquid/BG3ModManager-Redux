@@ -1,6 +1,6 @@
-# Fork integration: alpha.16.3.5
+# Fork integration: alpha.16.4.2
 
-This integration merges circleainn's `0882c52c` (alpha.16.3.5) into the existing
+This integration merges circleainn's `b09a2f4c` (alpha.16.4.2) into the existing
 HydraSquid fork. Earlier integrations and their history remain intact. The manual
 Nexus checker was checkpointed before this merge; the tree retains the differences below.
 
@@ -8,8 +8,8 @@ Nexus checker was checkpointed before this merge; the tree retains the differenc
 
 | Area | Integration |
 | --- | --- |
-| Downloads workspace | Embedded Inbox, History, and Archives pane using upstream's current download services, grouped actions, semantic button colors, and Enable/Disable/Repair/Takeover NXM controls; standalone window remains the fallback. |
-| Selection | Explicit selected-only install/removal, Select All, and virtualized selection synchronization. |
+| Downloads workspace | Embedded Inbox, History, and Archives pane using upstream's current services, grouped semantic actions, collection import, Delete All, archive-retention controls, and Enable/Disable/Repair/Takeover NXM controls. The header's open-window action exposes upstream's full Download Manager. Compact toolbars reserve space for every wrapped action group. |
+| Selection | Explicit selected-only install/removal and Select All operate on the current Inbox/History tab, with virtualized selection synchronization. Removal cannot race an active install batch. |
 | Dependency batches | Selected prerequisites are ordered before dependents; missing/old requirements and cycles block affected packages. Failed prerequisites suppress their dependents. |
 | Dependency assistance | UUID-based installed/bundled/download matches, reviewed source links, and Copy UUID without name-based guessing. |
 | PAK installation | Stage and validate all archive packages before committing; roll back destination and model changes on failure. Sibling packages satisfy each other's declared requirements. Updates/reinstalls retain active/inactive placement and load-order position; new mods enter Inactive. Selected and full batches use upstream progress with fork dependency sequencing and failure cascades. |
@@ -27,6 +27,10 @@ Nexus checker was checkpointed before this merge; the tree retains the differenc
 - Current mod-table selection reconciliation, load-order persistence, advisor, save manager, and portable updater. The retired Setup project and dedicated installer tests are removed with upstream.
 - Quiet NXM notifications (existing foreground preference preserved), fewer routine clean-package confirmations, installation progress, window-position/modal fixes, save-import fixes, and maintenance-update cleanup.
 - Current public documentation, release version, bundled mod database, and branding.
+- Nexus collection preview, selection, download guidance/retry, recent collection sessions, and separate saved-order import. Collection native inventory reads the fork's existing NativeInstalls ownership and BG3 ProductVersion; it does not create an independent ownership tree.
+- Save Manager details/portraits, UUID-based mod review, selected activation with Undo, and save/campaign ZIP export.
+- Rebuilt onboarding with live appearance controls and starter separators; persistent inactive order; per-saved-order active separators; bulk separator motion and nested-menu fixes.
+- Updater file-lock retries and read-only replacement handling, plus the supported .NET 8 SDK pin.
 
 The embedded Downloads pane supports explicit confirmed NXM-handler takeover from
 upstream alpha.16.3.3, including restoration of the prior handler when disabled.
@@ -70,6 +74,11 @@ is available through **Dependencies**.
   installed status and removal are managed by the game-directory manager.
 
 ## Verification
+
+The integrated Debug regression suite passes 560 checks, including upstream collection,
+save, inactive-order and separator regressions plus retained fork tests. Controlled
+wide/compact Downloads and Nexus checker renders verify action access and layout;
+live authenticated Nexus/collection downloads are not part of these fixture checks.
 
 Run `./Test-Redux.ps1` with Visual Studio's desktop C++/CLI and .NET workloads.
 The regression harness uses synthetic packages, game directories, and UI data.

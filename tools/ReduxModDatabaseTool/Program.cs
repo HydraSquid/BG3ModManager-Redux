@@ -33,7 +33,6 @@ public static class Program
 			return command switch
 			{
 				"validate" => ValidateCommand(options),
-				"sync-volo" => SyncVoloCommand(options),
 				"fingerprint" => await FingerprintCommandAsync(options),
 				"review-report" => ReviewReportCommand(options),
 				"accept-report" => AcceptReportCommand(options),
@@ -61,230 +60,6 @@ public static class Program
 		PrintValidation(path, result);
 		return result.Errors.Count == 0 ? 0 : 1;
 	}
-
-	private static int SyncVoloCommand(CommandOptions options)
-	{
-		var databasePath = ResolveDatabasePath(options);
-		var database = LoadDatabase(databasePath);
-		var before = ValidateDatabase(database);
-		if (before.Errors.Count > 0)
-		{
-			PrintValidation(databasePath, before);
-			return Fail("The database contains validation errors; VOLO was not synchronized.");
-		}
-
-		var masterlist = LoadJsonObject(Path.GetFullPath(options.Required("masterlist")), "VOLO masterlist");
-		var nexusCatalog = LoadJsonObject(Path.GetFullPath(options.Required("nexus-catalog")), "VOLO Nexus catalog");
-		var modioCatalog = LoadJsonObject(Path.GetFullPath(options.Required("modio-catalog")), "VOLO mod.io catalog");
-		var plugins = RequiredArray(masterlist, "plugins").OfType<JsonObject>().ToList();
-		var nexus = ReadVoloCatalog(nexusCatalog, false);
-		var modio = ReadVoloCatalog(modioCatalog, true);
-		var nexusIndex = BuildVoloNameIndex(nexus);
-		var modioIndex = BuildVoloNameIndex(modio);
-
-		var nexusProjects = RequiredArray(database, "projects");
-		var nexusIdentities = database["communityModuleIdentities"] as JsonArray ?? new JsonArray();
-		database["communityModuleIdentities"] = nexusIdentities;
-		var modioProjects = database["modioProjects"] as JsonArray ?? new JsonArray();
-		database["modioProjects"] = modioProjects;
-		var modioIdentities = database["communityModioIdentities"] as JsonArray ?? new JsonArray();
-		database["communityModioIdentities"] = modioIdentities;
-
-		var reviewedUuids = RequiredArray(database, "moduleIdentities").OfType<JsonObject>()
-			.Select(item => GetString(item, "uuid")).Where(value => !String.IsNullOrWhiteSpace(value))
-			.ToHashSet(StringComparer.OrdinalIgnoreCase);
-		var existingNexus = nexusIdentities.OfType<JsonObject>().Where(item => !String.IsNullOrWhiteSpace(GetString(item, "uuid")))
-			.ToDictionary(item => GetString(item, "uuid")!, item => item, StringComparer.OrdinalIgnoreCase);
-		var existingModio = modioIdentities.OfType<JsonObject>().Where(item => !String.IsNullOrWhiteSpace(GetString(item, "uuid")))
-			.ToDictionary(item => GetString(item, "uuid")!, item => item, StringComparer.OrdinalIgnoreCase);
-		var nexusProjectIds = nexusProjects.OfType<JsonObject>().Select(item => GetLong(item, "modId")).ToHashSet();
-		var modioProjectIds = modioProjects.OfType<JsonObject>().Select(item => GetLong(item, "modId")).ToHashSet();
-
-		var reportItems = new JsonArray();
-		var addedNexus = 0;
-		var addedModio = 0;
-		var removedAmbiguous = 0;
-		var ambiguous = 0;
-		var unmatched = 0;
-		foreach (var plugin in plugins)
-		{
-			var uuid = GetString(plugin, "uuid")?.Trim();
-			if (!Guid.TryParse(uuid, out _)) continue;
-			var names = VoloPluginNames(plugin);
-			var nexusMatches = CatalogMatches(names, nexusIndex);
-			var modioMatches = CatalogMatches(names, modioIndex);
-			var isAmbiguous = nexusMatches.Count > 0 && modioMatches.Count > 0;
-			if (isAmbiguous)
-			{
-				ambiguous++;
-				if (!reviewedUuids.Contains(uuid!) && existingNexus.Remove(uuid!, out var oldNexus))
-				{
-					nexusIdentities.Remove(oldNexus);
-					removedAmbiguous++;
-				}
-				if (existingModio.Remove(uuid!, out var oldModio))
-				{
-					modioIdentities.Remove(oldModio);
-					removedAmbiguous++;
-				}
-				AddVoloReportItem(reportItems, plugin, "ambiguous-provider", nexusMatches, modioMatches);
-				continue;
-			}
-
-			if (reviewedUuids.Contains(uuid!)) continue;
-			if (nexusMatches.Count == 1 && modioMatches.Count == 0)
-			{
-				if (existingModio.ContainsKey(uuid!)) continue;
-				var listing = nexusMatches.Single();
-				if (!nexusProjectIds.Contains(listing.Id))
-				{
-					nexusProjects.Add(CreateNexusProject(listing));
-					nexusProjectIds.Add(listing.Id);
-				}
-				if (!existingNexus.ContainsKey(uuid!))
-				{
-					var identity = CreateCommunityIdentity(plugin, listing.Id);
-					nexusIdentities.Add(identity);
-					existingNexus[uuid!] = identity;
-					addedNexus++;
-				}
-				continue;
-			}
-
-			if (modioMatches.Count == 1 && nexusMatches.Count == 0)
-			{
-				if (existingNexus.ContainsKey(uuid!)) continue;
-				var listing = modioMatches.Single();
-				if (!modioProjectIds.Contains(listing.Id))
-				{
-					modioProjects.Add(CreateModioProject(listing));
-					modioProjectIds.Add(listing.Id);
-				}
-				if (!existingModio.ContainsKey(uuid!))
-				{
-					var identity = CreateCommunityIdentity(plugin, listing.Id);
-					modioIdentities.Add(identity);
-					existingModio[uuid!] = identity;
-					addedModio++;
-				}
-				continue;
-			}
-
-			unmatched++;
-			if (nexusMatches.Count > 1 || modioMatches.Count > 1)
-				AddVoloReportItem(reportItems, plugin, "same-provider-collision", nexusMatches, modioMatches);
-		}
-
-		UpdateCounts(database);
-		var after = ValidateDatabase(database);
-		Console.WriteLine($"VOLO plugins: {plugins.Count}");
-		Console.WriteLine($"Added conservative identities: {addedNexus} Nexus, {addedModio} mod.io");
-		Console.WriteLine($"Ambiguous across providers: {ambiguous}; removed stale community guesses: {removedAmbiguous}");
-		Console.WriteLine($"Unmatched or non-unique: {unmatched}");
-		PrintValidation(databasePath, after);
-		if (after.Errors.Count > 0) return Fail("The synchronized database failed validation; no changes were written.");
-
-		if (options.Optional("review-output") is { Length: > 0 } reportPath)
-		{
-			var report = new JsonObject
-			{
-				["generatedAt"] = DateTimeOffset.UtcNow.ToString("O"),
-				["source"] = GetString(masterlist, "source"),
-				["counts"] = new JsonObject { ["ambiguousProvider"] = ambiguous, ["unmatchedOrNonUnique"] = unmatched },
-				["items"] = reportItems
-			};
-			WriteJsonAtomically(Path.GetFullPath(reportPath), report);
-			Console.WriteLine($"Wrote review report to {Path.GetFullPath(reportPath)}");
-		}
-
-		if (!options.Flag("write"))
-		{
-			Console.WriteLine("Preview only. Re-run with --write after reviewing the counts above.");
-			return 0;
-		}
-		WriteDatabaseAtomically(databasePath, database);
-		Console.WriteLine($"Updated {databasePath}");
-		return 0;
-	}
-
-	private sealed record VoloListing(long Id, string Name, string Author, string NameId, string Category, List<string> Aliases, List<string> Tags, long DateUpdated);
-
-	private static List<VoloListing> ReadVoloCatalog(JsonObject catalog, bool isModio)
-	{
-		var mods = catalog["mods"] as JsonObject ?? throw new InvalidDataException("VOLO catalog has no mods object.");
-		var result = new List<VoloListing>();
-		foreach (var pair in mods)
-		{
-			if (!Int64.TryParse(pair.Key, out var id) || id <= 0 || pair.Value is not JsonObject mod
-				|| !String.Equals(GetString(mod, "status"), "published", StringComparison.OrdinalIgnoreCase)) continue;
-			var name = GetString(mod, "name");
-			if (String.IsNullOrWhiteSpace(name)) continue;
-			var aliases = (mod["aliases"] as JsonArray ?? new JsonArray()).Select(value => value?.GetValue<string>()).Where(value => !String.IsNullOrWhiteSpace(value)).Cast<string>().ToList();
-			var tags = (mod["tags"] as JsonArray ?? new JsonArray()).Select(value => value?.GetValue<string>()).Where(value => !String.IsNullOrWhiteSpace(value)).Cast<string>().ToList();
-			var updated = DateTimeOffset.TryParse(GetString(mod, "updated"), out var timestamp) ? timestamp.ToUnixTimeSeconds() : 0;
-			result.Add(new VoloListing(id, name!, GetString(mod, "author") ?? String.Empty,
-				isModio ? GetString(mod, "nameId") ?? String.Empty : String.Empty,
-				GetString(mod, "category") ?? String.Empty, aliases, tags, updated));
-		}
-		return result;
-	}
-
-	private static Dictionary<string, List<VoloListing>> BuildVoloNameIndex(IEnumerable<VoloListing> listings)
-	{
-		var index = new Dictionary<string, List<VoloListing>>(StringComparer.Ordinal);
-		foreach (var listing in listings)
-		foreach (var name in new[] { listing.Name }.Concat(listing.Aliases))
-		{
-			var key = NormalizeName(name);
-			if (key.Length < 4) continue;
-			if (!index.TryGetValue(key, out var values)) index[key] = values = new();
-			if (!values.Any(value => value.Id == listing.Id)) values.Add(listing);
-		}
-		return index;
-	}
-
-	private static List<VoloListing> CatalogMatches(IEnumerable<string> names, Dictionary<string, List<VoloListing>> index) =>
-		names.Select(NormalizeName).Where(index.ContainsKey).SelectMany(name => index[name]).GroupBy(item => item.Id).Select(group => group.First()).ToList();
-
-	private static List<string> VoloPluginNames(JsonObject plugin) =>
-		new[] { GetString(plugin, "name"), GetString(plugin, "folder") }
-			.Concat((plugin["alternateNames"] as JsonArray ?? new JsonArray()).Select(value => value?.GetValue<string>()))
-			.Where(value => !String.IsNullOrWhiteSpace(value)).Cast<string>().Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-
-	private static string NormalizeName(string? value) => String.IsNullOrWhiteSpace(value)
-		? String.Empty
-		: new String(value.Normalize(NormalizationForm.FormD).Where(Char.IsLetterOrDigit).Select(Char.ToLowerInvariant).ToArray());
-
-	private static JsonObject CreateCommunityIdentity(JsonObject plugin, long id) => new()
-	{
-		["uuid"] = GetString(plugin, "uuid"), ["modId"] = id, ["name"] = GetString(plugin, "name"),
-		["folder"] = GetString(plugin, "folder"),
-		["aliases"] = new JsonArray(VoloPluginNames(plugin).Skip(1).Select(value => JsonValue.Create(value)).ToArray()),
-		["authors"] = new JsonArray(), ["matchBasis"] = "community-exact-name"
-	};
-
-	private static JsonObject CreateNexusProject(VoloListing listing) => new()
-	{
-		["modId"] = listing.Id, ["name"] = listing.Name,
-		["authors"] = new JsonArray(JsonValue.Create(listing.Author)), ["uploadedBy"] = listing.Author,
-		["aliases"] = new JsonArray(listing.Aliases.Select(value => JsonValue.Create(value)).ToArray()),
-		["categories"] = String.IsNullOrWhiteSpace(listing.Category) ? new JsonArray() : new JsonArray(JsonValue.Create(listing.Category)),
-		["pictureUrl"] = null
-	};
-
-	private static JsonObject CreateModioProject(VoloListing listing) => new()
-	{
-		["modId"] = listing.Id, ["nameId"] = listing.NameId, ["name"] = listing.Name, ["author"] = listing.Author,
-		["aliases"] = new JsonArray(listing.Aliases.Select(value => JsonValue.Create(value)).ToArray()),
-		["tags"] = new JsonArray(listing.Tags.Select(value => JsonValue.Create(value)).ToArray()), ["dateUpdated"] = listing.DateUpdated
-	};
-
-	private static void AddVoloReportItem(JsonArray report, JsonObject plugin, string status, List<VoloListing> nexus, List<VoloListing> modio) => report.Add(new JsonObject
-	{
-		["uuid"] = GetString(plugin, "uuid"), ["name"] = GetString(plugin, "name"), ["status"] = status,
-		["nexus"] = new JsonArray(nexus.Select(item => (JsonNode)new JsonObject { ["id"] = item.Id, ["name"] = item.Name }).ToArray()),
-		["modio"] = new JsonArray(modio.Select(item => (JsonNode)new JsonObject { ["id"] = item.Id, ["name"] = item.Name }).ToArray())
-	});
 
 	private static async Task<int> FingerprintCommandAsync(CommandOptions options)
 	{
@@ -1307,10 +1082,6 @@ Commands:
   fingerprint --file <artifact>
       Print Redux's exact PAK (xxHash64/Base64/little-endian) or archive (MD5/hex) fingerprint.
 
-  sync-volo --masterlist <path> --nexus-catalog <path> --modio-catalog <path> [options]
-      Preview a conservative VOLO catalog sync. Cross-provider and non-unique names remain unresolved.
-      Use --review-output <path> for the ambiguity report and --write to update atomically.
-
   review-report --file <report> [--database <path>] [--output <path>]
       Privacy-audit a tester contribution report and classify records against the database.
 
@@ -1338,8 +1109,6 @@ Add options:
 Examples:
   dotnet run --project tools/ReduxModDatabaseTool -- validate
   dotnet run --project tools/ReduxModDatabaseTool -- fingerprint --file "C:\Mods\Example.pak"
-  dotnet run --project tools/ReduxModDatabaseTool -- sync-volo --masterlist "C:\VOLO\masterlist\bg3-masterlist.json" `
-    --nexus-catalog "C:\VOLO\nexus\catalog.json" --modio-catalog "C:\VOLO\modio\catalog.json" --write
   dotnet run --project tools/ReduxModDatabaseTool -- review-report --file "Contribution.bg3redux-report"
   dotnet run --project tools/ReduxModDatabaseTool -- accept-report `
     --file "Contribution.bg3redux-report" --mod-id 123 --write

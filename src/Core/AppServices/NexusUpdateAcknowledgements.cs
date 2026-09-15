@@ -25,12 +25,12 @@ public sealed class NexusUpdateAcknowledgements
 		}
 	}
 
-	public static NexusUpdateAcknowledgement Find(IEnumerable<NexusUpdateAcknowledgement> entries, NexusInstalledFile file) =>
+	public static NexusUpdateAcknowledgement Find(IEnumerable<NexusUpdateAcknowledgement> entries, NexusUpdateInstalledFile file) =>
 		IsHash(file.PackageSha256) ? entries.FirstOrDefault(entry => entry.ModId == file.ModId
 			&& String.Equals(entry.Uuid, file.Uuid, StringComparison.OrdinalIgnoreCase)
 			&& String.Equals(entry.PackageSha256, file.PackageSha256, StringComparison.OrdinalIgnoreCase)) : null;
 
-	public void Set(NexusInstalledFile file, NexusRemoteFile reference)
+	public void Set(NexusUpdateInstalledFile file, NexusRemoteFile reference)
 	{
 		if (!Guid.TryParse(file.Uuid, out _) || file.ModId <= 0 || reference.FileId <= 0 || !IsHash(file.PackageSha256)
 			|| reference.Name?.Length > 1024 || reference.Version?.Length > 500)
@@ -39,9 +39,9 @@ public sealed class NexusUpdateAcknowledgements
 			reference.Name, reference.Version, DateTimeOffset.UtcNow));
 	}
 
-	public void Reset(NexusInstalledFile file) => Change(file, null);
+	public void Reset(NexusUpdateInstalledFile file) => Change(file, null);
 
-	private void Change(NexusInstalledFile file, NexusUpdateAcknowledgement replacement)
+	private void Change(NexusUpdateInstalledFile file, NexusUpdateAcknowledgement replacement)
 	{
 		Directory.CreateDirectory(Path.GetDirectoryName(_path));
 		using var lease = new FileStream(_path + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);

@@ -1,7 +1,119 @@
-# Changelog
+﻿# Changelog
 
 This file summarizes user-visible Redux releases. The issue tracker and Git history remain the
 source for individual implementation details.
+
+## Unreleased
+
+No changes recorded yet.
+
+## 0.1.0-alpha.16.4.2 — 2026-09-14
+
+A cumulative maintenance hotfix for separator persistence, controls, nested menus, and in-app updates.
+
+### Fixed
+
+- Keep active separators separate for every saved load order. Existing 16.4 separators migrate to the last-used order, while inactive organization remains global and automatic.
+- Keep separators attached to their recorded sections after multi-mod moves and other active-list changes.
+- Hide separators during text filtering, matching category and column-sorted views without changing the underlying order.
+- Restore smooth Collapse All and Expand All motion without animating the recyclable list presenter, preventing the list from remaining dimmed or invisible.
+- Add the matching bulk separator chevron to Inactive Mods and keep each pane's control synchronized with its own separators.
+- Remove the cursor dead zone between submenu headers and their nested menus across Redux context menus.
+- Retry update replacements while Windows releases short-lived file locks, replace read-only application files safely, and identify the exact blocked Redux file when an update still cannot proceed.
+
+### Changed
+
+- Pin repository builds to the supported .NET 8 SDK family so newer installed SDKs do not break the C++/CLI dependency build.
+
+## 0.1.0-alpha.16.4.1 — 2026-09-14
+
+A focused maintenance hotfix for separators and in-app updates.
+
+### Fixed
+
+- Keep active separators separate for every saved load order. Existing 16.4 separators migrate to the last-used order, while inactive organization remains global and automatic.
+- Keep separators attached to their recorded sections after multi-mod moves and other active-list changes.
+- Hide separators during text filtering, matching category and column-sorted views without changing the underlying order.
+- Apply Collapse All and Expand All directly so a recycled list presenter cannot remain dimmed or invisible.
+- Retry update replacements while Windows releases short-lived file locks, replace read-only application files safely, and identify the exact blocked Redux file when an update still cannot proceed.
+
+### Changed
+
+- Pin repository builds to the supported .NET 8 SDK family so newer installed SDKs do not break the C++/CLI dependency build.
+
+## 0.1.0-alpha.16.4 — 2026-09-13
+
+A larger update featuring overhauls of Save Game Manager and Download Manager, the new Nexus Collection Importer, persistent inactive organization, and a rebuilt Welcome Setup.
+
+### Highlights
+
+- **Save Game Manager overhaul:** a resizable details pane, party portraits and save facts, clearer campaign/save metadata, inline mod warnings, mod review, ZIP exports, and consistent right-click actions.
+- **Download Manager overhaul:** streamlined toolbars and tab-specific actions, clearer package information and thumbnails, compact NXM/archive controls, Delete All, and a complete Nexus collection import workflow.
+- **Nexus Collection Importer:** browse and select collection files, compare them with installed mods, track downloads, revisit recent collections, and review/save supported BG3 load orders.
+- **Organization and onboarding:** automatically saved inactive ordering, consistent sorting/filtering, live appearance previews, interactive setup tours, and optional starter separators.
+
+### Added
+
+- Import Nexus collections into Download Manager with a compact file list, resizable details pane, collection thumbnail, author/category information, and a link to browse BG3 collections.
+- Search collection files and filter by Missing, Installed, Unverified, or Needs attention. Select All and Deselect All apply to visible rows; hidden choices are preserved. Reset to Defaults restores the collection selection.
+- Compare collection files against Nexus-linked mods in both Active and Inactive Mods. Exact installed files are skipped by default; different files and uncertain matches are identified separately. Game-directory matches remain unverified when exact file IDs are unavailable.
+- Remember choices for the ten most recent collections. Reopening the same revision restores selections; a newer revision starts with current defaults and a review notice.
+- Guide collection downloads awaiting Nexus authorization one file at a time, with live queue progress, page reopening, and batch retry for eligible download failures.
+- Read supported BG3 load orders from collection manifests. Review active, inactive, missing, and unmatched entries before saving a separate order to Redux's Load Order dropdown, without activating mods or changing the current order.
+- Add a right-hand save-details pane with the save screenshot, recorded location, game version, party members, levels, races, classes, and mod counts when available.
+- Show companion portraits and race-based placeholders for generic party members. Generic names become readable race labels; unknown metadata is preserved rather than guessed.
+- Review a save's recorded mods against the installed library. Show missing/inactive warnings and enrich known mod names, authors, and categories from the Redux database. Review remains available for any save with recorded mods, even without errors.
+- Activate selected installed inactive requirements from Save Mod Review with Undo support, without replacing, saving, or syncing the current order automatically.
+- Export selected saves or a campaign to ZIP, including thumbnails, with progress, cancellation, and checks for files that change during export.
+- Add save-list context actions for Review Mods, Export This Save, Export Campaign, and Show in Folder.
+- Persist inactive-mod ordering and separators automatically, using the existing drag-and-drop and Undo/Redo system. Inactive organization stays in Redux; Load Order Advisor remains active-only.
+- Rebuild Welcome Setup around game discovery, theme previews, local/Nexus setup, interactive load-order practice, and a saves/native-mod tour.
+- Add live onboarding Appearance controls for icon visibility, icons-only mode, category colors, gradients, fonts, and text size. Cancel restores the previous appearance.
+- Add an Organize step explaining custom categories and separators. Optionally choose from nine starter sections: Foundations, Interface, Character Creation, Classes & Subclasses, Spells, Gameplay, Equipment, Visuals, and Patches. Sections append without moving mods or duplicating existing names.
+- Reopen release notes through Help > What's New, with a remembered preference for whether they appear after updates.
+- Expand the UUID-backed mod catalog with 499 entries, plus four corroborated category records and four library-name aliases. Refresh Advisor category evidence without importing unverified ordering constraints.
+
+### Changed
+
+- Streamline Download Manager: add actions stay at the top; Install All, Pause All, Resume All, and Delete All sit together in Downloads. Installed and Archives have their own cleanup action rows.
+- Rename Inbox to Downloads, Remove to Delete for packages, Open Archives to Open Folder, and archive cleanup to Delete All with red destructive styling. Bulk download deletion confirms once and preserves installed content and retained archives.
+- Show NXM association and archive retention as compact status/checkbox controls at the bottom of their relevant tabs. Use Nexus source styling for Paste NXM Link and Import Nexus Collection.
+- Allow explicitly requested collection files to be downloaded again when old installed history exists, retaining the previous archive.
+- Unify thumbnail sizes, title/metadata fonts, status placement, action spacing, and semantic button styling across Downloads, Saves, Game-Directory Mods, and Save Mod Review.
+- Show save type, difficulty, campaign, date, and size as readable metadata. Identify autosaves/quicksaves, use muted campaign counts, and match collapse controls to the rest of Redux.
+- Place save warnings consistently with game-directory warnings. Match row hover and selection to warning status, and smoothly transition Review Mods between muted, available, and warning states. Save Load Order uses the same transition in green.
+- Give installable child windows matching drag-and-drop cards, icons, borders, dimming, and blur. Block drops into a dimmed owner while a child window is active, and keep confirmation dialogs with their owning window.
+- Use matching clickable sorted-view notices in both mod panes. Make the # column optional, visible by default in Active Mods and hidden in Inactive Mods. Column-menu order follows the user's column arrangement, with icons/checkmarks and a consistent drag indicator.
+- Merge Quick Links into Help > Links & Folders. Use Ctrl+1 through Ctrl+4 for Mods, Game, Extender Logs, and Saves; retain the Redux update-availability dot.
+- Replace legacy yellow/blinking Script Extender menu text with a quiet missing-loader indicator. Move Generate Redux Database Contribution to Help.
+- Simplify game-directory mod cards, replace bulky status pills with concise information, enlarge thumbnails, and clarify ownership and protected-backup status.
+- Merge save file/folder installation under Install Save, and label folder navigation Saves Folder. Match the install menu's hover and selection colors to its action.
+- Refine Preferences grouping, responsive toolbar layouts, dialog focus, keyboard/accessibility labels, and review wording. Keep actions reachable while long content scrolls.
+- Use concise What's New headings, theme-aware release-note colors, and shared dialog backdrops. Hide release-control comments and internal announcement wording.
+- Preserve Redux/platform/action icons throughout onboarding, respect hidden-icon settings, and use reduced-motion-aware page and expander transitions.
+- Keep dev as a validation branch without downloadable release builds. Public releases belong to main, and Nexus descriptions include changes and additions as well as fixes.
+
+### Fixed
+
+- Restore reliable Save Manager context menus, including grouped campaign rows, standard icon/text styling, and Review Mods availability matching the toolbar.
+- Keep malformed save mod records visible as Needs attention instead of dropping them. Distinguish empty saves from unreadable metadata.
+- Remember the Script Extender export-default-values preference across restart and config reloads.
+- Allow explicit Nexus-link reassociation after another manager takes ownership, even when Redux's old ownership marker remains.
+- Stop identifying the base-game Bink DLL or an identical leftover backup as Native Mod Loader.
+- Apply Parchment's default Segoe UI font during setup while retaining explicit font overrides. Fix stuck expander hover and incomplete expansion states.
+- Correct clipped Nexus logos, missing menu icons, manager button-icon alignment, and theme/backdrop inconsistencies.
+- Remove an invalid database ordering record and correct four library dependency-name aliases.
+
+### Known limitations
+
+- Collection installer rules and instructions are not applied. Only an explicit supported BG3 load order can be saved; a collection without one keeps Save Load Order unavailable. Follow the collection author's instructions.
+- Free Nexus accounts still need a Mod Manager Download authorization for each file. Collection previews currently use the latest published revision; requested older revisions are rejected rather than silently substituted.
+- Different Nexus file IDs do not prove that one file is a newer version. Native matches without exact file identities remain unverified.
+- Save Mod Review compares recorded UUIDs; it does not verify dependency chains, required versions, or native mods. Save details and portraits depend on available metadata.
+- Save exports are limited to 32 saves, 1 GB total, and 256 MB per file. Export larger campaigns in smaller selections.
+- Native ownership records and protected backups remain local to each Redux installation. Switching folders does not migrate them.
+- Unexpected administrator warnings (#95) still need reporter diagnostics.
+
 
 ## 0.1.0-alpha.16.3.5 — silent public-alpha maintenance release
 

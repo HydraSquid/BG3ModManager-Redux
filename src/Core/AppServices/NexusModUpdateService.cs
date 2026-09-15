@@ -37,13 +37,13 @@ public sealed class NexusModUpdateService
 		Load();
 	}
 
-	public IReadOnlyList<NexusModUpdateResult> GetCachedResults(IEnumerable<NexusInstalledFile> installed)
+	public IReadOnlyList<NexusModUpdateResult> GetCachedResults(IEnumerable<NexusUpdateInstalledFile> installed)
 	{
 		var references = _acknowledgements.Read();
 		return installed.Select(file => CachedResult(file, references)).OrderBy(result => result.Status).ThenBy(result => result.Name).ToArray();
 	}
 
-	private NexusModUpdateResult CachedResult(NexusInstalledFile file, IReadOnlyList<NexusUpdateAcknowledgement> references)
+	private NexusModUpdateResult CachedResult(NexusUpdateInstalledFile file, IReadOnlyList<NexusUpdateAcknowledgement> references)
 	{
 		var reference = NexusUpdateAcknowledgements.Find(references, file);
 		if (!_cache.Projects.TryGetValue(file.ModId, out var entry)) return NexusModUpdateEvaluator.Evaluate(file, null) with { Acknowledgement = reference };
@@ -72,7 +72,7 @@ public sealed class NexusModUpdateService
 		return result;
 	}
 
-	public async Task SetReferenceAsync(NexusInstalledFile installed, long fileId, CancellationToken cancellationToken = default)
+	public async Task SetReferenceAsync(NexusUpdateInstalledFile installed, long fileId, CancellationToken cancellationToken = default)
 	{
 		await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
 		try
@@ -93,9 +93,9 @@ public sealed class NexusModUpdateService
 		finally { _gate.Release(); }
 	}
 
-	public void ResetReference(NexusInstalledFile installed) => _acknowledgements.Reset(installed);
+	public void ResetReference(NexusUpdateInstalledFile installed) => _acknowledgements.Reset(installed);
 
-	public async Task<NexusUpdateRun> CheckAsync(IReadOnlyList<NexusInstalledFile> installed, string apiKey,
+	public async Task<NexusUpdateRun> CheckAsync(IReadOnlyList<NexusUpdateInstalledFile> installed, string apiKey,
 		Func<bool> checksAllowed, IProgress<NexusUpdateProgress> progress = null, CancellationToken cancellationToken = default)
 	{
 		if (!await _gate.WaitAsync(0, cancellationToken).ConfigureAwait(false))

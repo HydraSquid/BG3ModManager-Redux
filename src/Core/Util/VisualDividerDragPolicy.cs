@@ -1,4 +1,4 @@
-using DivinityModManager.Models;
+﻿using DivinityModManager.Models;
 
 namespace DivinityModManager.Util;
 
@@ -15,7 +15,7 @@ public static class VisualDividerDragPolicy
 	}
 
 	public static bool CanDropOnPane(IEnumerable<DivinityModData> items, bool destinationActive) =>
-		destinationActive || !ContainsVisualDivider(items);
+		items.All(item => item?.IsVisualDivider != true || !item.IsVisualDividerCollapsed || item.IsActive == destinationActive);
 
 	public static IReadOnlyList<DivinityModData> ResolveDragItems(
 		IEnumerable<DivinityModData> visualItems,

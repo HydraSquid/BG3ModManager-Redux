@@ -119,8 +119,31 @@ public class ModListView : ListView
 		}
 	}
 
+    private void StyleColumnDropIndicator()
+    {
+        foreach (var presenter in this.FindVisualChildren<GridViewHeaderRowPresenter>())
+        {
+            for (var index = 0; index < System.Windows.Media.VisualTreeHelper.GetChildrenCount(presenter); index++)
+            {
+                if (System.Windows.Media.VisualTreeHelper.GetChild(presenter, index) is not Separator indicator) continue;
+                indicator.SetResourceReference(Control.TemplateProperty, "ReduxColumnDropIndicatorTemplate");
+                indicator.Width = 6;
+                indicator.IsHitTestVisible = false;
+            }
+        }
+    }
+
 	public ModListView() : base()
 	{
+        Loaded += (_, _) => StyleColumnDropIndicator();
+        AddHandler(GridViewColumnHeader.PreviewMouseLeftButtonDownEvent,
+            new MouseButtonEventHandler((_, e) =>
+            {
+                if (e.OriginalSource is DependencyObject source &&
+                    (source is GridViewColumnHeader || source.FindVisualParent<GridViewColumnHeader>() != null))
+                    StyleColumnDropIndicator();
+            }), true);
+
 		if (!HideHeader)
 		{
 			Loaded += (o, e) =>
@@ -129,7 +152,8 @@ public class ModListView : ListView
 				if (this.View is GridView grid)
 				{
 					//Capture user-resizing of the name column to disable auto-resizing
-					var nameColumn = grid.Columns[1];
+					var nameColumn = grid.Columns.FirstOrDefault(column => column.Header as string == "Name"
+                        || column.Header is TextBlock text && text.Text == "Name");
 					if (nameColumn != null)
 					{
 						pd.AddValueChanged(nameColumn, NameColumnWidthChanged);

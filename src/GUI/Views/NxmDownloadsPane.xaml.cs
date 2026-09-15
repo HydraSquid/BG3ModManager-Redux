@@ -150,7 +150,16 @@ public partial class NxmDownloadsPane : UserControl
 		ClearHistoryButton.IsEnabled = hasInstalled;
 		ClearArchivesButton.Visibility = DownloadsTabs.SelectedIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
 		ClearArchivesButton.IsEnabled = _viewModel?.RetainedPackageArchives.Count > 0;
-		OpenFolderText.Text = DownloadsTabs.SelectedIndex == 2 ? "Open Archives" : "Open Folder";
+		OpenFolderText.Text = "Open Folder";
+		var pending = DownloadsTabs.SelectedIndex == 0;
+		var archives = DownloadsTabs.SelectedIndex == 2;
+		InstallActions.Visibility = RemovalActions.Visibility = SelectAllDownloadsCheckBox.Visibility = archives ? Visibility.Collapsed : Visibility.Visible;
+		TransferActions.Visibility = InstallAllButton.Visibility = DeleteAllDownloadsButton.Visibility = pending ? Visibility.Visible : Visibility.Collapsed;
+		ArchiveRetentionPanel.Visibility = archives ? Visibility.Visible : Visibility.Collapsed;
+		DeleteAllDownloadsButton.IsEnabled = hasPending && _viewModel?.DownloadManagerInstallIsActive != true;
+		InstallActions.IsEnabled = _viewModel?.DownloadManagerInstallIsActive != true;
+		RemovalActions.IsEnabled = _viewModel?.DownloadManagerInstallIsActive != true;
+		UpdateSelectAllState();
 	}
 
 	private static NxmDownloadItem Item(object sender) => (sender as FrameworkElement)?.Tag as NxmDownloadItem;
@@ -185,9 +194,10 @@ public partial class NxmDownloadsPane : UserControl
 		UpdateAssociationButton();
 	}
 
-	private IReadOnlyList<NxmDownloadItem> SelectedDownloads() => InboxDownloadsList.SelectedItems
+	private ListBox CurrentDownloadsList => DownloadsTabs.SelectedIndex == 1 ? HistoryDownloadsList : InboxDownloadsList;
+
+	private IReadOnlyList<NxmDownloadItem> SelectedDownloads() => CurrentDownloadsList.SelectedItems
 		.OfType<NxmDownloadItem>()
-		.Concat(HistoryDownloadsList.SelectedItems.OfType<NxmDownloadItem>())
 		.GroupBy(item => item.Id, StringComparer.Ordinal)
 		.Select(group => group.First())
 		.ToArray();
@@ -225,6 +235,18 @@ public partial class NxmDownloadsPane : UserControl
 	private async void DependenciesButton_Click(object sender, RoutedEventArgs e) => await RunCommandAsync(() => _viewModel?.ReviewNxmDownloadDependenciesAsync(Item(sender), Window.GetWindow(this)) ?? Task.CompletedTask);
 	private async void RemoveButton_Click(object sender, RoutedEventArgs e) => await RunCommandAsync(() => _viewModel?.RemoveNxmDownloadAsync(Item(sender)) ?? Task.CompletedTask);
 	private async void ClearHistoryButton_Click(object sender, RoutedEventArgs e) => await RunCommandAsync(() => _viewModel?.ClearInstalledNxmHistoryAsync() ?? Task.CompletedTask);
+	private async void DeleteAllDownloadsButton_Click(object sender, RoutedEventArgs e) => await RunCommandAsync(() => _viewModel?.DeleteAllNxmDownloadsAsync(Window.GetWindow(this)) ?? Task.CompletedTask);
+	private void ArchiveRetentionCheckBox_Click(object sender, RoutedEventArgs e) => _viewModel?.SaveSettings();
+	private void ImportCollectionButton_Click(object sender, RoutedEventArgs e)
+	{
+		if (_viewModel != null) new ReduxCollectionWindow(Window.GetWindow(this), _viewModel).ShowDialog();
+	}
+	private async void OpenManagerButton_Click(object sender, RoutedEventArgs e) => await RunCommandAsync(async () =>
+	{
+		if (_viewModel == null || Window.GetWindow(this) is not MainWindow owner) return;
+		await _viewModel.EnsureNxmDownloadsInitializedAsync();
+		new ReduxNexusDownloadsWindow(owner, _viewModel).ShowDialog();
+	});
 	private async void ClearArchivesButton_Click(object sender, RoutedEventArgs e) => await RunCommandAsync(() => _viewModel?.ClearRetainedPackageArchivesAsync(Window.GetWindow(this)) ?? Task.CompletedTask);
 	private async void ReinstallArchiveButton_Click(object sender, RoutedEventArgs e) => await RunCommandAsync(() =>
 		_viewModel?.ReinstallRetainedPackageAsync((sender as FrameworkElement)?.Tag as RetainedPackageArchiveEntry, Window.GetWindow(this)) ?? Task.CompletedTask);
@@ -305,15 +327,15 @@ public partial class NxmDownloadsPane : UserControl
 
 	private void SelectAllDownloads_Click(object sender, RoutedEventArgs e)
 	{
-		if (SelectAllDownloadsCheckBox.IsChecked == true) InboxDownloadsList.SelectAll();
-		else InboxDownloadsList.UnselectAll();
+		if (SelectAllDownloadsCheckBox.IsChecked == true) CurrentDownloadsList.SelectAll();
+		else CurrentDownloadsList.UnselectAll();
 		UpdateSelectAllState();
 	}
 
 	private void UpdateSelectAllState()
 	{
-		var count = InboxDownloadsList.Items.Count;
-		var selected = InboxDownloadsList.SelectedItems.Count;
+		var count = CurrentDownloadsList.Items.Count;
+		var selected = CurrentDownloadsList.SelectedItems.Count;
 		SelectAllDownloadsCheckBox.IsChecked = selected == 0 ? false : selected == count ? true : null;
 	}
 }

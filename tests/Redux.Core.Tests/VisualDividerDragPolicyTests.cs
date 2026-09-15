@@ -1,4 +1,4 @@
-using DivinityModManager.Models;
+﻿using DivinityModManager.Models;
 using DivinityModManager.Util;
 
 using System;
@@ -9,14 +9,48 @@ namespace Redux.Core.Tests;
 
 public sealed class VisualDividerDragPolicyTests
 {
-	public void InactivePaneRejectsSeparatorPayloadBeforeShowingDropFeedback()
+	public void EstablishedSectionsFollowTheirMembersAfterMultiModChanges()
+	{
+		var addedFirst = CreateMod("added-first");
+		var addedSecond = CreateMod("added-second");
+		var firstMember = CreateMod("first-member");
+		var secondMember = CreateMod("second-member");
+		var divider = new ModListVisualDividerData
+		{
+			Id = "section", IsActiveList = true, Position = 0,
+			MemberModUuids = [firstMember.UUID, secondMember.UUID]
+		};
+
+		var changed = VisualDividerSectionPolicy.ReanchorPositionsToMembers(
+			new[] { addedFirst, addedSecond, firstMember, secondMember },
+			new[] { divider },
+			activeList: true);
+
+		RegressionAssert.True(changed);
+		RegressionAssert.Equal(2, divider.Position);
+		var projected = VisualDividerSectionPolicy.BuildVisualSequence(
+			new[] { addedFirst, addedSecond, firstMember, secondMember },
+			new[] { divider },
+			activeList: true,
+			_ => CreateDivider("section", collapsed: false));
+		RegressionAssert.SequenceEqual(
+			new[] { addedFirst, addedSecond, projected[2], firstMember, secondMember },
+			projected);
+	}
+
+	public void InactivePaneAcceptsSeparatorsAndKeepsClosedBlocksInTheirPane()
 	{
 		var divider = CreateDivider("section", collapsed: false);
 		var mod = CreateMod("ordinary-mod");
 
 		RegressionAssert.True(VisualDividerDragPolicy.ContainsVisualDivider(new[] { divider }));
 		RegressionAssert.False(VisualDividerDragPolicy.ContainsVisualDivider(new[] { mod }));
-		RegressionAssert.False(VisualDividerDragPolicy.CanDropOnPane(new[] { divider }, destinationActive: false));
+		RegressionAssert.True(VisualDividerDragPolicy.CanDropOnPane(new[] { divider }, destinationActive: false));
+		divider.IsVisualDividerCollapsed = true;
+		divider.IsActive = false;
+		RegressionAssert.True(VisualDividerDragPolicy.CanDropOnPane(new[] { divider }, destinationActive: false));
+		RegressionAssert.False(VisualDividerDragPolicy.CanDropOnPane(new[] { divider }, destinationActive: true));
+		divider.IsVisualDividerCollapsed = false;
 		RegressionAssert.True(VisualDividerDragPolicy.CanDropOnPane(new[] { divider }, destinationActive: true));
 		RegressionAssert.True(VisualDividerDragPolicy.CanDropOnPane(new[] { mod }, destinationActive: false));
 	}

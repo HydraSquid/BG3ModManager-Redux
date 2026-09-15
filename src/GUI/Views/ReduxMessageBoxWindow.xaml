@@ -89,7 +89,7 @@
 				<WrapPanel x:Name="ExtraActionsPanel" />
 				<Button x:Name="NoButton" MinWidth="80" Margin="8,4,0,4" Style="{StaticResource ReduxSecondaryActionButtonStyle}" Click="NoButton_Click" Visibility="Collapsed">
 					<StackPanel Orientation="Horizontal">
-						<controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0"
+						<controls:ReduxIcon VerticalAlignment="Center" Width="14" Height="14" Margin="0,0,6,0"
 							Foreground="{DynamicResource ReduxTextPrimaryBrush}"
 							StrokeData="{StaticResource Redux.Icon.Close}" />
 						<TextBlock x:Name="NoButtonLabel" Text="No" />
@@ -97,7 +97,7 @@
 				</Button>
 				<Button x:Name="CancelButton" MinWidth="80" Margin="8,4,0,4" Style="{StaticResource ReduxSecondaryActionButtonStyle}" Click="CancelButton_Click" Visibility="Collapsed" IsCancel="True">
 					<StackPanel Orientation="Horizontal">
-						<controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0"
+						<controls:ReduxIcon VerticalAlignment="Center" Width="14" Height="14" Margin="0,0,6,0"
 							Foreground="{DynamicResource ReduxTextPrimaryBrush}"
 							StrokeData="{StaticResource Redux.Icon.Close}" />
 						<TextBlock x:Name="CancelButtonLabel" Text="Cancel" />
@@ -105,7 +105,7 @@
 				</Button>
 				<Button x:Name="YesButton" MinWidth="80" Margin="8,4,0,4" Style="{StaticResource ReduxPrimaryActionButtonStyle}" Click="YesButton_Click" Visibility="Collapsed">
 					<StackPanel Orientation="Horizontal">
-						<controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0"
+						<controls:ReduxIcon VerticalAlignment="Center" Width="14" Height="14" Margin="0,0,6,0"
 							Foreground="{DynamicResource ReduxAccentForegroundBrush}"
 							StrokeData="{StaticResource Redux.Icon.Check}" />
 						<TextBlock x:Name="YesButtonLabel" Text="Yes" />
@@ -113,7 +113,7 @@
 				</Button>
 				<Button x:Name="OkButton" MinWidth="80" Margin="8,4,0,4" Style="{StaticResource ReduxPrimaryActionButtonStyle}" Click="OkButton_Click" Visibility="Collapsed">
 					<StackPanel Orientation="Horizontal">
-						<controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0"
+						<controls:ReduxIcon VerticalAlignment="Center" Width="14" Height="14" Margin="0,0,6,0"
 							Foreground="{DynamicResource ReduxAccentForegroundBrush}"
 							StrokeData="{StaticResource Redux.Icon.Check}" />
 						<TextBlock x:Name="OkButtonLabel" Text="OK" />

@@ -20,9 +20,9 @@ internal sealed class LoadOrderAdvisorKnowledgeTests
 	{
 		var knowledge = ReduxModDatabaseService.LoadOrderAdvisorKnowledge;
 
-		RegressionAssert.Equal(10124, knowledge.EntryCount);
+		RegressionAssert.Equal(10626, knowledge.EntryCount);
 		RegressionAssert.Equal(30, knowledge.GroupCount);
-		RegressionAssert.Equal(5, knowledge.DependencyAliasCount);
+		RegressionAssert.Equal(9, knowledge.DependencyAliasCount);
 		RegressionAssert.Equal(3, knowledge.DependencySubstituteCount);
 		RegressionAssert.True(knowledge.TryGetGroupPosition("Resources", out var resources));
 		RegressionAssert.True(knowledge.TryGetGroupPosition("Utilities", out var utilities));
@@ -52,6 +52,26 @@ internal sealed class LoadOrderAdvisorKnowledgeTests
 			out var resolvedSubstitute));
 		RegressionAssert.Equal(substitute.UUID, resolvedSubstitute);
 	}
+
+    public void LibraryListingAliasesResolveOnlyInstalledModules()
+    {
+        var knowledge = ReduxModDatabaseService.LoadOrderAdvisorKnowledge;
+        var aliases = new Dictionary<string, string>
+        {
+            ["Mod Configuration Menu (MCM)"] = "755a8a72-407f-4f0d-9a33-274ac0f0b53d",
+            ["Baldur's Gate 3 Community Library"] = "396c5966-09b0-40a1-af3f-93a5e9ce71c0",
+            ["Fade's Equipment Distribution (FED)"] = "3baef2b9-80d3-777b-a256-394f7f7be0d8",
+            ["Goon's Library - Passives Functions Spells and More"] = "07fbc2f1-f359-4b9d-b243-fe28bd783e4c"
+        };
+        foreach (var alias in aliases)
+        {
+            var installed = new Dictionary<string, DivinityModData> { [alias.Value] = CreateMod(alias.Value, "Local module name") };
+            RegressionAssert.True(knowledge.TryResolveInstalledDependency(String.Empty, alias.Key, installed, out var resolved));
+            RegressionAssert.Equal(alias.Value, resolved);
+            installed.Clear();
+            RegressionAssert.False(knowledge.TryResolveInstalledDependency(String.Empty, alias.Key, installed, out _));
+        }
+    }
 
 	public void OfflineDependencyFactsExtendTheExistingAdvisor()
 	{

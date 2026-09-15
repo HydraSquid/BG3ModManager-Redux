@@ -217,6 +217,25 @@ public sealed class ReduxLoadOrderEntryKnowledge
 	[JsonProperty("dependencies")] public List<ReduxLoadOrderDependencyKnowledge> Dependencies { get; set; } = new();
 	[JsonProperty("loadAfter")] public List<ReduxLoadAfterKnowledge> LoadAfter { get; set; } = new();
 	[JsonProperty("loadsAfterDependents")] public bool LoadsAfterDependents { get; set; }
+	[JsonProperty("evidence")] public ReduxPlacementEvidence Evidence { get; set; }
+}
+
+public sealed class ReduxPlacementEvidence
+{
+	[JsonProperty("basis")] public string Basis { get; set; }
+	[JsonProperty("confidence")] public double? Confidence { get; set; }
+
+	// These describe where a category came from, not the likelihood of compatibility.
+	public string Label => Basis switch
+	{
+		"curated" => "Curated placement",
+		"section" or "section-majority" => "Community placement",
+		"external-category" => "Provider category",
+		"name-pattern" => "Name-based suggestion",
+		"author-catalogue" => "Author-category suggestion",
+		"inferred" => "Inferred placement",
+		_ => "Unverified placement"
+	};
 }
 
 public sealed class ReduxLoadOrderDependencyKnowledge

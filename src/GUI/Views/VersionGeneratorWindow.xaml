@@ -179,7 +179,7 @@
 							MinWidth="88"
 							Style="{StaticResource ReduxPrimaryActionButtonStyle}">
 							<StackPanel Orientation="Horizontal">
-								<controls:ReduxIcon Width="14"
+								<controls:ReduxIcon VerticalAlignment="Center" Width="14"
 									Height="14"
 									Margin="0,0,6,0"
 									Foreground="{DynamicResource ReduxAccentForegroundBrush}"
@@ -192,9 +192,9 @@
 							Grid.Column="2"
 							Margin="8,0,0,0"
 							MinWidth="88"
-							Style="{StaticResource ReduxWarningActionButtonStyle}">
+							Style="{StaticResource ReduxMinorWarningActionButtonStyle}">
 							<StackPanel Orientation="Horizontal">
-								<controls:ReduxIcon Width="14"
+								<controls:ReduxIcon VerticalAlignment="Center" Width="14"
 									Height="14"
 									Margin="0,0,6,0"
 									Foreground="{DynamicResource ReduxWarningBrush}"

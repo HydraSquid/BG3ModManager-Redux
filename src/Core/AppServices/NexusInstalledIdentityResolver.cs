@@ -32,7 +32,7 @@ public sealed class NexusInstalledIdentityResolver
 		_resolveBundledPak = resolveBundledPak ?? ReduxModDatabaseService.TryResolvePakAsync;
 	}
 
-	public async Task<NexusInstalledFile> ResolveAsync(NexusInstalledFile installed,
+	public async Task<NexusUpdateInstalledFile> ResolveAsync(NexusUpdateInstalledFile installed,
 		IReadOnlyList<NexusRetainedDownload> evidence, CancellationToken token = default)
 	{
 		ArgumentNullException.ThrowIfNull(installed);
@@ -97,7 +97,7 @@ public sealed class NexusInstalledIdentityResolver
 		catch (Exception ex) when (IsLocalReadFailure(ex)) { return Unreadable(installed); }
 	}
 
-	private async Task AddBundledMatchAsync(NexusInstalledFile installed, List<VerifiedFile> matches,
+	private async Task AddBundledMatchAsync(NexusUpdateInstalledFile installed, List<VerifiedFile> matches,
 		CancellationToken token)
 	{
 		if (installed.ModId <= 0 || String.IsNullOrWhiteSpace(installed.FilePath)) return;
@@ -183,7 +183,7 @@ public sealed class NexusInstalledIdentityResolver
 	private static async Task<string> ComputeSha256Async(Stream input, CancellationToken token) =>
 		Convert.ToHexString(await SHA256.HashDataAsync(input, token).ConfigureAwait(false)).ToLowerInvariant();
 
-	private static NexusInstalledFile Unreadable(NexusInstalledFile installed) => installed with
+	private static NexusUpdateInstalledFile Unreadable(NexusUpdateInstalledFile installed) => installed with
 	{
 		HasExactFileIdentity = false,
 		PackageSha256 = String.Empty,
@@ -191,7 +191,7 @@ public sealed class NexusInstalledIdentityResolver
 		IdentityDescription = "The installed download was not identified because its package could not be read."
 	};
 
-	private static NexusInstalledFile TooManyCandidates(NexusInstalledFile installed, string packageSha256) => installed with
+	private static NexusUpdateInstalledFile TooManyCandidates(NexusUpdateInstalledFile installed, string packageSha256) => installed with
 	{
 		FileId = 0,
 		HasExactFileIdentity = false,
@@ -200,7 +200,7 @@ public sealed class NexusInstalledIdentityResolver
 		IdentityDescription = "Too many retained Nexus download candidates were found to identify the installed download safely."
 	};
 
-	private static NexusInstalledFile Unverified(NexusInstalledFile installed, string packageSha256)
+	private static NexusUpdateInstalledFile Unverified(NexusUpdateInstalledFile installed, string packageSha256)
 	{
 		var hasRecordedIdentity = installed.FileId > 0 && (String.IsNullOrEmpty(installed.PackageSha256)
 			|| String.Equals(installed.PackageSha256, packageSha256, StringComparison.OrdinalIgnoreCase));

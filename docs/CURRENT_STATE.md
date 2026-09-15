@@ -1,19 +1,72 @@
-# Current project state
+﻿# Current project state
 
 This page records the decisions and boundaries that define Redux today. It is the first reference
 to check before changing established behavior. The [changelog](CHANGELOG.md) records what shipped,
 the [issue tracker](https://github.com/circleainn/BG3ModManager-Redux/issues) tracks individual
 reports and proposals, and the source and tests remain authoritative for implementation details.
 
-Last reviewed: September 12, 2026, for `v0.1.0-alpha.16.3.5`.
+Last reviewed: September 14, 2026. Public baseline: `v0.1.0-alpha.16.4.1`; maintenance candidate: `v0.1.0-alpha.16.4.2`.
+
+Save Manager now exports selected saves or a selected campaign to ZIP, including thumbnails,
+with progress and cancellation. Export retains the import limits: 32 saves, 1 GB total and
+256 MB per file; larger campaigns require smaller selections. Round-trip and cancellation
+regressions pass; real campaign export/restore and cancellation still need a live check.
+
+## Development status
+
+Welcome Setup includes an optional starter-separator selection after the load-order tour. Chosen sections append to Active Mods through the existing separator/Undo workflow; matching active-section names are skipped and existing mods are not reordered. Canceling setup adds nothing. Downloads bulk deletion confirms once, skips installed/installing entries, and reuses the existing cancellation and package recycling path.
+
+Collection previews support text search and status filters, with visible-row bulk selection and preserved hidden choices. Batch recovery retries eligible failed downloads only, excluding installation and rollback failures. Saving a collection order now opens the shared mod-review window in a read-only review mode before confirmation; it retains missing entries and never activates mods or changes the current order.
+
+Collection installer groundwork now includes a BG3 collection-link parser and a bounded Nexus
+GraphQL preview reader. It preserves multiple files per mod and unavailable entries, rejects
+partial responses, and does not substitute the latest revision for a requested older revision.
+Download Manager now opens a themed collection preview with optional-file selection and
+duplicate-queue checks, and sends selected files through the existing NXM queue. Free accounts
+still require file-specific Nexus authorization. Live download verification,
+older revisions, collection manifest instructions, and shared preview rate-limit integration remain.
+The collection window can read explicit enabled BG3 UUID ordering from collection.json and save it as a separate Redux order. It does not apply the order or modify inactive mods. Metadata preview has been verified against a live collection; authenticated manifest retrieval has now been checked against pns4qv revision 150 (its loadOrder array is empty). The same reader successfully parsed 1,589 ordered entries from DUNGEON (f3iqts), revision 45. End-to-end saving and choosing a populated order in the running app still needs a check. Installer rules are not applied.
+
+Collection choices are stored separately from download authorization for the ten most recent collections. Reopening restores the last link; Recent collections imports a saved collection and restores selections only for the same revision. Changed revisions show a review notice and use current defaults.
+
+Collection imports now guide queued files awaiting Nexus authorization one page at a time. The guide advances on queue-state changes, supports reopening the current file, and derives progress from existing queue records. End-to-end free-account NXM handoff still needs a live check.
+
+Collection previews compare exact Nexus mod/file IDs against existing PAKs in both active and inactive panes and mark uncertain same-project matches separately. Game-directory detections have no exact file ID and remain unverified. No newer-version claim is inferred from file ID ordering. Installed history can be reacquired through the existing download pipeline if the installed file is no longer detected.
+
+The accumulated work is assigned to the alpha.16.4 update. Dev runs build and regression
+checks but publishes no downloadable portable build or release; main owns public releases.
+The Unreleased changelog is reserved for work after the 16.4.2 maintenance release.
+
+Alpha.16.4.1 fixes separator regressions reported in #121 and #123: filtered views hide separators,
+bulk collapse/expand no longer fades the whole recycled list, established sections re-anchor to their
+recorded mods, and active separators are stored with each saved load order. It also hardens the
+incoming updater against short-lived Windows locks and read-only application files for #122.
+
+Alpha.16.4.2 restores safe bulk separator motion using realized rows, adds the matching bulk
+collapse/expand control to Inactive Mods, and removes the cursor dead zone between nested menu levels.
+
+Inactive ordering and separators (#111), Script Extender export preference persistence (#119),
+and NXM reassociation recovery (#120) shipped in 16.4 and their issues are closed. Shared window
+refinement (#113) and collection importing (#108) are also closed for the accepted 16.4 scope.
+Direct collection NXM activation is not implemented; it remains a possible separate enhancement.
+The broader UI pass still benefits from live checks with custom themes and enlarged text. Issue
+#95 is closed as resolved for now at the maintainer’s request; reopen if a current-build report recurs. Native ownership and protected backups remain
+local to each Redux installation; changing to another folder does not migrate those records.
+
+See [the next-update audit](NEXT_UPDATE_AUDIT.md) for issue status and remaining release checks.
 
 ## Current release
+
+Save Mod Review reads save metadata and offers reviewed activation of installed inactive mods
+using existing ordering and Undo behavior. It does not verify versions, dependencies, or native
+mods, and never saves or syncs automatically.
+
 
 | Item | Current value |
 |:--|:--|
 | Product | Baldur's Gate 3 Mod Manager Redux |
 | Short name | Redux |
-| Latest version | `0.1.0-alpha.16.3.5` |
+| Latest version | `0.1.0-alpha.16.4.2` |
 | Lifecycle | Public alpha |
 | Supported platform | Windows 10/11 x64 |
 | Required runtime | .NET 8 Desktop Runtime |
@@ -23,7 +76,7 @@ Last reviewed: September 12, 2026, for `v0.1.0-alpha.16.3.5`.
 | Update channel | `public-alpha` |
 | Active milestone | `v0.1.0 – Public Alpha` |
 
-The release tag is `v0.1.0-alpha.16.3.5`. Always verify the live branches and releases before
+The maintenance release tag is `v0.1.0-alpha.16.4.2`. Always verify the live branches and releases before
 preparing another publication.
 
 ## What Redux is
@@ -125,8 +178,9 @@ The full publishing and recovery contract is in
 - Creator manifests and contribution reports provide evidence for review. They do not override
   parsed package identity or authorize automatic database changes.
 - Categories and separators are Redux presentation data and never enter `modsettings.lsx`.
-- Separators belong to Active Mods. Invalid drops must be rejected cleanly without leaving a drag
-  marker behind.
+- Separators can organize Active and Inactive Mods. Inactive ordering is saved in Redux settings,
+  shared across saved active orders, and never exported to the game. Column sorting is view-only.
+  Closed separator blocks move within their current pane; invalid drops leave no drag marker.
 
 ### Saving, syncing, diagnostics, and advice
 
@@ -135,7 +189,8 @@ The full publishing and recovery contract is in
 - Mod Diagnostics is built-in and read-only. It explains known package facts but does not repair,
   download, remove, activate, reorder, or sync anything.
 - Load Order Advisor is optional and experimental. Its organizer is deterministic, preview-first,
-  separator-aware, undoable, and unsaved until the user chooses to save.
+  separator-aware, undoable, and unsaved until the user chooses to save. The Advisor operates only
+  on Active Mods and must leave inactive ordering and separators untouched.
 - Unknown relationships remain unknown. Guidance must not imply certainty that the available data
   does not support.
 - Redux Modlists can carry order and selected presentation data, but never PAKs, saves, profiles,
@@ -170,19 +225,14 @@ The full publishing and recovery contract is in
 
 ## Current reports and planned work
 
-The issue tracker is the live source. At the time of this review, the public reports still needing
-attention were:
+The issue tracker is the live source. The 16.4 audit closed #108, #111, #113, #119, and #120 for the
+shipped scope. #95 is resolved for now based on the maintainer’s assessment, and #118 is not planned.
+Earlier fixes for window placement and save archive/discovery defects (#112, #114–116) remain closed.
 
-- Remembered window placement and save archive/discovery defects (#112, #114–116) are addressed in alpha.16.3.5.
-- [#95 — Elevation warning can appear unexpectedly](https://github.com/circleainn/BG3ModManager-Redux/issues/95), currently awaiting more reproduction information
+Open planned work:
 
-Accepted or proposed additions include:
-
-- [#113 — Streamline windows, warnings, and explanatory text](https://github.com/circleainn/BG3ModManager-Redux/issues/113)
-- [#111 — Separators and orders for Inactive Mods](https://github.com/circleainn/BG3ModManager-Redux/issues/111)
 - [#110 — Improve compatibility with Wine and Linux desktops](https://github.com/circleainn/BG3ModManager-Redux/issues/110)
 - [#109 — Manage Override mods when switching saved load orders](https://github.com/circleainn/BG3ModManager-Redux/issues/109)
-- [#108 — Explore Nexus Collections support](https://github.com/circleainn/BG3ModManager-Redux/issues/108)
 - [#98 — Add official Nexus Mods SSO account connection](https://github.com/circleainn/BG3ModManager-Redux/issues/98)
 - [#63 — Explore a docked or paged Managers workspace](https://github.com/circleainn/BG3ModManager-Redux/issues/63)
 - [#56 — Expand localization and accessibility support](https://github.com/circleainn/BG3ModManager-Redux/issues/56)

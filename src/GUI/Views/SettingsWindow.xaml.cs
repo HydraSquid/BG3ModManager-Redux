@@ -87,8 +87,10 @@ public partial class SettingsWindow : SettingsWindowBase
 			nameof(DivinityModManagerSettings.GameDataPath),
 			nameof(DivinityModManagerSettings.DocumentsFolderPathOverride),
 			nameof(DivinityModManagerSettings.LoadOrderPath)),
-		new("Package archive library",
+		new("Downloads and archives",
 			"Optionally keep verified install packages for later reinstall. This storage is separate from Download Manager history.",
+			nameof(DivinityModManagerSettings.NxmActiveDownloadLimit),
+			nameof(DivinityModManagerSettings.BringNxmDownloadsToFront),
 			nameof(DivinityModManagerSettings.RetainInstalledPackageArchives),
 			nameof(DivinityModManagerSettings.RetainedPackageArchiveQuotaGb)),
 		new("Game launch",
@@ -101,7 +103,7 @@ public partial class SettingsWindow : SettingsWindowBase
 			nameof(DivinityModManagerSettings.DisableLauncherTelemetry),
 			nameof(DivinityModManagerSettings.DisableLauncherModWarnings),
 			nameof(DivinityModManagerSettings.GameStoryLogEnabled)),
-		new("Mod-list workflow",
+		new("Mod lists and workspace",
 			"Adjust load-order editing, dependency handling, categories, and workspace behavior.",
 			nameof(DivinityModManagerSettings.AutoAddDependenciesWhenExporting),
 			nameof(DivinityModManagerSettings.HideEmptyModCategories),
@@ -109,7 +111,7 @@ public partial class SettingsWindow : SettingsWindowBase
 			nameof(DivinityModManagerSettings.SaveWindowLocation),
 			nameof(DivinityModManagerSettings.EnableColorblindSupport),
 			nameof(DivinityModManagerSettings.HideToolbar)),
-		new("Visual comfort",
+		new("Accessibility",
 			"Reduce motion or background effects for a quieter interface.",
 			nameof(DivinityModManagerSettings.ReduceMotion),
 			nameof(DivinityModManagerSettings.DisableBackgroundEffects)),
@@ -117,13 +119,16 @@ public partial class SettingsWindow : SettingsWindowBase
 			"Control source linking and experimental load-order guidance. Core diagnostics remain active.",
 			nameof(DivinityModManagerSettings.LocalOnlyMode),
 			nameof(DivinityModManagerSettings.EnableLoadOrderAdvisor)),
-		new("Metadata services",
+		new("Online accounts",
 			"Add optional provider keys for source details and update information.",
 			nameof(DivinityModManagerSettings.NexusModsAPIKey),
 			nameof(DivinityModManagerSettings.ModioAPIKey)),
-		new("Warnings and maintenance",
-			"Choose which update and safety notices Redux keeps active.",
+		new("Updates",
+			"Choose when Redux checks for updates and displays release notes.",
 			nameof(DivinityModManagerSettings.CheckForUpdates),
+			nameof(DivinityModManagerSettings.ShowWhatsNewAfterUpdates)),
+		new("Warnings",
+			"Choose which update and safety notices Redux keeps active.",
 			nameof(DivinityModManagerSettings.DeleteModCrashSanityCheck),
 			nameof(DivinityModManagerSettings.DisableMissingModWarnings))
 	];
@@ -622,15 +627,7 @@ public partial class SettingsWindow : SettingsWindowBase
 					Text = currentGroupTitle,
 					Style = FindResource("SettingsSubsectionTitleStyle") as Style
 				});
-				heading.Children.Add(new TextBlock
-				{
-					Text = group.Description,
-					Margin = new Thickness(0, 2, 0, 4),
-					Foreground = FindResource("ReduxTextMutedBrush") as System.Windows.Media.Brush,
-					FontSize = (double)FindResource("Redux.FontSize.10"),
-					TextWrapping = TextWrapping.Wrap,
-					HorizontalAlignment = HorizontalAlignment.Stretch
-				});
+				heading.ToolTip = group.Description;
 				targetGrid.Children.Add(heading);
 				Grid.SetRow(heading, row++);
 				Grid.SetColumnSpan(heading, 2);
@@ -836,6 +833,17 @@ public partial class SettingsWindow : SettingsWindowBase
 			SetTooltip:
 			if (createdObject != null)
 			{
+				System.Windows.Automation.AutomationProperties.SetName(createdObject, prop.Attribute.DisplayName);
+				System.Windows.Automation.AutomationProperties.SetHelpText(createdObject, tooltip ?? String.Empty);
+				tb.SetResourceReference(TextBlock.FontSizeProperty, "Redux.FontSize.12");
+				if (createdObject is Control control)
+				{
+					control.SetResourceReference(Control.FontSizeProperty, "Redux.FontSize.12");
+					control.MinHeight = 30;
+					control.VerticalAlignment = VerticalAlignment.Center;
+					if (control is not CheckBox) control.Padding = new Thickness(8, 4, 8, 4);
+					if (control is IntegerUpDown) control.Width = 104;
+				}
 				ApplyModuleAvailability(prop.Property.Name, tb, createdObject);
 			}
 			if (createdObject != null && !string.IsNullOrWhiteSpace(tooltip))

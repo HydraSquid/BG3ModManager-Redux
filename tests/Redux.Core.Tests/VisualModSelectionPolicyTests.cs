@@ -7,6 +7,18 @@ namespace Redux.Core.Tests;
 
 public sealed class VisualModSelectionPolicyTests
 {
+	public void TextFilteringUsesTheCleanModOnlyProjection()
+	{
+		RegressionAssert.True(VisualModFilterProjectionPolicy.ShouldShowSeparators(
+			"All Mods", "All Mods", string.Empty, metadataSorted: false));
+		RegressionAssert.False(VisualModFilterProjectionPolicy.ShouldShowSeparators(
+			"All Mods", "All Mods", "camera", metadataSorted: false));
+		RegressionAssert.False(VisualModFilterProjectionPolicy.ShouldShowSeparators(
+			"Visuals", "All Mods", string.Empty, metadataSorted: false));
+		RegressionAssert.False(VisualModFilterProjectionPolicy.ShouldShowSeparators(
+			"All Mods", "All Mods", string.Empty, metadataSorted: true));
+	}
+
 	public void SelectAllIncludesOnlyVisibleModRows()
 	{
 		var first = CreateMod("first");

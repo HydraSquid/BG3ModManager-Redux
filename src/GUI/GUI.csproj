@@ -6,7 +6,7 @@
 		<UseWPF>true</UseWPF>
 		<TargetFramework>net8.0-windows10.0.22621.0</TargetFramework>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		
+
 		<RootNamespace>DivinityModManager</RootNamespace>
 
 		<StartupObject>DivinityModManager.Program</StartupObject>
@@ -15,9 +15,9 @@
 		<AssemblyName>Redux</AssemblyName>
 		<AssemblyTitle>Baldur's Gate 3 Mod Manager Redux</AssemblyTitle>
 
-		<AssemblyVersion>0.1.16.305</AssemblyVersion>
-		<FileVersion>0.1.16.305</FileVersion>
-		<InformationalVersion>0.1.0-alpha.16.3.5</InformationalVersion>
+		<AssemblyVersion>0.1.16.402</AssemblyVersion>
+		<FileVersion>0.1.16.402</FileVersion>
+		<InformationalVersion>0.1.0-alpha.16.4.2</InformationalVersion>
 		<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
 
 		<Product>Baldur's Gate 3 Mod Manager Redux</Product>
@@ -31,7 +31,7 @@
 
 		<GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
 		<GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-		
+
 		<Platforms>AnyCPU;x64</Platforms>
 		<PlatformTarget>x64</PlatformTarget>
 		<Nullable>annotations</Nullable>
@@ -45,11 +45,11 @@
 		<Optimize>False</Optimize>
 		<DebugType>full</DebugType>
 	</PropertyGroup>
-	
+
 	<ItemGroup>
 		<ProjectReference Include="..\Core\DivinityModManagerCore.csproj" />
 	</ItemGroup>
-	
+
 	<ItemGroup>
 		<PackageReference Include="AdonisUI" Version="1.17.1" />
 		<PackageReference Include="AdonisUI.ClassicTheme" Version="1.17.1" />
@@ -71,7 +71,7 @@
 		<PackageReference Include="WpfScreenHelper" Version="2.1.1" />
 		<PackageReference Include="ZstdSharp.Port" Version="0.8.5" />
 	</ItemGroup>
-	
+
 	<ItemGroup>
 		<Resource Include="Redux.ico" />
 		<None Include="Resources\*.json">
@@ -81,6 +81,7 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Resource>
 		<Resource Include="Resources\Icons\Platforms\*.png" />
+        <Resource Include="Resources\Icons\Companions\*.png" />
 		<Content Include="Resources\Fonts\*.ttf;Resources\Fonts\*.otf">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
@@ -180,7 +181,6 @@
 		</Delete>
 		<RemoveDir Directories="$(OutputPath)de;$(OutputPath)en;$(OutputPath)es;$(OutputPath)fr;$(OutputPath)it;$(OutputPath)ja;$(OutputPath)ko;$(OutputPath)ru;$(OutputPath)zh-Hans;$(OutputPath)zh-Hant;$(OutputPath)cs-CZ;$(OutputPath)hu;$(OutputPath)ja-JP;$(OutputPath)pt-BR;$(OutputPath)ro;$(OutputPath)sv;$(OutputPath)ar;$(OutputPath)cs;$(OutputPath)da;$(OutputPath)lv;$(OutputPath)nl;$(OutputPath)pl;$(OutputPath)pt;$(OutputPath)sk;$(OutputPath)th;$(OutputPath)tr;$(OutputPath)zh;$(OutputPath)zh-TW;$(OutputPath)runtimes;$(OutputPath)_Logs;$(OutputPath)Data" ContinueOnError="true" />
 	</Target>
-	
 	<Target Name="RunBuildRelease" AfterTargets="SetupLibFolder" Condition="'$(Configuration)' == 'Publish'">
 		<Exec Command="&quot;$(PythonExecutable)&quot; &quot;BuildRelease.py&quot; &quot;$(InformationalVersion)&quot;" WorkingDirectory="$(SolutionDir)" />
 	</Target>

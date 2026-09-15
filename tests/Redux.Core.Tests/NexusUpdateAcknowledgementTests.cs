@@ -139,7 +139,7 @@ public sealed class NexusUpdateAcknowledgementTests
 		public string References => Cache + ".references.json";
 		public DateTimeOffset Now = DateTimeOffset.UtcNow;
 		public Client Client { get; } = new();
-		public NexusInstalledFile Installed { get; }
+		public NexusUpdateInstalledFile Installed { get; }
 		public Fixture()
 		{
 			Directory.CreateDirectory(_root);

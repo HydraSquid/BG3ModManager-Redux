@@ -11,6 +11,16 @@ namespace DivinityModManager.Util;
 /// </summary>
 public static class VisualModFilterProjectionPolicy
 {
+	public static bool ShouldShowSeparators(
+		string selectedCategory,
+		string allModsCategory,
+		string filterText,
+		bool metadataSorted) =>
+		!metadataSorted
+		&& String.IsNullOrWhiteSpace(filterText)
+		&& (String.IsNullOrWhiteSpace(selectedCategory)
+			|| selectedCategory.Equals(allModsCategory, StringComparison.OrdinalIgnoreCase));
+
 	public static IReadOnlyList<DivinityModData> ResolveVisibleMods(
 		IEnumerable<DivinityModData> mods)
 	{

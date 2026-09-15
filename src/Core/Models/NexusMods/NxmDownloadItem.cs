@@ -255,7 +255,7 @@ public sealed class NxmDownloadItem : ReactiveObject
 	public string InstallActionToolTip => DetectedDestination == "Inactive Mods"
 		? "New mods go to Inactive Mods. Updates preserve each installed mod's active or inactive state and load-order position."
 		: String.Empty;
-	public string RemoveActionText => State == NxmDownloadState.Installed ? "Clear" : "Remove";
+	public string RemoveActionText => State == NxmDownloadState.Installed ? "Clear" : "Delete";
 	public bool IsInstalledHistory => State == NxmDownloadState.Installed;
 	public string NexusActionToolTip => State == NxmDownloadState.NeedsFreshLink
 		? "Open this exact file on Nexus Mods, then choose Mod Manager Download again."

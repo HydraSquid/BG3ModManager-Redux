@@ -43,6 +43,13 @@ public class DivinityLoadOrder : ReactiveObject
 	[DataMember]
 	public List<DivinityLoadOrderEntry> Order { get; set; } = new List<DivinityLoadOrderEntry>();
 
+	/// <summary>
+	/// Redux presentation data for the active side of this saved order. A null value
+	/// identifies an order written before separators became order-specific.
+	/// </summary>
+	[DataMember(EmitDefaultValue = false)]
+	public List<ModListVisualDividerData> VisualDividers { get; set; }
+
 	public void Add(DivinityModData mod, bool force = false)
 	{
 		try
@@ -292,6 +299,21 @@ public class DivinityLoadOrder : ReactiveObject
 		Order.AddRange(nextOrder.Order);
 	}
 
+	private static List<ModListVisualDividerData> CloneVisualDividers(
+		IEnumerable<ModListVisualDividerData> dividers) => dividers?.Select(divider => new ModListVisualDividerData
+		{
+			Id = divider.Id,
+			Title = divider.Title,
+			Color = divider.Color,
+			IconId = divider.IconId,
+			Description = divider.Description,
+			IsActiveList = true,
+			Position = divider.Position,
+			IsCollapsed = divider.IsCollapsed,
+			HideLine = divider.HideLine,
+			MemberModUuids = divider.MemberModUuids?.ToList()
+		}).ToList();
+
 	public bool OrderEquals(IEnumerable<string> orderList)
 	{
 		if (Order.Count > 0)
@@ -307,6 +329,7 @@ public class DivinityLoadOrder : ReactiveObject
 		{
 			Name = this.Name,
 			Order = this.Order.ToList(),
+			VisualDividers = CloneVisualDividers(this.VisualDividers),
 			LastModifiedDate = this.LastModifiedDate
 		};
 	}

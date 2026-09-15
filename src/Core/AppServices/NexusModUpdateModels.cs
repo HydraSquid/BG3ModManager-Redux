@@ -3,14 +3,14 @@ using DivinityModManager.Models.NexusMods;
 
 namespace DivinityModManager.AppServices;
 
-public sealed record NexusInstalledFile(string Uuid, string Name, long ModId, long FileId,
+public sealed record NexusUpdateInstalledFile(string Uuid, string Name, long ModId, long FileId,
 	string InstalledVersion, bool HasExactFileIdentity)
 {
 	public string FilePath { get; init; }
 	public string PackageSha256 { get; init; }
 	public string DownloadVersion { get; init; }
 	public string IdentityDescription { get; init; }
-	public static NexusInstalledFile FromMod(DivinityModData mod)
+	public static NexusUpdateInstalledFile FromMod(DivinityModData mod)
 	{
 		if (mod == null || mod.IsLarianMod || mod.IsEditorMod || mod.IsVisualDivider
 			|| mod.Metadata.SourceType != ModSourceType.NEXUSMODS) return null;
@@ -34,7 +34,7 @@ public sealed record NexusProjectFiles(List<NexusRemoteFile> Files, List<NexusFi
 
 public enum NexusModUpdateStatus { UpdateAvailable, NeedsReview, CheckFailed, NotChecked, NoUpdateReported, DownloadNotIdentified, Acknowledged }
 
-public sealed record NexusModUpdateResult(NexusInstalledFile Installed, NexusModUpdateStatus Status,
+public sealed record NexusModUpdateResult(NexusUpdateInstalledFile Installed, NexusModUpdateStatus Status,
 	string Reason, NexusRemoteFile Candidate = null, DateTimeOffset? CheckedUtc = null, bool FromCache = false)
 {
 	public IReadOnlyList<NexusRemoteFile> AvailableFiles { get; init; } = Array.Empty<NexusRemoteFile>();
@@ -69,7 +69,7 @@ public sealed record NexusModUpdateResult(NexusInstalledFile Installed, NexusMod
 /// <summary>Uses explicit Nexus replacement relationships, never project versions or file-ID ordering.</summary>
 public static class NexusModUpdateEvaluator
 {
-	public static NexusModUpdateResult Evaluate(NexusInstalledFile installed, NexusProjectFiles project,
+	public static NexusModUpdateResult Evaluate(NexusUpdateInstalledFile installed, NexusProjectFiles project,
 		DateTimeOffset? checkedUtc = null, bool fromCache = false)
 	{
 		NexusModUpdateResult Result(NexusModUpdateStatus status, string reason, NexusRemoteFile file = null) =>

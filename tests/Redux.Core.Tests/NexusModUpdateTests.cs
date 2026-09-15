@@ -25,7 +25,7 @@ namespace Redux.Core.Tests;
 
 public sealed class NexusModUpdateTests
 {
-	private static NexusInstalledFile Installed(long project = 42, long file = 10, string uuid = "fixture") =>
+	private static NexusUpdateInstalledFile Installed(long project = 42, long file = 10, string uuid = "fixture") =>
 		new(uuid, "A mod with an optional compatibility patch", project, file, "1.0", true);
 	private static NexusProjectFiles Files() => new(
 		[new(10, "Original main file", "1.0", 4), new(20, "Intermediate file", "2.0", 4),
@@ -61,23 +61,23 @@ public sealed class NexusModUpdateTests
 		mod.NexusModsData.LastFileId = 10;
 		mod.NexusModsData.MetadataOrigin = NexusMetadataOrigin.BundledProvenance;
 		mod.NexusModsData.OfflineMatchKind = ReduxOfflineMatchKind.ModuleIdentity;
-		var target = NexusInstalledFile.FromMod(mod);
+		var target = NexusUpdateInstalledFile.FromMod(mod);
 		RegressionAssert.False(target.HasExactFileIdentity);
 		RegressionAssert.Equal(NexusModUpdateStatus.DownloadNotIdentified, NexusModUpdateEvaluator.Evaluate(target, Files()).Status);
 		mod.NexusModsData.OfflineMatchKind = ReduxOfflineMatchKind.ExactPak;
-		RegressionAssert.False(NexusInstalledFile.FromMod(mod).HasExactFileIdentity);
+		RegressionAssert.False(NexusUpdateInstalledFile.FromMod(mod).HasExactFileIdentity);
 		mod.NexusModsData.MetadataOrigin = NexusMetadataOrigin.NexusArchiveImport;
-		RegressionAssert.False(NexusInstalledFile.FromMod(mod).HasExactFileIdentity);
+		RegressionAssert.False(NexusUpdateInstalledFile.FromMod(mod).HasExactFileIdentity);
 		using var fixture = new Fixture();
 		fixture.Service().CheckAsync([Installed()], "fixture-key", () => true).GetAwaiter().GetResult();
-		var initial = fixture.Service().GetCachedResults([NexusInstalledFile.FromMod(mod)]).Single();
+		var initial = fixture.Service().GetCachedResults([NexusUpdateInstalledFile.FromMod(mod)]).Single();
 		RegressionAssert.Equal(NexusModUpdateStatus.DownloadNotIdentified, initial.Status);
 		RegressionAssert.Equal(null, initial.Candidate);
 		RegressionAssert.False(initial.CanChooseReference);
 		mod.NexusModsData.MetadataOrigin = NexusMetadataOrigin.ReduxBundleImport;
-		RegressionAssert.False(NexusInstalledFile.FromMod(mod).HasExactFileIdentity);
+		RegressionAssert.False(NexusUpdateInstalledFile.FromMod(mod).HasExactFileIdentity);
 		mod.OnlineMetadataEnabled = false;
-		RegressionAssert.Equal(null, NexusInstalledFile.FromMod(mod));
+		RegressionAssert.Equal(null, NexusUpdateInstalledFile.FromMod(mod));
 	}
 
 	public void NexusUpdateChecksDeduplicateProjectsAndPaceRequests()

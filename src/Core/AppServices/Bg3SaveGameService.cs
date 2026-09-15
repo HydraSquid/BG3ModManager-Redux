@@ -16,6 +16,21 @@ public enum Bg3SaveDifficulty
 	Custom
 }
 
+public sealed record Bg3SavePartyMember(string Origin, int? Level, string Race, string Classes, string Subregion)
+{
+    public string OriginKey => new string((Origin ?? "").Where(Char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
+    public string DisplayName => OriginKey switch
+    {
+        "laezel" => "Lae’zel", "shadowheart" => "Shadowheart", "darkurge" or "thedarkurge" => "The Dark Urge",
+        "gale" => "Gale", "astarion" => "Astarion", "karlach" => "Karlach", "wyll" => "Wyll",
+        "halsin" => "Halsin", "minthara" => "Minthara", "jaheira" => "Jaheira", "minsc" => "Minsc",
+        "generic" => String.IsNullOrWhiteSpace(Race) ? "Party member" : RaceDisplayName,
+        null or "" => "Party member", _ => Origin
+    };
+    public string RaceDisplayName => System.Text.RegularExpressions.Regex.Replace((Race ?? "").Replace('_', ' ').Trim(), @"(?<=[a-z])(?=[A-Z])", " ");
+    public string Details => String.Join(" · ", new[] { Level.HasValue ? $"Level {Level}" : null, OriginKey == "generic" ? null : RaceDisplayName, Classes }.Where(v => !String.IsNullOrWhiteSpace(v)));
+}
+
 public sealed record Bg3SaveGameEntry(
 	string FolderPath,
 	string FolderName,
@@ -25,7 +40,12 @@ public sealed record Bg3SaveGameEntry(
 	string ThumbnailPath,
 	DateTime ModifiedUtc,
 	long SizeBytes,
-	Bg3SaveDifficulty Difficulty);
+	Bg3SaveDifficulty Difficulty)
+{
+    public string GameVersion { get; init; } = "";
+    public string Location { get; init; } = "";
+    public IReadOnlyList<Bg3SavePartyMember> Party { get; init; } = Array.Empty<Bg3SavePartyMember>();
+}
 
 /// <summary>
 /// Discovers and imports BG3 story saves. Discovery reads the small SaveInfo.json
@@ -35,9 +55,9 @@ public sealed record Bg3SaveGameEntry(
 /// </summary>
 public static class Bg3SaveGameService
 {
-	private const int MaximumSaveGroupsPerArchive = 32;
-	private const long MaximumEntryBytes = 256L * 1024L * 1024L;
-	private const long MaximumArchiveBytes = 1024L * 1024L * 1024L;
+	internal const int MaximumSaveGroupsPerArchive = 32;
+	internal const long MaximumEntryBytes = 256L * 1024L * 1024L;
+	internal const long MaximumArchiveBytes = 1024L * 1024L * 1024L;
 	private static readonly HashSet<string> SupportedExtensions = new(StringComparer.OrdinalIgnoreCase)
 	{
 		".lsv", ".webp"
@@ -48,6 +68,18 @@ public static class Bg3SaveGameService
 	};
 	private static readonly object MetadataCacheLock = new();
 	private static readonly Dictionary<string, CachedSaveMetadata> MetadataCache = new(StringComparer.OrdinalIgnoreCase);
+
+    public static string ClassifySaveKind(string saveFilePath)
+    {
+        var stem = Path.GetFileNameWithoutExtension(saveFilePath ?? "");
+        var separator = stem.LastIndexOf("__", StringComparison.Ordinal);
+        if (separator >= 0) stem = stem[(separator + 2)..];
+        if (System.Text.RegularExpressions.Regex.IsMatch(stem, @"^AutoSave(?:[ _-]?\d+)?$", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+            return "Autosave";
+        if (System.Text.RegularExpressions.Regex.IsMatch(stem, @"^QuickSave(?:[ _-]?\d+)?$", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+            return "Quicksave";
+        return "Save";
+    }
 
 	public static IReadOnlyList<Bg3SaveGameEntry> Discover(string storyFolder)
 	{
@@ -74,16 +106,17 @@ public static class Bg3SaveGameService
 				var displayName = separator >= 0 && separator + 2 < folderName.Length
 					? folderName[(separator + 2)..]
 					: saveStem;
-				saves.Add(new Bg3SaveGameEntry(
+				var metadata = ReadMetadata(saveInfo);
+                saves.Add(new Bg3SaveGameEntry(
 					folder,
 					folderName,
-					displayName.Replace('_', ' '),
+					String.IsNullOrWhiteSpace(metadata.Name) ? displayName.Replace('_', ' ') : metadata.Name,
 					campaign,
 					saveFile,
 					thumbnail,
 					files.Max(file => file.LastWriteTimeUtc),
 					files.Sum(file => file.Length),
-					ReadDifficulty(saveInfo)));
+					metadata.Difficulty) { GameVersion = metadata.GameVersion, Location = metadata.Location, Party = metadata.Party ?? [] });
 			}
 			catch (IOException)
 			{
@@ -108,18 +141,20 @@ public static class Bg3SaveGameService
 		return Bg3SaveDifficulty.Unknown;
 	}
 
-	private static Bg3SaveDifficulty ReadDifficulty(FileInfo saveFile)
+	private static CachedSaveMetadata ReadMetadata(FileInfo saveFile)
 	{
-		if (saveFile.Length < 64) return Bg3SaveDifficulty.Unknown;
+		if (saveFile.Length < 64) return new(saveFile.Length, saveFile.LastWriteTimeUtc, Bg3SaveDifficulty.Unknown, "", "");
 		lock (MetadataCacheLock)
 		{
 			if (MetadataCache.TryGetValue(saveFile.FullName, out var cached)
 				&& cached.Length == saveFile.Length
 				&& cached.ModifiedUtc == saveFile.LastWriteTimeUtc)
-				return cached.Difficulty;
+				return cached;
 		}
 
 		var difficulty = Bg3SaveDifficulty.Unknown;
+        string name = "", gameVersion = "", location = "";
+        var party = new List<Bg3SavePartyMember>();
 		try
 		{
 			var reader = new PackageReader();
@@ -130,6 +165,27 @@ public static class Bg3SaveGameService
 			{
 				using var stream = info.CreateContentReader();
 				using var document = JsonDocument.Parse(stream);
+                if (document.RootElement.ValueKind != JsonValueKind.Object) throw new JsonException("Expected save metadata object.");
+                name = ReadText(document.RootElement, "Save Name");
+                gameVersion = ReadText(document.RootElement, "Game Version");
+                location = ReadText(document.RootElement, "Current Level");
+                if (document.RootElement.TryGetProperty("Active Party", out var activeParty) && activeParty.ValueKind == JsonValueKind.Object
+                    && activeParty.TryGetProperty("Characters", out var characters) && characters.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var character in characters.EnumerateArray().Take(32))
+                    {
+                        if (character.ValueKind != JsonValueKind.Object) continue;
+                        int? level = character.TryGetProperty("Level", out var levelValue) && levelValue.ValueKind == JsonValueKind.Number && levelValue.TryGetInt32(out var number) && number > 0 ? number : null;
+                        var classes = new List<string>();
+                        if (character.TryGetProperty("Classes", out var classValues) && classValues.ValueKind == JsonValueKind.Array)
+                            foreach (var value in classValues.EnumerateArray().Where(v => v.ValueKind == JsonValueKind.Object).Take(16))
+                            {
+                                var main = ReadText(value, "Main"); var sub = ReadText(value, "Sub");
+                                if (!String.IsNullOrWhiteSpace(main)) classes.Add(String.IsNullOrWhiteSpace(sub) ? main : $"{main} ({sub})");
+                            }
+                        party.Add(new(ReadText(character, "Origin"), level, ReadText(character, "Race"), String.Join(", ", classes), ReadText(character, "Subregion")));
+                    }
+                }
 				if (document.RootElement.TryGetProperty("Difficulty", out var values)
 					&& values.ValueKind == JsonValueKind.Array)
 				{
@@ -145,9 +201,9 @@ public static class Bg3SaveGameService
 			// package remains visible in the manager without a difficulty badge.
 		}
 
-		lock (MetadataCacheLock)
-			MetadataCache[saveFile.FullName] = new CachedSaveMetadata(saveFile.Length, saveFile.LastWriteTimeUtc, difficulty);
-		return difficulty;
+		var result = new CachedSaveMetadata(saveFile.Length, saveFile.LastWriteTimeUtc, difficulty, name, gameVersion, location, party.ToArray());
+        lock (MetadataCacheLock) MetadataCache[saveFile.FullName] = result;
+        return result;
 	}
 
 	public static IReadOnlyList<string> GetImportFolderNames(string sourcePath)
@@ -355,5 +411,9 @@ public static class Bg3SaveGameService
 	}
 
 	private sealed record ArchiveSaveGroup(string DestinationName, IReadOnlyList<IArchiveEntry> Entries);
-	private sealed record CachedSaveMetadata(long Length, DateTime ModifiedUtc, Bg3SaveDifficulty Difficulty);
+	private static string ReadText(JsonElement element, string key) =>
+        element.TryGetProperty(key, out var value) && value.ValueKind == JsonValueKind.String
+            ? (value.GetString() ?? "").Trim() : "";
+
+    private sealed record CachedSaveMetadata(long Length, DateTime ModifiedUtc, Bg3SaveDifficulty Difficulty, string Name, string GameVersion, string Location = "", IReadOnlyList<Bg3SavePartyMember> Party = null);
 }

@@ -55,7 +55,7 @@
 				<Setter Property="HorizontalContentAlignment" Value="Stretch" />
 				<Setter Property="Background" Value="Transparent" />
 				<Setter Property="BorderThickness" Value="0" />
-				<Setter Property="FocusVisualStyle" Value="{x:Null}" />
+				<Setter Property="FocusVisualStyle" Value="{StaticResource ReduxManagerKeyboardFocusStyle}" />
 				<Setter Property="Template">
 					<Setter.Value>
 						<ControlTemplate TargetType="{x:Type ListBoxItem}">
@@ -111,14 +111,19 @@
 				</Setter>
 			</Style>
 			<DataTemplate x:Key="InstalledModTemplate">
-				<Border Padding="10,8" Background="Transparent">
+				<Border Padding="{DynamicResource Redux.Manager.RowPadding}" Background="Transparent">
+                    <Border.ToolTip><StackPanel MaxWidth="460">
+                        <TextBlock Text="{Binding Summary}" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding FileSummary}" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding ManagementNote}" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                    </StackPanel></Border.ToolTip>
 					<Grid>
 						<Grid.ColumnDefinitions>
-							<ColumnDefinition Width="96" />
+							<ColumnDefinition Width="128" />
 							<ColumnDefinition Width="*" />
-							<ColumnDefinition Width="Auto" />
 						</Grid.ColumnDefinitions>
-						<Border Width="96" Height="54" VerticalAlignment="Center"
+						<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+						<Border Grid.RowSpan="2" Width="{DynamicResource Redux.Manager.ThumbnailWidth}" Height="{DynamicResource Redux.Manager.ThumbnailHeight}" VerticalAlignment="Center"
 							Background="{DynamicResource ReduxSurfaceMutedBrush}"
 							BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1"
 							CornerRadius="{DynamicResource Redux.CornerRadius.Control}" ClipToBounds="True">
@@ -128,92 +133,76 @@
 								<Image Source="{Binding ThumbnailUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
 							</Grid>
 						</Border>
-						<StackPanel Grid.Column="1" Margin="11,0,0,0" VerticalAlignment="Center">
+						<StackPanel Grid.Column="1" Margin="{DynamicResource Redux.Manager.ThumbnailGap}" VerticalAlignment="Center">
 							<Grid>
 								<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-								<TextBlock VerticalAlignment="Center" FontWeight="SemiBold" FontSize="{DynamicResource Redux.FontSize.12}"
-									Foreground="{DynamicResource ReduxTextPrimaryBrush}" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-								<Border x:Name="StatusPill" Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource ReduxStatusPillBaseStyle}"
-									Background="{DynamicResource ReduxSuccessPillBackground}" BorderBrush="{DynamicResource ReduxSuccessBrush}"
-									BorderThickness="1.5" ToolTip="{Binding ManagementNote}">
-									<StackPanel Orientation="Horizontal">
-										<controls:ReduxIcon x:Name="StatusIcon" Width="11" Height="11" Margin="0,0,5,0"
+								<TextBlock Style="{StaticResource ReduxManagerRowTitleStyle}" VerticalAlignment="Center" Text="{Binding Name}" TextWrapping="Wrap" ToolTip="{Binding Name}" />
+								<Border x:Name="StatusPill" Grid.Column="1" MaxWidth="180" VerticalAlignment="Top" Margin="12,1,0,0" Background="Transparent" BorderThickness="0" ToolTip="{Binding ManagementNote}">
+									<Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+										<controls:ReduxIcon x:Name="StatusIcon" VerticalAlignment="Center" Width="11" Height="11" Margin="0,0,5,0"
 											Foreground="{DynamicResource ReduxSuccessBrush}" StrokeData="{StaticResource Redux.Icon.ShieldCheck}" />
-										<TextBlock x:Name="StatusText" VerticalAlignment="Center" Foreground="{DynamicResource ReduxSuccessBrush}"
-											FontWeight="SemiBold" Text="{Binding StatusText}" />
-									</StackPanel>
+										<TextBlock Style="{StaticResource ReduxManagerStatusStyle}" x:Name="StatusText" Grid.Column="1" TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{DynamicResource ReduxSuccessBrush}" Text="{Binding StatusText}" />
+									</Grid>
 								</Border>
 							</Grid>
-							<TextBlock Margin="0,3,0,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}"
-								Text="{Binding Summary}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Summary}" />
-							<TextBlock Margin="0,3,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}"
-								Text="{Binding DetailsText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding DetailsText}" />
-							<TextBlock Margin="0,2,0,0" FontSize="{DynamicResource Redux.FontSize.10}" Foreground="{DynamicResource ReduxTextMutedBrush}"
-								Text="{Binding FileSummary}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FileSummary}" />
+
+							<TextBlock Style="{StaticResource ReduxManagerMetadataStyle}" Margin="0,3,0,0"
+								Text="{Binding DetailsText}" TextWrapping="Wrap" ToolTip="{Binding DetailsText}" />
+
 						</StackPanel>
-						<StackPanel Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" Orientation="Horizontal">
-							<Button Margin="0,0,6,0" Padding="9,5" Style="{StaticResource ReduxSourceButtonStyle}"
-								Click="SourceButton_Click" IsEnabled="{Binding HasSource}">
+						<WrapPanel Grid.Row="1" Grid.Column="1" Margin="13,6,0,0">
+							<Button Margin="0,0,6,0" Padding="8,4" MinHeight="30" FontSize="{DynamicResource Redux.FontSize.12}" Style="{StaticResource ReduxSourceButtonStyle}"
+								AutomationProperties.Name="Open mod source" Click="SourceButton_Click" IsEnabled="{Binding HasSource}">
 								<StackPanel Orientation="Horizontal">
-									<controls:ReduxIcon Width="13" Height="13" Margin="0,0,6,0"
+									<controls:ReduxIcon VerticalAlignment="Center" Width="13" Height="13" Margin="0,0,6,0"
 										Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 										StrokeData="{StaticResource Redux.Icon.LinkStroke}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
 									<TextBlock Text="Source" />
 								</StackPanel>
 							</Button>
-							<Button Margin="0,0,6,0" Padding="9,5" Style="{StaticResource ReduxMinorSuccessActionButtonStyle}"
-								Click="AdoptButton_Click" Visibility="{Binding CanAdopt, Converter={StaticResource BoolToVisibilityConverter}}">
+							<Button Margin="0,0,6,0" Padding="8,4" MinHeight="30" FontSize="{DynamicResource Redux.FontSize.12}" Style="{StaticResource ReduxMinorSuccessActionButtonStyle}"
+								ToolTip="{Binding ManagementNote}" AutomationProperties.Name="Manage this mod with Redux" Click="AdoptButton_Click" Visibility="{Binding CanAdopt, Converter={StaticResource BoolToVisibilityConverter}}">
 								<StackPanel Orientation="Horizontal">
-									<controls:ReduxIcon Width="13" Height="13" Margin="0,0,6,0"
+									<controls:ReduxIcon VerticalAlignment="Center" Width="13" Height="13" Margin="0,0,6,0"
 										Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 										StrokeData="{StaticResource Redux.Icon.ShieldCheck}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
-							<TextBlock Text="Manage with Redux" />
+							<TextBlock Text="Manage" />
 								</StackPanel>
 							</Button>
-							<Button Padding="9,5" Style="{StaticResource ReduxDeleteButtonStyle}"
-								Click="DeleteButton_Click" IsEnabled="{Binding CanRestore}">
+							<Button Margin="0,0,6,0" Padding="8,4" MinHeight="30" FontSize="{DynamicResource Redux.FontSize.12}" Style="{StaticResource ReduxDeleteButtonStyle}"
+								AutomationProperties.Name="Delete this game-directory mod" Click="DeleteButton_Click" IsEnabled="{Binding CanRestore}" Visibility="{Binding CanRestore, Converter={StaticResource BoolToVisibilityConverter}}">
 								<StackPanel Orientation="Horizontal">
-									<controls:ReduxIcon Width="13" Height="13" Margin="0,0,6,0"
+									<controls:ReduxIcon VerticalAlignment="Center" Width="13" Height="13" Margin="0,0,6,0"
 										Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 										StrokeData="{StaticResource Redux.Icon.Trash}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
 									<TextBlock Text="Delete" />
 								</StackPanel>
 							</Button>
-						</StackPanel>
+						</WrapPanel>
 					</Grid>
 				</Border>
 				<DataTemplate.Triggers>
 					<DataTrigger Binding="{Binding Status}" Value="External">
-						<Setter TargetName="StatusPill" Property="Background" Value="{DynamicResource ReduxSurfaceMutedBrush}" />
-						<Setter TargetName="StatusPill" Property="BorderBrush" Value="{DynamicResource ReduxBorderStrongBrush}" />
 						<Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource ReduxTextSecondaryBrush}" />
 						<Setter TargetName="StatusIcon" Property="Foreground" Value="{DynamicResource ReduxTextSecondaryBrush}" />
 						<Setter TargetName="StatusIcon" Property="StrokeData" Value="{StaticResource Redux.Icon.Information}" />
 					</DataTrigger>
 					<DataTrigger Binding="{Binding IsExternalReplacement}" Value="True">
-						<Setter TargetName="StatusPill" Property="Background" Value="{DynamicResource ReduxWarningPillBackground}" />
-						<Setter TargetName="StatusPill" Property="BorderBrush" Value="{DynamicResource ReduxWarningBrush}" />
 						<Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" />
 						<Setter TargetName="StatusIcon" Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" />
 						<Setter TargetName="StatusIcon" Property="StrokeData" Value="{StaticResource Redux.Icon.Warning}" />
 					</DataTrigger>
 					<DataTrigger Binding="{Binding Status}" Value="Changed">
-						<Setter TargetName="StatusPill" Property="Background" Value="{DynamicResource ReduxWarningPillBackground}" />
-						<Setter TargetName="StatusPill" Property="BorderBrush" Value="{DynamicResource ReduxWarningBrush}" />
 						<Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" />
 						<Setter TargetName="StatusIcon" Property="Foreground" Value="{DynamicResource ReduxWarningBrush}" />
 						<Setter TargetName="StatusIcon" Property="StrokeData" Value="{StaticResource Redux.Icon.Warning}" />
 					</DataTrigger>
 					<DataTrigger Binding="{Binding Status}" Value="Missing">
-						<Setter TargetName="StatusPill" Property="Background" Value="{DynamicResource ReduxErrorPillBackground}" />
-						<Setter TargetName="StatusPill" Property="BorderBrush" Value="{DynamicResource ReduxErrorBrush}" />
 						<Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource ReduxErrorBrush}" />
 						<Setter TargetName="StatusIcon" Property="Foreground" Value="{DynamicResource ReduxErrorBrush}" />
 						<Setter TargetName="StatusIcon" Property="StrokeData" Value="{StaticResource Redux.Icon.ShieldAlert}" />
 					</DataTrigger>
 					<DataTrigger Binding="{Binding Status}" Value="RecoveryRequired">
-						<Setter TargetName="StatusPill" Property="Background" Value="{DynamicResource ReduxErrorPillBackground}" />
-						<Setter TargetName="StatusPill" Property="BorderBrush" Value="{DynamicResource ReduxErrorBrush}" />
 						<Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource ReduxErrorBrush}" />
 						<Setter TargetName="StatusIcon" Property="Foreground" Value="{DynamicResource ReduxErrorBrush}" />
 						<Setter TargetName="StatusIcon" Property="StrokeData" Value="{StaticResource Redux.Icon.ShieldAlert}" />
@@ -237,48 +226,47 @@
 					<RowDefinition Height="Auto" />
 				</Grid.RowDefinitions>
 				<StackPanel>
-					<TextBlock FontSize="{DynamicResource Redux.FontSize.20}" FontWeight="{DynamicResource Redux.FontWeight.Title}"
-						Text="Game-directory mods" />
+					<TextBlock Style="{StaticResource ReduxWindowHeadingStyle}" Text="Game-Directory Mod Manager" />
 					<TextBlock Margin="0,5,0,0" Foreground="{DynamicResource ReduxTextSecondaryBrush}" TextWrapping="Wrap"
-						Text="Install and remove reviewed native mods without mixing them into the PAK load order." />
+						Text="Manage native mods installed in the game folder." />
 				</StackPanel>
 
-				<StackPanel Grid.Row="1" Margin="0,12,0,0" Orientation="Horizontal">
-					<Button Margin="0,0,7,0" Click="InstallButton_Click" Style="{StaticResource ReduxPrimaryActionButtonStyle}">
+				<WrapPanel Grid.Row="1" Margin="{DynamicResource Redux.Manager.ToolbarMargin}" Orientation="Horizontal">
+					<Button Margin="{DynamicResource Redux.Manager.ActionMargin}" AutomationProperties.Name="Install game-directory mod archive" Click="InstallButton_Click" Style="{StaticResource ReduxMinorSuccessActionButtonStyle}">
 						<StackPanel Orientation="Horizontal">
-							<controls:ReduxIcon Width="15" Height="15" Margin="0,0,7,0"
+							<controls:ReduxIcon VerticalAlignment="Center" Width="15" Height="15" Margin="0,0,7,0"
 								Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 								StrokeData="{StaticResource Redux.Icon.Download}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
 							<TextBlock Text="Install Archive..." />
 						</StackPanel>
 					</Button>
-					<Button x:Name="ScriptExtenderButton" Margin="0,0,7,0" Click="ScriptExtenderButton_Click"
+					<Button x:Name="ScriptExtenderButton" AutomationProperties.Name="{Binding Text, ElementName=ScriptExtenderButtonText}" Margin="{DynamicResource Redux.Manager.ActionMargin}" Click="ScriptExtenderButton_Click"
 						Style="{StaticResource ReduxScriptExtenderActionButtonStyle}"
 						ToolTip="Download and install Script Extender through this manager's reviewed workflow.">
 						<StackPanel Orientation="Horizontal">
-							<controls:ReduxIcon Width="15" Height="15" Margin="0,0,7,0"
+							<controls:ReduxIcon VerticalAlignment="Center" Width="15" Height="15" Margin="0,0,7,0"
 								Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 								StrokeData="{StaticResource Redux.Icon.Download}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
 							<TextBlock x:Name="ScriptExtenderButtonText" Text="Install Script Extender" />
 						</StackPanel>
 					</Button>
-					<Button Margin="0,0,7,0" Click="OpenGameFolderButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
+					<Button Margin="{DynamicResource Redux.Manager.ActionMargin}" AutomationProperties.Name="Open game folder" Click="OpenGameFolderButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
 						<StackPanel Orientation="Horizontal">
-							<controls:ReduxIcon Width="15" Height="15" Margin="0,0,7,0"
+							<controls:ReduxIcon VerticalAlignment="Center" Width="15" Height="15" Margin="0,0,7,0"
 								Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 								StrokeData="{StaticResource Redux.Icon.FolderOpen}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
 							<TextBlock Text="Open Game Folder" />
 						</StackPanel>
 					</Button>
-					<Button Click="RefreshButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
+					<Button Margin="{DynamicResource Redux.Manager.ActionMargin}" AutomationProperties.Name="Refresh game-directory mods" Click="RefreshButton_Click" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
 						<StackPanel Orientation="Horizontal">
-							<controls:ReduxIcon Width="15" Height="15" Margin="0,0,7,0"
+							<controls:ReduxIcon VerticalAlignment="Center" Width="15" Height="15" Margin="0,0,7,0"
 								Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
 								StrokeData="{StaticResource Redux.Icon.RefreshStroke}" Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
 							<TextBlock Text="Refresh" />
 						</StackPanel>
 					</Button>
-				</StackPanel>
+				</WrapPanel>
 
 				<Border Grid.Row="2" Margin="0,12,0,10" Background="{DynamicResource ReduxSurfaceElevatedBrush}"
 					BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1" CornerRadius="{DynamicResource Redux.CornerRadius.Control}" ClipToBounds="True">
@@ -289,7 +277,7 @@
 							Foreground="{DynamicResource ReduxWarningBrush}" IconKey="warning"
 							Style="{StaticResource ReduxOptionalInterfaceIconStyle}" />
 						<TextBlock Grid.Column="2" Margin="0,9,12,9" Foreground="{DynamicResource ReduxTextSecondaryBrush}" TextWrapping="Wrap"
-							Text="Native DLLs execute inside the game. Redux accepts only reviewed layouts, but you should still trust the download source before installing." />
+							Text="Native DLLs run code inside the game. Install only from sources you trust." />
 					</Grid>
 				</Border>
 
@@ -310,7 +298,7 @@
 						Foreground="{DynamicResource ReduxTextMutedBrush}" TextTrimming="CharacterEllipsis" />
 					<Button x:Name="GameDirectoryCloseButton" Grid.Column="1" MinWidth="84" IsCancel="True" Style="{StaticResource ReduxSecondaryActionButtonStyle}">
 						<StackPanel Orientation="Horizontal">
-							<controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Close}" />
+							<controls:ReduxIcon VerticalAlignment="Center" Width="14" Height="14" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Close}" />
 							<TextBlock Text="Close" />
 						</StackPanel>
 					</Button>

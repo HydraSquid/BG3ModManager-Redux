@@ -1,4 +1,4 @@
-using AdonisUI;
+﻿using AdonisUI;
 
 
 
@@ -54,6 +54,20 @@ public partial class MainViewControl : MainViewControlViewBase
 	private readonly HashSet<ContextMenu> _closingToolbarStatusMenus = new();
 
 	private readonly Dictionary<string, MenuItem> menuItems = new();
+	private object ScriptExtenderStatusHeader(object label)
+	{
+		var panel = new StackPanel { Orientation = Orientation.Horizontal };
+		panel.Children.Add(new ContentPresenter { Content = label, VerticalAlignment = VerticalAlignment.Center });
+		var dot = new Border { Width = 6, Height = 6, CornerRadius = new CornerRadius(3),
+			Margin = new Thickness(5, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center,
+			ToolTip = "Script Extender is not installed. Use Tools to install it." };
+		dot.SetResourceReference(Border.BackgroundProperty, "ReduxWarningBrush");
+		dot.SetBinding(VisibilityProperty, new Binding(nameof(MainWindowViewModel.ScriptExtenderMissing))
+		{ Source = ViewModel, Converter = FindResource("BoolToVisibilityConverter") as IValueConverter });
+		panel.Children.Add(dot);
+		return panel;
+	}
+
 	public Dictionary<string, MenuItem> MenuItems => menuItems;
 	private static readonly IReadOnlyDictionary<string, (string Resource, bool UseStroke, string Foreground)> MenuIconMap =
 		new Dictionary<string, (string, bool, string)>
@@ -320,7 +334,7 @@ public partial class MainViewControl : MainViewControlViewBase
 			if (String.IsNullOrEmpty(key.DisplayName))
 				key.DisplayName = menuSettings.DisplayName;
 
-			// Redux consolidates folder navigation into Quick Links. Direct-surface commands
+			// Redux consolidates folder navigation under Help. Direct-surface commands
 			// and donation/project destinations keep their hotkeys without duplicating menus.
 			if (menuSettings.Parent.Equals("Go", StringComparison.OrdinalIgnoreCase) ||
 				prop.Name == nameof(AppKeys.OpenCommandPalette) ||
@@ -355,10 +369,8 @@ public partial class MainViewControl : MainViewControlViewBase
 			{
 				newEntry.Icon = ReduxIcon.FromResource(iconSpec.Resource, iconSpec.UseStroke, iconSpec.Foreground);
 			}
-			if(key == ViewModel.Keys.DownloadScriptExtender && TryFindResource("MenuItemHighlightBlink") is Style blinkStyle)
-			{
-				newEntry.Style = blinkStyle;
-			}
+			if (key == ViewModel.Keys.DownloadScriptExtender)
+				newEntry.Header = ScriptExtenderStatusHeader(newEntry.Header);
 			BindingOperations.SetBinding(newEntry, MenuItem.CommandProperty, new Binding { Path = new PropertyPath("Command"), Source = key });
 			parentMenuItem.Items.Add(newEntry);
 			if (!String.IsNullOrWhiteSpace(menuSettings.Tooltip))
@@ -452,6 +464,7 @@ public partial class MainViewControl : MainViewControlViewBase
 
 		if (menuItems.TryGetValue("Tools", out var toolsMenuItem))
 		{
+			toolsMenuItem.Header = ScriptExtenderStatusHeader("Tools");
 			if (toolsMenuItem.Items.Count > 0) toolsMenuItem.Items.Add(new Separator());
 			var debugInformationItem = new MenuItem
 			{
@@ -479,6 +492,12 @@ public partial class MainViewControl : MainViewControlViewBase
 			packagePreflightItem.Click += InspectModPackage_Click;
 			toolsMenuItem.Items.Add(packagePreflightItem);
 
+
+		}
+
+		// Keep attribution available without dedicating a second top-level menu to it.
+		if (menuItems.TryGetValue("Help", out var helpMenuItem))
+		{
 			var contributionItem = new MenuItem
 			{
 				Header = "Generate Redux Database Contribution...",
@@ -497,12 +516,31 @@ public partial class MainViewControl : MainViewControlViewBase
 				contributionIcon.SetResourceReference(Control.ForegroundProperty, "ReduxSuccessBrush");
 			}
 			contributionItem.Click += GenerateReduxDatabaseContribution_Click;
-			toolsMenuItem.Items.Add(contributionItem);
-		}
+			helpMenuItem.Items.Add(contributionItem);
 
-		// Keep attribution available without dedicating a second top-level menu to it.
-		if (menuItems.TryGetValue("Help", out var helpMenuItem))
-		{
+			TopMenuBar.Items.Remove(QuickLinksMenuItem);
+			QuickLinksMenuItem.Header = "Links & Folders";
+			QuickLinksMenuItem.Icon = ReduxIcon.FromResource("Redux.Icon.FolderOpen", true);
+			helpMenuItem.Items.Add(QuickLinksMenuItem);
+			var whatsNewMenuItem = new MenuItem
+			{
+				Header = "What's New...",
+				Icon = ReduxIcon.FromResource("Redux.Icon.DocumentText", true)
+			};
+			whatsNewMenuItem.Click += (_, _) =>
+			{
+				var owner = Window.GetWindow(this);
+				var existing = owner?.OwnedWindows.OfType<ReduxWhatsNewWindow>().FirstOrDefault();
+				if (existing != null)
+				{
+					if (existing.WindowState == WindowState.Minimized) existing.WindowState = WindowState.Normal;
+					existing.Activate();
+					return;
+				}
+				new ReduxWhatsNewWindow(owner, DivinityApp.REDUX_DISPLAY_VERSION).Show();
+			};
+			helpMenuItem.Items.Add(whatsNewMenuItem);
+
 			var helpHeader = new StackPanel
 			{
 				Orientation = Orientation.Horizontal,
@@ -523,6 +561,7 @@ public partial class MainViewControl : MainViewControlViewBase
 				ToolTip = "A Redux update is available."
 			};
 			updateIndicator.SetResourceReference(Border.BackgroundProperty, "ReduxSuccessBrush");
+			System.Windows.Automation.AutomationProperties.SetName(updateIndicator, "Redux update available in Help");
 			BindingOperations.SetBinding(
 				updateIndicator,
 				VisibilityProperty,
@@ -538,7 +577,7 @@ public partial class MainViewControl : MainViewControlViewBase
 			var reduxWelcomeMenuItem = new MenuItem
 			{
 				Header = "Welcome Setup...",
-				Icon = ReduxIcon.FromResource("Redux.Icon.Sparkles", true)
+				Icon = ReduxIcon.FromResource("Redux.Icon.ReduxStar", true)
 			};
 			reduxWelcomeMenuItem.Click += (_, _) => ViewModel.ShowReduxWelcome();
 			helpMenuItem.Items.Add(reduxWelcomeMenuItem);

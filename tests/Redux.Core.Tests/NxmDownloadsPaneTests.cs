@@ -62,6 +62,12 @@ internal sealed class NxmDownloadsPaneTests
 				< title.TransformToAncestor(pane).Transform(new Point()).X);
 			var association = (Button)pane.FindName("AssociationButton");
 			WpfRenderCapture.AssertFullyWithin(association, pane);
+			foreach (var name in new[] { "ImportCollectionButton", "OpenManagerButton", "DeleteAllDownloadsButton" })
+			{
+				var action = (Button)pane.FindName(name);
+				RegressionAssert.True(action.IsVisible);
+				WpfRenderCapture.AssertFullyWithin(action, pane);
+			}
 			var status = viewModel.GetNxmAssociationStatus();
 			RegressionAssert.Equal(status.Success, association.IsEnabled);
 			RegressionAssert.Equal(status.Status switch
@@ -109,11 +115,43 @@ internal sealed class NxmDownloadsPaneTests
 				RegressionAssert.True(icon.StrokeData != null && ReferenceEquals(icon.Foreground, action.Foreground));
 			}
 			RegressionAssert.True(ReferenceEquals(reviewAction.Background, pane.FindResource("ReduxSuccessPillBackground")));
+			foreach (var name in new[] { "TransferActions", "RemovalActions" })
+			{
+				var group = (StackPanel)pane.FindName(name);
+				RegressionAssert.True(group.IsVisible);
+				WpfRenderCapture.AssertFullyWithin(group, pane);
+				var bottom = group.TransformToAncestor(pane).Transform(new Point(0, group.ActualHeight)).Y;
+				var checkTop = selectAll.TransformToAncestor(pane).Transform(new Point()).Y;
+				if (bottom > checkTop) throw new InvalidOperationException($"{name}: bottom={bottom}, checkboxTop={checkTop}, group={group.RenderSize}, parent={((FrameworkElement)group.Parent).RenderSize}, desired={((FrameworkElement)group.Parent).DesiredSize}");
+			}
 			WpfRenderCapture.CaptureIfRequested(pane, "nxm-downloads-pane-narrow");
 
 			pane.FocusDownload(downloads[^1]);
 			Settle(window);
 			RegressionAssert.True(ReferenceEquals(downloads[^1], inbox.SelectedItem));
+			window.Width = 960;
+			window.Height = 740;
+			Settle(window);
+			WpfRenderCapture.CaptureIfRequested(pane, "nxm-downloads-pane-wide");
+
+			downloads[0].State = NxmDownloadState.Installed;
+			Settle(window);
+			var tabs = (TabControl)pane.FindName("DownloadsTabs");
+			tabs.SelectedIndex = 1;
+			Settle(window);
+			selectAll.IsChecked = true;
+			selectAll.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+			Settle(window);
+			var selected = (System.Collections.Generic.IReadOnlyList<NxmDownloadItem>)typeof(NxmDownloadsPane)
+				.GetMethod("SelectedDownloads", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(pane, null)!;
+			RegressionAssert.Equal(1, selected.Count);
+			RegressionAssert.True(ReferenceEquals(downloads[0], selected[0]));
+			RegressionAssert.False(((Button)pane.FindName("DeleteAllDownloadsButton")).IsVisible);
+			tabs.SelectedIndex = 2;
+			Settle(window);
+			RegressionAssert.False(selectAll.IsVisible);
+			RegressionAssert.True(((StackPanel)pane.FindName("ArchiveRetentionPanel")).IsVisible);
+			WpfRenderCapture.CaptureIfRequested(pane, "nxm-downloads-pane-archives");
 		}
 		finally
 		{

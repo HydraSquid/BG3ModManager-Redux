@@ -62,3 +62,46 @@ Redux is a fork of LaughingLeader's BG3 Mod Manager and includes third-party com
 Preserve copyright, provenance, and required notices. Do not rename copied work to conceal its
 origin. Review [Third-Party Notices](../licenses/Third-Party-Notices.md) before adding a dependency,
 font, icon set, dataset, or substantially adapted code.
+
+
+### Button consistency
+
+Use shared styles from `MainResourceDictionary.xaml` rather than recreating semantic colors
+on a general button template:
+
+- Install, reinstall, and download actions: `ReduxMinorSuccessActionButtonStyle`.
+- Delete/remove actions: `ReduxMinorDestructiveActionButtonStyle`.
+- Reset/clear-history actions: `ReduxMinorWarningActionButtonStyle`.
+- Save/apply/continue actions: `ReduxPrimaryActionButtonStyle`.
+- Cancel/close/navigation actions: `ReduxSecondaryActionButtonStyle`.
+
+Keep stronger destructive confirmation styling where the decision warrants it. Dynamic buttons
+must switch styles when their action changes (for example, Install becoming Close). Toolbar
+variants may adjust sizing but should inherit the appropriate semantic style. The main
+Install Mod toolbar action intentionally retains the shared gradient workflow style to match
+its neighboring toolbar actions. Do not give every
+button the same color: color communicates the action.
+
+Center icons vertically in icon-and-label rows. Button margins belong on buttons, not their
+icons; icons use only the gap before the label. Icon-only buttons need an accessible name and
+padding that leaves room for the glyph. Check disabled, hover, keyboard-focus, and large-text
+states when changing a shared template.
+
+Release prose shown in Redux or on Nexus should describe changes and fixes without calling the
+release "silent". Announcement suppression is publishing metadata, not a user-facing feature.
+Owned review windows should use `ReduxWindowBehavior.AttachDialogTransitions` so background
+blur/dimming follows the shared preference. Reusable hide-on-close windows use `HideWindowBase`;
+message boxes use `ShowDialogWithOwnerBackdrop`. The custom-theme editor intentionally leaves
+the preview surface undimmed so users can judge colors accurately.
+
+Use brief inline statuses (for example, Managed, Unmanaged, or Backup unavailable). Put ownership
+scope and recovery explanations in tooltips and the relevant review, rather than repeating the
+app name in every row. Passive status text should not resemble an outlined action button.
+
+## Development and release branches
+
+`dev` is ongoing development, not a downloadable release channel. Commit work and maintain
+`docs/CHANGELOG.md` under Unreleased without bumping versions or creating release tags. CI still
+builds and tests dev, but portable artifacts are uploaded only for main. Public GitHub/Nexus
+releases are prepared from main after explicit release approval. Never publish a dev prerelease
+or repoint the public-alpha updater channel to development work.

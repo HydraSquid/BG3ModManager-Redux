@@ -122,26 +122,24 @@ public partial class ReduxLoadOrderImportWindow : AdonisUI.Controls.AdonisWindow
 		if (_createdByNewerRedux)
 		{
 			notices.Add(
-				$"This bundle was created with newer Redux {_creatorVersion}. " +
-				"Review its contents before importing; unsupported bundle schemas remain blocked.");
+				$"Created with newer Redux {_creatorVersion}. Review before importing.");
 		}
 		if (ImportLoadOrder && _missingModNames.Count > 0)
 		{
 			notices.Add(
 				$"Missing locally: {FormatNamePreview(_missingModNames)}. " +
-				"The saved order will preserve the missing entries so Redux can report them normally.");
+				"Missing entries will stay in the saved order.");
 		}
 		if (ImportPresentation && _categoryConflictNames.Count > 0)
 		{
 			notices.Add(
 				$"Renamed on import: {FormatNamePreview(_categoryConflictNames)}. " +
-				"Redux will create copies instead of overwriting the existing categories.");
+				"Existing categories will be kept.");
 		}
 		if (ImportSourceLinks)
 		{
 			notices.Add(
-				"Source links will replace existing Nexus Mods or mod.io associations for matching mod UUIDs. " +
-				"Leave this off if your installed copies came from different sources.");
+				"Replaces source links for matching mods. Leave off if your copies came from different sources.");
 		}
 
 		ImportImpactText.Text = String.Join(Environment.NewLine, notices);

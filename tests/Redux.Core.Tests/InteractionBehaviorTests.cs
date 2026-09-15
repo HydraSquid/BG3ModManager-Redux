@@ -1,4 +1,4 @@
-using DivinityModManager;
+﻿using DivinityModManager;
 using DivinityModManager.AppServices;
 using DivinityModManager.Controls;
 using DivinityModManager.Models;
@@ -184,6 +184,42 @@ public sealed class InteractionBehaviorTests
 		RegressionAssert.False(ReferenceEquals(saved, working));
 	}
 
+	public void SavedOrdersKeepIndependentActiveSeparators()
+	{
+		var saved = new DivinityLoadOrder
+		{
+			Name = "My Order",
+			FilePath = @"C:\Orders\My Order.json",
+			VisualDividers =
+			[
+				new ModListVisualDividerData
+				{
+					Id = "saved-section", Title = "Saved section", IsActiveList = true,
+					Position = 2, MemberModUuids = ["saved-mod"]
+				}
+			]
+		};
+		var workingDividers = new[]
+		{
+			new ModListVisualDividerData
+			{
+				Id = "working-section", Title = "Working section", IsActiveList = true,
+				Position = 0, MemberModUuids = ["working-mod"]
+			},
+			new ModListVisualDividerData { Id = "inactive", IsActiveList = false }
+		};
+
+		var working = LoadOrderPersistencePolicy.CreateWorkingCopy(
+			saved,
+			Array.Empty<DivinityModData>(),
+			workingDividers);
+
+		RegressionAssert.Equal("saved-section", saved.VisualDividers.Single().Id);
+		RegressionAssert.Equal("working-section", working.VisualDividers.Single().Id);
+		RegressionAssert.True(working.VisualDividers.Single().IsActiveList);
+		RegressionAssert.False(ReferenceEquals(saved.VisualDividers, working.VisualDividers));
+	}
+
 	public void SavedCurrentStateRestoresIntoTheSingleCurrentEntry()
 	{
 		var current = new DivinityLoadOrder
@@ -271,7 +307,7 @@ public sealed class InteractionBehaviorTests
 			var duplicate = (Button)settings.FindName("DuplicateCustomThemeButton");
 			var delete = (Button)settings.FindName("DeleteCustomThemeButton");
 			RegressionAssert.True(ReferenceEquals(modernTemplate, duplicate.Template));
-			RegressionAssert.True(ReferenceEquals(modernTemplate, delete.Template));
+			RegressionAssert.True(ReferenceEquals(settings.FindResource("ReduxAccentPillButtonTemplate"), delete.Template));
 			AssertLabeledIcon(duplicate, "Duplicate");
 			AssertLabeledIcon(delete, "Delete");
 			RegressionAssert.Equal(
@@ -305,6 +341,34 @@ public sealed class InteractionBehaviorTests
 		}
 	}
 
+	public void OnboardingAppearancePreviewsAndRestoresWithoutSaving()
+	{
+		var settings = new DivinityModManagerSettings { ShowCategoryIconsInPills = true, TextSize = ReduxTextSize.Default };
+		var window = new ReduxOnboardingWindow(null!, settings);
+		try
+		{
+			var hide = (CheckBox)window.FindName("HideIconsCheckBox");
+			hide.IsChecked = true;
+			hide.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.False(DivinityApp.ShowInterfaceIcons);
+			var previewIcon = (ReduxIcon)window.FindName("TourFileIcon");
+			System.Windows.Data.BindingOperations.GetBindingExpression(previewIcon, UIElement.VisibilityProperty)!.UpdateTarget();
+			RegressionAssert.Equal(Visibility.Collapsed, previewIcon.Visibility);
+			RegressionAssert.True(settings.ShowCategoryIconsInPills);
+			RegressionAssert.False(((CheckBox)window.FindName("IconsOnlyCheckBox")).IsEnabled);
+			((ComboBox)window.FindName("WelcomeTextSizeComboBox")).SelectedItem = ReduxTextSize.Large;
+			RegressionAssert.True((double)window.FindResource("Redux.FontSize.12") > 12);
+			var saved = new DivinityModManagerSettings();
+			window.ApplyAppearanceSelection(saved);
+			RegressionAssert.False(saved.ShowCategoryIconsInPills);
+			RegressionAssert.Equal(ReduxTextSize.Large, saved.TextSize);
+			RegressionAssert.Equal(ReduxTextSize.Default, settings.TextSize);
+		}
+		finally { window.Close(); }
+		RegressionAssert.True(DivinityApp.ShowInterfaceIcons);
+		RegressionAssert.Equal(12d, (double)window.FindResource("Redux.FontSize.12"));
+	}
+
 	public void OnboardingKeepsActionsVisibleAtItsMinimumSupportedSize()
 	{
 		Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -312,6 +376,15 @@ public sealed class InteractionBehaviorTests
 		try
 		{
 			RegressionAssert.Equal(ResizeMode.CanResize, window.ResizeMode);
+			var parchment = (RadioButton)window.FindName("ParchmentThemeCard");
+			parchment.IsChecked = true;
+			parchment.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Equal("Segoe UI", window.FontFamily.Source);
+			var dark = (RadioButton)window.FindName("ReduxDarkThemeCard");
+			dark.IsChecked = true;
+			dark.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Contains(window.FontFamily.Source, "Manrope");
+
 			RegressionAssert.Equal(SizeToContent.Manual, window.SizeToContent);
 
 			window.Width = window.MinWidth;
@@ -328,6 +401,63 @@ public sealed class InteractionBehaviorTests
 				throw new InvalidOperationException("The onboarding content did not receive a scrollable viewport.");
 			AssertInsideWindow(notNow, contentRoot, "Not now");
 			AssertInsideWindow(saveContinue, contentRoot, "Save & Continue");
+			var source = (CheckBox)window.FindName("SourceIntegrationsCheckBox");
+			saveContinue.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.False(window.WasResolved);
+			RegressionAssert.Equal(Visibility.Visible, ((FrameworkElement)window.FindName("ConnectionsPage")).Visibility);
+			source.IsChecked = true;
+			((PasswordBox)window.FindName("NexusApiKeyTextBox")).Password = "test-key";
+			saveContinue.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.False(window.ApplyChanges);
+			RegressionAssert.Equal(Visibility.Visible, ((FrameworkElement)window.FindName("OptionsPage")).Visibility);
+			var detailsExpander = (Expander)window.FindName("BeforePlayExpander");
+			detailsExpander.ApplyTemplate();
+			detailsExpander.IsExpanded = true;
+			var detailsPanel = (Border)detailsExpander.Template.FindName("Details", detailsExpander);
+			RegressionAssert.Equal(Visibility.Visible, detailsPanel.Visibility);
+			RegressionAssert.True(Double.IsNaN(detailsPanel.Height));
+			detailsExpander.IsExpanded = false;
+			RegressionAssert.Equal(Visibility.Collapsed, detailsPanel.Visibility);
+			RegressionAssert.Equal(0d, detailsPanel.Height);
+
+			var demo = (Button)window.FindName("DemoActionButton");
+			demo.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Equal("1  Example mod", ((TextBlock)window.FindName("DemoActiveText")).Text);
+			demo.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Contains(((TextBlock)window.FindName("DemoInstructionText")).Text, "Sync applies your saved order");
+			demo.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Contains(((TextBlock)window.FindName("DemoInstructionText")).Text, "Ready to play");
+			RegressionAssert.False(window.ApplyChanges);
+
+			saveContinue.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            RegressionAssert.Equal(Visibility.Visible, ((FrameworkElement)window.FindName("OrganizePage")).Visibility);
+            RegressionAssert.False(window.AddStarterSeparators);
+            RegressionAssert.Equal(9, window.SelectedStarterSeparators.Count);
+            ((CheckBox)window.FindName("StarterSeparatorsCheckBox")).IsChecked = true;
+            var starter = (System.Windows.Controls.Primitives.UniformGrid)window.FindName("StarterSeparatorsPreview");
+            ((CheckBox)starter.Children[0]).IsChecked = false;
+            RegressionAssert.Equal(8, window.SelectedStarterSeparators.Count);
+            RegressionAssert.True(window.AddStarterSeparators);
+            saveContinue.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Equal(Visibility.Visible, ((FrameworkElement)window.FindName("ManagersPage")).Visibility);
+			var tour = (Button)window.FindName("TourActionButton");
+			tour.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			tour.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Contains(((TextBlock)window.FindName("TourResult")).Text, "Save added");
+			((Button)window.FindName("NativeTourButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Contains(((TextBlock)window.FindName("TourResult")).Text, "Ready");
+			tour.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Contains(((TextBlock)window.FindName("TourResult")).Text, "Review");
+			tour.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Contains(((TextBlock)window.FindName("TourResult")).Text, "game folder");
+			RegressionAssert.False(window.ApplyChanges);
+			((Button)window.FindName("BackButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			RegressionAssert.Equal("test-key", window.SelectedNexusApiKey);
+			RegressionAssert.False(window.SelectedLocalOnlyMode);
+			contentRoot.UpdateLayout();
+			AssertInsideWindow(saveContinue, contentRoot, "Next");
+			AssertInsideWindow((Button)window.FindName("BackButton"), contentRoot, "Back");
+
 		}
 		finally
 		{
@@ -658,7 +788,7 @@ public sealed class InteractionBehaviorTests
 				((SolidColorBrush)installAllButton.Foreground).Color,
 				((SolidColorBrush)installAllIcon.Foreground).Color);
 			RegressionAssert.Equal(
-				((SolidColorBrush)nexusDownloads.FindResource("ReduxWarningBrush")).Color,
+				((SolidColorBrush)nexusDownloads.FindResource("ReduxErrorBrush")).Color,
 				((SolidColorBrush)clearArchivesButton.Foreground).Color);
 			RegressionAssert.Equal(
 				((SolidColorBrush)clearArchivesButton.Foreground).Color,

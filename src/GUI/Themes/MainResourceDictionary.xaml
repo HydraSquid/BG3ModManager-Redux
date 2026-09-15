@@ -21,9 +21,13 @@
     xmlns:xcprimitives="clr-namespace:Xceed.Wpf.Toolkit.Primitives;assembly=DotNetProjects.Wpf.Extended.Toolkit"
     xmlns:xcthemes="clr-namespace:Xceed.Wpf.Toolkit.Themes;assembly=DotNetProjects.Wpf.Extended.Toolkit"
 	x:Name="MainResources">
+
 	<ResourceDictionary.MergedDictionaries>
 		<ResourceDictionary Source="DefaultStyles/ComboBox.xaml" />
 	</ResourceDictionary.MergedDictionaries>
+    <sys:Double x:Key="Redux.Manager.ThumbnailWidth">128</sys:Double>
+    <sys:Double x:Key="Redux.Manager.ThumbnailHeight">72</sys:Double>
+
 	<!--  Keep native menu behavior while giving Redux popups a softer silhouette.  -->
 	<!--
 		Redux corner-radius scale. Single source of truth; do not hardcode radii on new
@@ -47,7 +51,7 @@
 	<!-- Whole-window move, resize, and package-drop feedback should carry the same
 	     visual weight as Redux's internal interaction rails. -->
 	<Thickness x:Key="Redux.WindowInteraction.BorderThickness">3</Thickness>
-	<Thickness x:Key="Redux.Interaction.RowPadding">10,6</Thickness>
+	<Thickness x:Key="Redux.Interaction.RowPadding">8,4</Thickness>
 	<Thickness x:Key="Redux.Interaction.SurfaceMargin">2,1</Thickness>
 	<sys:Double x:Key="Redux.Interaction.HoverBorder">1.5</sys:Double>
 	<sys:Double x:Key="Redux.Interaction.SelectedBorder">2</sys:Double>
@@ -417,7 +421,10 @@
 				IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
 				util:ReduxWindowBehavior.PreferredPopupPlacement="BesideRightward"
 				util:ReduxWindowBehavior.ManagedPopupAnimation="Fade">
-				<Grid Margin="4">
+				<!-- The transparent outer surface starts at the parent row's edge. Keeping the
+				     four-pixel antialiasing inset as padding removes the mouse dead zone between
+				     a submenu header and its visible popup chrome. -->
+				<Border Background="Transparent" Padding="4">
 					<Border
 						Background="{DynamicResource ReduxSurfaceElevatedBrush}"
 						BorderBrush="{DynamicResource ReduxBorderStrongBrush}"
@@ -430,7 +437,7 @@
 							IsItemsHost="True"
 							KeyboardNavigation.DirectionalNavigation="Cycle" />
 					</Border>
-				</Grid>
+				</Border>
 			</Popup>
 		</Grid>
 		<ControlTemplate.Triggers>
@@ -689,6 +696,24 @@
 
 	<!-- Shared secondary-window building blocks. Keep summary metrics and passive
 	     result lists aligned across export review, comparison, and inspection tools. -->
+	<Thickness x:Key="Redux.Manager.ToolbarMargin">0,12,0,4</Thickness>
+	<Thickness x:Key="Redux.Manager.ActionMargin">0,0,7,6</Thickness>
+	<Style x:Key="ReduxWindowHeadingStyle" TargetType="{x:Type TextBlock}">
+		<Setter Property="FontSize" Value="{DynamicResource Redux.FontSize.20}" />
+		<Setter Property="FontWeight" Value="{DynamicResource Redux.FontWeight.Title}" />
+		<Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}" />
+		<Setter Property="TextWrapping" Value="Wrap" />
+	</Style>
+	<Style x:Key="ReduxManagerKeyboardFocusStyle" TargetType="{x:Type Control}">
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="{x:Type Control}">
+					<Border Margin="2" BorderThickness="2" BorderBrush="{DynamicResource ReduxAccentBrush}"
+						CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}" IsHitTestVisible="False" />
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
 	<Style x:Key="ReduxDialogSummaryCardStyle" TargetType="{x:Type Border}">
 		<Setter Property="Margin" Value="0,0,8,0" />
 		<Setter Property="Padding" Value="11,9" />
@@ -697,6 +722,68 @@
 		<Setter Property="BorderThickness" Value="1" />
 		<Setter Property="CornerRadius" Value="{DynamicResource Redux.CornerRadius.Control}" />
 	</Style>
+	<Style x:Key="ReduxManagerSelectableItemStyle" TargetType="{x:Type ListBoxItem}">
+
+				<Setter Property="Margin" Value="0,0,0,7" />
+				<Setter Property="Padding" Value="0" />
+				<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+				<Setter Property="Background" Value="Transparent" />
+				<Setter Property="BorderThickness" Value="0" />
+				<Setter Property="FocusVisualStyle" Value="{StaticResource ReduxManagerKeyboardFocusStyle}" />
+				<Setter Property="Template">
+					<Setter.Value>
+						<ControlTemplate TargetType="{x:Type ListBoxItem}">
+							<Border x:Name="Card" Background="{DynamicResource ReduxSurfaceBrush}"
+								BorderBrush="{DynamicResource ReduxBorderBrush}" BorderThickness="1"
+								CornerRadius="{DynamicResource Redux.CornerRadius.Control}" ClipToBounds="True"
+								RenderTransformOrigin="0.5,0.5" util:ReduxWindowBehavior.HoverLift="1">
+								<Border.RenderTransform><TranslateTransform Y="0" /></Border.RenderTransform>
+								<Grid>
+									<Border x:Name="SelectionSurface" Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
+										Background="{DynamicResource ReduxAccentSoftBrush}"
+										CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}"
+										OpacityMask="{StaticResource Redux.Hover.WashMask}" IsHitTestVisible="False" Opacity="0" />
+									<Border x:Name="SelectionRail" Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
+										BorderBrush="{DynamicResource ReduxAccentBrush}" BorderThickness="{DynamicResource Redux.Rail.Thickness}"
+										CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}" IsHitTestVisible="False" Opacity="0" />
+									<Border x:Name="HoverSurface" Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
+										Background="{DynamicResource ReduxAccentSoftBrush}"
+										CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}"
+										OpacityMask="{StaticResource Redux.Hover.WashMask}" IsHitTestVisible="False" Opacity="0" />
+									<Border x:Name="HoverRail" Margin="{DynamicResource Redux.Interaction.SurfaceMargin}"
+										BorderBrush="{DynamicResource ReduxAccentBrush}" BorderThickness="{DynamicResource Redux.Rail.Thickness}"
+										CornerRadius="{DynamicResource Redux.CornerRadius.ControlInner}" IsHitTestVisible="False" Opacity="0" />
+									<ContentPresenter Margin="{DynamicResource Redux.Manager.RowPadding}" />
+								</Grid>
+							</Border>
+							<ControlTemplate.Triggers>
+
+
+								<Trigger Property="IsMouseOver" Value="True">
+									<Setter TargetName="Card" Property="BorderBrush" Value="Transparent" />
+									<Trigger.EnterActions><BeginStoryboard><Storyboard>
+										<DoubleAnimation Storyboard.TargetName="HoverSurface" Storyboard.TargetProperty="Opacity" To="0.62"
+											Duration="{StaticResource Redux.Motion.Fast}" EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
+										<DoubleAnimation Storyboard.TargetName="HoverRail" Storyboard.TargetProperty="Opacity" To="1"
+											Duration="{StaticResource Redux.Motion.Fast}" EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
+									</Storyboard></BeginStoryboard></Trigger.EnterActions>
+									<Trigger.ExitActions><BeginStoryboard><Storyboard>
+										<DoubleAnimation Storyboard.TargetName="HoverSurface" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Redux.Motion.Standard}" />
+										<DoubleAnimation Storyboard.TargetName="HoverRail" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Redux.Motion.Standard}" />
+									</Storyboard></BeginStoryboard></Trigger.ExitActions>
+								</Trigger>
+								<Trigger Property="IsSelected" Value="True">
+									<Setter TargetName="Card" Property="BorderBrush" Value="Transparent" />
+									<Setter TargetName="SelectionSurface" Property="Opacity" Value="0.62" />
+									<Setter TargetName="SelectionRail" Property="Opacity" Value="1" />
+									<Setter TargetName="HoverSurface" Property="Background" Value="Transparent" />
+									<Setter TargetName="HoverRail" Property="BorderBrush" Value="Transparent" />
+								</Trigger>
+							</ControlTemplate.Triggers>
+						</ControlTemplate>
+					</Setter.Value>
+				</Setter>
+			</Style>
 	<Style x:Key="ReduxPassiveResultItemStyle" TargetType="{x:Type ListBoxItem}">
 		<Setter Property="Margin" Value="0,0,0,6" />
 		<Setter Property="Padding" Value="0" />
@@ -722,7 +809,7 @@
 			<Setter.Value>
 				<ControlTemplate TargetType="{x:Type TabControl}">
 					<Grid KeyboardNavigation.TabNavigation="Local">
-						<Grid.RowDefinitions><RowDefinition Height="42" /><RowDefinition Height="1" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+						<Grid.RowDefinitions><RowDefinition Height="Auto" MinHeight="36" /><RowDefinition Height="1" /><RowDefinition Height="*" /></Grid.RowDefinitions>
 						<TabPanel Margin="14,2" ClipToBounds="False" IsItemsHost="True" KeyboardNavigation.TabIndex="1" />
 						<Border Grid.Row="1" Height="1" Background="{DynamicResource ReduxBorderBrush}" />
 						<ContentPresenter x:Name="PART_SelectedContentHost" Grid.Row="2" ContentSource="SelectedContent"
@@ -4839,6 +4926,12 @@
 			<ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
 		</ItemsControl>
 	</DataTemplate>
+    <ControlTemplate x:Key="ReduxColumnDropIndicatorTemplate" TargetType="{x:Type Separator}">
+        <Grid Margin="0,3" IsHitTestVisible="False">
+            <Border Width="6" CornerRadius="3" Opacity="0.18" Background="{DynamicResource ReduxAccentBrush}" />
+            <Border Width="2" CornerRadius="1" Background="{DynamicResource ReduxAccentBrush}" />
+        </Grid>
+    </ControlTemplate>
 	<Style x:Key="GridViewLeftContainerStyle" BasedOn="{StaticResource {x:Type GridViewColumnHeader}}" TargetType="{x:Type GridViewColumnHeader}">
 		<Setter Property="Height" Value="30" />
 		<Setter Property="Padding" Value="10,0" />
@@ -4971,6 +5064,21 @@
 	    AllowsColumnReorder="True"
 	    ColumnHeaderContainerStyle="{StaticResource GridViewLeftContainerStyle}">
 		<GridView.Columns>
+<GridViewColumn Width="45"
+			    behavior:ScreenReaderHelperBehavior.HelpText="The inactive arrangement index column"
+			    behavior:ScreenReaderHelperBehavior.Name="Index"
+			    Header="#"
+			    HeaderTemplate="{StaticResource GridViewTextblockHeaderTemplate}">
+				<GridViewColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock Margin="2,0,2,0"
+							Background="Transparent"
+							Style="{StaticResource Redux.Text.Metadata}"
+							Text="{Binding InactiveIndex}" />
+					</DataTemplate>
+				</GridViewColumn.CellTemplate>
+			</GridViewColumn>
+
 			<GridViewColumn Width="240"
 			    CellTemplate="{StaticResource ModNameTemplate}"
 			    Header="Name"
@@ -5339,4 +5447,152 @@
 		<Setter Property="ClipValueToMinMax" Value="True" />
 	</Style>
 	<Style BasedOn="{StaticResource ReduxLongUpDownStyle}" TargetType="{x:Type xc:LongUpDown}" />
+
+<Style x:Key="ReduxPaneHeaderActionButtonStyle" TargetType="{x:Type Button}">
+				<Setter Property="Width" Value="26" />
+				<Setter Property="Height" Value="26" />
+				<Setter Property="Margin" Value="2,0" />
+				<Setter Property="Background" Value="{DynamicResource ReduxAccentSoftBrush}" />
+				<Setter Property="BorderBrush" Value="Transparent" />
+				<Setter Property="BorderThickness" Value="0" />
+				<Setter Property="Cursor" Value="Hand" />
+				<Setter Property="FocusVisualStyle" Value="{x:Null}" />
+				<Setter Property="Foreground" Value="{DynamicResource ReduxTextSecondaryBrush}" />
+				<Setter Property="Template">
+					<Setter.Value>
+						<ControlTemplate TargetType="{x:Type Button}">
+							<Border x:Name="ButtonChrome"
+								Background="Transparent"
+								CornerRadius="{DynamicResource Redux.CornerRadius.Control}"
+								util:ReduxWindowBehavior.HoverLift="1"
+								RenderTransformOrigin="0.5,0.5">
+								<Border.RenderTransform>
+									<TranslateTransform Y="0" />
+								</Border.RenderTransform>
+								<Grid>
+									<Border x:Name="HoverSurface"
+										Width="24"
+										Height="24"
+										HorizontalAlignment="Center"
+										VerticalAlignment="Center"
+										Background="{TemplateBinding Background}"
+										CornerRadius="{DynamicResource Redux.CornerRadius.Pill}"
+										IsHitTestVisible="False"
+										Opacity="0" />
+									<ContentPresenter HorizontalAlignment="Center"
+										VerticalAlignment="Center"
+										TextElement.Foreground="{TemplateBinding Foreground}" />
+								</Grid>
+							</Border>
+							<ControlTemplate.Triggers>
+								<Trigger Property="IsMouseOver" Value="True">
+									<Setter Property="Foreground" Value="{DynamicResource ReduxAccentHoverBrush}" />
+									<Trigger.EnterActions>
+										<BeginStoryboard>
+											<Storyboard>
+												<DoubleAnimation Storyboard.TargetName="HoverSurface"
+													Storyboard.TargetProperty="Opacity"
+													To="1"
+													Duration="{StaticResource Redux.Motion.Fast}"
+													EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
+											</Storyboard>
+										</BeginStoryboard>
+									</Trigger.EnterActions>
+									<Trigger.ExitActions>
+										<BeginStoryboard>
+											<Storyboard>
+												<DoubleAnimation Storyboard.TargetName="HoverSurface"
+													Storyboard.TargetProperty="Opacity"
+													To="0"
+													Duration="{StaticResource Redux.Motion.Standard}" />
+											</Storyboard>
+										</BeginStoryboard>
+									</Trigger.ExitActions>
+								</Trigger>
+								<!--
+									Press feedback stays a plain setter. An animation on HoverSurface would
+									outrank the hover storyboard and could leave the control stuck in its
+									accent state after the pointer leaves.
+								-->
+								<Trigger Property="IsPressed" Value="True">
+									<Setter Property="Opacity" Value="0.85" />
+								</Trigger>
+								<Trigger Property="IsEnabled" Value="False">
+									<Setter Property="Opacity" Value="0.35" />
+								</Trigger>
+							</ControlTemplate.Triggers>
+						</ControlTemplate>
+					</Setter.Value>
+				</Setter>
+			</Style>
+
+    <Thickness x:Key="Redux.Manager.RowPadding">12,10</Thickness>
+    <Thickness x:Key="Redux.Manager.ThumbnailGap">13,0,0,0</Thickness>
+    <Style x:Key="ReduxManagerRowTitleStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{DynamicResource Redux.FontSize.13}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource ReduxTextPrimaryBrush}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style x:Key="ReduxManagerMetadataStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{DynamicResource Redux.FontSize.11}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ReduxTextMutedBrush}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style x:Key="ReduxManagerStatusStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{DynamicResource Redux.FontSize.12}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+<Style x:Key="ReduxManagerPaneSplitterStyle" TargetType="{x:Type GridSplitter}">
+				<Setter Property="Background" Value="Transparent" />
+				<Setter Property="Cursor" Value="SizeWE" />
+				<Setter Property="ResizeDirection" Value="Columns" />
+				<Setter Property="Template">
+					<Setter.Value>
+						<ControlTemplate TargetType="{x:Type GridSplitter}">
+							<Grid Background="Transparent">
+								<Border x:Name="SplitterHalo"
+									Width="6"
+									Margin="0,6"
+									HorizontalAlignment="Center"
+									Background="{DynamicResource ReduxAccentHoverBrush}"
+									CornerRadius="3"
+									Opacity="0" />
+								<Border x:Name="SplitterRail"
+									Width="2"
+									Margin="0,6"
+									HorizontalAlignment="Center"
+									Background="{DynamicResource ReduxAccentHoverBrush}"
+									CornerRadius="1"
+									Opacity="0" />
+							</Grid>
+							<ControlTemplate.Triggers>
+								<EventTrigger RoutedEvent="MouseEnter">
+									<BeginStoryboard>
+										<Storyboard>
+											<DoubleAnimation Storyboard.TargetName="SplitterHalo" Storyboard.TargetProperty="Opacity"
+												To="0.18" Duration="{StaticResource Redux.Motion.Fast}" EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
+											<DoubleAnimation Storyboard.TargetName="SplitterRail" Storyboard.TargetProperty="Opacity"
+												To="1" Duration="{StaticResource Redux.Motion.Fast}" EasingFunction="{StaticResource Redux.Motion.EaseOut}" />
+										</Storyboard>
+									</BeginStoryboard>
+								</EventTrigger>
+								<EventTrigger RoutedEvent="MouseLeave">
+									<BeginStoryboard>
+										<Storyboard>
+											<DoubleAnimation Storyboard.TargetName="SplitterHalo" Storyboard.TargetProperty="Opacity"
+												To="0" Duration="{StaticResource Redux.Motion.Standard}" />
+											<DoubleAnimation Storyboard.TargetName="SplitterRail" Storyboard.TargetProperty="Opacity"
+												To="0" Duration="{StaticResource Redux.Motion.Standard}" />
+										</Storyboard>
+									</BeginStoryboard>
+								</EventTrigger>
+							</ControlTemplate.Triggers>
+						</ControlTemplate>
+					</Setter.Value>
+				</Setter>
+			</Style>
 </ResourceDictionary>

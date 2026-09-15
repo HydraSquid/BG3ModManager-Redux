@@ -15,11 +15,13 @@ public sealed class ReduxInstallProgressWindow : Window
 	private readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap };
 	private readonly ProgressBar _progress = new() { Height = 6, Margin = new Thickness(0, 16, 0, 12), IsIndeterminate = true };
 	private bool _finished;
+    private readonly CancellationTokenSource _cancellation = new();
+    public CancellationToken CancellationToken => _cancellation.Token;
 
-	public ReduxInstallProgressWindow(Window owner)
+	public ReduxInstallProgressWindow(Window owner, bool exportingSaves = false)
 	{
 		Owner = owner;
-		Title = "Installing packages";
+		Title = exportingSaves ? "Exporting saves" : "Installing packages";
 		Width = 480;
 		SizeToContent = SizeToContent.Height;
 		ResizeMode = ResizeMode.NoResize;
@@ -39,19 +41,26 @@ public sealed class ReduxInstallProgressWindow : Window
 		root.Children.Add(new ReduxWindowTitleBar());
 		var body = new StackPanel { Margin = new Thickness(24) };
 		AutomationProperties.SetLiveSetting(_status, AutomationLiveSetting.Polite);
-		_status.Text = "Preparing Install All…";
+		_status.Text = exportingSaves ? "Preparing save export…" : "Preparing Install All…";
 		body.Children.Add(_status);
 		_progress.SetResourceReference(StyleProperty, "ReduxProgressBarStyle");
-		AutomationProperties.SetName(_progress, "Package progress");
+		AutomationProperties.SetName(_progress, exportingSaves ? "Save export progress" : "Package progress");
 		body.Children.Add(_progress);
 		var activity = new ProgressBar { Height = 3, IsIndeterminate = true, Margin = new Thickness(0, 0, 0, 12) };
 		activity.SetResourceReference(StyleProperty, "ReduxProgressBarStyle");
-		AutomationProperties.SetName(activity, "Current package is being processed");
+		AutomationProperties.SetName(activity, exportingSaves ? "Exporting save files" : "Current package is being processed");
 		body.Children.Add(activity);
-		body.Children.Add(new TextBlock { Text = "Please wait while Redux checks and installs your packages.", TextWrapping = TextWrapping.Wrap });
-		root.Children.Add(body);
+		body.Children.Add(new TextBlock { Text = exportingSaves ? "Your saves remain in place." : "Please wait while Redux checks and installs your packages.", TextWrapping = TextWrapping.Wrap });
+		if (exportingSaves)
+        {
+            var cancel = new Button { Content = "Cancel", HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 12, 0, 0) };
+            cancel.SetResourceReference(StyleProperty, "ReduxSecondaryActionButtonStyle");
+            cancel.Click += (_, _) => { _cancellation.Cancel(); cancel.IsEnabled = false; _status.Text = "Canceling…"; };
+            body.Children.Add(cancel);
+        }
+        root.Children.Add(body);
 		Content = root;
-		Closing += (_, e) => { if (!_finished) e.Cancel = true; };
+		Closing += (_, e) => { if (!_finished) { e.Cancel = true; if (exportingSaves) _cancellation.Cancel(); } };
 	}
 
 	public async Task ReportAsync(string phase, string name, int current, int total)
@@ -73,7 +82,8 @@ public sealed class ReduxInstallProgressWindow : Window
 			catch (Exception ex) { failure = ex; }
 			finally { _finished = true; Close(); }
 		};
-		ShowDialog();
+		ReduxWindowBehavior.ShowDialogWithOwnerBackdrop(this, Owner);
+        _cancellation.Dispose();
 		if (failure != null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
 	}
 }

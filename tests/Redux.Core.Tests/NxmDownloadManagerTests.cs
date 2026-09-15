@@ -486,13 +486,14 @@ internal sealed class NxmDownloadManagerTests
 
 	public void DownloadAgainPreservesTheArchiveAndUsesFreshAuthorizationWhenRequired()
 	{
+		foreach (var originalState in new[] { NxmDownloadState.InstallFailed, NxmDownloadState.Installed })
 		foreach (var requiresAuthorization in new[] { false, true })
 		{
 			var directory = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ReduxRedownloadTests", Guid.NewGuid().ToString("N"));
 			System.IO.Directory.CreateDirectory(directory);
 			var item = new NxmDownloadItem
 			{
-				ModId = 17535, FileId = 129059, State = NxmDownloadState.InstallFailed,
+				ModId = 17535, FileId = 129059, State = originalState, InstalledAt = DateTimeOffset.UtcNow,
 				FileName = "previous.zip", CompletedFileName = "previous.zip", PartialFileName = "previous.zip.part",
 				RequiresAuthorization = requiresAuthorization, ErrorCode = "install-failed", ErrorDetails = "old failure",
 				ETag = "old-etag", BytesReceived = 4, RetryCount = 3
@@ -520,6 +521,7 @@ internal sealed class NxmDownloadManagerTests
 				RegressionAssert.False(item.CompletedFileName == "previous.zip");
 				RegressionAssert.True(System.IO.File.Exists(System.IO.Path.Combine(directory, item.CompletedFileName)));
 				RegressionAssert.Equal(1, manager.Items.Count);
+				RegressionAssert.True(item.InstalledAt == null);
 				RegressionAssert.Equal(String.Empty, item.ErrorDetails);
 			}
 			finally

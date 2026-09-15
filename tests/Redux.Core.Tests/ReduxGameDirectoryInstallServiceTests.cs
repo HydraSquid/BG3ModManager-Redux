@@ -12,6 +12,21 @@ namespace Redux.Core.Tests;
 
 public sealed class ReduxGameDirectoryInstallServiceTests
 {
+	public void VanillaBinkIsNotAnExternalNativeLoader()
+	{
+		using var fixture = new NativeFixture();
+		var vanilla = fixture.Pe("vanilla game bink");
+		fixture.WriteVanillaLoader(vanilla);
+		RegressionAssert.False(fixture.Installer().GetInstalledMods().Any(mod => mod.NexusModId == 944));
+		RegressionAssert.False(fixture.Installer().DetectLoader().IsPresent);
+		File.WriteAllBytes(fixture.LoaderOriginalPath, vanilla);
+		RegressionAssert.False(fixture.Installer().GetInstalledMods().Any(mod => mod.NexusModId == 944));
+		RegressionAssert.False(fixture.Installer().DetectLoader().IsPresent);
+		fixture.WriteVanillaLoader(fixture.Pe("distinct external loader"));
+		RegressionAssert.True(fixture.Installer().GetInstalledMods().Any(mod => mod.NexusModId == 944));
+		RegressionAssert.True(fixture.Installer().DetectLoader().IsPresent);
+	}
+
 	public void AtomicReplacementRejectsSourceChangedSinceItsReviewedHash()
 	{
 		using var fixture = new NativeFixture();

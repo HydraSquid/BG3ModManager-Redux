@@ -30,6 +30,18 @@ internal sealed class ReduxModuleStateTests
 		RegressionAssert.Equal(10, settings.RetainedPackageArchiveQuotaGb);
 	}
 
+    public void StarterSeparatorsPreserveExistingSectionsAndSkipMatchingNames()
+    {
+        var existing = new[] { new ModListVisualDividerData { Title = " interface ", IsActiveList = true },
+            new ModListVisualDividerData { Title = "Gameplay", IsActiveList = false } };
+        var missing = ReduxOnboardingPolicy.MissingStarterSeparators(existing);
+        RegressionAssert.Equal(8, missing.Count);
+        RegressionAssert.False(missing.Contains("Interface"));
+        RegressionAssert.True(missing.Contains("Gameplay"));
+        RegressionAssert.Equal(" interface ", existing[0].Title);
+        RegressionAssert.Equal(9, ReduxOnboardingPolicy.StarterSeparatorTitles.Count);
+    }
+
 	public void FirstRunOnboardingStartsWithIntegrationsAndGuidanceOff()
 	{
 		var settings = new DivinityModManagerSettings

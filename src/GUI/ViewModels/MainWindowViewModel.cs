@@ -1,4 +1,4 @@
-
+﻿
 using DivinityModManager.AppServices;
 using DivinityModManager.Controls;
 using DivinityModManager.Extensions;
@@ -382,6 +382,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	[Reactive] public bool IsDragging { get; set; }
 	/// <summary>True when Active Mods is displayed in a metadata-sorted view rather than the real # load order.</summary>
 	[Reactive] public bool IsActiveListMetadataSorted { get; set; }
+	[Reactive] public bool IsInactiveListMetadataSorted { get; set; }
 	[Reactive] public bool AppSettingsLoaded { get; set; }
 	[Reactive] public bool IsRefreshing { get; private set; }
 	[Reactive] public bool IsRefreshingModUpdates { get; private set; }
@@ -398,7 +399,6 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	[Reactive] public string StatusBarRightText { get; set; }
 	[Reactive] public bool ModUpdatesAvailable { get; set; }
 	[Reactive] public bool ModUpdatesViewVisible { get; set; }
-	[Reactive] public bool HighlightExtenderDownload { get; set; }
 	[Reactive] public bool GameDirectoryFound { get; set; }
 
 	private readonly ObservableAsPropertyHelper<bool> _hasForceLoadedMods;
@@ -575,11 +575,62 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			Settings.LastSeenWhatsNewVersion = DivinityApp.REDUX_DISPLAY_VERSION;
 			SaveSettings();
 		}
-		if (showWhatsNew) new ReduxWhatsNewWindow(Window, DivinityApp.REDUX_DISPLAY_VERSION).Show();
+		if (showWhatsNew && Settings.ShowWhatsNewAfterUpdates)
+			new ReduxWhatsNewWindow(Window, DivinityApp.REDUX_DISPLAY_VERSION).Show();
 	}
 
 	public void EnqueueNxmActivation(string value) =>
 		ShowWhenMainWindowReady($"nxm-{Guid.NewGuid():N}", () => _ = HandleNxmLinkAsync(value, fromProtocolActivation: true));
+
+    public async Task<NexusCollectionInstallInventory> GetCollectionInstallInventoryAsync(CancellationToken token)
+    {
+        // Snapshot the live library on the UI thread; filesystem checks run off-thread.
+        var library = mods.Items.Where(m => m.NexusModsData?.ModId > 0)
+            .Select(m => (m.FilePath, Identity: new NexusInstalledFile(m.NexusModsData.ModId, m.NexusModsData.LastFileId, m.IsForceLoaded && !m.ForceAllowInLoadOrder ? "Override Mods" : m.IsActive ? "Active Mods" : "Inactive Mods"))).ToArray();
+        var executable = Environment.ExpandEnvironmentVariables(Settings.GameExecutablePath ?? "");
+        var stateDirectory = DivinityApp.GetAppDirectory("Data", "NativeInstalls");
+        return await Task.Run(() =>
+        {
+            var installed = library.Where(m => File.Exists(m.FilePath)).Select(m => m.Identity).ToList();
+            token.ThrowIfCancellationRequested();
+            var warning = "";
+            try
+            {
+                if (File.Exists(executable))
+                {
+                    var info = FileVersionInfo.GetVersionInfo(executable);
+                    var service = new ReduxGameDirectoryInstallService(Path.GetDirectoryName(Path.GetFullPath(executable)), stateDirectory,
+                        ReduxGameDirectoryModManagerWindow.ParseNativeGameVersion(info.ProductVersion));
+                    foreach (var entry in service.GetInstalledMods().Where(e => e.Status is ReduxGameDirectoryModStatus.Managed or ReduxGameDirectoryModStatus.External or ReduxGameDirectoryModStatus.Changed))
+                        installed.Add(new NexusInstalledFile(entry.NexusModId, 0, "Game directory"));
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or ArgumentException)
+            { warning = "Game-directory mods could not be checked. Active and inactive mod matches are shown."; }
+            token.ThrowIfCancellationRequested();
+            return new NexusCollectionInstallInventory(installed) { Warning = warning };
+        }, token);
+    }
+
+    public async Task<NexusCollectionRetryResult> RetryCollectionDownloadsAsync(IEnumerable<NexusCollectionFile> files, CancellationToken token)
+    {
+        if (_nxmShuttingDown || !Modules.SourceIntegrationsEnabled || _nxmDownloadManager == null)
+            throw new InvalidOperationException("Nexus downloads are unavailable.");
+        return await NexusCollectionRecovery.RetryAsync(files, NxmDownloads, _nxmDownloadManager.RetryAsync, token);
+    }
+
+	public async Task QueueCollectionFileAsync(NexusCollectionFile file, CancellationToken cancellationToken)
+	{
+		if (_nxmShuttingDown || !Modules.SourceIntegrationsEnabled || String.IsNullOrWhiteSpace(Settings.NexusModsAPIKey))
+			throw new InvalidOperationException("Nexus downloads are unavailable.");
+		if (!file.Available || file.ModId <= 0 || file.FileId <= 0) throw new InvalidOperationException("This collection file is unavailable.");
+		await EnsureNxmDownloadsInitializedAsync();
+        var existing = NxmDownloads.FirstOrDefault(d => d.ModId == file.ModId && d.FileId == file.FileId);
+        if (existing?.State == NxmDownloadState.Installed)
+            await _nxmDownloadManager.DownloadAgainAsync(existing.Id);
+        else
+			await _nxmDownloadManager.EnqueueAsync(new NexusModManagerLink(file.ModId, file.FileId, null, null, null), cancellationToken);
+	}
 
 	public async Task HandleNxmLinkAsync(string value, bool fromProtocolActivation = false)
 	{
@@ -957,9 +1008,14 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	public void ApplyNxmAssociationPreference(bool enabled)
 	{
 		var status = GetNxmAssociationStatus();
-		if (!status.Success || status.Status == NxmAssociationStatus.OwnedByAnotherHandler)
+		if (!status.Success)
 		{
 			if (enabled) ShowAlert(status.Message, AlertType.Warning, 25);
+			return;
+		}
+		if (status.Status == NxmAssociationStatus.OwnedByAnotherHandler)
+		{
+			if (enabled) ConfigureNxmAssociation();
 			return;
 		}
 		var currentlyOwned = status.Status is NxmAssociationStatus.Owned or NxmAssociationStatus.NeedsRepair;
@@ -1008,8 +1064,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		var hasArchive = item.State is NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview
 			or NxmDownloadState.InstallFailed;
 		if (ReduxMessageBox.Show(Window,
-			hasArchive ? "Remove this entry and move its downloaded archive to the Recycle Bin?" : "Cancel and remove this download?",
-			"Remove Package", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+			hasArchive ? "Delete this entry and move its downloaded archive to the Recycle Bin?" : "Cancel and delete this download?",
+			"Delete Package", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
 		await _nxmDownloadManager.RemoveAsync(item.Id, hasArchive);
 	}
 
@@ -1019,7 +1075,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	/// </summary>
 	public async Task RemoveSelectedNxmDownloadsAsync(IEnumerable<NxmDownloadItem> selected)
 	{
-		if (_nxmDownloadManager == null) return;
+		if (_nxmDownloadManager == null || DownloadManagerInstallIsActive) return;
 		var selectedIds = (selected ?? [])
 			.Where(item => item != null && item.State != NxmDownloadState.Installing)
 			.Select(item => item.Id).Where(id => !String.IsNullOrWhiteSpace(id))
@@ -1036,11 +1092,29 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
 		foreach (var item in items)
 		{
+			if (DownloadManagerInstallIsActive || item.State == NxmDownloadState.Installing) break;
 			var hasArchive = item.State is NxmDownloadState.Downloaded or NxmDownloadState.NeedsReview
 				or NxmDownloadState.InstallFailed;
 			await _nxmDownloadManager.RemoveAsync(item.Id, hasArchive);
 		}
 	}
+
+    public async Task DeleteAllNxmDownloadsAsync(Window owner)
+    {
+        if (_nxmDownloadManager == null || DownloadManagerInstallIsActive) return;
+        var items = NxmDownloads.Where(item => !item.IsInstalledHistory && item.State != NxmDownloadState.Installing).ToArray();
+        if (items.Length == 0) return;
+        if (ReduxMessageBox.Show(owner, $"Delete all {items.Length} downloads? Active downloads will be canceled and downloaded packages moved to the Recycle Bin. Installed mods and retained archives are kept.",
+            "Delete All Downloads", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+        var failed = 0;
+        foreach (var item in items)
+        {
+            if (DownloadManagerInstallIsActive || item.IsInstalledHistory || item.State == NxmDownloadState.Installing) break;
+            try { await _nxmDownloadManager.RemoveAsync(item.Id, true); }
+            catch (Exception ex) { failed++; DivinityApp.Log($"Could not delete download: {ex.Message}"); }
+        }
+        if (failed > 0) ShowAlert($"{failed} downloads could not be fully deleted. Check their files and try again.", AlertType.Warning);
+    }
 
 	public async Task ClearInstalledNxmHistoryAsync()
 	{
@@ -1055,8 +1129,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	{
 		if (_retainedPackageArchiveService == null || RetainedPackageArchives.Count == 0) return;
 		if (ReduxMessageBox.Show(owner?.IsLoaded == true ? owner : Window,
-			"Clear every retained install package? Installed mods and Download Manager history will not change.",
-			"Clear Package Archives", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+			"Delete every retained install package? Installed mods and Download Manager history will not change.",
+			"Delete Archives", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
 		try
 		{
 			await _retainedPackageArchiveService.ClearAsync();
@@ -1788,7 +1862,6 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			if (!classification.Installable || classification.Destination != "Game-directory Mods")
 				throw new InvalidDataException("The downloaded Script Extender archive does not match Redux's reviewed layout.");
 			MainProgressValue = 1;
-			HighlightExtenderDownload = false;
 			completed = true;
 			return intakePath;
 		}
@@ -1877,8 +1950,18 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		}
 	}
 
+	[Reactive] public bool ScriptExtenderMissing { get; private set; }
+
+	public void RefreshScriptExtenderMissingStatus()
+	{
+		var executable = Environment.ExpandEnvironmentVariables(Settings.GameExecutablePath ?? String.Empty);
+		ScriptExtenderMissing = File.Exists(executable)
+			&& !File.Exists(Path.Combine(Path.GetDirectoryName(Path.GetFullPath(executable))!, DivinityApp.EXTENDER_UPDATER_FILE));
+	}
+
 	private void CheckExtenderUpdaterVersion()
 	{
+		RefreshScriptExtenderMissingStatus();
 		string extenderUpdaterPath = Path.Combine(Path.GetDirectoryName(Settings.GameExecutablePath), DivinityApp.EXTENDER_UPDATER_FILE);
 		DivinityApp.Log($"Looking for Script Extender at '{extenderUpdaterPath}'.");
 		if (File.Exists(extenderUpdaterPath))
@@ -2061,7 +2144,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 					if (DivinityJsonUtils.TrySafeDeserializeFromPath<ScriptExtenderSettings>(settingsFilePath, out var data))
 					{
 						DivinityApp.Log($"Loaded {settingsFilePath}");
-						Settings.ExtenderSettings.SetFrom(data);
+						Settings.ExtenderSettings.ApplyGameConfig(data);
 					}
 				}
 			}
@@ -2197,7 +2280,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				NullValueHandling = NullValueHandling.Ignore,
 				Formatting = Formatting.Indented
 			};
-			var contents = JsonConvert.SerializeObject(Settings.ExtenderSettings, exportSettings);
+			var contents = Settings.ExtenderSettings.ToConfigJson();
 			AtomicFileWriter.WriteAllText(outputFile, contents, validateTemporaryFile: temporaryPath =>
 				JsonConvert.DeserializeObject<ScriptExtenderSettings>(File.ReadAllText(temporaryPath), exportSettings) != null);
 		}
@@ -2224,6 +2307,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		{
 			ProcessHelper.TryOpenPath(Path.GetDirectoryName(Settings.GameExecutablePath), Directory.Exists);
 		}, canOpenGameFolder);
+
+		Keys.OpenSaveGamesFolder.AddAction(() => View?.OpenSaveGamesFolder());
 
 		Keys.OpenLogsFolder.AddAction(() =>
 		{
@@ -2641,7 +2726,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 					var extenderConfig = DivinityJsonUtils.SafeDeserialize<ScriptExtenderSettings>(extenderConfigPath);
 					if(extenderConfig != null)
 					{
-						Settings.ExtenderSettings.SetFrom(extenderConfig);
+						Settings.ExtenderSettings.ApplyGameConfig(extenderConfig);
 					}
 				}
 				catch (Exception ex)
@@ -3479,6 +3564,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 		nextOrders.AddRange(savedOrders);
 
+		MigrateLegacyActiveVisualDividers(nextOrders, lastOrderName);
+
 		if (!string.IsNullOrEmpty(lastOrderName))
 		{
 			int lastOrderIndex = nextOrders.IndexOf(nextOrders.FirstOrDefault(x => x.Name == lastOrderName));
@@ -3506,6 +3593,53 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				DivinityApp.Log($"Error setting next load order:\n{ex}");
 			}
 		}
+	}
+
+	private void MigrateLegacyActiveVisualDividers(
+		IReadOnlyList<DivinityLoadOrder> orders,
+		string requestedOrderName)
+	{
+		var legacyDividers = LoadOrderPersistencePolicy.CloneActiveVisualDividers(
+			Settings.VisualModListDividers);
+		if (legacyDividers.Count == 0 || orders.Count == 0 ||
+			orders.Any(order => order.VisualDividers != null)) return;
+
+		var ownerName = !String.IsNullOrWhiteSpace(requestedOrderName)
+			? requestedOrderName
+			: Settings.LastOrder;
+		var owner = orders.FirstOrDefault(order =>
+			String.Equals(order.Name, ownerName, StringComparison.OrdinalIgnoreCase))
+			?? orders[0];
+		owner.VisualDividers = legacyDividers;
+
+		try
+		{
+			var migrationPath = owner.IsModSettings
+				? GetCurrentWorkingOrderPath(SelectedProfile)
+				: owner.FilePath;
+			if (!String.IsNullOrWhiteSpace(migrationPath))
+			{
+				var snapshot = owner.Clone();
+				snapshot.Name = owner.Name;
+				snapshot.FilePath = migrationPath;
+				DivinityModDataLoader.ExportLoadOrderToFile(migrationPath, snapshot);
+			}
+		}
+		catch (Exception exception)
+		{
+			DivinityApp.Log($"Could not persist legacy separators for '{owner.Name}': {exception}");
+		}
+	}
+
+	private void ApplyActiveVisualDividers(DivinityLoadOrder order)
+	{
+		Settings.VisualModListDividers ??= [];
+		var inactiveDividers = CloneVisualDividers(
+			Settings.VisualModListDividers.Where(divider => !divider.IsActiveList));
+		var activeDividers = LoadOrderPersistencePolicy.CloneActiveVisualDividers(
+			order?.VisualDividers);
+		Settings.VisualModListDividers = activeDividers.Concat(inactiveDividers).ToList();
+		CaptureVisualDividerBaseline();
 	}
 
 	private string CreatePakImportTemporaryPath(string finalPath)
@@ -3992,6 +4126,30 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		}
 	}
 
+    public string SaveCollectionLoadOrder(NexusCollectionPreview collection, IReadOnlyList<DivinityLoadOrderEntry> entries)
+    {
+        var directory = GetOrdersDirectory();
+        Directory.CreateDirectory(directory);
+        var baseName = DivinityModDataLoader.MakeSafeFilename($"{collection.Name} - Revision {collection.Revision}", '_');
+        if (baseName.Length > 100) baseName = baseName.Substring(0, 100);
+        var name = baseName;
+        var suffix = 2;
+        while (ModOrderList.Any(o => String.Equals(o.Name, name, StringComparison.OrdinalIgnoreCase)) || File.Exists(Path.Combine(directory, name + ".json")))
+            name = $"{baseName} ({suffix++})";
+		var order = new DivinityLoadOrder
+		{
+			Name = name,
+			FilePath = Path.Combine(directory, name + ".json"),
+			LastModifiedDate = DateTime.Now,
+			VisualDividers = []
+		};
+        order.Order.AddRange(entries.Select(e => e.Clone()));
+        if (!DivinityModDataLoader.ExportLoadOrderToFile(order.FilePath, order)) throw new IOException("Could not save the collection load order.");
+        SavedModOrderList.Add(order);
+        ModOrderList.Add(order);
+        return name;
+    }
+
 	private void AddNewModOrder(DivinityLoadOrder newOrder = null)
 	{
 		var lastIndex = SelectedModOrderIndex;
@@ -4111,7 +4269,10 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			ActiveMods.Clear();
 			ActiveMods.AddRange(addonMods.Where(x => x.CanAddToLoadOrder && x.IsActive).OrderBy(x => x.Index));
 			InactiveMods.Clear();
-			InactiveMods.AddRange(addonMods.Where(x => x.CanAddToLoadOrder && !x.IsActive));
+			InactiveMods.AddRange(InactiveModOrderPolicy.Restore(
+				addonMods.Where(x => x.CanAddToLoadOrder && !x.IsActive), Settings.InactiveModOrder));
+
+			ApplyActiveVisualDividers(order);
 
 			OnFilterTextChanged(ActiveModFilterText, ActiveMods);
 			OnFilterTextChanged(InactiveModFilterText, InactiveMods);
@@ -4176,18 +4337,13 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			}
 		}
 
-		// Blinky animation on the tools/download buttons if the extender is required by mods and is missing
-		if (mod.ExtenderModStatus.HasFlag(DivinityExtenderModStatus.MissingUpdater))
-		{
-			HighlightExtenderDownload = true;
-		}
+
 	}
 
 	public void UpdateExtenderVersionForAllMods()
 	{
 		if (Mods.Count > 0)
 		{
-			HighlightExtenderDownload = false;
 
 			foreach (var mod in Mods)
 			{
@@ -4420,7 +4576,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 							mod.ModioData.Update(match.CreateMetadata(mod.UUID));
 							UpdateHandler.Modio.CacheData.Mods[mod.UUID] = mod.ModioData;
 							modioCatalogChanged = true;
-							DivinityApp.Log($"Matched '{mod.FileName}' to mod.io project {match.ModId} using Redux's conservative VOLO catalog identity.");
+							DivinityApp.Log($"Matched '{mod.FileName}' to mod.io project {match.ModId} using Redux's conservative catalog identity.");
 						}
 					}, RxApp.MainThreadScheduler);
 					cacheChanged |= modioCatalogChanged;
@@ -4996,16 +5152,23 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		Settings.HasSeenReduxWelcome = true;
 		if (welcomeWindow.ApplyChanges)
 		{
-			var themeChanged = !String.IsNullOrWhiteSpace(Settings.ActiveCustomThemeId)
-				|| Settings.ColorTheme != welcomeWindow.SelectedTheme;
+			var themeChanged = welcomeWindow.ThemeSelectionChanged;
 			if (themeChanged)
 			{
+				var useThemeDefaultTypography = Settings.UseThemeDefaultTypography;
 				Settings.ActiveCustomThemeId = String.Empty;
+				if (useThemeDefaultTypography)
+				{
+					Settings.UseThemeDefaultTypography = true;
+					Settings.TypographyFont = ReduxTypographyService.GetThemeDefault(welcomeWindow.SelectedTheme);
+					Settings.CustomTypographyFont = String.Empty;
+				}
 				ReduxThemeService.ApplyBuiltInCategoryPresentation(Settings, welcomeWindow.SelectedTheme);
 				Settings.ColorTheme = welcomeWindow.SelectedTheme;
 				Settings.UsesGeneratedGradients = welcomeWindow.SelectedTheme != ReduxThemeType.Parchment;
 			}
 
+			welcomeWindow.ApplyAppearanceSelection(Settings);
 			Settings.LocalOnlyMode = welcomeWindow.SelectedLocalOnlyMode;
 			Settings.EnableLoadOrderAdvisor = welcomeWindow.SelectedGuidanceEnabled;
 			Settings.NexusModsAPIKey = welcomeWindow.SelectedNexusApiKey;
@@ -5013,10 +5176,27 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			Settings.ReduceMotion = welcomeWindow.SelectedReduceMotion;
 			Settings.DisableBackgroundEffects = welcomeWindow.SelectedDisableBackgroundEffects;
 			Settings.RetainInstalledPackageArchives = welcomeWindow.SelectedRetainInstalledPackageArchives;
+			if (!String.Equals(Settings.GameExecutablePath, welcomeWindow.SelectedGameExecutablePath, StringComparison.OrdinalIgnoreCase))
+			{
+				Settings.GameExecutablePath = welcomeWindow.SelectedGameExecutablePath;
+				var gameRoot = Path.GetDirectoryName(Path.GetDirectoryName(Settings.GameExecutablePath));
+				var dataPath = String.IsNullOrEmpty(gameRoot) ? String.Empty : Path.Combine(gameRoot, "Data");
+				if (Directory.Exists(dataPath)) Settings.GameDataPath = dataPath;
+			}
+
 		}
 
 		if (SaveSettings() && welcomeWindow.ApplyChanges)
-			ApplyNxmAssociationPreference(welcomeWindow.SelectedNxmAssociationEnabled);
+		{
+			if (welcomeWindow.AddStarterSeparators)
+            {
+                foreach (var title in ReduxOnboardingPolicy.MissingStarterSeparators(Settings.VisualModListDividers).Where(welcomeWindow.SelectedStarterSeparators.Contains))
+                    AddVisualDivider(true, DisplayActiveMods.Count, title, "#8A6AF1", "layers", false);
+            }
+            ApplyNxmAssociationPreference(welcomeWindow.SelectedNxmAssociationEnabled);
+			if (welcomeWindow.OpenDownloadsAfterSetup)
+				Window.Dispatcher.BeginInvoke(new Action(async () => await Window.OpenNexusDownloadsAsync()));
+		}
 	}
 
 	private bool _firstRunWelcomeIsDeferred;
@@ -5457,12 +5637,11 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 	public bool ApplyLoadOrderAdvisorPlan(LoadOrderAdvisorPlan plan)
 	{
-		if (plan == null || plan.OrderedMods.Count != ActiveMods.Count
+		if (plan == null || plan.Dividers.Any(divider => !divider.IsActiveList) || plan.OrderedMods.Count != ActiveMods.Count
 			|| !plan.OrderedMods.ToHashSet(ReferenceEqualityComparer.Instance)
 				.SetEquals(ActiveMods)) return false;
 
 		EnsureVisualDividerBaseline();
-		EnsureVisualDividerMemberships();
 		var historyBefore = CaptureLoadOrderEditState();
 		_updatingVisualModLists = true;
 		try
@@ -5487,7 +5666,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			_updatingVisualModLists = false;
 		}
 
-		RefreshVisualDividers();
+		RefreshVisualDividers(true);
 		HasUnsavedLoadOrderChanges = true;
 		ScheduleModHealthRefresh();
 		ScheduleExportStatusRefresh(immediate: true);
@@ -5676,6 +5855,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			{
 				orderToSave.LastModifiedDate = File.GetLastWriteTime(outputPath);
 				SelectedModOrder.SetOrder(orderToSave);
+				SelectedModOrder.VisualDividers = LoadOrderPersistencePolicy.CloneActiveVisualDividers(
+					orderToSave.VisualDividers);
 				SelectedModOrder.LastModifiedDate = orderToSave.LastModifiedDate;
 				HasUnsavedLoadOrderChanges = false;
 				CaptureVisualDividerBaseline();
@@ -5737,7 +5918,9 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			{
 				Name = modOrderName,
 				FilePath = outputPath,
-				LastModifiedDate = DateTime.Now
+				LastModifiedDate = DateTime.Now,
+				VisualDividers = LoadOrderPersistencePolicy.CloneActiveVisualDividers(
+					Settings.VisualModListDividers)
 			};
 			tempOrder.Order.AddRange(CreateWorkingLoadOrderEntries());
 			if (DivinityModDataLoader.ExportLoadOrderToFile(outputPath, tempOrder))
@@ -5749,6 +5932,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 					if (String.Equals(order.FilePath, outputPath, StringComparison.OrdinalIgnoreCase))
 					{
 						order.SetOrder(tempOrder);
+						order.VisualDividers = LoadOrderPersistencePolicy.CloneActiveVisualDividers(
+							tempOrder.VisualDividers);
 						updatedOrder = true;
 						DivinityApp.Log($"Updated saved order '{order.Name}' from '{modOrderName}'");
 					}
@@ -5875,7 +6060,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			if (missingResults.TotalMissing > 0)
 			{
 				List<string> messages = [];
-				
+
 				var missingMessage = missingResults.GetMissingMessage();
 				var missingDependencies = missingResults.GetDependenciesMessage();
 
@@ -7824,7 +8009,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			var order = new DivinityLoadOrder
 			{
 				Name = name,
-				Order = bundledOrder.Order.Select(entry => entry.Clone()).ToList()
+				Order = bundledOrder.Order.Select(entry => entry.Clone()).ToList(),
+				VisualDividers = []
 			};
 			var ordersDirectory = GetOrdersDirectory();
 			var fileName = DivinityModDataLoader.MakeSafeFilename($"{name}.json", '_');
@@ -8034,6 +8220,20 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		var warnings = new List<string>();
 		if (importWindow.ImportPresentation)
 			presentationImported = ImportReduxBundlePresentation(contents, warnings);
+		if (importWindow.ImportPresentation && presentationImported && importedOrder != null)
+		{
+			try
+			{
+				importedOrder.VisualDividers = LoadOrderPersistencePolicy.CloneActiveVisualDividers(
+					Settings.VisualModListDividers);
+				DivinityModDataLoader.ExportLoadOrderToFile(importedOrder.FilePath, importedOrder);
+			}
+			catch (Exception exception)
+			{
+				DivinityApp.Log($"Could not attach imported separators to the saved order: {exception}");
+				warnings.Add("The imported separators are open now, but could not be attached to the saved order.");
+			}
+		}
 		if (importWindow.ImportPrivateNotes)
 			privateNotesImported = ImportReduxBundlePrivateNotes(
 				contents,
@@ -8683,7 +8883,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		VisualDividerSectionPolicy.AssignMembersPreservingCollapsedSections(
 			sequence, Settings.VisualModListDividers, activeList);
 		RefreshVisualDividers();
-		HasUnsavedLoadOrderChanges = true;
+		if (activeList) HasUnsavedLoadOrderChanges = true;
 		QueueSave();
 		RecordLoadOrderEdit(historyBefore);
 	}
@@ -8700,7 +8900,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		divider.HideLine = hideLine;
 		divider.Description = description?.Trim() ?? "";
 		RefreshVisualDividers();
-		HasUnsavedLoadOrderChanges = true;
+		if (divider.IsActiveList) HasUnsavedLoadOrderChanges = true;
 		QueueSave();
 		RecordLoadOrderEdit(historyBefore);
 	}
@@ -8724,7 +8924,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		VisualDividerSectionPolicy.AssignMembersPreservingCollapsedSections(
 			sequence, Settings.VisualModListDividers, divider.IsActiveList);
 		RefreshVisualDividers();
-		HasUnsavedLoadOrderChanges = true;
+		if (divider.IsActiveList) HasUnsavedLoadOrderChanges = true;
 		QueueSave();
 		RecordLoadOrderEdit(historyBefore);
 	}
@@ -9054,6 +9254,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 	private void SaveVisualDividerPositions(IReadOnlyList<DivinityModData> sequence, bool activeList)
 	{
+		if (!activeList) Settings.InactiveModOrder = InactiveModOrderPolicy.Capture(sequence, Settings.InactiveModOrder);
 		for (var index = 0; index < sequence.Count; index++)
 		{
 			if (!sequence[index].IsVisualDivider) continue;
@@ -9180,6 +9381,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			Settings.VisualModListDividers = CloneVisualDividers(state.Dividers);
 			ObservableCollectionSynchronizer.Synchronize(ActiveMods, state.Active, ReferenceEquals);
 			ObservableCollectionSynchronizer.Synchronize(InactiveMods, state.Inactive, ReferenceEquals);
+			Settings.InactiveModOrder = InactiveModOrderPolicy.Capture(state.Inactive, Settings.InactiveModOrder);
 			for (var index = 0; index < ActiveMods.Count; index++)
 			{
 				ActiveMods[index].Index = index;
@@ -9281,11 +9483,15 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		return true;
 	}
 
-	private void CaptureVisualDividerBaseline() =>
+	private void CaptureVisualDividerBaseline()
+	{
 		_savedVisualDividerBaseline = CloneVisualDividers(Settings.VisualModListDividers);
+	}
 
-	private void EnsureVisualDividerBaseline() =>
+	private void EnsureVisualDividerBaseline()
+	{
 		_savedVisualDividerBaseline ??= CloneVisualDividers(Settings.VisualModListDividers);
+	}
 
 	public void DiscardUnsavedLoadOrderPresentationChanges()
 	{
@@ -9293,11 +9499,15 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		_deferSave = null;
 		if (_savedVisualDividerBaseline != null)
 		{
-			Settings.VisualModListDividers = CloneVisualDividers(_savedVisualDividerBaseline);
+            // Inactive organization is autosaved independently of the active load order.
+            Settings.VisualModListDividers = CloneVisualDividers(
+                _savedVisualDividerBaseline.Where(divider => divider.IsActiveList)
+                    .Concat(Settings.VisualModListDividers.Where(divider => !divider.IsActiveList)));
 			RefreshVisualDividers();
 		}
 		HasUnsavedLoadOrderChanges = false;
 		ClearLoadOrderEditHistory();
+		QueueSave();
 	}
 
 	public void ApplyVisualModListDrop(IEnumerable<DivinityModData> draggedItems, bool destinationActive, int insertIndex)
@@ -9364,6 +9574,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 			false);
 		var desiredActiveMods = resultingActiveSequence.Where(item => !item.IsVisualDivider).ToList();
 		var desiredInactiveMods = resultingInactiveSequence.Where(item => !item.IsVisualDivider).ToList();
+		Settings.InactiveModOrder = InactiveModOrderPolicy.Capture(desiredInactiveMods, Settings.InactiveModOrder);
 
 		_updatingVisualModLists = true;
 		try
@@ -9413,9 +9624,29 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		finally { _updatingVisualModLists = false; }
 		RefreshVisualDividers();
 		ScheduleModHealthRefresh();
-		HasUnsavedLoadOrderChanges = true;
+		if (sourceActive || destinationActive) HasUnsavedLoadOrderChanges = true;
 		QueueSave();
 		RecordLoadOrderEdit(historyBefore);
+	}
+
+	public IReadOnlyList<SaveModRequirement> ReviewSaveMods(IEnumerable<DivinityLoadOrderEntry> required) =>
+		SaveModReviewService.Review(required, UserMods.Concat(Mods).Concat(ForceLoadedMods).Distinct(),
+			ActiveMods.Select(m => m.UUID), InactiveMods.Select(m => m.UUID));
+
+	public int ActivateReviewedSaveMods(IReadOnlyList<DivinityLoadOrderEntry> recorded,
+		IReadOnlyList<SaveModRequirement> reviewed, IEnumerable<string> selected)
+	{
+		if (IsRefreshing || IsLoadingOrder || MainProgressIsActive)
+			throw new InvalidOperationException("Wait for the current operation to finish, then review the save again.");
+		var current = ReviewSaveMods(recorded);
+		if (!current.SequenceEqual(reviewed))
+			throw new InvalidOperationException("Installed mods changed since this review. Review the save again.");
+		var ids = SaveModReviewService.SelectedActivationIds(current, selected);
+		var modsToActivate = ids.Select(id => InactiveMods.Single(m => Guid.TryParse(m.UUID, out var uuid) && uuid == Guid.Parse(id))).ToArray();
+		if (modsToActivate.Any(m => !File.Exists(m.FilePath)))
+			throw new InvalidOperationException("An installed mod file is no longer available. Refresh your mods and review again.");
+		MoveModsBetweenLists(modsToActivate, true);
+		return modsToActivate.Length;
 	}
 
 	public void MoveModsBetweenLists(IEnumerable<DivinityModData> mods, bool moveToActive)
@@ -9442,6 +9673,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		IsVisualDividerCollapsed = divider.IsCollapsed,
 		VisualDividerChevronAngle = divider.IsCollapsed ? -90d : 0d,
 		IsVisualDivider = true,
+		IsActive = divider.IsActiveList,
 		ShowVisualDivider = true,
 		CanDrag = true
 	};
@@ -9457,6 +9689,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 	{
 		if (current?.IsVisualDivider != true || desired?.IsVisualDivider != true) return;
 		current.Name = desired.Name;
+		current.IsActive = desired.IsActive;
 		current.VisualDividerTitle = desired.VisualDividerTitle;
 		current.VisualDividerColor = desired.VisualDividerColor;
 		current.VisualDividerIconId = desired.VisualDividerIconId;
@@ -9480,6 +9713,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 	private void RefreshVisualDividers(bool? activeListOnly, bool preferBulkReset = false)
 	{
+		for (var index = 0; index < InactiveMods.Count; index++)
+			InactiveMods[index].InactiveIndex = index;
 		if (_updatingVisualModLists) return;
 		_refreshVisualDividersTask?.Dispose();
 		_refreshVisualDividersTask = null;
@@ -9500,37 +9735,50 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				}
 				Settings.ModListVisualDividers.Clear();
 			}
-			membershipMigrated = VisualDividerSectionPolicy.MigrateLegacyMembership(
-				ActiveMods, Settings.VisualModListDividers ?? Enumerable.Empty<ModListVisualDividerData>(), true, IsInitialized)
-				| VisualDividerSectionPolicy.MigrateLegacyMembership(
-					InactiveMods, Settings.VisualModListDividers ?? Enumerable.Empty<ModListVisualDividerData>(), false, IsInitialized);
+			membershipMigrated = (activeListOnly != false && VisualDividerSectionPolicy.MigrateLegacyMembership(
+				ActiveMods, Settings.VisualModListDividers ?? Enumerable.Empty<ModListVisualDividerData>(), true, IsInitialized))
+				| (activeListOnly != true && VisualDividerSectionPolicy.MigrateLegacyMembership(
+					InactiveMods, Settings.VisualModListDividers ?? Enumerable.Empty<ModListVisualDividerData>(), false, IsInitialized));
 			if (IsInitialized)
 			{
+				membershipMigrated |= activeListOnly != false && VisualDividerSectionPolicy.ReanchorPositionsToMembers(
+					ActiveMods,
+					Settings.VisualModListDividers,
+					true);
+				membershipMigrated |= activeListOnly != true && VisualDividerSectionPolicy.ReanchorPositionsToMembers(
+					InactiveMods,
+					Settings.VisualModListDividers,
+					false);
 				// Expanded sections follow their current boundaries. Collapsed sections
 				// retain the membership snapshot captured when they were closed, so an
 				// unrelated refresh cannot absorb newly positioned rows.
-				membershipMigrated |= VisualDividerSectionPolicy.AssignMembersPreservingCollapsedSections(
+				membershipMigrated |= activeListOnly != false && VisualDividerSectionPolicy.AssignMembersPreservingCollapsedSections(
 					BuildVisualDividerSequence(true),
 					Settings.VisualModListDividers,
 					true);
-				membershipMigrated |= VisualDividerSectionPolicy.AssignMembersPreservingCollapsedSections(
+				membershipMigrated |= activeListOnly != true && VisualDividerSectionPolicy.AssignMembersPreservingCollapsedSections(
 					BuildVisualDividerSequence(false),
 					Settings.VisualModListDividers,
 					false);
 			}
-			var show = String.IsNullOrWhiteSpace(SelectedModCategory) || SelectedModCategory.Equals(AllModsCategory, StringComparison.OrdinalIgnoreCase);
 			void Build(ObservableCollectionExtended<DivinityModData> target, IEnumerable<DivinityModData> mods, bool active)
 			{
 				var sourceMods = mods.ToList();
 				var visibleMods = VisualModFilterProjectionPolicy.ResolveVisibleMods(sourceMods);
-				var result = show
+				var filterText = active ? ActiveModFilterText : InactiveModFilterText;
+				var showSeparators = VisualModFilterProjectionPolicy.ShouldShowSeparators(
+					SelectedModCategory,
+					AllModsCategory,
+					filterText,
+					active ? IsActiveListMetadataSorted : IsInactiveListMetadataSorted);
+				var result = showSeparators
 					? VisualDividerSectionPolicy.BuildVisualSequence(
 						visibleMods,
 						Settings.VisualModListDividers ?? Enumerable.Empty<ModListVisualDividerData>(),
 						active,
 						CreateVisualDividerItem).ToList()
 					: visibleMods.ToList();
-				var collapsedMemberIds = show
+				var collapsedMemberIds = showSeparators
 					? VisualDividerSectionPolicy.GetCollapsedMemberIds(
 						result,
 						Settings.VisualModListDividers ?? Enumerable.Empty<ModListVisualDividerData>(),
@@ -9542,7 +9790,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 				// and can trap WPF in repeated measurement. Clear only stale legacy state.
 				foreach (var mod in sourceMods)
 					if (mod.IsHiddenByVisualDivider) mod.IsHiddenByVisualDivider = false;
-				if (show && collapsedMemberIds.Count > 0)
+				if (showSeparators && collapsedMemberIds.Count > 0)
 				{
 					// Keep collapsed members in ActiveMods/InactiveMods, but omit them from
 					// the virtualized display projection. Retaining zero-height collapsed
@@ -10230,7 +10478,7 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 		RetainedPackageArchiveUsageText = RetainedPackageArchives.Count == 0
 			? Settings.RetainInstalledPackageArchives
 				? $"Archive library is empty · {Settings.RetainedPackageArchiveQuotaGb} GB limit"
-				: "Archive retention is off · enable it in Preferences"
+				: "Archive retention is off"
 			: $"{FormatStorageSize(usage)} used · {Settings.RetainedPackageArchiveQuotaGb} GB limit";
 	}
 
@@ -10886,7 +11134,10 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 
 	private DivinityLoadOrder CreateWorkingLoadOrderSnapshot()
 	{
-		return LoadOrderPersistencePolicy.CreateWorkingCopy(SelectedModOrder, ActiveMods);
+		return LoadOrderPersistencePolicy.CreateWorkingCopy(
+			SelectedModOrder,
+			ActiveMods,
+			Settings.VisualModListDividers);
 	}
 
 	private void ScheduleModHealthRefresh()
@@ -11587,6 +11838,8 @@ public class MainWindowViewModel : BaseHistoryViewModel, IActivatableViewModel, 
 					else
 					{
 						DivinityApp.Log($"Order changed to {SelectedModOrder.Name}. Skipping list loading since the orders match.");
+						ApplyActiveVisualDividers(SelectedModOrder);
+						RefreshVisualDividers(activeListOnly: true);
 					}
 				}
 			}

@@ -56,6 +56,13 @@ jobs:
             exit 1
           fi
 
+          # Publish only tags already contained in main; dev is never a release channel.
+          relation="$(gh api "repos/$GITHUB_REPOSITORY/compare/$tag...main" --jq '.status')"
+          if [[ "$relation" != "ahead" && "$relation" != "identical" ]]; then
+            echo "Release tag $tag is not contained in main." >&2
+            exit 1
+          fi
+
           version="${tag#v}"
           filename="BG3ModManager-Redux_v${version}.zip"
           asset_path="$RUNNER_TEMP/redux-nexus/$filename"
@@ -135,7 +142,7 @@ jobs:
                   current += " " + line
 
           finish_item()
-          items = items[:5]
+          # Keep all release highlights so early fixes cannot hide later changes.
 
           if not items:
               paragraphs = [clean(part) for part in re.split(r"\n\s*\n", body)

@@ -13,6 +13,7 @@
 	ResizeMode="CanResize"
 	ShowInTaskbar="False"
 	WindowStartupLocation="CenterOwner"
+	FocusManager.FocusedElement="{Binding ElementName=ScanActionButton}"
 	WindowStyle="SingleBorderWindow"
 	Template="{DynamicResource ReduxWindowTemplate}"
 	Background="{DynamicResource ReduxWindowBrush}">
@@ -102,7 +103,7 @@
 		</Grid.RowDefinitions>
 		<controls:ReduxWindowTitleBar IconData="{DynamicResource Redux.Icon.Blocks}" />
 		<Border Grid.Row="1"
-			Padding="22,19"
+			Padding="18,14"
 			Background="{DynamicResource ReduxAppBackgroundBrush}"
 			BorderBrush="{DynamicResource ReduxBorderBrush}"
 			BorderThickness="1">
@@ -116,13 +117,10 @@
 				</Grid.RowDefinitions>
 
 				<StackPanel>
-					<TextBlock FontSize="{DynamicResource Redux.FontSize.20}"
-						FontWeight="{DynamicResource Redux.FontWeight.Title}"
-						Foreground="{DynamicResource ReduxTextPrimaryBrush}"
-						Text="Active file overlaps" />
+					<TextBlock Style="{StaticResource ReduxWindowHeadingStyle}" Text="Active file overlaps" />
 					<TextBlock Margin="0,5,0,0"
 						Foreground="{DynamicResource ReduxTextSecondaryBrush}"
-						Text="Shared internal PAK paths can be intentional overrides or patches. This read-only view reports overlaps; it does not determine compatibility or change any files."
+						Text="Shared files may be intentional overrides. Overlaps alone do not establish incompatibility."
 						TextWrapping="Wrap" />
 				</StackPanel>
 
@@ -237,10 +235,10 @@
 						VerticalAlignment="Center"
 						Foreground="{DynamicResource ReduxTextMutedBrush}"
 						TextWrapping="Wrap" />
-					<Button x:Name="ScanActionButton" Grid.Column="1" MinWidth="84" Margin="14,0,0,0"
+					<Button x:Name="ScanActionButton" AutomationProperties.Name="{Binding Text, ElementName=ScanActionButtonText}" Grid.Column="1" MinWidth="84" Margin="14,0,0,0"
 						Style="{StaticResource ReduxSecondaryActionButtonStyle}"
 						Click="CloseButton_Click">
-						<StackPanel Orientation="Horizontal"><controls:ReduxIcon Width="14" Height="14" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Close}" /><TextBlock x:Name="ScanActionButtonText" Text="Cancel" /></StackPanel>
+						<StackPanel Orientation="Horizontal"><controls:ReduxIcon VerticalAlignment="Center" Width="14" Height="14" Margin="0,0,6,0" StrokeData="{StaticResource Redux.Icon.Close}" /><TextBlock x:Name="ScanActionButtonText" Text="Cancel" /></StackPanel>
 					</Button>
 				</Grid>
 			</Grid>

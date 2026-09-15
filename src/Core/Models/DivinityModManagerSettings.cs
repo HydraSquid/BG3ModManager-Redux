@@ -59,7 +59,13 @@ public enum ReduxTextSize
 [DataContract]
 public class DivinityModManagerSettings : ReactiveObject
 {
-	[DataMember, Reactive] public string LastSeenWhatsNewVersion { get; set; } = String.Empty;
+	[DefaultValue(true), DataMember, Reactive] public bool ShowActiveModIndex { get; set; } = true;
+    [DataMember, Reactive] public bool ShowInactiveModIndex { get; set; } = false;
+
+    [DataMember, Reactive] public string LastSeenWhatsNewVersion { get; set; } = String.Empty;
+	[DefaultValue(true)]
+	[SettingsEntry("Show What's New after updates", "Open release notes after Redux updates. Turn this off to skip future popups.")]
+	[DataMember, Reactive] public bool ShowWhatsNewAfterUpdates { get; set; } = true;
 	private bool? _useGeneratedGradients;
 	private bool? _useThemeDefaultTypography;
 
@@ -127,7 +133,7 @@ public class DivinityModManagerSettings : ReactiveObject
 	[DataMember, Reactive] public bool AutoAddDependenciesWhenExporting { get; set; }
 
 	[DefaultValue(false)]
-	[SettingsEntry("Check for Redux updates automatically", "Check the public-alpha channel in the background after startup and notify me when a newer release is available.")]
+	[SettingsEntry("Check for updates automatically", "Check the public-alpha channel in the background after startup and notify me when a newer release is available.")]
 	[DataMember, Reactive] public bool CheckForUpdates { get; set; }
 
 	[DefaultValue("")]
@@ -230,7 +236,7 @@ public class DivinityModManagerSettings : ReactiveObject
 	[DataMember, Reactive] public bool ConfirmCleanModInstalls { get; set; } = true;
 
 	[DefaultValue(false)]
-	[SettingsEntry("Bring Nexus downloads forward", "Open Download Manager for Nexus links instead of showing a quiet notification. Existing saved choices are preserved.")]
+	[SettingsEntry("Open Download Manager for Nexus links", "Bring Download Manager forward when a Nexus download starts. When off, show a quiet notification.")]
 	[DataMember, Reactive] public bool BringNxmDownloadsToFront { get; set; } = false;
 
 	[DefaultValue(false)]
@@ -364,6 +370,8 @@ public class DivinityModManagerSettings : ReactiveObject
 	[DefaultValue(true)]
 	[DataMember, Reactive] public bool CategoriesPanelExpanded { get; set; } = true;
 
+	[DataMember] public List<string> InactiveModOrder { get; set; } = new();
+
 	[DefaultValue(true)]
 	[DataMember, Reactive] public bool InactiveModsPanelExpanded { get; set; } = true;
 
@@ -397,6 +405,13 @@ public class DivinityModManagerSettings : ReactiveObject
 
 	[DataMember, IgnoreSetFrom] public ScriptExtenderSettings ExtenderSettings { get; set; }
 	[DataMember, IgnoreSetFrom] public ScriptExtenderUpdateConfig ExtenderUpdaterSettings { get; set; }
+
+	[DefaultValue(false), DataMember]
+	public bool ExportDefaultScriptExtenderSettings
+	{
+		get => ExtenderSettings?.ExportDefaultExtenderSettings == true;
+		set { if (ExtenderSettings != null) ExtenderSettings.ExportDefaultExtenderSettings = value; }
+	}
 
 	[DefaultValue(DivinityGameLaunchWindowAction.None)]
 	[SettingsEntry("After launching the game", "Choose whether the manager stays open, minimizes, or closes.")]

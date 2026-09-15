@@ -495,6 +495,15 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		ReduxDropFeedback.Clear(ref _categoryDropMotion);
 	}
 
+	private bool ModListRejectsDrop(ListView listView)
+	{
+		if (listView == ActiveModsListView)
+			return ViewModel.IsActiveListMetadataSorted || ViewModel.DragHandler?.CanDropOnPane(true) == false;
+		if (listView == InactiveModsListView)
+			return ViewModel.IsInactiveListMetadataSorted || ViewModel.DragHandler?.CanDropOnPane(false) == false;
+		return false;
+	}
+
 	private void ModListView_PreviewDragOver(object sender, DragEventArgs e)
 	{
 		if (e.Data.GetDataPresent(typeof(ModCategoryFilterItem)))
@@ -517,8 +526,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			return;
 		}
 
-		if (ReferenceEquals(listView, InactiveModsListView) &&
-			ViewModel.DragHandler?.IsDraggingVisualDivider == true)
+		if (ModListRejectsDrop(listView))
 		{
 			ClearModListDropIndicator();
 			e.Effects = DragDropEffects.None;
@@ -562,8 +570,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			return;
 		}
 
-		if (ReferenceEquals(sender, InactiveModsListView) &&
-			ViewModel.DragHandler?.IsDraggingVisualDivider == true)
+		if (ModListRejectsDrop(sender as ListView))
 		{
 			ViewModel.DragHandler.CompleteDragTracking();
 			ClearModListDropIndicator();
@@ -824,18 +831,11 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			var insertIndex = GetVisualInsertionIndex(listView, point);
 			var activeList = listView == ActiveModsListView;
 			var overrideList = listView == ForceLoadedModsListView;
-			var emptySpaceSeparatorUnavailableReason = overrideList
-				? "Override mods are always loaded outside the normal load order, so separators cannot be added to them."
-				: "Inactive mods do not retain a load order.";
 			var addHere = new MenuItem
 			{
-				Header = activeList
-					? "Insert Separator Here..."
-					: overrideList
-						? "Insert Separator (Not available for Override Mods)"
-						: "Insert Separator (Inactive mods do not retain a load order)",
-				IsEnabled = activeList,
-				ToolTip = activeList ? null : emptySpaceSeparatorUnavailableReason,
+				Header = overrideList ? "Insert Separator (Not available for Override Mods)" : "Insert Separator Here...",
+				IsEnabled = !overrideList,
+				ToolTip = overrideList ? "Override mods are always loaded outside the normal load order." : null,
 				Icon = ReduxIcon.FromResource("Redux.Icon.AddStroke", true)
 			};
 			addHere.Click += (_, _) => ShowAddVisualDividerDialog(activeList, insertIndex);
@@ -882,7 +882,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			remove.Click += (_, _) =>
 			{
 				ViewModel.RemoveVisualDivider(mod);
-				UpdateActiveSeparatorBulkToggleButton();
+				UpdateSeparatorBulkToggleButtons();
 			};
 			menu.Items.Add(toggleSection);
 			menu.Items.Add(new Separator { Tag = VisualDividerMenuTag });
@@ -1136,19 +1136,12 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 
 		var activeModList = listView == ActiveModsListView;
 		var overrideModList = listView == ForceLoadedModsListView;
-		var separatorUnavailableReason = overrideModList
-			? "Override mods are always loaded outside the normal load order, so separators cannot be added to them."
-			: "Inactive mods do not retain a load order.";
 		var dividerMenu = new MenuItem
 		{
-			Header = activeModList
-				? "Separator"
-				: overrideModList
-					? "Separator (Not available for Override Mods)"
-					: "Separator (Inactive mods do not retain a load order)",
+			Header = overrideModList ? "Separator (Not available for Override Mods)" : "Separator",
 			Tag = VisualDividerMenuTag,
-			IsEnabled = activeModList,
-			ToolTip = activeModList ? null : separatorUnavailableReason,
+			IsEnabled = !overrideModList,
+			ToolTip = overrideModList ? "Override mods are always loaded outside the normal load order." : null,
 			Icon = ReduxIcon.FromResource("Redux.Icon.AddStroke", true)
 		};
 		var visualIndex = listView.Items.IndexOf(mod);
@@ -1318,7 +1311,11 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 
 	private void ShowAddVisualDividerDialog(bool activeList, int position)
 	{
-		if (!activeList) return;
+		if (activeList ? ViewModel.IsActiveListMetadataSorted : ViewModel.IsInactiveListMetadataSorted)
+		{
+			ViewModel.ShowAlert("Return to the saved order view before adding separators.", AlertType.Info, 8);
+			return;
+		}
 		var dialog = new CategoryNameDialog(color: ViewModel.GetSuggestedCustomCategoryColor(),
 			savedColors: ViewModel.Settings.SavedCategoryColors, visualDividerMode: true,
 			useCategoryColorsForHover: ViewModel.Settings.UseCategoryColorsForInteractions)
@@ -1329,7 +1326,14 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		SaveCategoryDialogColors(dialog);
 		ViewModel.AddVisualDivider(activeList, position, dialog.CategoryName, dialog.CategoryColor,
 			dialog.CategoryIconId, dialog.HideSeparatorLine, dialog.CategoryDescription);
-		UpdateActiveSeparatorBulkToggleButton();
+		UpdateSeparatorBulkToggleButtons();
+	}
+
+	private void AddInactiveSeparatorButton_Click(object sender, RoutedEventArgs e)
+	{
+		var position = InactiveModsListView.SelectedIndex >= 0
+			? InactiveModsListView.SelectedIndex + 1 : InactiveModsListView.Items.Count;
+		ShowAddVisualDividerDialog(false, position);
 	}
 
 	private void AddActiveSeparatorButton_Click(object sender, RoutedEventArgs e) =>
@@ -1349,8 +1353,17 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 	private void ActiveSeparatorBulkToggleButton_MouseEnter(object sender, MouseEventArgs e) =>
 		UpdateActiveSeparatorBulkToggleButton();
 
+	private void InactiveSeparatorBulkToggleButton_Loaded(object sender, RoutedEventArgs e) =>
+		UpdateInactiveSeparatorBulkToggleButton();
+
+	private void InactiveSeparatorBulkToggleButton_MouseEnter(object sender, MouseEventArgs e) =>
+		UpdateInactiveSeparatorBulkToggleButton();
+
 	private void ActiveSeparatorBulkToggleButton_Click(object sender, RoutedEventArgs e) =>
 		ToggleAllActiveSeparators();
+
+	private void InactiveSeparatorBulkToggleButton_Click(object sender, RoutedEventArgs e) =>
+		ToggleAllInactiveSeparators();
 
 	public void ToggleAllActiveSeparators()
 	{
@@ -1370,67 +1383,86 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		CompleteVisualDividerTransition(listView);
 		if (!ViewModel.CanSetAllVisualDividersCollapsed(activeList, collapsed))
 		{
-			if (activeList) UpdateActiveSeparatorBulkToggleButton();
+			UpdateSeparatorBulkToggleButtons();
 			return;
 		}
 
 		void ApplyState()
 		{
 			ViewModel.SetAllVisualDividersCollapsed(activeList, collapsed);
-			if (activeList) UpdateActiveSeparatorBulkToggleButton();
+			UpdateSeparatorBulkToggleButtons();
 		}
 
 		listView.ApplyTemplate();
-		var animationTarget = listView.FindVisualChildren<ItemsPresenter>().FirstOrDefault();
+		var realizedBefore = GetRealizedListRows(listView)
+			.Select(entry => new VisualDividerAnimatedRow(entry.Row))
+			.ToList();
 		if (ReduxWindowBehavior.ReduceMotion || !SystemParameters.ClientAreaAnimation ||
-			!listView.IsLoaded || animationTarget == null)
+			!listView.IsLoaded || realizedBefore.Count == 0)
 		{
+			foreach (var row in realizedBefore) row.Restore();
 			ApplyState();
 			return;
 		}
 
-		var restingOpacity = animationTarget.Opacity;
+		const double fadeOutEnd = 0.44;
+		const double fadeInStart = 0.56;
+		const double transitionOpacity = 0.16;
 		var stateApplied = false;
+		var realizedAfter = new List<VisualDividerAnimatedRow>();
 		VisualDividerAnimation transition = null;
+
 		void Update(double progress)
 		{
-			const double fadeOutEnd = 0.46;
-			const double fadeInStart = 0.54;
-			const double transitionOpacity = 0.08;
 			if (progress < fadeOutEnd)
 			{
 				var phase = progress / fadeOutEnd;
-				animationTarget.Opacity = restingOpacity * (1 - ((1 - transitionOpacity) * phase));
+				foreach (var row in realizedBefore.Where(candidate => candidate.IsCurrent))
+				{
+					row.Translation.Y = -3 * phase;
+					row.SetOpacity(row.BaseOpacity * (1 - ((1 - transitionOpacity) * phase)));
+				}
 				return;
 			}
 
 			if (!stateApplied)
 			{
+				foreach (var row in realizedBefore) row.Restore();
 				ApplyState();
 				stateApplied = true;
 				listView.UpdateLayout();
+				foreach (var entry in GetRealizedListRows(listView))
+				{
+					entry.Row.ClearValue(UIElement.OpacityProperty);
+					entry.Row.ClearValue(UIElement.RenderTransformProperty);
+					entry.Row.ClearValue(UIElement.RenderTransformOriginProperty);
+					var animated = new VisualDividerAnimatedRow(entry.Row);
+					animated.Translation.Y = 3;
+					animated.SetOpacity(animated.BaseOpacity * transitionOpacity);
+					realizedAfter.Add(animated);
+				}
 			}
 
-			if (progress <= fadeInStart)
+			if (progress <= fadeInStart) return;
+			var phaseIn = (progress - fadeInStart) / (1 - fadeInStart);
+			foreach (var row in realizedAfter.Where(candidate => candidate.IsCurrent))
 			{
-				animationTarget.Opacity = restingOpacity * transitionOpacity;
-				return;
+				row.Translation.Y = 3 * (1 - phaseIn);
+				row.SetOpacity(row.BaseOpacity *
+					(transitionOpacity + ((1 - transitionOpacity) * phaseIn)));
 			}
-
-			var fadeInProgress = (progress - fadeInStart) / (1 - fadeInStart);
-			animationTarget.Opacity = restingOpacity *
-				(transitionOpacity + ((1 - transitionOpacity) * fadeInProgress));
 		}
 
 		void Finish(bool completed)
 		{
 			try
 			{
+				foreach (var row in realizedBefore) row.Restore();
+				foreach (var row in realizedAfter) row.Restore();
 				if (completed && !stateApplied) ApplyState();
 			}
 			finally
 			{
-				animationTarget.Opacity = restingOpacity;
 				if (activeList && ReferenceEquals(_activeVisualDividerTransition, transition))
 					_activeVisualDividerTransition = null;
 				else if (!activeList && ReferenceEquals(_inactiveVisualDividerTransition, transition))
@@ -1447,23 +1479,55 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		transition.Start();
 	}
 
+	public void ToggleAllInactiveSeparators()
+	{
+		var collapsedTarget = ViewModel.ResolveAllVisualDividersCollapsedTarget(activeList: false);
+		if (collapsedTarget.HasValue)
+			SetAllVisualDividersCollapsed(activeList: false, collapsedTarget.Value);
+		else
+			UpdateInactiveSeparatorBulkToggleButton();
+	}
+
 	private void UpdateActiveSeparatorBulkToggleButton()
 	{
-		if (ActiveSeparatorBulkToggleButton == null || ActiveSeparatorBulkToggleIcon == null || ViewModel == null) return;
-		var collapsedTarget = ViewModel.ResolveAllVisualDividersCollapsedTarget(activeList: true);
+		UpdateSeparatorBulkToggleButton(
+			ActiveSeparatorBulkToggleButton,
+			ActiveSeparatorBulkToggleIcon,
+			activeList: true);
+	}
+
+	private void UpdateInactiveSeparatorBulkToggleButton()
+	{
+		UpdateSeparatorBulkToggleButton(
+			InactiveSeparatorBulkToggleButton,
+			InactiveSeparatorBulkToggleIcon,
+			activeList: false);
+	}
+
+	private void UpdateSeparatorBulkToggleButtons()
+	{
+		UpdateActiveSeparatorBulkToggleButton();
+		UpdateInactiveSeparatorBulkToggleButton();
+	}
+
+	private void UpdateSeparatorBulkToggleButton(Button button, ReduxIcon icon, bool activeList)
+	{
+		if (button == null || icon == null || ViewModel == null) return;
+		var collapsedTarget = ViewModel.ResolveAllVisualDividersCollapsedTarget(activeList);
 		var collapse = collapsedTarget != false;
-		var action = collapse ? "Collapse all active separators" : "Expand all active separators";
+		var paneName = activeList ? "active" : "inactive";
+		var action = collapse ? $"Collapse all {paneName} separators" : $"Expand all {paneName} separators";
 		var hasMultipleSeparators = ViewModel.Settings.VisualModListDividers?
-			.Count(divider => divider != null && divider.IsActiveList) > 1;
-		ActiveSeparatorBulkToggleButton.Visibility = hasMultipleSeparators
+			.Count(divider => divider != null && divider.IsActiveList == activeList) > 1;
+		button.Visibility = hasMultipleSeparators
 			? Visibility.Visible
 			: Visibility.Collapsed;
-		ActiveSeparatorBulkToggleButton.IsEnabled = collapsedTarget.HasValue && ViewModel.IsInitialized && !ViewModel.IsLocked;
-		ActiveSeparatorBulkToggleButton.ToolTip = collapsedTarget.HasValue
+		button.IsEnabled = collapsedTarget.HasValue && ViewModel.IsInitialized && !ViewModel.IsLocked;
+		button.ToolTip = collapsedTarget.HasValue
 			? action
-			: "No active separators to expand or collapse";
-		System.Windows.Automation.AutomationProperties.SetName(ActiveSeparatorBulkToggleButton, action);
-		ActiveSeparatorBulkToggleIcon.SetResourceReference(
+			: $"No {paneName} separators to expand or collapse";
+		System.Windows.Automation.AutomationProperties.SetName(button, action);
+		icon.SetResourceReference(
 			ReduxIcon.StrokeDataProperty,
 			collapse ? "Redux.Icon.ChevronUpStroke" : "Redux.Icon.ChevronDownStroke");
 	}
@@ -3253,8 +3317,13 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 					h => ((INotifyCollectionChanged)ViewModel.DisplayActiveMods).CollectionChanged += h,
 					h => ((INotifyCollectionChanged)ViewModel.DisplayActiveMods).CollectionChanged -= h)
 					.ObserveOn(RxApp.MainThreadScheduler)
-					.Subscribe(_ => UpdateActiveSeparatorBulkToggleButton()));
-				UpdateActiveSeparatorBulkToggleButton();
+					.Subscribe(_ => UpdateSeparatorBulkToggleButtons()));
+				d(Observable.FromEventPattern<NotifyCollectionChangedEventHandler, NotifyCollectionChangedEventArgs>(
+					h => ((INotifyCollectionChanged)ViewModel.DisplayInactiveMods).CollectionChanged += h,
+					h => ((INotifyCollectionChanged)ViewModel.DisplayInactiveMods).CollectionChanged -= h)
+					.ObserveOn(RxApp.MainThreadScheduler)
+					.Subscribe(_ => UpdateSeparatorBulkToggleButtons()));
+				UpdateSeparatorBulkToggleButtons();
 
 				d(this.OneWayBind(ViewModel, vm => vm.HasForceLoadedMods, v => v.AlwaysLoadedSectionGrid.Visibility, BoolToVisibilityConverter.FromBool));
 				d(this.Bind(ViewModel, vm => vm.ActiveModFilterText, v => v.ActiveModsFilterTextBox.Text));
@@ -3748,7 +3817,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			switch (columnName)
 			{
 				case "#":
-					candidateWidth = MeasureColumnText(listView, mod.Index.ToString(CultureInfo.CurrentCulture)) + 20;
+					candidateWidth = MeasureColumnText(listView, (listView == InactiveModsListView ? mod.InactiveIndex : mod.Index).ToString(CultureInfo.CurrentCulture)) + 20;
 					break;
 				case "Name":
 					candidateWidth = MeasureColumnText(listView, mod.DisplayTitle) + 28 + GetModNameAdornmentWidth(mod);
@@ -3958,7 +4027,10 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		CaptureModListColumnWidths();
 		foreach (var gridView in GetModListGridViews())
 		{
-			foreach (var columnName in OptionalModListColumns)
+			SetGridViewColumnVisibility(gridView, "#",
+                ReferenceEquals(gridView, InactiveModsListView.View)
+                    ? ViewModel.Settings.ShowInactiveModIndex : ViewModel.Settings.ShowActiveModIndex);
+            foreach (var columnName in OptionalModListColumns)
 			{
 				SetGridViewColumnVisibility(gridView, columnName, IsModListColumnVisible(columnName));
 			}
@@ -3967,7 +4039,9 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 
 	private void ResetModListColumnsToDefaults()
 	{
-		CaptureModListColumnWidths();
+		ViewModel.Settings.ShowActiveModIndex = true;
+        ViewModel.Settings.ShowInactiveModIndex = false;
+        CaptureModListColumnWidths();
 
 		foreach (var columnName in OptionalModListColumns)
 		{
@@ -4054,33 +4128,59 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		});
 		menu.Items.Add(new Separator());
 
-		if (ReferenceEquals(listView, ActiveModsListView))
-		{
-			menu.Items.Add(CreateFixedColumnMenuItem("#  (load order — always shown)"));
-		}
-		menu.Items.Add(CreateFixedColumnMenuItem("Name  (always shown)"));
-
-		foreach (var columnName in OptionalModListColumns)
-		{
-			if (columnName == "Source" && !ViewModel.Modules.SourceIntegrationsEnabled)
-			{
-				continue;
-			}
-
-			var item = new MenuItem
-			{
-				Header = columnName,
-				IsCheckable = true,
-				IsChecked = IsModListColumnVisible(columnName)
-			};
-			item.Click += (_, _) =>
-			{
-				SetModListColumnSetting(columnName, item.IsChecked);
-				ApplyModListColumnVisibility();
-				ViewModel.QueueSave();
-			};
-			menu.Items.Add(item);
-		}
+        var inactivePane = ReferenceEquals(listView, InactiveModsListView);
+        var availableColumns = new[] { "#", "Name" }.Concat(OptionalModListColumns).ToArray();
+        // Visible columns mirror this pane left-to-right. Hidden columns follow so
+        // they remain available without interrupting the visible sequence.
+        var orderedColumns = (listView.View is GridView currentView
+                ? currentView.Columns.Select(GetColumnName)
+                : Enumerable.Empty<string>())
+            .Concat(availableColumns)
+            .Where(name => availableColumns.Contains(name))
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+        foreach (var columnName in orderedColumns)
+        {
+            if (columnName == "Source" && !ViewModel.Modules.SourceIntegrationsEnabled) continue;
+            if (columnName == "Name")
+            {
+                menu.Items.Add(new MenuItem { Header = "Name  (always shown)", IsCheckable = true, IsChecked = true, IsEnabled = false });
+                continue;
+            }
+            var item = new MenuItem
+            {
+                Header = columnName,
+                IsCheckable = true,
+                IsChecked = columnName == "#"
+                    ? (inactivePane ? ViewModel.Settings.ShowInactiveModIndex : ViewModel.Settings.ShowActiveModIndex)
+                    : IsModListColumnVisible(columnName)
+            };
+            var iconKey = columnName switch
+            {
+                "#" => "Redux.Icon.ReorderStroke",
+                "Category" => "Redux.Icon.ListStroke",
+                "Author" => "Redux.Icon.Information",
+                "Last Updated" or "Last Modified" => "Redux.Icon.CalendarDays",
+                "Source" => "Redux.Icon.LinkStroke",
+                "File Name" => "Redux.Icon.FolderOpen",
+                _ => "Redux.Icon.Information"
+            };
+            void RefreshColumnIcon() => item.Icon = item.IsChecked ? null : ReduxIcon.FromResource(iconKey, true);
+            RefreshColumnIcon();
+            item.Checked += (_, _) => RefreshColumnIcon();
+            item.Unchecked += (_, _) => RefreshColumnIcon();
+            item.Click += (_, _) =>
+            {
+                if (columnName == "#")
+                {
+                    if (inactivePane) ViewModel.Settings.ShowInactiveModIndex = item.IsChecked;
+                    else ViewModel.Settings.ShowActiveModIndex = item.IsChecked;
+                }
+                else SetModListColumnSetting(columnName, item.IsChecked);
+                ApplyModListColumnVisibility();
+                ViewModel.QueueSave();
+            };
+            menu.Items.Add(item);
+        }
 
 		menu.Items.Add(new Separator());
 		var autoSizeItem = new MenuItem
@@ -4189,6 +4289,13 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 		}
 	}
 
+    private void ClearModListSort_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button) return;
+        Sort("#", ListSortDirection.Ascending,
+            button.Tag as string == "Active" ? ActiveModsListView : InactiveModsListView);
+    }
+
 	public void Sort(string sortBy, ListSortDirection direction, object sender)
 	{
 		var requestedLoadOrder = sortBy == "#";
@@ -4215,6 +4322,7 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 				// non-mod rows by a synthetic Index value.
 				dataView.Filter = null;
 				if (lv == ActiveModsListView && ViewModel != null) ViewModel.IsActiveListMetadataSorted = false;
+				if (lv == InactiveModsListView && ViewModel != null) ViewModel.IsInactiveListMetadataSorted = false;
 				ViewModel?.RefreshVisualDividers();
 				dataView.Refresh();
 				return;
@@ -4227,6 +4335,8 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			if (lv == ActiveModsListView || lv == InactiveModsListView)
 			{
 				if (lv == ActiveModsListView && ViewModel != null) ViewModel.IsActiveListMetadataSorted = true;
+				if (lv == InactiveModsListView && ViewModel != null) ViewModel.IsInactiveListMetadataSorted = true;
+				ViewModel?.RefreshVisualDividers();
 				foreach (var mod in lv.ItemsSource.OfType<DivinityModData>().Where(item => !item.IsVisualDivider))
 					mod.IsHiddenByVisualDivider = false;
 				dataView.Filter = item => item is not DivinityModData mod || !mod.IsVisualDivider;
@@ -4309,7 +4419,8 @@ public partial class HorizontalModLayout : HorizontalModLayoutBase, IModViewLayo
 			if (targetWidth > 0)
 			{
 				InactiveModsListView.Resizing = true;
-				gridView.Columns[0].Width = targetWidth;
+				var nameColumn = gridView.Columns.FirstOrDefault(column => GetColumnName(column) == "Name");
+				if (nameColumn != null) nameColumn.Width = targetWidth;
 			}
 		}
 	}

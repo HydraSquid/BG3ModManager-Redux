@@ -151,4 +151,18 @@ public class ScriptExtenderSettings : ReactiveObject
 		ExtenderVersion = String.Empty;
 		ExtenderMajorVersion = -1;
 	}
+
+	public string ToConfigJson() => JsonConvert.SerializeObject(this, new JsonSerializerSettings
+	{
+		Formatting = Formatting.Indented,
+		DefaultValueHandling = ExportDefaultExtenderSettings ? DefaultValueHandling.Include : DefaultValueHandling.Ignore,
+		NullValueHandling = NullValueHandling.Ignore
+	});
+
+	public void ApplyGameConfig(ScriptExtenderSettings config)
+	{
+		var includeDefaults = ExportDefaultExtenderSettings;
+		this.SetFrom(config);
+		ExportDefaultExtenderSettings = includeDefaults;
+	}
 }
